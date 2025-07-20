@@ -1,4 +1,6 @@
+
 import { Network } from '../types'
+import { clusterApiUrl } from '@solana/web3.js'
 
 export type { Network }
 
@@ -100,7 +102,7 @@ export const SVM_NETWORKS: Network[] = [
     id: 'solana-mainnet',
     name: 'Solana Mainnet',
     chainId: 'mainnet-beta',
-    rpcUrl: 'https://solana.publicnode.com',
+    rpcUrl: "https://mainnet.helius-rpc.com/?api-key=b3927776-59ce-4234-a5a1-344b20b3d9bd",
     symbol: 'SOL',
     explorer: 'https://explorer.solana.com',
     explorerUrl: 'https://explorer.solana.com',
@@ -115,7 +117,7 @@ export const SVM_NETWORKS: Network[] = [
     id: 'solana-devnet',
     name: 'Solana Devnet',
     chainId: 'devnet',
-    rpcUrl: 'https://api.devnet.solana.com',
+    rpcUrl: clusterApiUrl('devnet'),
     symbol: 'SOL',
     explorer: 'https://explorer.solana.com?cluster=devnet',
     explorerUrl: 'https://explorer.solana.com?cluster=devnet',
