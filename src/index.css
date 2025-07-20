@@ -37,6 +37,15 @@
     ) !important;
   }
   
+  /* Chat-specific backgrounds - always dark translucent */
+  .bg-chat-surface {
+    background-color: rgb(23 23 23);
+  }
+  
+  .bg-chat-message {
+    background-color: rgba(38, 38, 38, 0.8);
+  }
+  
   /* Special effects */
   .candy-red-glow {
     box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
