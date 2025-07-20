@@ -105,9 +105,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
-        <Dialog.Content className="fixed top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] bg-surface-base rounded-lg shadow-2xl border border-border-subtle w-[600px] max-h-[85vh] overflow-hidden flex flex-col">
-          <div className="p-6 border-b border-border-subtle">
+        <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-md z-40" />
+        <Dialog.Content className="fixed top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] bg-surface-base rounded-lg shadow-2xl border border-border-subtle w-[650px] h-[600px] flex flex-col z-50 overflow-hidden">
+          <div className="p-6 border-b border-border-subtle flex-shrink-0 bg-surface-base relative z-10">
             <div className="flex items-center justify-between">
               <Dialog.Title className="text-xl font-semibold text-text-primary">
                 Settings
@@ -120,8 +120,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             </div>
           </div>
 
-          <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-            <Tabs.List className="flex border-b border-border-subtle px-6">
+          <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+            <Tabs.List className="flex border-b border-border-subtle px-6 flex-shrink-0">
               <Tabs.Trigger
                 value="ai"
                 className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent-500 data-[state=active]:border-b-2 data-[state=active]:border-accent-500 transition-colors"
@@ -145,8 +145,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               </Tabs.Trigger>
             </Tabs.List>
 
-            <div className="flex-1 overflow-y-auto">
-              <Tabs.Content value="ai" className="p-6 space-y-6">
+            <div className="flex-1 overflow-hidden relative min-h-0">
+              <Tabs.Content value="ai" className="absolute inset-0 overflow-y-auto p-6 space-y-6 settings-scroll">
                 <div>
                   <h3 className="text-lg font-medium text-text-primary mb-4">
                     AI Assistant Settings
@@ -191,7 +191,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 </div>
               </Tabs.Content>
 
-              <Tabs.Content value="security" className="p-6 space-y-6">
+              <Tabs.Content value="security" className="absolute inset-0 overflow-y-auto p-6 space-y-6 settings-scroll">
                 <div>
                   <h3 className="text-lg font-medium text-text-primary mb-4">
                     Password & Authentication
@@ -318,7 +318,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 </div>
               </Tabs.Content>
 
-              <Tabs.Content value="appearance" className="p-6 space-y-6">
+              <Tabs.Content value="appearance" className="absolute inset-0 overflow-y-auto p-6 space-y-6 settings-scroll">
                 <div>
                   <h3 className="text-lg font-medium text-text-primary mb-4">
                     Theme Settings
@@ -425,7 +425,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               </Tabs.Content>
             </div>
 
-            <div className="p-6 border-t border-border-subtle">
+            <div className="p-6 border-t border-border-subtle flex-shrink-0 bg-surface-base">
               <div className="flex gap-2 justify-end">
                 <button
                   onClick={() => onOpenChange(false)}

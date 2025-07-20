@@ -109,3 +109,26 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgb(var(--color-border-strong));
 }
+
+/* Custom scrollbar for settings dialog */
+.settings-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--color-border-default)) rgb(var(--color-surface-elevated));
+}
+
+.settings-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.settings-scroll::-webkit-scrollbar-track {
+  @apply bg-surface-elevated rounded;
+}
+
+.settings-scroll::-webkit-scrollbar-thumb {
+  background: rgb(var(--color-border-default));
+  @apply rounded;
+}
+
+.settings-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--color-border-strong));
+}
