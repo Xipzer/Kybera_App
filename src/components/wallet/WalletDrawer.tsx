@@ -28,8 +28,11 @@ import { WalletDetailView } from './WalletDetailView'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 
 export function WalletDrawer() {
-  const { wallets, walletGroups, activeWalletId, activeNetwork, setActiveWallet, removeWallet } =
+  const { wallets, walletGroups, activeWalletId, setActiveWallet, removeWallet } =
     useWalletStore()
+  
+  // Filter out default-imported group from count
+  const actualGroups = walletGroups.filter(g => g.id !== 'default-imported')
   const [showImportDialog, setShowImportDialog] = useState(false)
   const [showSettingsDialog, setShowSettingsDialog] = useState(false)
   const [renameWallet, setRenameWallet] = useState<(typeof wallets)[0] | null>(null)
@@ -43,8 +46,6 @@ export function WalletDrawer() {
     EVM: wallets.filter((w) => w.type === 'EVM'),
     SVM: wallets.filter((w) => w.type === 'SVM'),
   }
-
-  const compatibleWallets = activeNetwork.type === 'EVM' ? walletsByType.EVM : walletsByType.SVM
 
   const copyAddress = (address: string) => {
     navigator.clipboard.writeText(address)
@@ -122,13 +123,19 @@ export function WalletDrawer() {
             value="groups"
             className="flex-1 px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent-500 data-[state=active]:border-b-2 data-[state=active]:border-accent-500 transition-colors"
           >
-            Groups ({walletGroups.length})
+            Groups ({actualGroups.length})
           </Tabs.Trigger>
           <Tabs.Trigger
-            value="compatible"
+            value="evm"
             className="flex-1 px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent-500 data-[state=active]:border-b-2 data-[state=active]:border-accent-500 transition-colors"
           >
-            {activeNetwork.type} ({compatibleWallets.length})
+            EVM ({walletsByType.EVM.length})
+          </Tabs.Trigger>
+          <Tabs.Trigger
+            value="svm"
+            className="flex-1 px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent-500 data-[state=active]:border-b-2 data-[state=active]:border-accent-500 transition-colors"
+          >
+            SVM ({walletsByType.SVM.length})
           </Tabs.Trigger>
           <Tabs.Trigger
             value="all"
@@ -139,7 +146,7 @@ export function WalletDrawer() {
         </Tabs.List>
 
         <Tabs.Content value="groups" className="flex-1 overflow-y-auto p-4">
-          {walletGroups.length === 0 ? (
+          {actualGroups.length === 0 ? (
             <EmptyState
               icon={Users}
               title="No wallet groups yet"
@@ -152,9 +159,7 @@ export function WalletDrawer() {
             />
           ) : (
             <div className="space-y-3">
-              {walletGroups
-                .filter((g) => g.id !== 'default-imported')
-                .map((group) => (
+              {actualGroups.map((group) => (
                   <WalletGroupItem
                     key={group.id}
                     group={group}
@@ -166,6 +171,9 @@ export function WalletDrawer() {
                     onSelectWallet={(walletId) => setActiveWallet(walletId)}
                     activeWalletId={activeWalletId}
                     onExportGroup={(group) => setExportGroup(group)}
+                    onRenameWallet={(wallet) => setRenameWallet(wallet)}
+                    onDeleteWallet={(walletId) => removeWallet(walletId)}
+                    onCopyAddress={(address) => copyAddress(address)}
                   />
                 ))}
 
@@ -197,21 +205,51 @@ export function WalletDrawer() {
           )}
         </Tabs.Content>
 
-        <Tabs.Content value="compatible" className="flex-1 overflow-y-auto p-4">
-          {compatibleWallets.length === 0 ? (
+        <Tabs.Content value="evm" className="flex-1 overflow-y-auto p-4">
+          {walletsByType.EVM.length === 0 ? (
             <EmptyState
               icon={WalletIcon}
-              title="No wallets yet"
-              description={`Create or import a ${activeNetwork.type} wallet to get started`}
+              title="No EVM wallets yet"
+              description="Create or import an EVM wallet to get started"
               action={{
-                label: 'Create Group',
+                label: 'Create EVM Group',
                 onClick: () => setShowCreateGroupDialog(true),
               }}
               className="h-full"
             />
           ) : (
             <div className="space-y-2">
-              {compatibleWallets.map((wallet) => (
+              {walletsByType.EVM.map((wallet) => (
+                <WalletItem
+                  key={wallet.id}
+                  wallet={wallet}
+                  isActive={wallet.id === activeWalletId}
+                  onSelect={() => setActiveWallet(wallet.id)}
+                  onCopy={() => copyAddress(wallet.address)}
+                  onRename={() => setRenameWallet(wallet)}
+                  onExport={() => handleExportWallet(wallet)}
+                  onDelete={() => removeWallet(wallet.id)}
+                />
+              ))}
+            </div>
+          )}
+        </Tabs.Content>
+
+        <Tabs.Content value="svm" className="flex-1 overflow-y-auto p-4">
+          {walletsByType.SVM.length === 0 ? (
+            <EmptyState
+              icon={WalletIcon}
+              title="No SVM wallets yet"
+              description="Create or import a Solana wallet to get started"
+              action={{
+                label: 'Create SVM Group',
+                onClick: () => setShowCreateGroupDialog(true),
+              }}
+              className="h-full"
+            />
+          ) : (
+            <div className="space-y-2">
+              {walletsByType.SVM.map((wallet) => (
                 <WalletItem
                   key={wallet.id}
                   wallet={wallet}
@@ -422,6 +460,9 @@ interface WalletGroupItemProps {
   onSelectWallet: (walletId: string) => void
   activeWalletId: string | null
   onExportGroup: (group: any) => void
+  onRenameWallet: (wallet: any) => void
+  onDeleteWallet: (walletId: string) => void
+  onCopyAddress: (address: string) => void
 }
 
 function WalletGroupItem({
@@ -431,6 +472,9 @@ function WalletGroupItem({
   onSelectWallet,
   activeWalletId,
   onExportGroup,
+  onRenameWallet,
+  onDeleteWallet,
+  onCopyAddress,
 }: WalletGroupItemProps) {
   const { removeWalletGroup } = useWalletStore()
   const [isExpanded, setIsExpanded] = useState(true)
@@ -519,14 +563,16 @@ function WalletGroupItem({
             wallets.map((wallet) => (
               <div
                 key={wallet.id}
-                onClick={() => onSelectWallet(wallet.id)}
-                className={`p-2 rounded cursor-pointer transition-colors ${
+                className={`group relative p-2 rounded transition-colors ${
                   wallet.id === activeWalletId
                     ? 'bg-accent-500/10 border border-accent-500/30'
                     : 'hover:bg-surface-hover'
                 }`}
               >
-                <div className="flex items-center justify-between">
+                <div 
+                  onClick={() => onSelectWallet(wallet.id)}
+                  className="flex items-center justify-between cursor-pointer"
+                >
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-text-primary">
                       {wallet.name}
@@ -535,7 +581,57 @@ function WalletGroupItem({
                       {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
                     </p>
                   </div>
-                  <span className="text-xs text-text-tertiary">{wallet.type}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-text-tertiary">{wallet.type}</span>
+                    <DropdownMenu.Root>
+                      <DropdownMenu.Trigger asChild>
+                        <button
+                          onClick={(e) => e.stopPropagation()}
+                          className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-surface-hover transition-all"
+                        >
+                          <ChevronDown className="w-3 h-3 text-text-secondary" />
+                        </button>
+                      </DropdownMenu.Trigger>
+                      <DropdownMenu.Portal>
+                        <DropdownMenu.Content
+                          className="min-w-[140px] bg-surface-base rounded-lg shadow-lg border border-border-subtle p-1"
+                          sideOffset={5}
+                        >
+                          <DropdownMenu.Item
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onCopyAddress(wallet.address)
+                            }}
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-surface-hover rounded cursor-pointer"
+                          >
+                            <Copy className="w-3 h-3" />
+                            Copy Address
+                          </DropdownMenu.Item>
+                          <DropdownMenu.Item
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onRenameWallet(wallet)
+                            }}
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm text-text-primary hover:bg-surface-hover rounded cursor-pointer"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                            Rename
+                          </DropdownMenu.Item>
+                          <DropdownMenu.Separator className="h-px bg-border-subtle my-1" />
+                          <DropdownMenu.Item
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onDeleteWallet(wallet.id)
+                            }}
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm text-accent-500 hover:bg-accent-500/10 rounded cursor-pointer"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            Delete
+                          </DropdownMenu.Item>
+                        </DropdownMenu.Content>
+                      </DropdownMenu.Portal>
+                    </DropdownMenu.Root>
+                  </div>
                 </div>
               </div>
             ))
