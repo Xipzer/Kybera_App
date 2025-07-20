@@ -79,11 +79,13 @@ export function ImportWalletDialog({ open, onOpenChange }: ImportWalletDialogPro
 
       const wallet: Wallet = {
         id: Date.now().toString(),
+        groupId: 'default-imported',
         name: walletName,
         address,
         type: walletType,
-        encryptedPrivateKey,
+        derivationIndex: -1, // -1 indicates imported wallet
         createdAt: new Date(),
+        encryptedPrivateKey,
         isImported: true,
       }
 

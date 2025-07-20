@@ -1,6 +1,7 @@
 import { Plus, MessageSquare, Trash2 } from 'lucide-react'
 import { useChatStore } from '../../store/chatStore'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
+import { EmptyState } from '../common/EmptyState'
 
 export function ChatSidebar() {
   const { conversations, activeConversationId, createConversation, deleteConversation, setActiveConversation } = useChatStore()
@@ -30,8 +31,20 @@ export function ChatSidebar() {
 
       <ScrollArea.Root className="flex-1">
         <ScrollArea.Viewport className="h-full w-full p-2">
-          <div className="space-y-1">
-            {conversations.map((conversation) => (
+          {conversations.length === 0 ? (
+            <EmptyState
+              icon={MessageSquare}
+              title="No conversations"
+              description="Start a new chat to begin"
+              action={{
+                label: "New Chat",
+                onClick: handleNewChat
+              }}
+              className="h-full"
+            />
+          ) : (
+            <div className="space-y-1">
+              {conversations.map((conversation) => (
               <div
                 key={conversation.id}
                 onClick={() => setActiveConversation(conversation.id)}
@@ -61,7 +74,8 @@ export function ChatSidebar() {
                 </button>
               </div>
             ))}
-          </div>
+            </div>
+          )}
         </ScrollArea.Viewport>
         <ScrollArea.Scrollbar
           className="flex select-none touch-none p-0.5 bg-gray-100 dark:bg-gray-900 transition-colors duration-[160ms] ease-out hover:bg-gray-200 dark:hover:bg-gray-800 data-[orientation=vertical]:w-2.5 data-[orientation=horizontal]:flex-col data-[orientation=horizontal]:h-2.5"

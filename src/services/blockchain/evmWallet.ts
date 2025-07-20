@@ -10,6 +10,24 @@ export class EVMWalletService {
       mnemonic: wallet.mnemonic!.phrase,
     }
   }
+  
+  static async createSeedPhrase(): Promise<string> {
+    const wallet = ethers.Wallet.createRandom()
+    return wallet.mnemonic!.phrase
+  }
+  
+  static async deriveWalletFromSeed(
+    mnemonic: string,
+    index: number = 0
+  ): Promise<{ address: string; privateKey: string }> {
+    // BIP44 path for Ethereum: m/44'/60'/0'/0/index
+    const path = `m/44'/60'/0'/0/${index}`
+    const wallet = ethers.HDNodeWallet.fromPhrase(mnemonic, undefined, path)
+    return {
+      address: wallet.address,
+      privateKey: wallet.privateKey,
+    }
+  }
 
   static async importFromPrivateKey(privateKey: string): Promise<{ address: string }> {
     const wallet = new ethers.Wallet(privateKey)
@@ -70,6 +88,61 @@ export class EVMWalletService {
       return true
     } catch {
       return false
+    }
+  }
+
+  static async sendERC20Token(
+    privateKey: string,
+    tokenAddress: string,
+    to: string,
+    amount: string,
+    decimals: number,
+    rpcUrl: string,
+  ): Promise<string> {
+    const provider = new ethers.JsonRpcProvider(rpcUrl)
+    const wallet = new ethers.Wallet(privateKey, provider)
+
+    // ERC20 ABI for transfer function
+    const erc20Abi = [
+      'function transfer(address to, uint256 amount) returns (bool)',
+      'function balanceOf(address account) view returns (uint256)',
+      'function decimals() view returns (uint8)',
+    ]
+
+    const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, wallet)
+    
+    // Convert amount to smallest unit based on decimals
+    const amountInWei = ethers.parseUnits(amount, decimals)
+    
+    // Send the transaction
+    const tx = await tokenContract.transfer(to, amountInWei)
+    await tx.wait()
+    
+    return tx.hash
+  }
+
+  static async getERC20Balance(
+    tokenAddress: string,
+    walletAddress: string,
+    rpcUrl: string,
+  ): Promise<{ balance: string; decimals: number }> {
+    const provider = new ethers.JsonRpcProvider(rpcUrl)
+    
+    const erc20Abi = [
+      'function balanceOf(address account) view returns (uint256)',
+      'function decimals() view returns (uint8)',
+    ]
+    
+    const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, provider)
+    
+    const [balance, decimals] = await Promise.all([
+      tokenContract.balanceOf(walletAddress),
+      tokenContract.decimals(),
+    ])
+    
+    return {
+      balance: ethers.formatUnits(balance, decimals),
+      decimals,
     }
   }
 }

@@ -10,14 +10,26 @@ export interface Network {
   type: ChainType
 }
 
+export interface WalletGroup {
+  id: string
+  name: string
+  type: ChainType // Groups are restricted to a single chain type
+  encryptedSeed: string // Encrypted mnemonic seed phrase
+  createdAt: Date
+  walletCount: number // Track number of wallets in group
+}
+
 export interface Wallet {
   id: string
+  groupId: string // Reference to wallet group
   name: string
   address: string
   type: ChainType
-  encryptedPrivateKey: string
+  derivationIndex: number // BIP44 derivation index
   createdAt: Date
-  isImported: boolean
+  // For imported wallets that don't belong to a group
+  encryptedPrivateKey?: string
+  isImported?: boolean
 }
 
 export interface WalletBalance {
