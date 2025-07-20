@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from 'react'
+import { ReactNode, useEffect, useRef, useCallback } from 'react'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { useUIStore } from '../../store/uiStore'
 import { WalletDrawer } from '../wallet/WalletDrawer'
@@ -12,7 +12,6 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   const {
     walletDrawerOpen,
-    walletDrawerWidth,
     setWalletDrawerWidth,
     theme,
     chatSidebarOpen,
@@ -20,12 +19,29 @@ export function MainLayout({ children }: MainLayoutProps) {
     toggleWalletDrawer,
   } = useUIStore()
 
+  const resizeTimeoutRef = useRef<NodeJS.Timeout>()
+
   useEffect(() => {
     // Remove all theme classes first
     document.documentElement.classList.remove('light', 'dark', 'xipz')
     // Add the current theme class
     document.documentElement.classList.add(theme)
   }, [theme])
+
+  // Debounced resize handler for wallet panel
+  const handleWalletResize = useCallback(
+    (size: number) => {
+      // Clear existing timeout
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current)
+      }
+      // Set new timeout to update store
+      resizeTimeoutRef.current = setTimeout(() => {
+        setWalletDrawerWidth((size / 100) * window.innerWidth)
+      }, 100) // Debounce by 100ms
+    },
+    [setWalletDrawerWidth],
+  )
 
   return (
     <div className="h-screen flex flex-col bg-bg-subtle">
@@ -79,12 +95,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           {walletDrawerOpen && (
             <>
               <PanelResizeHandle className="w-px bg-border-subtle hover:bg-accent transition-colors" />
-              <Panel
-                defaultSize={(walletDrawerWidth / window.innerWidth) * 100}
-                minSize={15}
-                maxSize={40}
-                onResize={(size) => setWalletDrawerWidth((size / 100) * window.innerWidth)}
-              >
+              <Panel defaultSize={25} minSize={15} maxSize={40} onResize={handleWalletResize}>
                 <WalletDrawer />
               </Panel>
             </>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Plus,
   ChevronDown,
@@ -32,8 +32,6 @@ export function WalletDrawer() {
   const { wallets, walletGroups, activeWalletId, setActiveWallet, removeWallet } =
     useWalletStore()
   
-  // Filter out default-imported group from count
-  const actualGroups = walletGroups.filter(g => g.id !== 'default-imported')
   const [showImportDialog, setShowImportDialog] = useState(false)
   const [showSettingsDialog, setShowSettingsDialog] = useState(false)
   const [renameWallet, setRenameWallet] = useState<(typeof wallets)[0] | null>(null)
@@ -43,10 +41,19 @@ export function WalletDrawer() {
   const [exportGroup, setExportGroup] = useState<any | null>(null)
   const [showImportGroupDialog, setShowImportGroupDialog] = useState(false)
 
-  const walletsByType = {
-    EVM: wallets.filter((w) => w.type === 'EVM'),
-    SVM: wallets.filter((w) => w.type === 'SVM'),
-  }
+  // Memoize filtered data to avoid recalculation on every render
+  const actualGroups = useMemo(
+    () => walletGroups.filter(g => g.id !== 'default-imported'),
+    [walletGroups]
+  )
+  
+  const walletsByType = useMemo(
+    () => ({
+      EVM: wallets.filter((w) => w.type === 'EVM'),
+      SVM: wallets.filter((w) => w.type === 'SVM'),
+    }),
+    [wallets]
+  )
 
   const copyAddress = (address: string) => {
     navigator.clipboard.writeText(address)
