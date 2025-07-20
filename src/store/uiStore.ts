@@ -6,6 +6,9 @@ interface UIState {
   walletDrawerWidth: number
   theme: 'light' | 'dark'
   chatSidebarOpen: boolean
+  profilePicture: string | null
+  chatWallpaper: string | null
+  wallpaperOpacity: number
 
   // Actions
   toggleWalletDrawer: () => void
@@ -13,6 +16,9 @@ interface UIState {
   toggleTheme: () => void
   setTheme: (theme: 'light' | 'dark') => void
   toggleChatSidebar: () => void
+  setProfilePicture: (dataUrl: string | null) => void
+  setChatWallpaper: (dataUrl: string | null) => void
+  setWallpaperOpacity: (opacity: number) => void
 }
 
 export const useUIStore = create<UIState>()(
@@ -22,6 +28,9 @@ export const useUIStore = create<UIState>()(
       walletDrawerWidth: 320,
       theme: 'dark',
       chatSidebarOpen: true,
+      profilePicture: null,
+      chatWallpaper: null,
+      wallpaperOpacity: 0.1,
 
       toggleWalletDrawer: () => {
         set((state) => ({ walletDrawerOpen: !state.walletDrawerOpen }))
@@ -41,6 +50,18 @@ export const useUIStore = create<UIState>()(
 
       toggleChatSidebar: () => {
         set((state) => ({ chatSidebarOpen: !state.chatSidebarOpen }))
+      },
+
+      setProfilePicture: (dataUrl) => {
+        set({ profilePicture: dataUrl })
+      },
+
+      setChatWallpaper: (dataUrl) => {
+        set({ chatWallpaper: dataUrl })
+      },
+
+      setWallpaperOpacity: (opacity) => {
+        set({ wallpaperOpacity: opacity })
       },
     }),
     {

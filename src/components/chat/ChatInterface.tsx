@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Send, Settings, AlertCircle } from 'lucide-react'
 import { useChatStore } from '../../store/chatStore'
 import { useSettingsStore } from '../../store/settingsStore'
+import { useUIStore } from '../../store/uiStore'
 import { ChatMessage } from './ChatMessage'
 import { ModelSelector } from './ModelSelector'
 import { SettingsDialog } from '../settings/SettingsDialog'
@@ -11,6 +12,7 @@ import * as ScrollArea from '@radix-ui/react-scroll-area'
 export function ChatInterface() {
   const { conversations, activeConversationId, addMessage, createConversation, updateConversation, setLoading, isLoading } = useChatStore()
   const { openRouterApiKey, selectedModel } = useSettingsStore()
+  const { chatWallpaper, wallpaperOpacity } = useUIStore()
   const [input, setInput] = useState('')
   const [showSettings, setShowSettings] = useState(false)
   const [streamingContent, setStreamingContent] = useState('')
@@ -125,7 +127,23 @@ export function ChatInterface() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-surface-base">
+    <div className="h-full flex flex-col bg-surface-base relative overflow-hidden">
+      {/* Chat wallpaper */}
+      {chatWallpaper && (
+        <div 
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: `url(${chatWallpaper})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            opacity: wallpaperOpacity,
+          }}
+        />
+      )}
+      
+      {/* Content with relative positioning to stay above wallpaper */}
+      <div className="relative z-10 h-full flex flex-col">
       <div className="border-b border-border-subtle p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -206,6 +224,7 @@ export function ChatInterface() {
       </div>
 
       <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />
+      </div>
     </div>
   )
 }

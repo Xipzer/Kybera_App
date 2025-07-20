@@ -17,6 +17,7 @@ import { useSettingsStore } from '../../store/settingsStore'
 import { useUIStore } from '../../store/uiStore'
 import { useAuthStore } from '../../store/authStore'
 import { useWalletStore } from '../../store/walletStore'
+import { ImageUpload } from '../common/ImageUpload'
 
 interface SettingsDialogProps {
   open: boolean
@@ -25,7 +26,7 @@ interface SettingsDialogProps {
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const { openRouterApiKey, autoLockTimeout, setOpenRouterApiKey, setAutoLockTimeout } = useSettingsStore()
-  const { theme, toggleTheme } = useUIStore()
+  const { theme, toggleTheme, profilePicture, setProfilePicture, chatWallpaper, setChatWallpaper, wallpaperOpacity, setWallpaperOpacity } = useUIStore()
   const { changePassword } = useAuthStore()
   const { password: currentSessionPassword } = useWalletStore()
   
@@ -363,6 +364,61 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         <div className="w-6 h-6 bg-gradient-candy-red rounded" />
                         <span className="text-xs text-text-secondary">Candy Red</span>
                       </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="border-t border-border-subtle pt-6">
+                  <h3 className="text-lg font-medium text-text-primary mb-4">
+                    Personalization
+                  </h3>
+                  
+                  <div className="space-y-6">
+                    <ImageUpload
+                      currentImage={profilePicture}
+                      onImageChange={setProfilePicture}
+                      label="Profile Picture"
+                      description="This image will appear on the lock screen and in chats"
+                      aspectRatio="square"
+                      maxSizeInMB={2}
+                    />
+                    
+                    <div className="border-t border-border-subtle pt-6">
+                      <ImageUpload
+                        currentImage={chatWallpaper}
+                        onImageChange={setChatWallpaper}
+                        label="Chat Background"
+                        description="Set a custom wallpaper for the chat interface"
+                        maxSizeInMB={5}
+                      />
+                      
+                      {chatWallpaper && (
+                        <div className="mt-4">
+                          <label className="block text-sm font-medium text-text-secondary mb-2">
+                            Wallpaper Opacity
+                          </label>
+                          <div className="flex items-center gap-4">
+                            <input
+                              type="range"
+                              min="0"
+                              max="50"
+                              step="5"
+                              value={wallpaperOpacity * 100}
+                              onChange={(e) => setWallpaperOpacity(parseInt(e.target.value) / 100)}
+                              className="flex-1 h-2 bg-surface-elevated rounded-lg appearance-none cursor-pointer"
+                              style={{
+                                background: `linear-gradient(to right, rgb(var(--color-accent-500)) 0%, rgb(var(--color-accent-500)) ${wallpaperOpacity * 200}%, rgb(var(--color-surface-elevated)) ${wallpaperOpacity * 200}%, rgb(var(--color-surface-elevated)) 100%)`
+                              }}
+                            />
+                            <span className="text-sm text-text-secondary w-12 text-right">
+                              {Math.round(wallpaperOpacity * 100)}%
+                            </span>
+                          </div>
+                          <p className="text-xs text-text-tertiary mt-1">
+                            Adjust the transparency of the background image
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react'
 import { Lock, Wallet, AlertCircle } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import { useAuthStore } from '../../store/authStore'
+import { useUIStore } from '../../store/uiStore'
 
 export function UnlockScreen() {
   const { unlock } = useWalletStore()
   const { isInitialized, initializePassword, verifyPassword, isLockedOut, failedAttempts } = useAuthStore()
+  const { profilePicture } = useUIStore()
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -65,9 +67,19 @@ export function UnlockScreen() {
       <div className="max-w-md w-full">
         <div className="bg-surface-base border border-border-subtle rounded-lg shadow-2xl p-8 backdrop-blur-sm">
           <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 bg-gradient-candy-red rounded-full flex items-center justify-center mb-4 candy-red-glow">
-              <Wallet className="w-8 h-8 text-white" />
-            </div>
+            {profilePicture ? (
+              <div className="w-20 h-20 rounded-full overflow-hidden mb-4 ring-2 ring-accent-500 ring-offset-2 ring-offset-surface-base">
+                <img 
+                  src={profilePicture} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="w-16 h-16 bg-gradient-candy-red rounded-full flex items-center justify-center mb-4 candy-red-glow">
+                <Wallet className="w-8 h-8 text-white" />
+              </div>
+            )}
             <h1 className="text-2xl font-bold text-text-primary">SmartWallet AI</h1>
             <p className="text-text-secondary mt-2">
               {!isInitialized

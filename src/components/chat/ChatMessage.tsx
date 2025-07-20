@@ -2,6 +2,7 @@ import { User, Bot } from 'lucide-react'
 import { Message } from '../../types'
 import MarkdownIt from 'markdown-it'
 import { useMemo } from 'react'
+import { useUIStore } from '../../store/uiStore'
 
 const md = new MarkdownIt({
   html: false,
@@ -14,6 +15,7 @@ interface ChatMessageProps {
 }
 
 export function ChatMessage({ message }: ChatMessageProps) {
+  const { profilePicture } = useUIStore()
   const renderedContent = useMemo(() => {
     return message.role === 'assistant'
       ? md.render(message.content)
@@ -49,9 +51,19 @@ export function ChatMessage({ message }: ChatMessageProps) {
       </div>
 
       {message.role === 'user' && (
-        <div className="flex-shrink-0 w-8 h-8 bg-primary-800 rounded-lg flex items-center justify-center">
-          <User className="w-5 h-5 text-white" />
-        </div>
+        profilePicture ? (
+          <div className="flex-shrink-0 w-8 h-8 rounded-lg overflow-hidden">
+            <img 
+              src={profilePicture} 
+              alt="User" 
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ) : (
+          <div className="flex-shrink-0 w-8 h-8 bg-primary-800 rounded-lg flex items-center justify-center">
+            <User className="w-5 h-5 text-white" />
+          </div>
+        )
       )}
     </div>
   )
