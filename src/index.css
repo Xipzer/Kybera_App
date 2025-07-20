@@ -22,6 +22,21 @@
     background: var(--gradient-candy-red);
   }
   
+  /* Theme-aware background gradient for lock screen */
+  .bg-gradient-lockscreen {
+    background: linear-gradient(135deg, rgb(0, 225, 255) 0%, rgb(255, 0, 153) 100%);
+  }
+  :root.xipz .bg-gradient-lockscreen,
+  .xipz .bg-gradient-lockscreen {
+    background: linear-gradient(
+      135deg,
+      rgb(22, 12, 39) 0%,
+      rgb(66, 45, 95) 40%,
+      rgb(44, 28, 67) 60%,
+      rgb(11, 6, 20) 100%
+    ) !important;
+  }
+  
   /* Special effects */
   .candy-red-glow {
     box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
@@ -46,9 +61,9 @@
   }
   
   /* Theme-aware button classes */
-  /* Primary button - cyan in light/dark, candy red in xipz */
+  /* Primary button - cyan-pink in light/dark, candy red in xipz */
   .bg-gradient-primary {
-    background: linear-gradient(135deg, rgb(0, 225, 255) 0%, rgb(0, 184, 212) 100%);
+    background: linear-gradient(135deg, rgb(0, 225, 255) 0%, rgb(255, 0, 153) 100%);
   }
   .xipz .bg-gradient-primary {
     background: var(--gradient-candy-red);
@@ -62,9 +77,46 @@
     background: var(--gradient-candy-red);
   }
   
+  /* Outline button styles - transparent bg with theme borders */
+  .btn-outline-primary {
+    background: transparent;
+    border: 2px solid rgb(0, 225, 255);
+    color: rgb(0, 225, 255);
+  }
+  .xipz .btn-outline-primary {
+    border-color: rgb(239, 68, 68);
+    color: rgb(239, 68, 68);
+  }
+  .btn-outline-primary:hover {
+    background: rgba(0, 225, 255, 0.1);
+    box-shadow: 0 0 20px rgba(0, 225, 255, 0.3);
+  }
+  .xipz .btn-outline-primary:hover {
+    background: rgba(239, 68, 68, 0.1);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+  }
+  
+  .btn-outline-secondary {
+    background: transparent;
+    border: 2px solid rgb(255, 0, 153);
+    color: rgb(255, 0, 153);
+  }
+  .xipz .btn-outline-secondary {
+    border-color: rgb(239, 68, 68);
+    color: rgb(239, 68, 68);
+  }
+  .btn-outline-secondary:hover {
+    background: rgba(255, 0, 153, 0.1);
+    box-shadow: 0 0 20px rgba(255, 0, 153, 0.3);
+  }
+  .xipz .btn-outline-secondary:hover {
+    background: rgba(239, 68, 68, 0.1);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+  }
+  
   /* Theme-aware glow effects */
   .primary-glow {
-    box-shadow: 0 0 20px rgba(0, 225, 255, 0.5);
+    box-shadow: 0 0 20px rgba(0, 225, 255, 0.5), 0 0 30px rgba(255, 0, 153, 0.3);
   }
   .xipz .primary-glow {
     box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
@@ -111,6 +163,27 @@
   }
   .xipz .bg-accent-30 {
     background-color: rgb(239 68 68 / 0.3);
+  }
+  
+  .bg-accent\/10 {
+    background-color: rgb(var(--color-accent-500) / 0.1);
+  }
+  .xipz .bg-accent\/10 {
+    background-color: rgb(239 68 68 / 0.1);
+  }
+  
+  .bg-accent\/30 {
+    background-color: rgb(var(--color-accent-500) / 0.3);
+  }
+  .xipz .bg-accent\/30 {
+    background-color: rgb(239 68 68 / 0.3);
+  }
+  
+  .border-accent\/30 {
+    border-color: rgb(var(--color-accent-500) / 0.3);
+  }
+  .xipz .border-accent\/30 {
+    border-color: rgb(239 68 68 / 0.3);
   }
   
   .text-accent {
@@ -169,11 +242,31 @@
     --tw-ring-color: rgb(239 68 68);
   }
   
+  .focus\:ring-2:focus {
+    --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+    --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+    box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+  }
+  
   .focus\:border-accent:focus {
     border-color: rgb(var(--color-accent-500));
   }
   .xipz .focus\:border-accent:focus {
     border-color: rgb(239 68 68);
+  }
+  
+  .ring-2 {
+    --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+    --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+    box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+  }
+  
+  .ring-offset-2 {
+    --tw-ring-offset-width: 2px;
+  }
+  
+  .ring-offset-surface-base {
+    --tw-ring-offset-color: rgb(var(--color-surface-base));
   }
 }
 
@@ -268,9 +361,9 @@
   scrollbar-width: thin;
 }
 
-/* Light/Dark Mode - Cyan scrollbar */
+/* Light/Dark Mode - Hot Pink scrollbar */
 .light *, .dark * {
-  scrollbar-color: rgb(0, 225, 255) transparent;  /* Firefox - Cyan */
+  scrollbar-color: rgb(255, 0, 153) transparent;  /* Firefox - Hot Pink */
 }
 
 .light *::-webkit-scrollbar, .dark *::-webkit-scrollbar {
@@ -283,12 +376,12 @@
 }
 
 .light *::-webkit-scrollbar-thumb, .dark *::-webkit-scrollbar-thumb {
-  background: rgb(0, 225, 255);  /* Cyan */
+  background: rgb(255, 0, 153);  /* Hot Pink */
   border-radius: 10px;
 }
 
 .light *::-webkit-scrollbar-thumb:hover, .dark *::-webkit-scrollbar-thumb:hover {
-  background: rgb(0, 184, 212);  /* Darker cyan */
+  background: rgb(219, 39, 119);  /* Darker hot pink */
 }
 
 .light *::-webkit-scrollbar-corner, .dark *::-webkit-scrollbar-corner {

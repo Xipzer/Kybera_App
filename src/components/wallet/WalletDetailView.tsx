@@ -142,7 +142,7 @@ export function WalletDetailView() {
           </button>
           <button
             onClick={() => setShowReceiveDialog(true)}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gradient-secondary text-white rounded-lg hover:shadow-lg hover:secondary-glow transition-all duration-300 font-medium"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 btn-outline-secondary rounded-lg transition-all duration-300 font-medium"
           >
             <Download className="w-4 h-4" />
             Receive

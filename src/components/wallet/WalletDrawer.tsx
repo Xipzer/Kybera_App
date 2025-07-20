@@ -86,10 +86,10 @@ export function WalletDrawer() {
             </button>
             <DropdownMenu.Root>
               <DropdownMenu.Trigger asChild>
-                <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-border-default rounded-lg hover:bg-surface-hover hover:border-accent/50 transition-all duration-300 text-text-primary">
-                  <Upload className="w-4 h-4 text-text-secondary" />
+                <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 btn-outline-secondary rounded-lg transition-all duration-300 font-medium">
+                  <Upload className="w-4 h-4" />
                   Import
-                  <ChevronDown className="w-3 h-3 text-text-secondary" />
+                  <ChevronDown className="w-3 h-3" />
                 </button>
               </DropdownMenu.Trigger>
               <DropdownMenu.Portal>

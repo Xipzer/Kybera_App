@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { useWalletStore } from './store/walletStore'
 import { useChatStore } from './store/chatStore'
 import { useSettingsStore } from './store/settingsStore'
+import { useUIStore } from './store/uiStore'
 import { ResponsiveLayout } from './components/layout/ResponsiveLayout'
 import { ChatInterface } from './components/chat/ChatInterface'
 import { UnlockScreen } from './components/auth/UnlockScreen'
@@ -14,6 +15,13 @@ function App() {
   const { isLocked, loadWallets, loadWalletGroups } = useWalletStore()
   const { loadConversations } = useChatStore()
   const { loadSettings } = useSettingsStore()
+  const { theme } = useUIStore()
+
+  useEffect(() => {
+    // Apply theme class to document root
+    document.documentElement.classList.remove('light', 'dark', 'xipz')
+    document.documentElement.classList.add(theme)
+  }, [theme])
 
   useEffect(() => {
     // Load persisted data on app start

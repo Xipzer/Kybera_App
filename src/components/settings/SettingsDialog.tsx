@@ -394,19 +394,39 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   
                   <div className="mt-6 p-4 bg-surface-elevated rounded-lg">
                     <h4 className="text-sm font-medium text-text-primary mb-2">Theme Colors</h4>
-                    <p className="text-xs text-text-secondary mb-3">
-                      Current theme is based on Panther Black Pearl and Candy Apple Red
-                    </p>
-                    <div className="flex gap-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-gradient-pearlescent rounded" />
-                        <span className="text-xs text-text-secondary">Pearlescent</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-gradient-candy-red rounded" />
-                        <span className="text-xs text-text-secondary">Candy Red</span>
-                      </div>
-                    </div>
+                    {theme === 'xipz' ? (
+                      <>
+                        <p className="text-xs text-text-secondary mb-3">
+                          Current theme is based on Panther Black Pearl and Candy Apple Red
+                        </p>
+                        <div className="flex gap-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 bg-gradient-pearlescent rounded" />
+                            <span className="text-xs text-text-secondary">Pearlescent</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 bg-gradient-candy-red rounded" />
+                            <span className="text-xs text-text-secondary">Candy Red</span>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-xs text-text-secondary mb-3">
+                          Current theme uses Cyan and Hot Pink accent colors
+                        </p>
+                        <div className="flex gap-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded" style={{ backgroundColor: 'rgb(0, 225, 255)' }} />
+                            <span className="text-xs text-text-secondary">Cyan</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded" style={{ backgroundColor: 'rgb(255, 0, 153)' }} />
+                            <span className="text-xs text-text-secondary">Hot Pink</span>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
                 

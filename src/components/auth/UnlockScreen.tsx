@@ -63,7 +63,7 @@ export function UnlockScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-pearlescent flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-lockscreen flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         <div className="bg-surface-base border border-border-subtle rounded-lg shadow-2xl p-8 backdrop-blur-sm">
           <div className="flex flex-col items-center mb-8">
