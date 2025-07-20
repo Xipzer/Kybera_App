@@ -14,6 +14,7 @@ import {
 import { useWalletStore } from '../../store/walletStore'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import * as Tabs from '@radix-ui/react-tabs'
+import * as ScrollArea from '@radix-ui/react-scroll-area'
 import { NetworkSelector } from './NetworkSelector'
 // import { CreateWalletDialog } from './CreateWalletDialog' - Deprecated in favor of groups
 import { ImportWalletDialog } from './ImportWalletDialog'
@@ -59,8 +60,8 @@ export function WalletDrawer() {
   return (
     <div className="h-full bg-surface-base border-l border-border-subtle">
       <PanelGroup direction="vertical" className="h-full">
-        <Panel defaultSize={50} minSize={30} maxSize={70} className="flex flex-col">
-      <div className="p-4 border-b border-border-subtle">
+        <Panel defaultSize={50} minSize={30} maxSize={70} className="flex flex-col overflow-hidden">
+      <div className="p-4 border-b border-border-subtle flex-shrink-0">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-text-primary">Wallets</h2>
           <button
@@ -117,8 +118,8 @@ export function WalletDrawer() {
         </div>
       </div>
 
-      <Tabs.Root defaultValue="groups" className="flex-1 flex flex-col">
-        <Tabs.List className="flex border-b border-border-subtle">
+      <Tabs.Root defaultValue="groups" className="flex-1 flex flex-col min-h-0">
+        <Tabs.List className="flex border-b border-border-subtle flex-shrink-0">
           <Tabs.Trigger
             value="groups"
             className="flex-1 px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent-500 data-[state=active]:border-b-2 data-[state=active]:border-accent-500 transition-colors"
@@ -145,168 +146,208 @@ export function WalletDrawer() {
           </Tabs.Trigger>
         </Tabs.List>
 
-        <Tabs.Content value="groups" className="flex-1 overflow-y-auto p-4">
-          {actualGroups.length === 0 ? (
-            <EmptyState
-              icon={Users}
-              title="No wallet groups yet"
-              description="Create a group to manage multiple wallets with one recovery phrase"
-              action={{
-                label: 'Create Group',
-                onClick: () => setShowCreateGroupDialog(true),
-              }}
-              className="h-full"
-            />
-          ) : (
-            <div className="space-y-3">
-              {actualGroups.map((group) => (
-                  <WalletGroupItem
-                    key={group.id}
-                    group={group}
-                    wallets={wallets.filter((w) => w.groupId === group.id)}
-                    onAddWallet={() => {
-                      setSelectedGroupId(group.id)
-                      setShowAddToGroupDialog(true)
-                    }}
-                    onSelectWallet={(walletId) => setActiveWallet(walletId)}
-                    activeWalletId={activeWalletId}
-                    onExportGroup={(group) => setExportGroup(group)}
-                    onRenameWallet={(wallet) => setRenameWallet(wallet)}
-                    onDeleteWallet={(walletId) => removeWallet(walletId)}
-                    onCopyAddress={(address) => copyAddress(address)}
-                  />
-                ))}
+        <Tabs.Content value="groups" className="flex-1 overflow-hidden min-h-0">
+          <ScrollArea.Root className="h-full w-full">
+            <ScrollArea.Viewport className="h-full w-full rounded-[inherit] p-4">
+              {actualGroups.length === 0 ? (
+                <EmptyState
+                  icon={Users}
+                  title="No wallet groups yet"
+                  description="Create a group to manage multiple wallets with one recovery phrase"
+                  action={{
+                    label: 'Create Group',
+                    onClick: () => setShowCreateGroupDialog(true),
+                  }}
+                  className="h-full"
+                />
+              ) : (
+                <div className="space-y-3">
+                  {actualGroups.map((group) => (
+                      <WalletGroupItem
+                        key={group.id}
+                        group={group}
+                        wallets={wallets.filter((w) => w.groupId === group.id)}
+                        onAddWallet={() => {
+                          setSelectedGroupId(group.id)
+                          setShowAddToGroupDialog(true)
+                        }}
+                        onSelectWallet={(walletId) => setActiveWallet(walletId)}
+                        activeWalletId={activeWalletId}
+                        onExportGroup={(group) => setExportGroup(group)}
+                        onRenameWallet={(wallet) => setRenameWallet(wallet)}
+                        onDeleteWallet={(walletId) => removeWallet(walletId)}
+                        onCopyAddress={(address) => copyAddress(address)}
+                      />
+                    ))}
 
-              {/* Show imported wallets group if it has wallets */}
-              {wallets.some((w) => w.groupId === 'default-imported') && (
-                <div className="mt-6">
-                  <h3 className="text-sm font-medium text-text-secondary mb-2">
-                    Imported Wallets
-                  </h3>
-                  <div className="space-y-2">
-                    {wallets
-                      .filter((w) => w.groupId === 'default-imported')
-                      .map((wallet) => (
-                        <WalletItem
-                          key={wallet.id}
-                          wallet={wallet}
-                          isActive={wallet.id === activeWalletId}
-                          onSelect={() => setActiveWallet(wallet.id)}
-                          onCopy={() => copyAddress(wallet.address)}
-                          onRename={() => setRenameWallet(wallet)}
-                          onExport={() => handleExportWallet(wallet)}
-                          onDelete={() => removeWallet(wallet.id)}
-                        />
-                      ))}
-                  </div>
+                  {/* Show imported wallets group if it has wallets */}
+                  {wallets.some((w) => w.groupId === 'default-imported') && (
+                    <div className="mt-6">
+                      <h3 className="text-sm font-medium text-text-secondary mb-2">
+                        Imported Wallets
+                      </h3>
+                      <div className="space-y-2">
+                        {wallets
+                          .filter((w) => w.groupId === 'default-imported')
+                          .map((wallet) => (
+                            <WalletItem
+                              key={wallet.id}
+                              wallet={wallet}
+                              isActive={wallet.id === activeWalletId}
+                              onSelect={() => setActiveWallet(wallet.id)}
+                              onCopy={() => copyAddress(wallet.address)}
+                              onRename={() => setRenameWallet(wallet)}
+                              onExport={() => handleExportWallet(wallet)}
+                              onDelete={() => removeWallet(wallet.id)}
+                            />
+                          ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          )}
+            </ScrollArea.Viewport>
+            <ScrollArea.Scrollbar
+              className="flex select-none touch-none p-0.5 bg-surface-elevated transition-colors duration-[160ms] ease-out hover:bg-surface-hover data-[orientation=vertical]:w-2.5 data-[orientation=horizontal]:flex-col data-[orientation=horizontal]:h-2.5"
+              orientation="vertical"
+            >
+              <ScrollArea.Thumb className="flex-1 bg-border-default rounded-[10px] relative before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-full before:h-full before:min-w-[44px] before:min-h-[44px]" />
+            </ScrollArea.Scrollbar>
+          </ScrollArea.Root>
         </Tabs.Content>
 
-        <Tabs.Content value="evm" className="flex-1 overflow-y-auto p-4">
-          {walletsByType.EVM.length === 0 ? (
-            <EmptyState
-              icon={WalletIcon}
-              title="No EVM wallets yet"
-              description="Create or import an EVM wallet to get started"
-              action={{
-                label: 'Create EVM Group',
-                onClick: () => setShowCreateGroupDialog(true),
-              }}
-              className="h-full"
-            />
-          ) : (
-            <div className="space-y-2">
-              {walletsByType.EVM.map((wallet) => (
-                <WalletItem
-                  key={wallet.id}
-                  wallet={wallet}
-                  isActive={wallet.id === activeWalletId}
-                  onSelect={() => setActiveWallet(wallet.id)}
-                  onCopy={() => copyAddress(wallet.address)}
-                  onRename={() => setRenameWallet(wallet)}
-                  onExport={() => handleExportWallet(wallet)}
-                  onDelete={() => removeWallet(wallet.id)}
+        <Tabs.Content value="evm" className="flex-1 overflow-hidden min-h-0">
+          <ScrollArea.Root className="h-full w-full">
+            <ScrollArea.Viewport className="h-full w-full rounded-[inherit] p-4">
+              {walletsByType.EVM.length === 0 ? (
+                <EmptyState
+                  icon={WalletIcon}
+                  title="No EVM wallets yet"
+                  description="Create or import an EVM wallet to get started"
+                  action={{
+                    label: 'Create EVM Group',
+                    onClick: () => setShowCreateGroupDialog(true),
+                  }}
+                  className="h-full"
                 />
-              ))}
-            </div>
-          )}
+              ) : (
+                <div className="space-y-2">
+                  {walletsByType.EVM.map((wallet) => (
+                    <WalletItem
+                      key={wallet.id}
+                      wallet={wallet}
+                      isActive={wallet.id === activeWalletId}
+                      onSelect={() => setActiveWallet(wallet.id)}
+                      onCopy={() => copyAddress(wallet.address)}
+                      onRename={() => setRenameWallet(wallet)}
+                      onExport={() => handleExportWallet(wallet)}
+                      onDelete={() => removeWallet(wallet.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </ScrollArea.Viewport>
+            <ScrollArea.Scrollbar
+              className="flex select-none touch-none p-0.5 bg-surface-elevated transition-colors duration-[160ms] ease-out hover:bg-surface-hover data-[orientation=vertical]:w-2.5 data-[orientation=horizontal]:flex-col data-[orientation=horizontal]:h-2.5"
+              orientation="vertical"
+            >
+              <ScrollArea.Thumb className="flex-1 bg-border-default rounded-[10px] relative before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-full before:h-full before:min-w-[44px] before:min-h-[44px]" />
+            </ScrollArea.Scrollbar>
+          </ScrollArea.Root>
         </Tabs.Content>
 
-        <Tabs.Content value="svm" className="flex-1 overflow-y-auto p-4">
-          {walletsByType.SVM.length === 0 ? (
-            <EmptyState
-              icon={WalletIcon}
-              title="No SVM wallets yet"
-              description="Create or import a Solana wallet to get started"
-              action={{
-                label: 'Create SVM Group',
-                onClick: () => setShowCreateGroupDialog(true),
-              }}
-              className="h-full"
-            />
-          ) : (
-            <div className="space-y-2">
-              {walletsByType.SVM.map((wallet) => (
-                <WalletItem
-                  key={wallet.id}
-                  wallet={wallet}
-                  isActive={wallet.id === activeWalletId}
-                  onSelect={() => setActiveWallet(wallet.id)}
-                  onCopy={() => copyAddress(wallet.address)}
-                  onRename={() => setRenameWallet(wallet)}
-                  onExport={() => handleExportWallet(wallet)}
-                  onDelete={() => removeWallet(wallet.id)}
+        <Tabs.Content value="svm" className="flex-1 overflow-hidden min-h-0">
+          <ScrollArea.Root className="h-full w-full">
+            <ScrollArea.Viewport className="h-full w-full rounded-[inherit] p-4">
+              {walletsByType.SVM.length === 0 ? (
+                <EmptyState
+                  icon={WalletIcon}
+                  title="No SVM wallets yet"
+                  description="Create or import a Solana wallet to get started"
+                  action={{
+                    label: 'Create SVM Group',
+                    onClick: () => setShowCreateGroupDialog(true),
+                  }}
+                  className="h-full"
                 />
-              ))}
-            </div>
-          )}
+              ) : (
+                <div className="space-y-2">
+                  {walletsByType.SVM.map((wallet) => (
+                    <WalletItem
+                      key={wallet.id}
+                      wallet={wallet}
+                      isActive={wallet.id === activeWalletId}
+                      onSelect={() => setActiveWallet(wallet.id)}
+                      onCopy={() => copyAddress(wallet.address)}
+                      onRename={() => setRenameWallet(wallet)}
+                      onExport={() => handleExportWallet(wallet)}
+                      onDelete={() => removeWallet(wallet.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </ScrollArea.Viewport>
+            <ScrollArea.Scrollbar
+              className="flex select-none touch-none p-0.5 bg-surface-elevated transition-colors duration-[160ms] ease-out hover:bg-surface-hover data-[orientation=vertical]:w-2.5 data-[orientation=horizontal]:flex-col data-[orientation=horizontal]:h-2.5"
+              orientation="vertical"
+            >
+              <ScrollArea.Thumb className="flex-1 bg-border-default rounded-[10px] relative before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-full before:h-full before:min-w-[44px] before:min-h-[44px]" />
+            </ScrollArea.Scrollbar>
+          </ScrollArea.Root>
         </Tabs.Content>
 
-        <Tabs.Content value="all" className="flex-1 overflow-y-auto p-4">
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-medium text-text-secondary mb-2">
-                EVM Wallets
-              </h3>
-              <div className="space-y-2">
-                {walletsByType.EVM.map((wallet) => (
-                  <WalletItem
-                    key={wallet.id}
-                    wallet={wallet}
-                    isActive={wallet.id === activeWalletId}
-                    onSelect={() => setActiveWallet(wallet.id)}
-                    onCopy={() => copyAddress(wallet.address)}
-                    onRename={() => setRenameWallet(wallet)}
-                    onExport={() => handleExportWallet(wallet)}
-                    onDelete={() => removeWallet(wallet.id)}
-                  />
-                ))}
-              </div>
-            </div>
+        <Tabs.Content value="all" className="flex-1 overflow-hidden min-h-0">
+          <ScrollArea.Root className="h-full w-full">
+            <ScrollArea.Viewport className="h-full w-full rounded-[inherit] p-4">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-medium text-text-secondary mb-2">
+                    EVM Wallets
+                  </h3>
+                  <div className="space-y-2">
+                    {walletsByType.EVM.map((wallet) => (
+                      <WalletItem
+                        key={wallet.id}
+                        wallet={wallet}
+                        isActive={wallet.id === activeWalletId}
+                        onSelect={() => setActiveWallet(wallet.id)}
+                        onCopy={() => copyAddress(wallet.address)}
+                        onRename={() => setRenameWallet(wallet)}
+                        onExport={() => handleExportWallet(wallet)}
+                        onDelete={() => removeWallet(wallet.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
 
-            <div>
-              <h3 className="text-sm font-medium text-text-secondary mb-2">
-                SVM Wallets
-              </h3>
-              <div className="space-y-2">
-                {walletsByType.SVM.map((wallet) => (
-                  <WalletItem
-                    key={wallet.id}
-                    wallet={wallet}
-                    isActive={wallet.id === activeWalletId}
-                    onSelect={() => setActiveWallet(wallet.id)}
-                    onCopy={() => copyAddress(wallet.address)}
-                    onRename={() => setRenameWallet(wallet)}
-                    onExport={() => handleExportWallet(wallet)}
-                    onDelete={() => removeWallet(wallet.id)}
-                  />
-                ))}
+                <div>
+                  <h3 className="text-sm font-medium text-text-secondary mb-2">
+                    SVM Wallets
+                  </h3>
+                  <div className="space-y-2">
+                    {walletsByType.SVM.map((wallet) => (
+                      <WalletItem
+                        key={wallet.id}
+                        wallet={wallet}
+                        isActive={wallet.id === activeWalletId}
+                        onSelect={() => setActiveWallet(wallet.id)}
+                        onCopy={() => copyAddress(wallet.address)}
+                        onRename={() => setRenameWallet(wallet)}
+                        onExport={() => handleExportWallet(wallet)}
+                        onDelete={() => removeWallet(wallet.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            </ScrollArea.Viewport>
+            <ScrollArea.Scrollbar
+              className="flex select-none touch-none p-0.5 bg-surface-elevated transition-colors duration-[160ms] ease-out hover:bg-surface-hover data-[orientation=vertical]:w-2.5 data-[orientation=horizontal]:flex-col data-[orientation=horizontal]:h-2.5"
+              orientation="vertical"
+            >
+              <ScrollArea.Thumb className="flex-1 bg-border-default rounded-[10px] relative before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-full before:h-full before:min-w-[44px] before:min-h-[44px]" />
+            </ScrollArea.Scrollbar>
+          </ScrollArea.Root>
         </Tabs.Content>
       </Tabs.Root>
 
