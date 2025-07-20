@@ -100,7 +100,7 @@ export const SVM_NETWORKS: Network[] = [
     id: 'solana-mainnet',
     name: 'Solana Mainnet',
     chainId: 'mainnet-beta',
-    rpcUrl: 'https://api.mainnet-beta.solana.com',
+    rpcUrl: 'https://solana.publicnode.com',
     symbol: 'SOL',
     explorer: 'https://explorer.solana.com',
     explorerUrl: 'https://explorer.solana.com',

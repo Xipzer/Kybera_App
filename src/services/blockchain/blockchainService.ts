@@ -28,19 +28,37 @@ class BlockchainService {
         ? await EVMWalletService.getBalance(wallet.address, network.rpcUrl)
         : await SVMWalletService.getBalance(wallet.address, network.rpcUrl)
 
-      // Get price data
-      const prices = await this.getPrices([network.symbol.toLowerCase()])
-      const nativePrice = prices[network.symbol.toLowerCase()]?.usd || 0
+      // Get price data - map SOL to solana for CoinGecko
+      const priceId = network.symbol.toLowerCase() === 'sol' ? 'solana' : network.symbol.toLowerCase()
+      const prices = await this.getPrices([priceId])
+      const nativePrice = prices[priceId]?.usd || 0
       const nativeUSD = parseFloat(nativeBalance) * nativePrice
 
-      // TODO: Implement token balance fetching
+      // Fetch token balances
       const tokens: TokenBalance[] = []
+      
+      if (wallet.type === 'SVM') {
+        // Fetch SPL token balances for Solana
+        try {
+          const tokenBalances = await this.getSPLTokenBalances(wallet.address, network.rpcUrl)
+          tokens.push(...tokenBalances)
+        } catch (error) {
+          console.error('Failed to fetch SPL token balances:', error)
+        }
+      }
+      
+      // Calculate total USD value including tokens
+      const tokensUSD = tokens.reduce((sum, _token) => {
+        // For now, we don't have token prices, so just use 0
+        // TODO: Fetch token prices from CoinGecko
+        return sum
+      }, 0)
       
       return {
         native: nativeBalance,
         nativeUSD,
         tokens,
-        totalUSD: nativeUSD
+        totalUSD: nativeUSD + tokensUSD
       }
     } catch (error) {
       console.error('Failed to get balance:', error)
@@ -196,6 +214,44 @@ class BlockchainService {
     return type === 'EVM'
       ? EVMWalletService.isValidAddress(address)
       : SVMWalletService.isValidAddress(address)
+  }
+  
+  private async getSPLTokenBalances(walletAddress: string, rpcUrl: string): Promise<TokenBalance[]> {
+    try {
+      const { Connection, PublicKey } = await import('@solana/web3.js')
+      const connection = new Connection(rpcUrl, 'confirmed')
+      const walletPublicKey = new PublicKey(walletAddress)
+      
+      // Get all token accounts for the wallet
+      const tokenAccounts = await connection.getParsedTokenAccountsByOwner(walletPublicKey, {
+        programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA')
+      })
+      
+      const tokens: TokenBalance[] = []
+      
+      for (const account of tokenAccounts.value) {
+        const parsedInfo = account.account.data.parsed.info
+        const balance = parsedInfo.tokenAmount.uiAmountString
+        
+        if (parseFloat(balance) > 0) {
+          // For now, we'll use the mint address as the token name
+          // In a real implementation, you'd want to fetch token metadata
+          tokens.push({
+            address: parsedInfo.mint,
+            symbol: 'Unknown', // TODO: Fetch actual token symbol
+            name: 'Unknown Token', // TODO: Fetch actual token name
+            decimals: parsedInfo.tokenAmount.decimals,
+            balance: balance,
+            logoURI: undefined
+          })
+        }
+      }
+      
+      return tokens
+    } catch (error) {
+      console.error('Failed to fetch SPL token balances:', error)
+      return []
+    }
   }
 }
 

@@ -62,10 +62,16 @@ export class SVMWalletService {
   }
 
   static async getBalance(address: string, rpcUrl: string): Promise<string> {
-    const connection = new Connection(rpcUrl)
-    const publicKey = new PublicKey(address)
-    const balance = await connection.getBalance(publicKey)
-    return (balance / LAMPORTS_PER_SOL).toString()
+    try {
+      const connection = new Connection(rpcUrl, 'confirmed')
+      const publicKey = new PublicKey(address)
+      const balance = await connection.getBalance(publicKey)
+      console.log(`Solana balance for ${address}: ${balance} lamports = ${balance / LAMPORTS_PER_SOL} SOL`)
+      return (balance / LAMPORTS_PER_SOL).toString()
+    } catch (error) {
+      console.error('Failed to fetch Solana balance:', error)
+      throw error
+    }
   }
 
   static async sendTransaction(
