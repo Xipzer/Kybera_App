@@ -93,7 +93,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         
         setTimeout(() => setPasswordSuccess(false), 3000)
       } else {
-        setPasswordError('Current password is incorrect')
+        setPasswordError('Current password is incorrect or re-encryption failed')
       }
     } catch (error) {
       setPasswordError('Failed to change password. Please try again.')
@@ -285,7 +285,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       {isChangingPassword ? (
                         <span className="flex items-center gap-2">
                           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Changing Password...
+                          Re-encrypting wallets...
                         </span>
                       ) : (
                         'Change Password'

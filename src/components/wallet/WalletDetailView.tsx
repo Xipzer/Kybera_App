@@ -8,6 +8,7 @@ import {
   ExternalLink,
   TrendingUp,
   TrendingDown,
+  RefreshCw,
 } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import * as Tabs from '@radix-ui/react-tabs'
@@ -16,6 +17,7 @@ import { SendDialog } from './SendDialog'
 import { ReceiveDialog } from './ReceiveDialog'
 import { TokenList } from './TokenList'
 import { TransactionHistory } from './TransactionHistory'
+import { useWalletBalance } from '../../hooks/useWalletBalance'
 
 export function WalletDetailView() {
   const { activeWalletId, wallets, activeNetwork } = useWalletStore()
@@ -23,6 +25,7 @@ export function WalletDetailView() {
   const [showReceiveDialog, setShowReceiveDialog] = useState(false)
 
   const activeWallet = wallets.find((w) => w.id === activeWalletId)
+  const { balance, loading, error, refetch } = useWalletBalance(activeWallet, activeNetwork)
 
   if (!activeWallet) {
     return (
@@ -36,17 +39,15 @@ export function WalletDetailView() {
     navigator.clipboard.writeText(activeWallet.address)
   }
 
-  // Mock data for now - will be replaced with real data
-  const mockBalance = '1.234'
-  const mockUsdValue = '2,468.00'
-  const mockChange24h = 5.2
-
   // Get native currency info with fallback
   const nativeCurrency = activeNetwork.nativeCurrency || {
     name: activeNetwork.symbol || 'ETH',
     symbol: activeNetwork.symbol || 'ETH',
     decimals: 18
   }
+  
+  // Calculate 24h change (will be 0 if price data is not available)
+  const change24h = 0 // TODO: Get from price data
 
   return (
     <div className="h-full flex flex-col bg-surface-base">
@@ -78,25 +79,56 @@ export function WalletDetailView() {
         {/* Balance Display */}
         <div className="mb-6">
           <div className="flex items-baseline gap-2 mb-1">
-            <span className="text-3xl font-bold text-text-primary">
-              {mockBalance} {nativeCurrency.symbol}
-            </span>
-            <span className="text-lg text-text-secondary">${mockUsdValue}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            {mockChange24h >= 0 ? (
-              <TrendingUp className="w-4 h-4 text-green-500" />
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <div className="w-32 h-8 bg-surface-elevated animate-pulse rounded" />
+                <RefreshCw className="w-4 h-4 text-text-secondary animate-spin" />
+              </div>
+            ) : error ? (
+              <div className="flex items-center gap-2">
+                <span className="text-accent-500">Error loading balance</span>
+                <button
+                  onClick={refetch}
+                  className="p-1 rounded hover:bg-surface-hover transition-colors"
+                  title="Retry"
+                >
+                  <RefreshCw className="w-4 h-4 text-text-secondary" />
+                </button>
+              </div>
             ) : (
-              <TrendingDown className="w-4 h-4 text-accent-500" />
+              <>
+                <span className="text-3xl font-bold text-text-primary">
+                  {parseFloat(balance.native).toFixed(4)} {nativeCurrency.symbol}
+                </span>
+                <span className="text-lg text-text-secondary">
+                  ${balance.nativeUSD.toFixed(2)}
+                </span>
+                <button
+                  onClick={refetch}
+                  className="p-1 rounded hover:bg-surface-hover transition-colors ml-2"
+                  title="Refresh balance"
+                >
+                  <RefreshCw className="w-3 h-3 text-text-secondary" />
+                </button>
+              </>
             )}
-            <span
-              className={`text-sm ${
-                mockChange24h >= 0 ? 'text-green-500' : 'text-accent-500'
-              }`}
-            >
-              {mockChange24h >= 0 ? '+' : ''}{mockChange24h}% (24h)
-            </span>
           </div>
+          {!loading && !error && change24h !== 0 && (
+            <div className="flex items-center gap-1">
+              {change24h >= 0 ? (
+                <TrendingUp className="w-4 h-4 text-green-500" />
+              ) : (
+                <TrendingDown className="w-4 h-4 text-accent-500" />
+              )}
+              <span
+                className={`text-sm ${
+                  change24h >= 0 ? 'text-green-500' : 'text-accent-500'
+                }`}
+              >
+                {change24h >= 0 ? '+' : ''}{change24h}% (24h)
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}

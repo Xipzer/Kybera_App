@@ -1,5 +1,5 @@
 import Dexie, { Table } from 'dexie'
-import { Wallet, WalletGroup, Conversation, Message } from '../../types'
+import { Wallet, WalletGroup, Conversation, Message, Transaction } from '../../types'
 
 export interface StoredWallet extends Omit<Wallet, 'createdAt'> {
   createdAt: number
@@ -27,13 +27,23 @@ export interface StoredAuth {
   updatedAt?: number
 }
 
+export interface StoredTransaction extends Omit<Transaction, 'timestamp'> {
+  timestamp: number
+}
+
+export interface StoredSetting {
+  key: string
+  value: any
+}
+
 export class SmartWalletDB extends Dexie {
   wallets!: Table<StoredWallet>
   walletGroups!: Table<StoredWalletGroup>
   conversations!: Table<StoredConversation>
   messages!: Table<StoredMessage>
-  settings!: Table<{ key: string; value: any }>
+  settings!: Table<StoredSetting>
   auth!: Table<StoredAuth>
+  transactions!: Table<StoredTransaction>
 
   constructor() {
     super('SmartWalletDB')
@@ -80,6 +90,17 @@ export class SmartWalletDB extends Dexie {
       messages: '++id, conversationId, timestamp',
       settings: 'key',
       auth: 'id'
+    })
+    
+    // Version 4 adds transactions table
+    this.version(4).stores({
+      wallets: '++id, groupId, address, type',
+      walletGroups: '++id, type, createdAt',
+      conversations: '++id, createdAt',
+      messages: '++id, conversationId, timestamp',
+      settings: 'key',
+      auth: 'id',
+      transactions: '++id, hash, from, to, network, timestamp'
     })
   }
 }

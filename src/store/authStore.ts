@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { hashPassword, verifyPassword } from '../utils/auth'
 import { db } from '../services/storage/database'
+import { reencryptWalletData } from '../utils/reencryption'
 
 interface AuthState {
   passwordHash: string | null
@@ -87,25 +88,30 @@ export const useAuthStore = create<AuthState>()(
           return false
         }
         
-        // Hash new password
-        const { hash, salt } = await hashPassword(newPassword)
-        
-        // Update auth data
-        await db.auth.update('primary', {
-          passwordHash: hash,
-          passwordSalt: salt,
-          updatedAt: Date.now()
-        })
-        
-        set({
-          passwordHash: hash,
-          passwordSalt: salt
-        })
-        
-        // Note: In a real implementation, you would need to re-encrypt all wallet data
-        // with a new encryption key derived from the new password
-        
-        return true
+        try {
+          // Re-encrypt all wallet data with the new password
+          await reencryptWalletData(currentPassword, newPassword)
+          
+          // Hash new password
+          const { hash, salt } = await hashPassword(newPassword)
+          
+          // Update auth data
+          await db.auth.update('primary', {
+            passwordHash: hash,
+            passwordSalt: salt,
+            updatedAt: Date.now()
+          })
+          
+          set({
+            passwordHash: hash,
+            passwordSalt: salt
+          })
+          
+          return true
+        } catch (error) {
+          console.error('Failed to change password:', error)
+          return false
+        }
       },
       
       incrementFailedAttempts: () => {

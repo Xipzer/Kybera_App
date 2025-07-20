@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { X, Send, AlertCircle } from 'lucide-react'
+import { X, Send, AlertCircle, ExternalLink } from 'lucide-react'
 import { Wallet } from '../../types'
 import { Network } from '../../utils/networks'
+import { blockchainService } from '../../services/blockchain/blockchainService'
+import { useWalletStore } from '../../store/walletStore'
 
 interface SendDialogProps {
   open: boolean
@@ -12,11 +14,14 @@ interface SendDialogProps {
 }
 
 export function SendDialog({ open, onOpenChange, wallet, network }: SendDialogProps) {
+  const { password } = useWalletStore()
   const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState('')
   const [memo, setMemo] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [txHash, setTxHash] = useState<string | null>(null)
+  const [showSuccess, setShowSuccess] = useState(false)
 
   // Get native currency info with fallback
   const nativeCurrency = network.nativeCurrency || {
@@ -32,23 +37,51 @@ export function SendDialog({ open, onOpenChange, wallet, network }: SendDialogPr
       setError('Please fill in all required fields')
       return
     }
+    
+    if (!password) {
+      setError('Please unlock your wallet first')
+      return
+    }
+    
+    // Validate recipient address
+    if (!blockchainService.validateAddress(recipient, wallet.type)) {
+      setError('Invalid recipient address')
+      return
+    }
+    
+    // Validate amount
+    const amountNum = parseFloat(amount)
+    if (isNaN(amountNum) || amountNum <= 0) {
+      setError('Invalid amount')
+      return
+    }
 
-    // TODO: Implement actual send functionality
     setIsLoading(true)
     
     try {
-      // Simulate transaction
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      const hash = await blockchainService.sendTransaction(
+        wallet,
+        network,
+        recipient,
+        amount,
+        password
+      )
       
-      // Close dialog on success
-      onOpenChange(false)
+      setTxHash(hash)
+      setShowSuccess(true)
       
-      // Reset form
-      setRecipient('')
-      setAmount('')
-      setMemo('')
+      // Reset form after a delay
+      setTimeout(() => {
+        onOpenChange(false)
+        setRecipient('')
+        setAmount('')
+        setMemo('')
+        setTxHash(null)
+        setShowSuccess(false)
+      }, 3000)
     } catch (err) {
-      setError('Transaction failed. Please try again.')
+      console.error('Transaction failed:', err)
+      setError(err instanceof Error ? err.message : 'Transaction failed. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -134,6 +167,24 @@ export function SendDialog({ open, onOpenChange, wallet, network }: SendDialogPr
                 <div className="flex items-center gap-2 p-3 bg-accent-500/10 border border-accent-500/30 rounded-lg">
                   <AlertCircle className="w-4 h-4 text-accent-500 flex-shrink-0" />
                   <p className="text-sm text-accent-400">{error}</p>
+                </div>
+              )}
+              
+              {showSuccess && txHash && (
+                <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                  <div className="flex-1">
+                    <p className="text-sm text-green-400 font-medium">Transaction sent successfully!</p>
+                    <p className="text-xs text-green-400/80 mt-1">Hash: {txHash.slice(0, 10)}...{txHash.slice(-8)}</p>
+                  </div>
+                  <a
+                    href={`${network.explorerUrl || network.explorer}/tx/${txHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1 rounded hover:bg-green-500/20 transition-colors"
+                    title="View on explorer"
+                  >
+                    <ExternalLink className="w-4 h-4 text-green-400" />
+                  </a>
                 </div>
               )}
 
