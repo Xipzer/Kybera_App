@@ -24,6 +24,8 @@ import { CreateGroupDialog } from './CreateGroupDialog'
 import { AddWalletToGroupDialog } from './AddWalletToGroupDialog'
 import { ExportGroupDialog } from './ExportGroupDialog'
 import { ImportGroupDialog } from './ImportGroupDialog'
+import { WalletDetailView } from './WalletDetailView'
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 
 export function WalletDrawer() {
   const { wallets, walletGroups, activeWalletId, activeNetwork, setActiveWallet, removeWallet } =
@@ -54,7 +56,9 @@ export function WalletDrawer() {
   }
 
   return (
-    <div className="h-full bg-surface-base border-l border-border-subtle flex flex-col">
+    <div className="h-full bg-surface-base border-l border-border-subtle">
+      <PanelGroup direction="vertical" className="h-full">
+        <Panel defaultSize={50} minSize={30} maxSize={70} className="flex flex-col">
       <div className="p-4 border-b border-border-subtle">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-text-primary">Wallets</h2>
@@ -287,6 +291,17 @@ export function WalletDrawer() {
         group={exportGroup}
       />
       <ImportGroupDialog open={showImportGroupDialog} onOpenChange={setShowImportGroupDialog} />
+        </Panel>
+
+        {activeWalletId && (
+          <>
+            <PanelResizeHandle className="h-px bg-border-subtle hover:bg-accent-500 transition-colors" />
+            <Panel>
+              <WalletDetailView />
+            </Panel>
+          </>
+        )}
+      </PanelGroup>
     </div>
   )
 }

@@ -1,5 +1,7 @@
 import { Network } from '../types'
 
+export type { Network }
+
 export const EVM_NETWORKS: Network[] = [
   {
     id: 'ethereum',
@@ -8,7 +10,13 @@ export const EVM_NETWORKS: Network[] = [
     rpcUrl: 'https://eth.llamarpc.com',
     symbol: 'ETH',
     explorer: 'https://etherscan.io',
+    explorerUrl: 'https://etherscan.io',
     type: 'EVM',
+    nativeCurrency: {
+      name: 'Ether',
+      symbol: 'ETH',
+      decimals: 18,
+    },
   },
   {
     id: 'base',
@@ -17,7 +25,13 @@ export const EVM_NETWORKS: Network[] = [
     rpcUrl: 'https://mainnet.base.org',
     symbol: 'ETH',
     explorer: 'https://basescan.org',
+    explorerUrl: 'https://basescan.org',
     type: 'EVM',
+    nativeCurrency: {
+      name: 'Ether',
+      symbol: 'ETH',
+      decimals: 18,
+    },
   },
   {
     id: 'bsc',
@@ -26,7 +40,13 @@ export const EVM_NETWORKS: Network[] = [
     rpcUrl: 'https://bsc-dataseed.binance.org',
     symbol: 'BNB',
     explorer: 'https://bscscan.com',
+    explorerUrl: 'https://bscscan.com',
     type: 'EVM',
+    nativeCurrency: {
+      name: 'Binance Coin',
+      symbol: 'BNB',
+      decimals: 18,
+    },
   },
   {
     id: 'polygon',
@@ -35,7 +55,13 @@ export const EVM_NETWORKS: Network[] = [
     rpcUrl: 'https://polygon-rpc.com',
     symbol: 'MATIC',
     explorer: 'https://polygonscan.com',
+    explorerUrl: 'https://polygonscan.com',
     type: 'EVM',
+    nativeCurrency: {
+      name: 'MATIC',
+      symbol: 'MATIC',
+      decimals: 18,
+    },
   },
   {
     id: 'arbitrum',
@@ -44,7 +70,13 @@ export const EVM_NETWORKS: Network[] = [
     rpcUrl: 'https://arb1.arbitrum.io/rpc',
     symbol: 'ETH',
     explorer: 'https://arbiscan.io',
+    explorerUrl: 'https://arbiscan.io',
     type: 'EVM',
+    nativeCurrency: {
+      name: 'Ether',
+      symbol: 'ETH',
+      decimals: 18,
+    },
   },
   {
     id: 'optimism',
@@ -53,7 +85,13 @@ export const EVM_NETWORKS: Network[] = [
     rpcUrl: 'https://mainnet.optimism.io',
     symbol: 'ETH',
     explorer: 'https://optimistic.etherscan.io',
+    explorerUrl: 'https://optimistic.etherscan.io',
     type: 'EVM',
+    nativeCurrency: {
+      name: 'Ether',
+      symbol: 'ETH',
+      decimals: 18,
+    },
   },
 ]
 
@@ -65,7 +103,13 @@ export const SVM_NETWORKS: Network[] = [
     rpcUrl: 'https://api.mainnet-beta.solana.com',
     symbol: 'SOL',
     explorer: 'https://explorer.solana.com',
+    explorerUrl: 'https://explorer.solana.com',
     type: 'SVM',
+    nativeCurrency: {
+      name: 'Solana',
+      symbol: 'SOL',
+      decimals: 9,
+    },
   },
   {
     id: 'solana-devnet',
@@ -74,7 +118,13 @@ export const SVM_NETWORKS: Network[] = [
     rpcUrl: 'https://api.devnet.solana.com',
     symbol: 'SOL',
     explorer: 'https://explorer.solana.com?cluster=devnet',
+    explorerUrl: 'https://explorer.solana.com?cluster=devnet',
     type: 'SVM',
+    nativeCurrency: {
+      name: 'Solana',
+      symbol: 'SOL',
+      decimals: 9,
+    },
   },
 ]
 

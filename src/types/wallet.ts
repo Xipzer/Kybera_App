@@ -7,7 +7,13 @@ export interface Network {
   rpcUrl: string
   symbol: string
   explorer: string
+  explorerUrl: string // Full URL for explorer
   type: ChainType
+  nativeCurrency: {
+    name: string
+    symbol: string
+    decimals: number
+  }
 }
 
 export interface WalletGroup {
