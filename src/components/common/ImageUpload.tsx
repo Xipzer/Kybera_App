@@ -104,7 +104,7 @@ export function ImageUpload({
             />
             <button
               onClick={() => onImageChange(null)}
-              className="absolute -top-2 -right-2 p-1 bg-accent-500 text-white rounded-full hover:bg-accent-600 transition-colors"
+              className="absolute -top-2 -right-2 p-1 bg-accent text-white rounded-full hover:bg-accent-600 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -116,8 +116,8 @@ export function ImageUpload({
             onDragLeave={handleDragLeave}
             className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
               isDragging 
-                ? 'border-accent-500 bg-accent-500/10' 
-                : 'border-border-default hover:border-accent-500/50'
+                ? 'border-accent bg-accent/10' 
+                : 'border-border-default hover:border-accent/50'
             }`}
           >
             <input
@@ -152,7 +152,7 @@ export function ImageUpload({
         )}
         
         {error && (
-          <p className="text-xs text-accent-500">{error}</p>
+          <p className="text-xs text-accent">{error}</p>
         )}
       </div>
     </div>

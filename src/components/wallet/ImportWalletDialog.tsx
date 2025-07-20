@@ -218,7 +218,7 @@ export function ImportWalletDialog({ open, onOpenChange }: ImportWalletDialogPro
               <button
                 onClick={handleImport}
                 disabled={!walletName.trim() || isLoading}
-                className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full py-2 bg-gradient-secondary text-white rounded-lg hover:shadow-lg hover:secondary-glow disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium"
               >
                 {isLoading ? 'Importing...' : 'Import Wallet'}
               </button>

@@ -126,21 +126,21 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             <Tabs.List className="flex border-b border-border-subtle px-6 flex-shrink-0">
               <Tabs.Trigger
                 value="ai"
-                className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent-500 data-[state=active]:border-b-2 data-[state=active]:border-accent-500 transition-colors"
+                className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent data-state-active:border-b-2 data-[state=active]:border-accent transition-colors"
               >
                 <Brain className="w-4 h-4" />
                 AI Configuration
               </Tabs.Trigger>
               <Tabs.Trigger
                 value="security"
-                className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent-500 data-[state=active]:border-b-2 data-[state=active]:border-accent-500 transition-colors"
+                className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent data-state-active:border-b-2 data-[state=active]:border-accent transition-colors"
               >
                 <Shield className="w-4 h-4" />
                 Security
               </Tabs.Trigger>
               <Tabs.Trigger
                 value="appearance"
-                className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent-500 data-[state=active]:border-b-2 data-[state=active]:border-accent-500 transition-colors"
+                className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent data-state-active:border-b-2 data-[state=active]:border-accent transition-colors"
               >
                 <Palette className="w-4 h-4" />
                 Appearance
@@ -164,7 +164,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         value={apiKey}
                         onChange={(e) => setApiKey(e.target.value)}
                         placeholder="sk-or-v1-..."
-                        className="w-full px-3 py-2 pr-10 border border-border-default rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors"
+                        className="w-full px-3 py-2 pr-10 border border-border-default rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
                       />
                       <button
                         type="button"
@@ -184,7 +184,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         href="https://openrouter.ai/keys"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-accent-500 hover:text-accent-400 hover:underline transition-colors"
+                        className="text-accent hover:text-accent-400 hover:underline transition-colors"
                       >
                         openrouter.ai/keys
                       </a>
@@ -210,7 +210,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                           value={currentPassword}
                           onChange={(e) => setCurrentPassword(e.target.value)}
                           placeholder="Enter current password"
-                          className="w-full px-3 py-2 pr-10 border border-border-default rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors"
+                          className="w-full px-3 py-2 pr-10 border border-border-default rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
                         />
                         <button
                           type="button"
@@ -236,7 +236,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
                           placeholder="Enter new password"
-                          className="w-full px-3 py-2 pr-10 border border-border-default rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors"
+                          className="w-full px-3 py-2 pr-10 border border-border-default rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
                         />
                         <button
                           type="button"
@@ -261,13 +261,13 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         value={confirmNewPassword}
                         onChange={(e) => setConfirmNewPassword(e.target.value)}
                         placeholder="Confirm new password"
-                        className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors"
+                        className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
                       />
                     </div>
                     
                     {passwordError && (
-                      <div className="flex items-center gap-2 p-3 bg-accent-500/10 border border-accent-500/30 rounded-lg">
-                        <AlertCircle className="w-4 h-4 text-accent-500 flex-shrink-0" />
+                      <div className="flex items-center gap-2 p-3 bg-accent/10 border border-accent/30 rounded-lg">
+                        <AlertCircle className="w-4 h-4 text-accent flex-shrink-0" />
                         <p className="text-sm text-accent-400">{passwordError}</p>
                       </div>
                     )}
@@ -282,7 +282,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     <button
                       onClick={handlePasswordChange}
                       disabled={isChangingPassword || !currentPassword || !newPassword || !confirmNewPassword}
-                      className="px-4 py-2 bg-gradient-candy-red text-white rounded-lg hover:shadow-lg hover:shadow-accent-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium"
+                      className="px-4 py-2 bg-gradient-secondary text-white rounded-lg hover:shadow-lg hover:secondary-glow disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium"
                     >
                       {isChangingPassword ? (
                         <span className="flex items-center gap-2">
@@ -311,7 +311,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       onChange={(e) => setLockTimeout(e.target.value)}
                       min="1"
                       max="60"
-                      className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-elevated text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors"
+                      className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-elevated text-text-primary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
                     />
                     <p className="mt-1 text-xs text-text-tertiary">
                       Automatically lock the wallet after this period of inactivity
@@ -348,7 +348,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                               value="light"
                               className={`flex items-center justify-between px-3 py-2 text-sm rounded cursor-pointer transition-colors ${
                                 theme === 'light'
-                                  ? 'bg-accent-500/10 text-accent-500'
+                                  ? 'bg-accent/10 text-accent'
                                   : 'text-text-primary hover:bg-surface-hover'
                               }`}
                             >
@@ -361,7 +361,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                               value="dark"
                               className={`flex items-center justify-between px-3 py-2 text-sm rounded cursor-pointer transition-colors ${
                                 theme === 'dark'
-                                  ? 'bg-accent-500/10 text-accent-500'
+                                  ? 'bg-accent/10 text-accent'
                                   : 'text-text-primary hover:bg-surface-hover'
                               }`}
                             >
@@ -374,7 +374,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                               value="xipz"
                               className={`flex items-center justify-between px-3 py-2 text-sm rounded cursor-pointer transition-colors ${
                                 theme === 'xipz'
-                                  ? 'bg-accent-500/10 text-accent-500'
+                                  ? 'bg-accent/10 text-accent'
                                   : 'text-text-primary hover:bg-surface-hover'
                               }`}
                             >
@@ -477,7 +477,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 </button>
                 <button
                   onClick={handleSave}
-                  className="px-4 py-2 bg-gradient-candy-red text-white rounded-lg hover:shadow-lg hover:shadow-accent-500/30 transition-all duration-300 font-medium"
+                  className="px-4 py-2 bg-gradient-primary text-white rounded-lg hover:shadow-lg hover:primary-glow transition-all duration-300 font-medium"
                 >
                   Save Changes
                 </button>

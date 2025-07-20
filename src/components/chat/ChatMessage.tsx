@@ -25,7 +25,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
   return (
     <div className={`flex gap-4 mb-6 ${message.role === 'user' ? 'justify-end' : ''}`}>
       {message.role === 'assistant' && (
-        <div className="flex-shrink-0 w-8 h-8 bg-gradient-candy-red rounded-lg flex items-center justify-center candy-red-glow">
+        <div className="flex-shrink-0 w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center primary-glow">
           <Bot className="w-5 h-5 text-white" />
         </div>
       )}

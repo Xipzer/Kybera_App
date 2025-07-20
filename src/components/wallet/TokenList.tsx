@@ -86,11 +86,11 @@ export function TokenList({ network }: TokenListProps) {
                     {token.change24h >= 0 ? (
                       <TrendingUp className="w-3 h-3 text-green-500" />
                     ) : (
-                      <TrendingDown className="w-3 h-3 text-accent-500" />
+                      <TrendingDown className="w-3 h-3 text-accent" />
                     )}
                     <span
                       className={`text-xs ${
-                        token.change24h >= 0 ? 'text-green-500' : 'text-accent-500'
+                        token.change24h >= 0 ? 'text-green-500' : 'text-accent'
                       }`}
                     >
                       {token.change24h >= 0 ? '+' : ''}{token.change24h}%

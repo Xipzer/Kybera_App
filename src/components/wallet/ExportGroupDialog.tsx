@@ -137,7 +137,7 @@ export function ExportGroupDialog({ open, onOpenChange, group }: ExportGroupDial
                     <button
                       type="submit"
                       disabled={!password || isLoading}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="px-4 py-2 bg-gradient-secondary text-white rounded-lg hover:shadow-lg hover:secondary-glow disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium"
                     >
                       {isLoading ? 'Exporting...' : 'Export'}
                     </button>
@@ -182,7 +182,7 @@ export function ExportGroupDialog({ open, onOpenChange, group }: ExportGroupDial
 
                 <button
                   onClick={handleClose}
-                  className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="w-full py-2 bg-gradient-primary text-white rounded-lg hover:shadow-lg hover:primary-glow transition-all duration-300 font-medium"
                 >
                   Done
                 </button>

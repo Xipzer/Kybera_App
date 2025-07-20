@@ -35,7 +35,7 @@ export function ModelSelector() {
               onClick={() => setSelectedModel(model.id)}
               className={`flex items-center justify-between px-3 py-2 text-sm rounded cursor-pointer transition-colors ${
                 model.id === selectedModel
-                  ? 'bg-accent-500/10 text-accent-500'
+                  ? 'bg-accent/10 text-accent'
                   : 'text-text-primary hover:bg-surface-hover'
               }`}
             >

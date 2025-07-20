@@ -38,7 +38,7 @@ export function NetworkSelector() {
               onClick={() => setActiveNetwork(network)}
               className={`flex items-center gap-2 px-3 py-2 text-sm rounded cursor-pointer transition-colors ${
                 network.id === activeNetwork.id
-                  ? 'bg-accent-500/10 text-accent-500'
+                  ? 'bg-accent/10 text-accent'
                   : 'text-text-primary hover:bg-surface-hover'
               }`}
             >

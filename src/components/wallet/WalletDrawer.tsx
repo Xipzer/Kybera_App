@@ -79,14 +79,14 @@ export function WalletDrawer() {
           <div className="flex gap-2">
             <button
               onClick={() => setShowCreateGroupDialog(true)}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gradient-candy-red text-white rounded-lg hover:shadow-lg hover:shadow-accent-500/30 transition-all duration-300 font-medium"
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gradient-primary text-white rounded-lg hover:shadow-lg hover:primary-glow transition-all duration-300 font-medium"
             >
               <Users className="w-4 h-4" />
               New Group
             </button>
             <DropdownMenu.Root>
               <DropdownMenu.Trigger asChild>
-                <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-border-default rounded-lg hover:bg-surface-hover hover:border-accent-500/50 transition-all duration-300 text-text-primary">
+                <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-border-default rounded-lg hover:bg-surface-hover hover:border-accent/50 transition-all duration-300 text-text-primary">
                   <Upload className="w-4 h-4 text-text-secondary" />
                   Import
                   <ChevronDown className="w-3 h-3 text-text-secondary" />
@@ -122,25 +122,25 @@ export function WalletDrawer() {
         <Tabs.List className="flex border-b border-border-subtle flex-shrink-0">
           <Tabs.Trigger
             value="groups"
-            className="flex-1 px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent-500 data-[state=active]:border-b-2 data-[state=active]:border-accent-500 transition-colors"
+            className="flex-1 px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent data-state-active:border-b-2 data-[state=active]:border-accent transition-colors"
           >
             Groups ({actualGroups.length})
           </Tabs.Trigger>
           <Tabs.Trigger
             value="evm"
-            className="flex-1 px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent-500 data-[state=active]:border-b-2 data-[state=active]:border-accent-500 transition-colors"
+            className="flex-1 px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent data-state-active:border-b-2 data-[state=active]:border-accent transition-colors"
           >
             EVM ({walletsByType.EVM.length})
           </Tabs.Trigger>
           <Tabs.Trigger
             value="svm"
-            className="flex-1 px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent-500 data-[state=active]:border-b-2 data-[state=active]:border-accent-500 transition-colors"
+            className="flex-1 px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent data-state-active:border-b-2 data-[state=active]:border-accent transition-colors"
           >
             SVM ({walletsByType.SVM.length})
           </Tabs.Trigger>
           <Tabs.Trigger
             value="all"
-            className="flex-1 px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent-500 data-[state=active]:border-b-2 data-[state=active]:border-accent-500 transition-colors"
+            className="flex-1 px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent data-state-active:border-b-2 data-[state=active]:border-accent transition-colors"
           >
             All ({wallets.length})
           </Tabs.Trigger>
@@ -350,7 +350,7 @@ export function WalletDrawer() {
 
         {activeWalletId && (
           <>
-            <PanelResizeHandle className="h-px bg-border-subtle hover:bg-accent-500 transition-colors" />
+            <PanelResizeHandle className="h-px bg-border-subtle hover:bg-accent transition-colors" />
             <Panel>
               <WalletDetailView />
             </Panel>
@@ -384,7 +384,7 @@ function WalletItem({
     <div
       className={`p-3 rounded-lg border transition-all cursor-pointer ${
         isActive
-          ? 'border-accent-500 bg-accent-500/10'
+          ? 'border-accent bg-accent/10'
           : 'border-border-subtle hover:border-border-default'
       }`}
       onClick={onSelect}
@@ -457,7 +457,7 @@ function WalletItem({
                   e.stopPropagation()
                   onDelete()
                 }}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-accent-500 hover:bg-accent-500/10 rounded cursor-pointer"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-accent hover:bg-accent/10 rounded cursor-pointer"
               >
                 <Trash2 className="w-4 h-4" />
                 Delete
@@ -551,7 +551,7 @@ function WalletGroupItem({
                       removeWalletGroup(group.id)
                     }
                   }}
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-accent-500 hover:bg-accent-500/10 rounded cursor-pointer"
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-accent hover:bg-accent/10 rounded cursor-pointer"
                 >
                   <Trash2 className="w-4 h-4" />
                   Delete Group
@@ -571,7 +571,7 @@ function WalletGroupItem({
               </p>
               <button
                 onClick={onAddWallet}
-                className="text-sm text-accent-500 hover:text-accent-400 hover:underline transition-colors"
+                className="text-sm text-accent hover:text-accent-400 hover:underline transition-colors"
               >
                 Add a wallet
               </button>
@@ -582,7 +582,7 @@ function WalletGroupItem({
                 key={wallet.id}
                 className={`group relative p-2 rounded transition-colors ${
                   wallet.id === activeWalletId
-                    ? 'bg-accent-500/10 border border-accent-500/30'
+                    ? 'bg-accent/10 border border-accent/30'
                     : 'hover:bg-surface-hover'
                 }`}
               >
@@ -640,7 +640,7 @@ function WalletGroupItem({
                               e.stopPropagation()
                               onDeleteWallet(wallet.id)
                             }}
-                            className="flex items-center gap-2 px-3 py-1.5 text-sm text-accent-500 hover:bg-accent-500/10 rounded cursor-pointer"
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm text-accent hover:bg-accent/10 rounded cursor-pointer"
                           >
                             <Trash2 className="w-3 h-3" />
                             Delete

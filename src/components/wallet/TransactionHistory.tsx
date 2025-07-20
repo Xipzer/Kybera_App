@@ -29,7 +29,7 @@ export function TransactionHistory({ wallet, network }: TransactionHistoryProps)
   if (error) {
     return (
       <div className="p-4 text-center">
-        <p className="text-accent-500">Error loading transactions</p>
+        <p className="text-accent">Error loading transactions</p>
         <p className="text-sm text-text-tertiary mt-1">{error}</p>
       </div>
     )
@@ -51,12 +51,12 @@ export function TransactionHistory({ wallet, network }: TransactionHistoryProps)
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center ${
                       isSent
-                        ? 'bg-accent-500/10'
+                        ? 'bg-accent/10'
                         : 'bg-green-500/10'
                     }`}
                   >
                     {isSent ? (
-                      <ArrowUpRight className="w-5 h-5 text-accent-500" />
+                      <ArrowUpRight className="w-5 h-5 text-accent" />
                     ) : (
                       <ArrowDownLeft className="w-5 h-5 text-green-500" />
                     )}
@@ -72,7 +72,7 @@ export function TransactionHistory({ wallet, network }: TransactionHistoryProps)
                           ? 'bg-green-500/10 text-green-500'
                           : tx.status === 'pending'
                           ? 'bg-yellow-500/10 text-yellow-500'
-                          : 'bg-accent-500/10 text-accent-500'
+                          : 'bg-accent/10 text-accent'
                       }`}>
                         {tx.status === 'confirmed' ? 'success' : tx.status}
                       </span>
@@ -89,7 +89,7 @@ export function TransactionHistory({ wallet, network }: TransactionHistoryProps)
 
                 <div className="text-right">
                   <p className={`font-medium ${
-                    isSent ? 'text-accent-500' : 'text-green-500'
+                    isSent ? 'text-accent' : 'text-green-500'
                   }`}>
                     {isSent ? '-' : '+'}{formatBalance(tx.value)} {nativeCurrency.symbol}
                   </p>

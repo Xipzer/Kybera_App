@@ -191,7 +191,7 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
                 <button
                   type="submit"
                   disabled={!groupName.trim() || !seedPhrase.trim() || isLoading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-2 bg-gradient-secondary text-white rounded-lg hover:shadow-lg hover:secondary-glow disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium"
                 >
                   {isLoading ? 'Importing...' : 'Import Group'}
                 </button>

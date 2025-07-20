@@ -116,7 +116,7 @@ export function ChatInterface() {
           </p>
           <button
             onClick={() => setShowSettings(true)}
-            className="px-4 py-2 bg-gradient-candy-red text-white rounded-lg hover:shadow-lg hover:shadow-accent-500/30 transition-all duration-300 font-medium"
+            className="px-4 py-2 bg-gradient-primary text-white rounded-lg hover:shadow-lg hover:primary-glow transition-all duration-300 font-medium"
           >
             Configure API Key
           </button>
@@ -180,7 +180,7 @@ export function ChatInterface() {
             )}
             {isLoading && !streamingContent && (
               <div className="flex gap-4 mb-6">
-                <div className="flex-shrink-0 w-8 h-8 bg-gradient-candy-red rounded-lg flex items-center justify-center candy-red-glow">
+                <div className="flex-shrink-0 w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center primary-glow">
                   <div className="flex items-center gap-1">
                     <div className="w-1.5 h-1.5 bg-surface-base rounded-full animate-pulse" />
                     <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse animation-delay-200" />
@@ -209,13 +209,13 @@ export function ChatInterface() {
               onKeyDown={handleKeyPress}
               placeholder="Type your message..."
               rows={1}
-              className="flex-1 px-4 py-2 border border-border-default rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 resize-none transition-colors"
+              className="flex-1 px-4 py-2 border border-border-default rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent resize-none transition-colors"
               style={{ minHeight: '44px', maxHeight: '200px' }}
             />
             <button
               onClick={handleSend}
               disabled={!input.trim() || isLoading}
-              className="px-4 py-2 bg-gradient-candy-red text-white rounded-lg hover:shadow-lg hover:shadow-accent-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium"
+              className="px-4 py-2 bg-gradient-primary text-white rounded-lg hover:shadow-lg hover:primary-glow disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium"
             >
               <Send className="w-5 h-5" />
             </button>

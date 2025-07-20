@@ -68,7 +68,7 @@ export function UnlockScreen() {
         <div className="bg-surface-base border border-border-subtle rounded-lg shadow-2xl p-8 backdrop-blur-sm">
           <div className="flex flex-col items-center mb-8">
             {profilePicture ? (
-              <div className="w-20 h-20 rounded-full overflow-hidden mb-4 ring-2 ring-accent-500 ring-offset-2 ring-offset-surface-base">
+              <div className="w-20 h-20 rounded-full overflow-hidden mb-4 ring-2 ring-accent ring-offset-2 ring-offset-surface-base">
                 <img 
                   src={profilePicture} 
                   alt="Profile" 
@@ -76,7 +76,7 @@ export function UnlockScreen() {
                 />
               </div>
             ) : (
-              <div className="w-16 h-16 bg-gradient-candy-red rounded-full flex items-center justify-center mb-4 candy-red-glow">
+              <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mb-4 primary-glow">
                 <Wallet className="w-8 h-8 text-white" />
               </div>
             )}
@@ -98,7 +98,7 @@ export function UnlockScreen() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter password"
-                  className="w-full pl-10 pr-3 py-2 border border-border-subtle rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors"
+                  className="w-full pl-10 pr-3 py-2 border border-border-subtle rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
                   autoFocus
                 />
               </div>
@@ -116,14 +116,14 @@ export function UnlockScreen() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirm password"
-                    className="w-full pl-10 pr-3 py-2 border border-border-subtle rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors"
+                    className="w-full pl-10 pr-3 py-2 border border-border-subtle rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
                   />
                 </div>
               </div>
             )}
 
             {error && (
-              <div className="p-3 bg-accent-500/10 border border-accent-500/30 rounded-lg">
+              <div className="p-3 bg-accent/10 border border-accent/30 rounded-lg">
                 <p className="text-sm text-accent-400">{error}</p>
               </div>
             )}
@@ -131,7 +131,7 @@ export function UnlockScreen() {
             <button
               type="submit"
               disabled={isLoading || (isLockedOut && isLockedOut())}
-              className="w-full py-2 bg-gradient-candy-red text-white rounded-lg hover:shadow-lg hover:shadow-accent-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-semibold"
+              className="w-full py-2 bg-gradient-primary text-white rounded-lg hover:shadow-lg hover:primary-glow disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-semibold"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">

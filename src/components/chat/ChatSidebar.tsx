@@ -22,7 +22,7 @@ export function ChatSidebar() {
         
         <button
           onClick={handleNewChat}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gradient-candy-red text-white rounded-lg hover:shadow-lg hover:shadow-accent-500/30 transition-all duration-300 font-medium"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gradient-primary text-white rounded-lg hover:shadow-lg hover:primary-glow transition-all duration-300 font-medium"
         >
           <Plus className="w-4 h-4" />
           New Chat
@@ -50,7 +50,7 @@ export function ChatSidebar() {
                 onClick={() => setActiveConversation(conversation.id)}
                 className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
                   conversation.id === activeConversationId
-                    ? 'bg-accent-500/10 border border-accent-500/30'
+                    ? 'bg-accent/10 border border-accent/30'
                     : 'hover:bg-surface-hover'
                 }`}
               >

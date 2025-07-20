@@ -86,7 +86,7 @@ export function WalletDetailView() {
               </div>
             ) : error ? (
               <div className="flex items-center gap-2">
-                <span className="text-accent-500">Error loading balance</span>
+                <span className="text-accent">Error loading balance</span>
                 <button
                   onClick={refetch}
                   className="p-1 rounded hover:bg-surface-hover transition-colors"
@@ -118,11 +118,11 @@ export function WalletDetailView() {
               {change24h >= 0 ? (
                 <TrendingUp className="w-4 h-4 text-green-500" />
               ) : (
-                <TrendingDown className="w-4 h-4 text-accent-500" />
+                <TrendingDown className="w-4 h-4 text-accent" />
               )}
               <span
                 className={`text-sm ${
-                  change24h >= 0 ? 'text-green-500' : 'text-accent-500'
+                  change24h >= 0 ? 'text-green-500' : 'text-accent'
                 }`}
               >
                 {change24h >= 0 ? '+' : ''}{change24h}% (24h)
@@ -135,16 +135,16 @@ export function WalletDetailView() {
         <div className="flex gap-3">
           <button
             onClick={() => setShowSendDialog(true)}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gradient-candy-red text-white rounded-lg hover:shadow-lg hover:shadow-accent-500/30 transition-all duration-300 font-medium"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gradient-primary text-white rounded-lg hover:shadow-lg hover:primary-glow transition-all duration-300 font-medium"
           >
             <Send className="w-4 h-4" />
             Send
           </button>
           <button
             onClick={() => setShowReceiveDialog(true)}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-border-default rounded-lg hover:bg-surface-hover hover:border-accent-500/50 transition-all duration-300 text-text-primary"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gradient-secondary text-white rounded-lg hover:shadow-lg hover:secondary-glow transition-all duration-300 font-medium"
           >
-            <Download className="w-4 h-4 text-text-secondary" />
+            <Download className="w-4 h-4" />
             Receive
           </button>
         </div>
@@ -155,14 +155,14 @@ export function WalletDetailView() {
         <Tabs.List className="flex border-b border-border-subtle">
           <Tabs.Trigger
             value="tokens"
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent-500 data-[state=active]:border-b-2 data-[state=active]:border-accent-500 transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent data-state-active:border-b-2 data-[state=active]:border-accent transition-colors"
           >
             <Coins className="w-4 h-4" />
             Tokens
           </Tabs.Trigger>
           <Tabs.Trigger
             value="history"
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent-500 data-[state=active]:border-b-2 data-[state=active]:border-accent-500 transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent data-state-active:border-b-2 data-[state=active]:border-accent transition-colors"
           >
             <History className="w-4 h-4" />
             History

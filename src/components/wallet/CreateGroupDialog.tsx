@@ -146,7 +146,7 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                     <button
                       type="submit"
                       disabled={!groupName.trim() || isLoading}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="px-4 py-2 bg-gradient-primary text-white rounded-lg hover:shadow-lg hover:primary-glow disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium"
                     >
                       {isLoading ? 'Creating...' : 'Create Group'}
                     </button>
@@ -192,7 +192,7 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
 
                 <button
                   onClick={handleClose}
-                  className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="w-full py-2 bg-gradient-primary text-white rounded-lg hover:shadow-lg hover:primary-glow transition-all duration-300 font-medium"
                 >
                   Done
                 </button>

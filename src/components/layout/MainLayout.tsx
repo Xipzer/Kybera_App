@@ -43,7 +43,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             )}
           </button>
           <div className="flex items-center gap-2">
-            <Wallet className="w-6 h-6 text-accent-500" />
+            <Wallet className="w-6 h-6 text-accent" />
             <h1 className="text-xl font-semibold text-text-primary">SmartWallet AI</h1>
           </div>
         </div>
@@ -68,7 +68,7 @@ export function MainLayout({ children }: MainLayoutProps) {
               <Panel defaultSize={20} minSize={15} maxSize={30}>
                 <ChatSidebar />
               </Panel>
-              <PanelResizeHandle className="w-px bg-border-subtle hover:bg-accent-500 transition-colors" />
+              <PanelResizeHandle className="w-px bg-border-subtle hover:bg-accent transition-colors" />
             </>
           )}
 
@@ -78,7 +78,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
           {walletDrawerOpen && (
             <>
-              <PanelResizeHandle className="w-px bg-border-subtle hover:bg-accent-500 transition-colors" />
+              <PanelResizeHandle className="w-px bg-border-subtle hover:bg-accent transition-colors" />
               <Panel
                 defaultSize={(walletDrawerWidth / window.innerWidth) * 100}
                 minSize={15}

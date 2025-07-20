@@ -93,7 +93,7 @@ export function AddWalletToGroupDialog({ open, onOpenChange, groupId }: AddWalle
                       Select Group
                     </label>
                     <Select.Root value={selectedGroupId} onValueChange={setSelectedGroupId}>
-                      <Select.Trigger className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-elevated text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 flex items-center justify-between transition-colors">
+                      <Select.Trigger className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-elevated text-text-primary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent flex items-center justify-between transition-colors">
                         <Select.Value placeholder="Choose a wallet group" />
                         <ChevronDown className="w-4 h-4 text-text-secondary" />
                       </Select.Trigger>
@@ -125,13 +125,13 @@ export function AddWalletToGroupDialog({ open, onOpenChange, groupId }: AddWalle
                   value={walletName}
                   onChange={(e) => setWalletName(e.target.value)}
                   placeholder="e.g., Trading Wallet #1"
-                  className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors"
+                  className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
                   autoFocus
                 />
               </div>
 
               {error && (
-                <div className="p-3 bg-accent-500/10 border border-accent-500/30 rounded-lg">
+                <div className="p-3 bg-accent/10 border border-accent/30 rounded-lg">
                   <p className="text-sm text-accent-400">{error}</p>
                 </div>
               )}
@@ -147,7 +147,7 @@ export function AddWalletToGroupDialog({ open, onOpenChange, groupId }: AddWalle
                 <button
                   type="submit"
                   disabled={!selectedGroupId || !walletName.trim() || isLoading}
-                  className="px-4 py-2 bg-gradient-candy-red text-white rounded-lg hover:shadow-lg hover:shadow-accent-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium flex items-center gap-2"
+                  className="px-4 py-2 bg-gradient-primary text-white rounded-lg hover:shadow-lg hover:primary-glow disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium flex items-center gap-2"
                 >
                   {isLoading ? (
                     <>
