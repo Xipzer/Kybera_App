@@ -1,0 +1,872 @@
+/**
+ * Code by Xipzer
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root,
+.xipz {
+  --color-primary-50: 250 248 252;
+  --color-primary-100: 243 240 248;
+  --color-primary-200: 229 223 238;
+  --color-primary-300: 205 193 219;
+  --color-primary-400: 161 143 185;
+  --color-primary-500: 117 93 151;
+  --color-primary-600: 89 65 123;
+  --color-primary-700: 66 45 95;
+  --color-primary-800: 44 28 67;
+  --color-primary-900: 22 12 39;
+  --color-primary-950: 11 6 20;
+  --color-accent-50: 254 242 242;
+  --color-accent-100: 254 226 226;
+  --color-accent-200: 254 202 202;
+  --color-accent-300: 252 165 165;
+  --color-accent-400: 248 113 113;
+  --color-accent-500: 239 68 68;
+  --color-accent-600: 220 38 38;
+  --color-accent-700: 185 28 28;
+  --color-accent-800: 153 27 27;
+  --color-accent-900: 127 29 29;
+  --color-bg-base: 11 6 20;
+  --color-bg-elevated: 22 12 39;
+  --color-bg-overlay: 44 28 67;
+  --color-bg-subtle: 17 9 30;
+  --color-surface-base: 22 12 39;
+  --color-surface-elevated: 44 28 67;
+  --color-surface-overlay: 66 45 95;
+  --color-surface-hover: 33 20 53;
+  --color-text-primary: 243 240 248;
+  --color-text-secondary: 205 193 219;
+  --color-text-tertiary: 161 143 185;
+  --color-text-inverse: 22 12 39;
+  --color-border-subtle: 44 28 67;
+  --color-border-default: 44 28 67;
+  --color-border-strong: 66 45 95;
+  --color-interactive-hover: 239 68 68 / 0.1;
+  --color-interactive-active: 239 68 68 / 0.2;
+  --color-interactive-focus: 239 68 68;
+  --gradient-pearlescent: linear-gradient(135deg, rgb(var(--color-primary-900)) 0%, rgb(var(--color-primary-700)) 40%, rgb(var(--color-primary-800)) 60%, rgb(var(--color-primary-950)) 100%);
+  --gradient-candy-red: linear-gradient(135deg, rgb(var(--color-accent-500)) 0%, rgb(var(--color-accent-600)) 50%, rgb(var(--color-accent-700)) 100%);
+}
+
+.light {
+  --color-primary-50: 250 250 255;
+  --color-primary-100: 245 245 252;
+  --color-primary-200: 235 235 245;
+  --color-primary-300: 220 222 232;
+  --color-primary-400: 180 184 200;
+  --color-primary-500: 140 144 170;
+  --color-primary-600: 100 104 140;
+  --color-primary-700: 70 75 110;
+  --color-primary-800: 45 50 85;
+  --color-primary-900: 25 28 55;
+  --color-primary-950: 12 14 30;
+  --color-accent-50: 245 245 255;
+  --color-accent-100: 235 235 255;
+  --color-accent-200: 210 210 255;
+  --color-accent-300: 180 180 255;
+  --color-accent-400: 155 155 255;
+  --color-accent-500: 139 139 255;
+  --color-accent-600: 120 120 230;
+  --color-accent-700: 100 100 200;
+  --color-accent-800: 80 80 170;
+  --color-accent-900: 60 60 140;
+  --color-secondary-50: 240 245 255;
+  --color-secondary-100: 225 235 255;
+  --color-secondary-200: 200 215 255;
+  --color-secondary-300: 170 190 255;
+  --color-secondary-400: 140 165 255;
+  --color-secondary-500: 100 130 255;
+  --color-secondary-600: 80 110 230;
+  --color-secondary-700: 60 90 200;
+  --color-secondary-800: 45 70 170;
+  --color-secondary-900: 30 50 140;
+  --color-bg-base: 252 252 255;
+  --color-bg-elevated: 255 255 255;
+  --color-bg-overlay: 248 248 252;
+  --color-bg-subtle: 245 245 250;
+  --color-surface-base: 255 255 255;
+  --color-surface-elevated: 252 252 255;
+  --color-surface-overlay: 248 248 252;
+  --color-surface-hover: 245 245 252;
+  --color-text-primary: 20 20 40;
+  --color-text-secondary: 80 85 110;
+  --color-text-tertiary: 140 145 175;
+  --color-text-inverse: 250 250 255;
+  --color-border-subtle: 230 232 242;
+  --color-border-default: 210 215 230;
+  --color-border-strong: 180 185 210;
+  --color-interactive-hover: 139 139 255 / 0.1;
+  --color-interactive-active: 139 139 255 / 0.2;
+  --color-interactive-focus: 139 139 255;
+  --gradient-pearlescent: linear-gradient(135deg, rgb(255, 255, 255) 0%, rgb(139, 139, 255) 50%, rgb(255, 255, 255) 100%);
+  --gradient-candy-red: linear-gradient(135deg, rgb(var(--color-accent-500)) 0%, rgb(var(--color-secondary-500)) 100%);
+}
+
+.dark {
+  --color-primary-50: 240 242 255;
+  --color-primary-100: 225 228 250;
+  --color-primary-200: 200 205 240;
+  --color-primary-300: 170 175 220;
+  --color-primary-400: 130 135 190;
+  --color-primary-500: 100 105 160;
+  --color-primary-600: 75 80 130;
+  --color-primary-700: 50 55 100;
+  --color-primary-800: 30 32 60;
+  --color-primary-900: 18 18 31;
+  --color-primary-950: 3 3 8;
+  --color-accent-50: 245 245 255;
+  --color-accent-100: 235 235 255;
+  --color-accent-200: 210 210 255;
+  --color-accent-300: 180 180 255;
+  --color-accent-400: 155 155 255;
+  --color-accent-500: 139 139 255;
+  --color-accent-600: 120 120 230;
+  --color-accent-700: 100 100 200;
+  --color-accent-800: 80 80 170;
+  --color-accent-900: 60 60 140;
+  --color-secondary-50: 240 240 255;
+  --color-secondary-100: 220 220 255;
+  --color-secondary-200: 190 190 255;
+  --color-secondary-300: 160 160 255;
+  --color-secondary-400: 130 130 255;
+  --color-secondary-500: 100 100 255;
+  --color-secondary-600: 84 84 255;
+  --color-secondary-700: 70 70 220;
+  --color-secondary-800: 55 55 180;
+  --color-secondary-900: 40 40 140;
+  --color-bg-base: 3 3 8;
+  --color-bg-elevated: 10 10 18;
+  --color-bg-overlay: 18 18 31;
+  --color-bg-subtle: 6 6 12;
+  --color-surface-base: 10 10 18;
+  --color-surface-elevated: 18 18 31;
+  --color-surface-overlay: 25 25 42;
+  --color-surface-hover: 22 22 36;
+  --color-text-primary: 240 242 255;
+  --color-text-secondary: 160 164 192;
+  --color-text-tertiary: 90 94 128;
+  --color-text-inverse: 3 3 8;
+  --color-border-subtle: 35 33 68;
+  --color-border-default: 45 42 82;
+  --color-border-strong: 65 62 115;
+  --color-interactive-hover: 139 139 255 / 0.1;
+  --color-interactive-active: 139 139 255 / 0.2;
+  --color-interactive-focus: 139 139 255;
+  --gradient-pearlescent: linear-gradient(135deg, rgb(139, 139, 255) 0%, rgb(84, 84, 255) 100%);
+  --gradient-candy-red: linear-gradient(135deg, rgb(139, 139, 255) 0%, rgb(100, 100, 255) 100%);
+}
+
+.ogDark {
+  --color-primary-50: 250 250 250;
+  --color-primary-100: 245 245 245;
+  --color-primary-200: 229 229 229;
+  --color-primary-300: 212 212 212;
+  --color-primary-400: 163 163 163;
+  --color-primary-500: 115 115 115;
+  --color-primary-600: 82 82 82;
+  --color-primary-700: 64 64 64;
+  --color-primary-800: 38 38 38;
+  --color-primary-900: 23 23 23;
+  --color-primary-950: 10 10 10;
+  --color-accent-50: 236 254 255;
+  --color-accent-100: 207 250 254;
+  --color-accent-200: 165 243 252;
+  --color-accent-300: 103 232 249;
+  --color-accent-400: 34 211 238;
+  --color-accent-500: 0 225 255;
+  --color-accent-600: 0 184 212;
+  --color-accent-700: 0 151 167;
+  --color-accent-800: 0 127 140;
+  --color-accent-900: 0 96 100;
+  --color-secondary-50: 253 242 248;
+  --color-secondary-100: 252 231 243;
+  --color-secondary-200: 251 207 232;
+  --color-secondary-300: 249 168 212;
+  --color-secondary-400: 244 114 182;
+  --color-secondary-500: 255 0 153;
+  --color-secondary-600: 219 39 119;
+  --color-secondary-700: 190 24 93;
+  --color-secondary-800: 157 23 77;
+  --color-secondary-900: 131 24 67;
+  --color-bg-base: 18 18 18;
+  --color-bg-elevated: 26 26 26;
+  --color-bg-overlay: 38 38 38;
+  --color-bg-subtle: 13 13 13;
+  --color-surface-base: 26 26 26;
+  --color-surface-elevated: 33 33 33;
+  --color-surface-overlay: 46 46 46;
+  --color-surface-hover: 29 29 29;
+  --color-text-primary: 245 245 245;
+  --color-text-secondary: 212 212 212;
+  --color-text-tertiary: 163 163 163;
+  --color-text-inverse: 23 23 23;
+  --color-border-subtle: 38 38 38;
+  --color-border-default: 38 38 38;
+  --color-border-strong: 51 51 51;
+  --color-interactive-hover: 0 225 255 / 0.1;
+  --color-interactive-active: 0 225 255 / 0.2;
+  --color-interactive-focus: 0 225 255;
+  --gradient-pearlescent: linear-gradient(135deg, rgb(0, 225, 255) 0%, rgb(255, 0, 153) 100%);
+  --gradient-candy-red: linear-gradient(135deg, rgb(255, 0, 153) 0%, rgb(219, 39, 119) 100%);
+}
+
+.ogLight {
+  --color-primary-50: 255 255 255;
+  --color-primary-100: 250 250 250;
+  --color-primary-200: 245 245 245;
+  --color-primary-300: 229 231 235;
+  --color-primary-400: 209 213 219;
+  --color-primary-500: 156 163 175;
+  --color-primary-600: 107 114 128;
+  --color-primary-700: 75 85 99;
+  --color-primary-800: 55 65 81;
+  --color-primary-900: 31 41 55;
+  --color-primary-950: 17 24 39;
+  --color-accent-50: 236 254 255;
+  --color-accent-100: 207 250 254;
+  --color-accent-200: 165 243 252;
+  --color-accent-300: 103 232 249;
+  --color-accent-400: 34 211 238;
+  --color-accent-500: 0 225 255;
+  --color-accent-600: 0 184 212;
+  --color-accent-700: 0 151 167;
+  --color-accent-800: 0 127 140;
+  --color-accent-900: 0 96 100;
+  --color-secondary-50: 253 242 248;
+  --color-secondary-100: 252 231 243;
+  --color-secondary-200: 251 207 232;
+  --color-secondary-300: 249 168 212;
+  --color-secondary-400: 244 114 182;
+  --color-secondary-500: 255 0 153;
+  --color-secondary-600: 219 39 119;
+  --color-secondary-700: 190 24 93;
+  --color-secondary-800: 157 23 77;
+  --color-secondary-900: 131 24 67;
+  --color-bg-base: 255 255 255;
+  --color-bg-elevated: 250 250 250;
+  --color-bg-overlay: 245 245 245;
+  --color-bg-subtle: 252 252 252;
+  --color-surface-base: 255 255 255;
+  --color-surface-elevated: 250 250 250;
+  --color-surface-overlay: 245 245 245;
+  --color-surface-hover: 240 240 240;
+  --color-text-primary: 17 24 39;
+  --color-text-secondary: 75 85 99;
+  --color-text-tertiary: 156 163 175;
+  --color-text-inverse: 255 255 255;
+  --color-border-subtle: 229 231 235;
+  --color-border-default: 209 213 219;
+  --color-border-strong: 156 163 175;
+  --color-interactive-hover: 0 225 255 / 0.1;
+  --color-interactive-active: 0 225 255 / 0.2;
+  --color-interactive-focus: 0 225 255;
+  --gradient-pearlescent: linear-gradient(135deg, rgb(0, 225, 255) 0%, rgb(255, 0, 153) 100%);
+  --gradient-candy-red: linear-gradient(135deg, rgb(255, 0, 153) 0%, rgb(219, 39, 119) 100%);
+}
+
+.pearlescent {
+  background: var(--gradient-pearlescent);
+  position: relative;
+}
+
+.pearlescent::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg, transparent 30%, rgba(161, 143, 185, 0.2) 50%, transparent 70%);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@layer utilities {
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+  
+  .animation-delay-400 {
+    animation-delay: 400ms;
+  }
+
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .safe-area-inset {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  html, body, #root {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background-color: var(--color-surface-base, #030308);
+  }
+
+  html, body {
+    overscroll-behavior: none;
+  }
+
+  .overscroll-contain {
+    overscroll-behavior: contain;
+  }
+
+  .momentum-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+  
+  .dialog-overlay {
+    @apply fixed inset-0 bg-black/80 z-40;
+  }
+  
+  .dialog-content {
+    @apply fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50;
+    @apply max-w-[calc(100vw-32px)] max-h-[calc(100vh-32px)];
+  }
+
+  [data-radix-popper-content-wrapper] {
+    z-index: 9999 !important;
+  }
+  
+  .bg-gradient-pearlescent {
+    background: var(--gradient-pearlescent);
+  }
+  
+  .bg-gradient-candy-red {
+    background: var(--gradient-candy-red);
+  }
+  
+  .panel-content-fade {
+    animation: fadeIn 300ms ease-out;
+  }
+  
+  .panel-content-fade-right {
+    animation: fadeIn 300ms ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  .bg-gradient-lockscreen {
+    background: linear-gradient(135deg, rgb(0, 225, 255) 0%, rgb(255, 0, 153) 100%);
+  }
+  :root.dark .bg-gradient-lockscreen,
+  .dark .bg-gradient-lockscreen {
+    background: linear-gradient(135deg, rgb(0, 90, 102) 0%, rgb(102, 0, 61) 100%);
+  }
+  :root.xipz .bg-gradient-lockscreen,
+  .xipz .bg-gradient-lockscreen {
+    background: linear-gradient(
+      135deg,
+      rgb(22, 12, 39) 0%,
+      rgb(66, 45, 95) 40%,
+      rgb(44, 28, 67) 60%,
+      rgb(11, 6, 20) 100%
+    ) !important;
+  }
+  
+  .bg-chat-surface {
+    background-color: rgb(23 23 23);
+  }
+  
+  .bg-chat-message {
+    background-color: rgba(38, 38, 38, 0.8);
+  }
+  
+  .candy-red-glow {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+  }
+  
+  .bg-gradient-cyan {
+    background: linear-gradient(135deg, rgb(0, 225, 255) 0%, rgb(0, 184, 212) 100%);
+  }
+  
+  .bg-gradient-pink {
+    background: linear-gradient(135deg, rgb(255, 0, 153) 0%, rgb(219, 39, 119) 100%);
+  }
+  
+  .cyan-glow {
+    box-shadow: 0 0 20px rgba(0, 225, 255, 0.5);
+  }
+  
+  .pink-glow {
+    box-shadow: 0 0 20px rgba(255, 0, 153, 0.5);
+  }
+  
+  .primary-glow {
+    box-shadow: 0 0 20px rgba(0, 225, 255, 0.5), 0 0 30px rgba(255, 0, 153, 0.3);
+  }
+  :root.dark .primary-glow {
+    box-shadow: 0 0 20px rgba(0, 225, 255, 0.5), 0 0 30px rgba(255, 0, 153, 0.3);
+  }
+  :root.xipz .primary-glow {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.5) !important;
+  }
+  
+  .secondary-glow {
+    box-shadow: 0 0 20px rgba(255, 0, 153, 0.5);
+  }
+  .xipz .secondary-glow {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+  }
+  
+  .ring-accent {
+    --tw-ring-color: rgb(var(--color-accent-500));
+  }
+  .xipz .ring-accent {
+    --tw-ring-color: rgb(239 68 68);
+  }
+  
+  .border-accent {
+    border-color: rgb(var(--color-accent-500));
+  }
+  .xipz .border-accent {
+    border-color: rgb(239 68 68);
+  }
+  
+  .bg-accent {
+    background-color: rgb(var(--color-accent-500));
+  }
+  .xipz .bg-accent {
+    background-color: rgb(239 68 68);
+  }
+  
+  .bg-accent-10 {
+    background-color: rgb(var(--color-accent-500) / 0.1);
+  }
+  .xipz .bg-accent-10 {
+    background-color: rgb(239 68 68 / 0.1);
+  }
+  
+  .bg-accent-30 {
+    background-color: rgb(var(--color-accent-500) / 0.3);
+  }
+  .xipz .bg-accent-30 {
+    background-color: rgb(239 68 68 / 0.3);
+  }
+  
+  .bg-accent\/10 {
+    background-color: rgb(var(--color-accent-500) / 0.1);
+  }
+  .xipz .bg-accent\/10 {
+    background-color: rgb(239 68 68 / 0.1);
+  }
+  
+  .bg-accent\/30 {
+    background-color: rgb(var(--color-accent-500) / 0.3);
+  }
+  .xipz .bg-accent\/30 {
+    background-color: rgb(239 68 68 / 0.3);
+  }
+  
+  .border-accent\/30 {
+    border-color: rgb(var(--color-accent-500) / 0.3);
+  }
+  .xipz .border-accent\/30 {
+    border-color: rgb(239 68 68 / 0.3);
+  }
+  
+  .text-accent {
+    color: rgb(var(--color-accent-500));
+  }
+  .xipz .text-accent {
+    color: rgb(239 68 68);
+  }
+  
+  .text-accent-400 {
+    color: rgb(var(--color-accent-400));
+  }
+  .xipz .text-accent-400 {
+    color: rgb(248 113 113);
+  }
+  
+  .hover\:text-accent-400:hover {
+    color: rgb(var(--color-accent-400));
+  }
+  .xipz .hover\:text-accent-400:hover {
+    color: rgb(248 113 113);
+  }
+  
+  .hover\:bg-accent-10:hover {
+    background-color: rgb(var(--color-accent-500) / 0.1);
+  }
+  .xipz .hover\:bg-accent-10:hover {
+    background-color: rgb(239 68 68 / 0.1);
+  }
+  
+  .hover\:border-accent-50:hover {
+    border-color: rgb(var(--color-accent-500) / 0.5);
+  }
+  .xipz .hover\:border-accent-50:hover {
+    border-color: rgb(239 68 68 / 0.5);
+  }
+  
+  .data-state-active\:text-accent[data-state="active"] {
+    color: rgb(var(--color-accent-500));
+  }
+  .xipz .data-state-active\:text-accent[data-state="active"] {
+    color: rgb(239 68 68);
+  }
+  
+  .data-state-active\:border-accent[data-state="active"] {
+    border-color: rgb(var(--color-accent-500));
+  }
+  .xipz .data-state-active\:border-accent[data-state="active"] {
+    border-color: rgb(239 68 68);
+  }
+  
+  .focus\:ring-accent:focus {
+    --tw-ring-color: rgb(var(--color-accent-500));
+  }
+  .xipz .focus\:ring-accent:focus {
+    --tw-ring-color: rgb(239 68 68);
+  }
+  
+  .focus\:ring-2:focus {
+    --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+    --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+    box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+  }
+  
+  .focus\:border-accent:focus {
+    border-color: rgb(var(--color-accent-500));
+  }
+  .xipz .focus\:border-accent:focus {
+    border-color: rgb(239 68 68);
+  }
+  
+  .ring-2 {
+    --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+    --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+    box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+  }
+  
+  .ring-offset-2 {
+    --tw-ring-offset-width: 2px;
+  }
+  
+  .ring-offset-surface-base {
+    --tw-ring-offset-color: rgb(var(--color-surface-base));
+  }
+}
+
+.prose {
+  @apply text-text-primary;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  @apply text-text-primary;
+}
+
+.prose strong {
+  @apply text-text-primary font-bold;
+}
+
+.prose a {
+  color: rgb(var(--color-accent-500));
+}
+.prose a:hover {
+  color: rgb(var(--color-accent-400));
+}
+.xipz .prose a {
+  color: rgb(239 68 68);
+}
+.xipz .prose a:hover {
+  color: rgb(248 113 113);
+}
+
+.prose blockquote {
+  color: rgb(var(--color-text-secondary));
+  border-left-width: 4px;
+  border-left-color: rgb(var(--color-accent-500));
+}
+.xipz .prose blockquote {
+  border-left-color: rgb(239 68 68);
+}
+
+.prose pre {
+  @apply bg-surface-elevated rounded-lg p-4 text-text-primary;
+}
+
+.prose code {
+  @apply bg-surface-elevated px-1 py-0.5 rounded text-text-primary;
+}
+
+.prose ol, .prose ul {
+  @apply text-text-primary;
+}
+
+.prose li {
+  @apply text-text-primary;
+}
+
+.prose.dark\:prose-invert {
+  @apply text-text-primary;
+}
+
+.prose.dark\:prose-invert h1,
+.prose.dark\:prose-invert h2,
+.prose.dark\:prose-invert h3,
+.prose.dark\:prose-invert h4,
+.prose.dark\:prose-invert h5,
+.prose.dark\:prose-invert h6 {
+  @apply text-text-primary;
+}
+
+.prose.dark\:prose-invert strong {
+  @apply text-text-primary;
+}
+
+.prose.dark\:prose-invert a {
+  color: rgb(var(--color-accent-500));
+}
+.prose.dark\:prose-invert a:hover {
+  color: rgb(var(--color-accent-400));
+}
+.xipz .prose.dark\:prose-invert a {
+  color: rgb(239 68 68);
+}
+.xipz .prose.dark\:prose-invert a:hover {
+  color: rgb(248 113 113);
+}
+
+.prose.dark\:prose-invert code {
+  @apply text-text-primary;
+}
+
+* {
+  scrollbar-width: thin;
+}
+
+.light * {
+  scrollbar-color: rgb(99, 102, 241) transparent;
+}
+
+.light *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.light *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.light *::-webkit-scrollbar-thumb {
+  background: rgb(99, 102, 241);
+  border-radius: 10px;
+}
+
+.light *::-webkit-scrollbar-thumb:hover {
+  background: rgb(79, 70, 229);
+}
+
+.light *::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.dark * {
+  scrollbar-color: rgb(139, 139, 255) transparent;
+}
+
+.dark *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.dark *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dark *::-webkit-scrollbar-thumb {
+  background: rgb(139, 139, 255);
+  border-radius: 10px;
+}
+
+.dark *::-webkit-scrollbar-thumb:hover {
+  background: rgb(167, 139, 250);
+}
+
+.dark *::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.xipz * {
+  scrollbar-color: rgb(255, 0, 102) transparent;
+}
+
+.xipz *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.xipz *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.xipz *::-webkit-scrollbar-thumb {
+  background: rgb(255, 0, 102);
+  border-radius: 10px;
+}
+
+.xipz *::-webkit-scrollbar-thumb:hover {
+  background: rgb(204, 0, 82);
+}
+
+.xipz *::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.ogDark * {
+  scrollbar-color: rgb(255, 0, 153) transparent;
+}
+
+.ogDark *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.ogDark *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ogDark *::-webkit-scrollbar-thumb {
+  background: rgb(255, 0, 153);
+  border-radius: 10px;
+}
+
+.ogDark *::-webkit-scrollbar-thumb:hover {
+  background: rgb(219, 39, 119);
+}
+
+.ogDark *::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.ogLight * {
+  scrollbar-color: rgb(255, 0, 153) transparent;
+}
+
+.ogLight *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.ogLight *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ogLight *::-webkit-scrollbar-thumb {
+  background: rgb(255, 0, 153);
+  border-radius: 10px;
+}
+
+.ogLight *::-webkit-scrollbar-thumb:hover {
+  background: rgb(219, 39, 119);
+}
+
+.ogLight *::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgb(var(--color-accent-500));
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+    box-shadow: 0 0 8px rgba(var(--color-accent-500), 0.4);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgb(var(--color-accent-500));
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+    transform: scale(1.15);
+    box-shadow: 0 0 8px rgba(var(--color-accent-500), 0.4);
+}
+
+[data-radix-scroll-area-viewport] {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+[data-radix-scroll-area-viewport]::-webkit-scrollbar {
+  display: none;
+}
+
+[data-radix-scroll-area-scrollbar][data-state="visible"] [data-radix-scroll-area-thumb] {
+  opacity: 1 !important;
+}
+
+.custom-scrollarea [data-radix-scroll-area-thumb] {
+  opacity: 1 !important;
+}
+
+.custom-scrollarea [data-radix-scroll-area-scrollbar][data-state="visible"] [data-radix-scroll-area-thumb],
+.custom-scrollarea [data-radix-scroll-area-scrollbar]:hover [data-radix-scroll-area-thumb] {
+  opacity: 1 !important;
+}
