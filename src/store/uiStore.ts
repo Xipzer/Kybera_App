@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware'
 interface UIState {
   walletDrawerOpen: boolean
   walletDrawerWidth: number
-  theme: 'light' | 'dark'
+  theme: 'light' | 'dark' | 'xipz'
   chatSidebarOpen: boolean
   profilePicture: string | null
   chatWallpaper: string | null
@@ -14,7 +14,7 @@ interface UIState {
   toggleWalletDrawer: () => void
   setWalletDrawerWidth: (width: number) => void
   toggleTheme: () => void
-  setTheme: (theme: 'light' | 'dark') => void
+  setTheme: (theme: 'light' | 'dark' | 'xipz') => void
   toggleChatSidebar: () => void
   setProfilePicture: (dataUrl: string | null) => void
   setChatWallpaper: (dataUrl: string | null) => void
@@ -26,7 +26,7 @@ export const useUIStore = create<UIState>()(
     (set) => ({
       walletDrawerOpen: true,
       walletDrawerWidth: 320,
-      theme: 'dark',
+      theme: 'xipz',
       chatSidebarOpen: true,
       profilePicture: null,
       chatWallpaper: null,
@@ -41,7 +41,9 @@ export const useUIStore = create<UIState>()(
       },
 
       toggleTheme: () => {
-        set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' }))
+        set((state) => ({ 
+          theme: state.theme === 'light' ? 'dark' : state.theme === 'dark' ? 'xipz' : 'light' 
+        }))
       },
 
       setTheme: (theme) => {

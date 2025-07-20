@@ -26,7 +26,7 @@ export function ModelSelector() {
 
       <DropdownMenu.Portal>
         <DropdownMenu.Content
-          className="min-w-[200px] bg-surface-base rounded-lg shadow-lg border border-border-subtle p-1"
+          className="min-w-[200px] bg-surface-base rounded-lg shadow-lg border border-border-subtle p-1 z-50"
           sideOffset={5}
         >
           {AVAILABLE_MODELS.map((model) => (

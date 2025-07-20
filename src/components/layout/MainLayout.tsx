@@ -21,7 +21,10 @@ export function MainLayout({ children }: MainLayoutProps) {
   } = useUIStore()
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark')
+    // Remove all theme classes first
+    document.documentElement.classList.remove('light', 'dark', 'xipz')
+    // Add the current theme class
+    document.documentElement.classList.add(theme)
   }, [theme])
 
   return (

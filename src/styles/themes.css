@@ -1,7 +1,8 @@
 /* Theme System with CSS Custom Properties */
 
-/* Default Theme - Panther Black Pearl & Candy Apple Red */
-:root {
+/* Default Theme - Xipz Mode (Panther Black Pearl & Candy Apple Red) */
+:root,
+.xipz {
   /* Primary Colors - Panther Black Pearl (Black with Purple Pearlescence) */
   --color-primary-50: 250 248 252;   /* Very light purple tint */
   --color-primary-100: 243 240 248;  /* Light purple tint */
@@ -73,26 +74,166 @@
   );
 }
 
-/* Light Theme Override (if needed in future) */
+/* Light Mode Theme - Cyan & Pink */
 .light {
-  --color-bg-base: 250 248 252;
-  --color-bg-elevated: 255 255 255;
-  --color-bg-overlay: 243 240 248;
-  --color-bg-subtle: 248 246 250;
+  /* Primary Colors - Light neutrals */
+  --color-primary-50: 255 255 255;
+  --color-primary-100: 250 250 250;
+  --color-primary-200: 245 245 245;
+  --color-primary-300: 229 231 235;
+  --color-primary-400: 209 213 219;
+  --color-primary-500: 156 163 175;
+  --color-primary-600: 107 114 128;
+  --color-primary-700: 75 85 99;
+  --color-primary-800: 55 65 81;
+  --color-primary-900: 31 41 55;
+  --color-primary-950: 17 24 39;
 
+  /* Accent Colors - Cyan (primary accent) */
+  --color-accent-50: 236 254 255;
+  --color-accent-100: 207 250 254;
+  --color-accent-200: 165 243 252;
+  --color-accent-300: 103 232 249;
+  --color-accent-400: 34 211 238;
+  --color-accent-500: 0 225 255;     /* Main cyan */
+  --color-accent-600: 0 184 212;
+  --color-accent-700: 0 151 167;
+  --color-accent-800: 0 127 140;
+  --color-accent-900: 0 96 100;
+
+  /* Secondary Accent - Pink */
+  --color-secondary-50: 253 242 248;
+  --color-secondary-100: 252 231 243;
+  --color-secondary-200: 251 207 232;
+  --color-secondary-300: 249 168 212;
+  --color-secondary-400: 244 114 182;
+  --color-secondary-500: 255 0 153;     /* Main pink */
+  --color-secondary-600: 219 39 119;
+  --color-secondary-700: 190 24 93;
+  --color-secondary-800: 157 23 77;
+  --color-secondary-900: 131 24 67;
+
+  /* Background Colors */
+  --color-bg-base: 255 255 255;
+  --color-bg-elevated: 250 250 250;
+  --color-bg-overlay: 245 245 245;
+  --color-bg-subtle: 252 252 252;
+
+  /* Surface Colors */
   --color-surface-base: 255 255 255;
-  --color-surface-elevated: 250 248 252;
-  --color-surface-overlay: 243 240 248;
-  --color-surface-hover: 243 240 248;
+  --color-surface-elevated: 250 250 250;
+  --color-surface-overlay: 245 245 245;
+  --color-surface-hover: 240 240 240;
 
-  --color-text-primary: 22 12 39;
-  --color-text-secondary: 66 45 95;
-  --color-text-tertiary: 117 93 151;
-  --color-text-inverse: 243 240 248;
+  /* Text Colors */
+  --color-text-primary: 17 24 39;
+  --color-text-secondary: 75 85 99;
+  --color-text-tertiary: 156 163 175;
+  --color-text-inverse: 255 255 255;
 
-  --color-border-subtle: 229 223 238;
-  --color-border-default: 205 193 219;
-  --color-border-strong: 161 143 185;
+  /* Border Colors */
+  --color-border-subtle: 229 231 235;
+  --color-border-default: 209 213 219;
+  --color-border-strong: 156 163 175;
+
+  /* Interactive States */
+  --color-interactive-hover: 0 225 255 / 0.1;
+  --color-interactive-active: 0 225 255 / 0.2;
+  --color-interactive-focus: 0 225 255;
+
+  /* Gradients */
+  --gradient-pearlescent: linear-gradient(
+    135deg,
+    rgb(var(--color-accent-500)) 0%,
+    rgb(var(--color-secondary-500)) 100%
+  );
+
+  --gradient-candy-red: linear-gradient(
+    135deg,
+    rgb(var(--color-accent-500)) 0%,
+    rgb(var(--color-secondary-500)) 100%
+  );
+}
+
+/* Dark Mode Theme - Cyan & Pink */
+.dark {
+  /* Primary Colors - True neutral greys */
+  --color-primary-50: 250 250 250;
+  --color-primary-100: 245 245 245;
+  --color-primary-200: 229 229 229;
+  --color-primary-300: 212 212 212;
+  --color-primary-400: 163 163 163;
+  --color-primary-500: 115 115 115;
+  --color-primary-600: 82 82 82;
+  --color-primary-700: 64 64 64;
+  --color-primary-800: 38 38 38;
+  --color-primary-900: 23 23 23;
+  --color-primary-950: 10 10 10;
+
+  /* Accent Colors - Cyan (primary accent) */
+  --color-accent-50: 236 254 255;
+  --color-accent-100: 207 250 254;
+  --color-accent-200: 165 243 252;
+  --color-accent-300: 103 232 249;
+  --color-accent-400: 34 211 238;
+  --color-accent-500: 0 225 255;     /* Main cyan */
+  --color-accent-600: 0 184 212;
+  --color-accent-700: 0 151 167;
+  --color-accent-800: 0 127 140;
+  --color-accent-900: 0 96 100;
+
+  /* Secondary Accent - Pink */
+  --color-secondary-50: 253 242 248;
+  --color-secondary-100: 252 231 243;
+  --color-secondary-200: 251 207 232;
+  --color-secondary-300: 249 168 212;
+  --color-secondary-400: 244 114 182;
+  --color-secondary-500: 255 0 153;     /* Main pink */
+  --color-secondary-600: 219 39 119;
+  --color-secondary-700: 190 24 93;
+  --color-secondary-800: 157 23 77;
+  --color-secondary-900: 131 24 67;
+
+  /* Background Colors */
+  --color-bg-base: 18 18 18;      /* Main background - slightly lighter than header */
+  --color-bg-elevated: 26 26 26;   /* Elevated surfaces */
+  --color-bg-overlay: 38 38 38;    /* Overlays and modals */
+  --color-bg-subtle: 13 13 13;     /* Header and subtle areas - darkest */
+
+  /* Surface Colors */
+  --color-surface-base: 26 26 26;     /* Base surface */
+  --color-surface-elevated: 33 33 33; /* Elevated surface */
+  --color-surface-overlay: 46 46 46;  /* Overlay surface */
+  --color-surface-hover: 38 38 38;    /* Hover state */
+
+  /* Text Colors */
+  --color-text-primary: 245 245 245;
+  --color-text-secondary: 212 212 212;
+  --color-text-tertiary: 163 163 163;
+  --color-text-inverse: 23 23 23;
+
+  /* Border Colors */
+  --color-border-subtle: 38 38 38;    /* Subtle borders */
+  --color-border-default: 51 51 51;   /* Default borders */
+  --color-border-strong: 77 77 77;    /* Strong borders */
+
+  /* Interactive States */
+  --color-interactive-hover: 0 225 255 / 0.1;
+  --color-interactive-active: 0 225 255 / 0.2;
+  --color-interactive-focus: 0 225 255;
+
+  /* Gradients */
+  --gradient-pearlescent: linear-gradient(
+    135deg,
+    rgb(var(--color-accent-500)) 0%,
+    rgb(var(--color-secondary-500)) 100%
+  );
+
+  --gradient-candy-red: linear-gradient(
+    135deg,
+    rgb(var(--color-secondary-500)) 0%,
+    rgb(var(--color-accent-500)) 100%
+  );
 }
 
 /* Utility Classes for Pearlescent Effects */

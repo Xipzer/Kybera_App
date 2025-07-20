@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Tabs from '@radix-ui/react-tabs'
+import * as Select from '@radix-ui/react-select'
 import { 
   X, 
   Eye, 
@@ -11,7 +12,8 @@ import {
   Brain, 
   Palette, 
   AlertCircle,
-  Check
+  Check,
+  ChevronDown
 } from 'lucide-react'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useUIStore } from '../../store/uiStore'
@@ -26,7 +28,7 @@ interface SettingsDialogProps {
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const { openRouterApiKey, autoLockTimeout, setOpenRouterApiKey, setAutoLockTimeout } = useSettingsStore()
-  const { theme, toggleTheme, profilePicture, setProfilePicture, chatWallpaper, setChatWallpaper, wallpaperOpacity, setWallpaperOpacity } = useUIStore()
+  const { theme, setTheme, profilePicture, setProfilePicture, chatWallpaper, setChatWallpaper, wallpaperOpacity, setWallpaperOpacity } = useUIStore()
   const { changePassword } = useAuthStore()
   const { password: currentSessionPassword } = useWalletStore()
   
@@ -328,25 +330,65 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     <label className="block text-sm font-medium text-text-secondary mb-2">
                       Theme Mode
                     </label>
-                    <button
-                      type="button"
-                      onClick={toggleTheme}
-                      className="flex items-center gap-2 px-4 py-2 border border-border-default rounded-lg hover:bg-surface-hover transition-colors text-text-primary"
-                    >
-                      {theme === 'dark' ? (
-                        <>
-                          <Moon className="w-4 h-4 text-text-secondary" />
-                          <span>Dark Mode</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sun className="w-4 h-4 text-text-secondary" />
-                          <span>Light Mode</span>
-                        </>
-                      )}
-                    </button>
+                    <Select.Root value={theme} onValueChange={(value) => setTheme(value as 'light' | 'dark' | 'xipz')}>
+                      <Select.Trigger className="flex items-center gap-2 px-3 py-1.5 text-sm bg-surface-elevated rounded-lg hover:bg-surface-hover transition-colors">
+                        <Select.Value>
+                          <span className="text-text-primary">
+                            {theme === 'xipz' ? 'Xipz Mode' : theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
+                          </span>
+                        </Select.Value>
+                        <Select.Icon>
+                          <ChevronDown className="w-4 h-4 text-text-secondary" />
+                        </Select.Icon>
+                      </Select.Trigger>
+                      <Select.Portal>
+                        <Select.Content className="min-w-[160px] bg-surface-base rounded-lg shadow-lg border border-border-subtle p-1 z-50">
+                          <Select.Viewport>
+                            <Select.Item
+                              value="light"
+                              className={`flex items-center justify-between px-3 py-2 text-sm rounded cursor-pointer transition-colors ${
+                                theme === 'light'
+                                  ? 'bg-accent-500/10 text-accent-500'
+                                  : 'text-text-primary hover:bg-surface-hover'
+                              }`}
+                            >
+                              <Select.ItemText>
+                                <span>Light Mode</span>
+                              </Select.ItemText>
+                              <Sun className="w-4 h-4" />
+                            </Select.Item>
+                            <Select.Item
+                              value="dark"
+                              className={`flex items-center justify-between px-3 py-2 text-sm rounded cursor-pointer transition-colors ${
+                                theme === 'dark'
+                                  ? 'bg-accent-500/10 text-accent-500'
+                                  : 'text-text-primary hover:bg-surface-hover'
+                              }`}
+                            >
+                              <Select.ItemText>
+                                <span>Dark Mode</span>
+                              </Select.ItemText>
+                              <Moon className="w-4 h-4" />
+                            </Select.Item>
+                            <Select.Item
+                              value="xipz"
+                              className={`flex items-center justify-between px-3 py-2 text-sm rounded cursor-pointer transition-colors ${
+                                theme === 'xipz'
+                                  ? 'bg-accent-500/10 text-accent-500'
+                                  : 'text-text-primary hover:bg-surface-hover'
+                              }`}
+                            >
+                              <Select.ItemText>
+                                <span>Xipz Mode</span>
+                              </Select.ItemText>
+                              <Palette className="w-4 h-4" />
+                            </Select.Item>
+                          </Select.Viewport>
+                        </Select.Content>
+                      </Select.Portal>
+                    </Select.Root>
                     <p className="mt-2 text-xs text-text-tertiary">
-                      Switch between light and dark theme modes
+                      Choose your preferred theme mode
                     </p>
                   </div>
                   
