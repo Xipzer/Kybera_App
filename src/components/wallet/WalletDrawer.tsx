@@ -14,7 +14,7 @@ import {
 import { useWalletStore } from '../../store/walletStore'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import * as Tabs from '@radix-ui/react-tabs'
-import * as ScrollArea from '@radix-ui/react-scroll-area'
+import { SimpleScrollArea } from '../common/SimpleScrollArea'
 import { NetworkSelector } from './NetworkSelector'
 // import { CreateWalletDialog } from './CreateWalletDialog' - Deprecated in favor of groups
 import { ImportWalletDialog } from './ImportWalletDialog'
@@ -147,9 +147,8 @@ export function WalletDrawer() {
         </Tabs.List>
 
         <Tabs.Content value="groups" className="flex-1 overflow-hidden min-h-0">
-          <ScrollArea.Root className="h-full w-full">
-            <ScrollArea.Viewport className="h-full w-full rounded-[inherit]">
-              <div className="p-4">
+          <SimpleScrollArea>
+            <div className="p-4">
               {actualGroups.length === 0 ? (
                 <EmptyState
                   icon={Users}
@@ -207,22 +206,13 @@ export function WalletDrawer() {
                   )}
                 </div>
               )}
-              </div>
-            </ScrollArea.Viewport>
-            <ScrollArea.Scrollbar
-              className="flex select-none touch-none p-0.5 bg-transparent transition-colors duration-[160ms] ease-out hover:bg-surface-hover data-[orientation=vertical]:w-2.5 data-[orientation=horizontal]:flex-col data-[orientation=horizontal]:h-2.5"
-              orientation="vertical"
-            >
-              <ScrollArea.Thumb className="flex-1 bg-border-default rounded-[10px] relative before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-full before:h-full before:min-w-[44px] before:min-h-[44px] hover:bg-border-subtle" />
-            </ScrollArea.Scrollbar>
-            <ScrollArea.Corner className="bg-surface-base" />
-          </ScrollArea.Root>
+            </div>
+          </SimpleScrollArea>
         </Tabs.Content>
 
         <Tabs.Content value="evm" className="flex-1 overflow-hidden min-h-0">
-          <ScrollArea.Root className="h-full w-full">
-            <ScrollArea.Viewport className="h-full w-full rounded-[inherit]">
-              <div className="p-4">
+          <SimpleScrollArea>
+            <div className="p-4">
               {walletsByType.EVM.length === 0 ? (
                 <EmptyState
                   icon={WalletIcon}
@@ -250,22 +240,13 @@ export function WalletDrawer() {
                   ))}
                 </div>
               )}
-              </div>
-            </ScrollArea.Viewport>
-            <ScrollArea.Scrollbar
-              className="flex select-none touch-none p-0.5 bg-transparent transition-colors duration-[160ms] ease-out hover:bg-surface-hover data-[orientation=vertical]:w-2.5 data-[orientation=horizontal]:flex-col data-[orientation=horizontal]:h-2.5"
-              orientation="vertical"
-            >
-              <ScrollArea.Thumb className="flex-1 bg-border-default rounded-[10px] relative before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-full before:h-full before:min-w-[44px] before:min-h-[44px] hover:bg-border-subtle" />
-            </ScrollArea.Scrollbar>
-            <ScrollArea.Corner className="bg-surface-base" />
-          </ScrollArea.Root>
+            </div>
+          </SimpleScrollArea>
         </Tabs.Content>
 
         <Tabs.Content value="svm" className="flex-1 overflow-hidden min-h-0">
-          <ScrollArea.Root className="h-full w-full">
-            <ScrollArea.Viewport className="h-full w-full rounded-[inherit]">
-              <div className="p-4">
+          <SimpleScrollArea>
+            <div className="p-4">
               {walletsByType.SVM.length === 0 ? (
                 <EmptyState
                   icon={WalletIcon}
@@ -293,22 +274,13 @@ export function WalletDrawer() {
                   ))}
                 </div>
               )}
-              </div>
-            </ScrollArea.Viewport>
-            <ScrollArea.Scrollbar
-              className="flex select-none touch-none p-0.5 bg-transparent transition-colors duration-[160ms] ease-out hover:bg-surface-hover data-[orientation=vertical]:w-2.5 data-[orientation=horizontal]:flex-col data-[orientation=horizontal]:h-2.5"
-              orientation="vertical"
-            >
-              <ScrollArea.Thumb className="flex-1 bg-border-default rounded-[10px] relative before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-full before:h-full before:min-w-[44px] before:min-h-[44px] hover:bg-border-subtle" />
-            </ScrollArea.Scrollbar>
-            <ScrollArea.Corner className="bg-surface-base" />
-          </ScrollArea.Root>
+            </div>
+          </SimpleScrollArea>
         </Tabs.Content>
 
         <Tabs.Content value="all" className="flex-1 overflow-hidden min-h-0">
-          <ScrollArea.Root className="h-full w-full">
-            <ScrollArea.Viewport className="h-full w-full rounded-[inherit]">
-              <div className="p-4">
+          <SimpleScrollArea>
+            <div className="p-4">
               <div className="space-y-4">
                 <div>
                   <h3 className="text-sm font-medium text-text-secondary mb-2">
@@ -350,16 +322,8 @@ export function WalletDrawer() {
                   </div>
                 </div>
               </div>
-              </div>
-            </ScrollArea.Viewport>
-            <ScrollArea.Scrollbar
-              className="flex select-none touch-none p-0.5 bg-transparent transition-colors duration-[160ms] ease-out hover:bg-surface-hover data-[orientation=vertical]:w-2.5 data-[orientation=horizontal]:flex-col data-[orientation=horizontal]:h-2.5"
-              orientation="vertical"
-            >
-              <ScrollArea.Thumb className="flex-1 bg-border-default rounded-[10px] relative before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-full before:h-full before:min-w-[44px] before:min-h-[44px] hover:bg-border-subtle" />
-            </ScrollArea.Scrollbar>
-            <ScrollArea.Corner className="bg-surface-base" />
-          </ScrollArea.Root>
+            </div>
+          </SimpleScrollArea>
         </Tabs.Content>
       </Tabs.Root>
 

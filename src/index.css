@@ -132,3 +132,30 @@
 .settings-scroll::-webkit-scrollbar-thumb:hover {
   background: rgb(var(--color-border-strong));
 }
+
+/* Radix ScrollArea customization */
+[data-radix-scroll-area-viewport] {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+[data-radix-scroll-area-viewport]::-webkit-scrollbar {
+  display: none;
+}
+
+/* Radix ScrollArea thumb visibility fix */
+/* Always show thumb when scrollbar is visible */
+[data-radix-scroll-area-scrollbar][data-state="visible"] [data-radix-scroll-area-thumb] {
+  opacity: 1 !important;
+}
+
+/* Force thumb visibility in custom scrollarea */
+.custom-scrollarea [data-radix-scroll-area-thumb] {
+  opacity: 1 !important;
+}
+
+/* Override any inline styles */
+.custom-scrollarea [data-radix-scroll-area-scrollbar][data-state="visible"] [data-radix-scroll-area-thumb],
+.custom-scrollarea [data-radix-scroll-area-scrollbar]:hover [data-radix-scroll-area-thumb] {
+  opacity: 1 !important;
+}
