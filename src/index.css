@@ -1,3 +1,5 @@
+@import './styles/themes.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -10,15 +12,83 @@
   .animation-delay-400 {
     animation-delay: 400ms;
   }
+  
+  /* Gradient backgrounds */
+  .bg-gradient-pearlescent {
+    background: var(--gradient-pearlescent);
+  }
+  
+  .bg-gradient-candy-red {
+    background: var(--gradient-candy-red);
+  }
+  
+  /* Special effects */
+  .candy-red-glow {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+  }
 }
 
 /* Prose customization for markdown */
+.prose {
+  @apply text-text-primary;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  @apply text-text-primary;
+}
+
+.prose strong {
+  @apply text-text-primary font-bold;
+}
+
+.prose a {
+  @apply text-accent-500 hover:text-accent-400;
+}
+
+.prose blockquote {
+  @apply text-text-secondary border-l-4 border-accent-500;
+}
+
 .prose pre {
-  @apply bg-gray-100 dark:bg-gray-800 rounded-lg p-4;
+  @apply bg-surface-elevated rounded-lg p-4 text-text-primary;
 }
 
 .prose code {
-  @apply bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded;
+  @apply bg-surface-elevated px-1 py-0.5 rounded text-text-primary;
+}
+
+.prose ol, .prose ul {
+  @apply text-text-primary;
+}
+
+.prose li {
+  @apply text-text-primary;
+}
+
+/* Override dark mode prose styles */
+.prose.dark\:prose-invert {
+  @apply text-text-primary;
+}
+
+.prose.dark\:prose-invert h1,
+.prose.dark\:prose-invert h2,
+.prose.dark\:prose-invert h3,
+.prose.dark\:prose-invert h4,
+.prose.dark\:prose-invert h5,
+.prose.dark\:prose-invert h6 {
+  @apply text-text-primary;
+}
+
+.prose.dark\:prose-invert strong {
+  @apply text-text-primary;
+}
+
+.prose.dark\:prose-invert a {
+  @apply text-accent-500 hover:text-accent-400;
+}
+
+.prose.dark\:prose-invert code {
+  @apply text-text-primary;
 }
 
 /* Scrollbar styling */
@@ -28,13 +98,14 @@
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-100 dark:bg-gray-900;
+  @apply bg-surface-elevated;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-400 dark:bg-gray-600 rounded;
+  background: rgb(var(--color-border-default));
+  @apply rounded;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-500 dark:bg-gray-500;
+  background: rgb(var(--color-border-strong));
 }

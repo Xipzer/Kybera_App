@@ -15,20 +15,20 @@ export function NetworkSelector() {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
-        <button className="w-full flex items-center justify-between px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+        <button className="w-full flex items-center justify-between px-3 py-2 bg-surface-elevated rounded-lg hover:bg-surface-hover transition-colors">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-green-500 rounded-full" />
-            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            <span className="text-sm font-medium text-text-primary">
               {activeNetwork.name}
             </span>
           </div>
-          <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          <ChevronDown className="w-4 h-4 text-text-secondary" />
         </button>
       </DropdownMenu.Trigger>
 
       <DropdownMenu.Portal>
         <DropdownMenu.Content
-          className="min-w-[200px] bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 p-1"
+          className="min-w-[200px] bg-surface-base rounded-lg shadow-lg border border-border-subtle p-1"
           sideOffset={5}
           align="start"
         >
@@ -38,8 +38,8 @@ export function NetworkSelector() {
               onClick={() => setActiveNetwork(network)}
               className={`flex items-center gap-2 px-3 py-2 text-sm rounded cursor-pointer transition-colors ${
                 network.id === activeNetwork.id
-                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  ? 'bg-accent-500/10 text-accent-500'
+                  : 'text-text-primary hover:bg-surface-hover'
               }`}
             >
               <div className="w-2 h-2 bg-green-500 rounded-full" />

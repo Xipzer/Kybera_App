@@ -1,0 +1,128 @@
+/* Theme System with CSS Custom Properties */
+
+/* Default Theme - Panther Black Pearl & Candy Apple Red */
+:root {
+  /* Primary Colors - Panther Black Pearl (Black with Purple Pearlescence) */
+  --color-primary-50: 250 248 252;   /* Very light purple tint */
+  --color-primary-100: 243 240 248;  /* Light purple tint */
+  --color-primary-200: 229 223 238;  /* Soft purple */
+  --color-primary-300: 205 193 219;  /* Light purple */
+  --color-primary-400: 161 143 185;  /* Medium purple */
+  --color-primary-500: 117 93 151;   /* Purple */
+  --color-primary-600: 89 65 123;    /* Dark purple */
+  --color-primary-700: 66 45 95;     /* Deeper purple */
+  --color-primary-800: 44 28 67;     /* Very dark purple */
+  --color-primary-900: 22 12 39;     /* Near black with purple tint */
+  --color-primary-950: 11 6 20;      /* Panther black pearl */
+
+  /* Accent Colors - Candy Apple Red */
+  --color-accent-50: 254 242 242;    /* Very light red */
+  --color-accent-100: 254 226 226;   /* Light red */
+  --color-accent-200: 254 202 202;   /* Soft red */
+  --color-accent-300: 252 165 165;   /* Light candy red */
+  --color-accent-400: 248 113 113;   /* Medium candy red */
+  --color-accent-500: 239 68 68;     /* Candy apple red */
+  --color-accent-600: 220 38 38;     /* Dark candy red */
+  --color-accent-700: 185 28 28;     /* Deeper red */
+  --color-accent-800: 153 27 27;     /* Very dark red */
+  --color-accent-900: 127 29 29;     /* Darkest red */
+
+  /* Background Colors */
+  --color-bg-base: 11 6 20;          /* Base background - Panther black */
+  --color-bg-elevated: 22 12 39;     /* Elevated surfaces */
+  --color-bg-overlay: 44 28 67;      /* Overlays and modals */
+  --color-bg-subtle: 17 9 30;        /* Subtle background variation */
+
+  /* Surface Colors with Pearlescent Effect */
+  --color-surface-base: 22 12 39;    /* Base surface */
+  --color-surface-elevated: 44 28 67; /* Elevated surface */
+  --color-surface-overlay: 66 45 95;  /* Overlay surface */
+  --color-surface-hover: 33 20 53;   /* Hover state */
+
+  /* Text Colors */
+  --color-text-primary: 243 240 248;  /* Primary text - light */
+  --color-text-secondary: 205 193 219; /* Secondary text */
+  --color-text-tertiary: 161 143 185;  /* Tertiary text */
+  --color-text-inverse: 22 12 39;     /* Inverse text */
+
+  /* Border Colors */
+  --color-border-subtle: 44 28 67;    /* Subtle borders */
+  --color-border-default: 66 45 95;   /* Default borders */
+  --color-border-strong: 89 65 123;   /* Strong borders */
+
+  /* Interactive States */
+  --color-interactive-hover: 239 68 68 / 0.1;  /* Hover with red tint */
+  --color-interactive-active: 239 68 68 / 0.2; /* Active with red tint */
+  --color-interactive-focus: 239 68 68;        /* Focus ring */
+
+  /* Pearlescent Gradient for Special Effects */
+  --gradient-pearlescent: linear-gradient(
+    135deg,
+    rgb(var(--color-primary-900)) 0%,
+    rgb(var(--color-primary-700)) 40%,
+    rgb(var(--color-primary-800)) 60%,
+    rgb(var(--color-primary-950)) 100%
+  );
+
+  /* Candy Red Gradient */
+  --gradient-candy-red: linear-gradient(
+    135deg,
+    rgb(var(--color-accent-500)) 0%,
+    rgb(var(--color-accent-600)) 50%,
+    rgb(var(--color-accent-700)) 100%
+  );
+}
+
+/* Light Theme Override (if needed in future) */
+.light {
+  --color-bg-base: 250 248 252;
+  --color-bg-elevated: 255 255 255;
+  --color-bg-overlay: 243 240 248;
+  --color-bg-subtle: 248 246 250;
+
+  --color-surface-base: 255 255 255;
+  --color-surface-elevated: 250 248 252;
+  --color-surface-overlay: 243 240 248;
+  --color-surface-hover: 243 240 248;
+
+  --color-text-primary: 22 12 39;
+  --color-text-secondary: 66 45 95;
+  --color-text-tertiary: 117 93 151;
+  --color-text-inverse: 243 240 248;
+
+  --color-border-subtle: 229 223 238;
+  --color-border-default: 205 193 219;
+  --color-border-strong: 161 143 185;
+}
+
+/* Utility Classes for Pearlescent Effects */
+.pearlescent {
+  background: var(--gradient-pearlescent);
+  position: relative;
+}
+
+.pearlescent::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(161, 143, 185, 0.2) 50%,
+    transparent 70%
+  );
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.candy-red-glow {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+}
+
+.candy-red-glow:hover {
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.7);
+}

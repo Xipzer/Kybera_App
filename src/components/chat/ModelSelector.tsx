@@ -18,15 +18,15 @@ export function ModelSelector() {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
-        <button className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-          <span className="text-gray-700 dark:text-gray-300">{currentModel.name}</span>
-          <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+        <button className="flex items-center gap-2 px-3 py-1.5 text-sm bg-surface-elevated rounded-lg hover:bg-surface-hover transition-colors">
+          <span className="text-text-primary">{currentModel.name}</span>
+          <ChevronDown className="w-4 h-4 text-text-secondary" />
         </button>
       </DropdownMenu.Trigger>
 
       <DropdownMenu.Portal>
         <DropdownMenu.Content
-          className="min-w-[200px] bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 p-1"
+          className="min-w-[200px] bg-surface-base rounded-lg shadow-lg border border-border-subtle p-1"
           sideOffset={5}
         >
           {AVAILABLE_MODELS.map((model) => (
@@ -35,12 +35,12 @@ export function ModelSelector() {
               onClick={() => setSelectedModel(model.id)}
               className={`flex items-center justify-between px-3 py-2 text-sm rounded cursor-pointer transition-colors ${
                 model.id === selectedModel
-                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  ? 'bg-accent-500/10 text-accent-500'
+                  : 'text-text-primary hover:bg-surface-hover'
               }`}
             >
               <span>{model.name}</span>
-              <span className="text-xs text-gray-500 dark:text-gray-500">{model.provider}</span>
+              <span className="text-xs text-text-tertiary">{model.provider}</span>
             </DropdownMenu.Item>
           ))}
         </DropdownMenu.Content>

@@ -25,28 +25,28 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-        <Dialog.Content className="fixed top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] bg-white dark:bg-gray-900 rounded-lg shadow-lg w-[500px] max-h-[85vh] overflow-y-auto">
+        <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+        <Dialog.Content className="fixed top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] bg-surface-base rounded-lg shadow-2xl border border-border-subtle w-[500px] max-h-[85vh] overflow-y-auto">
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <Dialog.Title className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+              <Dialog.Title className="text-xl font-semibold text-text-primary">
                 Settings
               </Dialog.Title>
               <Dialog.Close asChild>
-                <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800">
-                  <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <button className="p-1 rounded hover:bg-surface-hover transition-colors">
+                  <X className="w-5 h-5 text-text-secondary" />
                 </button>
               </Dialog.Close>
             </div>
 
             <div className="space-y-6">
               <div>
-                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">
+                <h3 className="text-sm font-medium text-text-primary mb-4">
                   AI Configuration
                 </h3>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-text-secondary mb-2">
                     OpenRouter API Key
                   </label>
                   <div className="relative">
@@ -55,27 +55,27 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       value={apiKey}
                       onChange={(e) => setApiKey(e.target.value)}
                       placeholder="sk-or-v1-..."
-                      className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 pr-10 border border-border-default rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors"
                     />
                     <button
                       type="button"
                       onClick={() => setShowApiKey(!showApiKey)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-surface-hover transition-colors"
                     >
                       {showApiKey ? (
-                        <EyeOff className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        <EyeOff className="w-4 h-4 text-text-secondary" />
                       ) : (
-                        <Eye className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        <Eye className="w-4 h-4 text-text-secondary" />
                       )}
                     </button>
                   </div>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <p className="mt-1 text-xs text-text-tertiary">
                     Get your API key from{' '}
                     <a
                       href="https://openrouter.ai/keys"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 dark:text-blue-400 hover:underline"
+                      className="text-accent-500 hover:text-accent-400 hover:underline transition-colors"
                     >
                       openrouter.ai/keys
                     </a>
@@ -84,12 +84,12 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               </div>
 
               <div>
-                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">
+                <h3 className="text-sm font-medium text-text-primary mb-4">
                   Security
                 </h3>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-text-secondary mb-2">
                     Auto-lock Timeout (minutes)
                   </label>
                   <input
@@ -98,36 +98,36 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     onChange={(e) => setLockTimeout(e.target.value)}
                     min="1"
                     max="60"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-elevated text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors"
                   />
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <p className="mt-1 text-xs text-text-tertiary">
                     Automatically lock the wallet after this period of inactivity
                   </p>
                 </div>
               </div>
 
               <div>
-                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">
+                <h3 className="text-sm font-medium text-text-primary mb-4">
                   Appearance
                 </h3>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-text-secondary mb-2">
                     Theme
                   </label>
                   <button
                     type="button"
                     onClick={toggleTheme}
-                    className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 border border-border-default rounded-lg hover:bg-surface-hover transition-colors text-text-primary"
                   >
                     {theme === 'dark' ? (
                       <>
-                        <Moon className="w-4 h-4" />
+                        <Moon className="w-4 h-4 text-text-secondary" />
                         <span>Dark Mode</span>
                       </>
                     ) : (
                       <>
-                        <Sun className="w-4 h-4" />
+                        <Sun className="w-4 h-4 text-text-secondary" />
                         <span>Light Mode</span>
                       </>
                     )}
@@ -138,13 +138,13 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               <div className="flex gap-2 justify-end">
                 <button
                   onClick={() => onOpenChange(false)}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  className="px-4 py-2 border border-border-default rounded-lg hover:bg-surface-hover transition-colors text-text-primary"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSave}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 bg-gradient-candy-red text-white rounded-lg hover:shadow-lg hover:shadow-accent-500/30 transition-all duration-300 font-medium"
                 >
                   Save Changes
                 </button>

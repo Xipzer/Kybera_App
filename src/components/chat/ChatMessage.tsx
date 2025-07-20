@@ -23,7 +23,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
   return (
     <div className={`flex gap-4 mb-6 ${message.role === 'user' ? 'justify-end' : ''}`}>
       {message.role === 'assistant' && (
-        <div className="flex-shrink-0 w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+        <div className="flex-shrink-0 w-8 h-8 bg-gradient-candy-red rounded-lg flex items-center justify-center candy-red-glow">
           <Bot className="w-5 h-5 text-white" />
         </div>
       )}
@@ -31,7 +31,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
       <div
         className={`max-w-[70%] ${
           message.role === 'user'
-            ? 'bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-2'
+            ? 'bg-surface-hover rounded-lg px-4 py-2'
             : ''
         }`}
       >
@@ -41,15 +41,15 @@ export function ChatMessage({ message }: ChatMessageProps) {
             dangerouslySetInnerHTML={{ __html: renderedContent }}
           />
         ) : (
-          <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap">{message.content}</p>
+          <p className="text-text-primary whitespace-pre-wrap">{message.content}</p>
         )}
-        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+        <p className="text-xs text-text-tertiary mt-1">
           {new Date(message.timestamp).toLocaleTimeString()}
         </p>
       </div>
 
       {message.role === 'user' && (
-        <div className="flex-shrink-0 w-8 h-8 bg-gray-600 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+        <div className="flex-shrink-0 w-8 h-8 bg-primary-800 rounded-lg flex items-center justify-center">
           <User className="w-5 h-5 text-white" />
         </div>
       )}
