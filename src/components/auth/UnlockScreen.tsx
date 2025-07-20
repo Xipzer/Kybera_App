@@ -1,32 +1,63 @@
-import { useState } from 'react'
-import { Lock, Wallet } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Lock, Wallet, AlertCircle } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
+import { useAuthStore } from '../../store/authStore'
 
 export function UnlockScreen() {
   const { unlock } = useWalletStore()
+  const { isInitialized, initializePassword, verifyPassword, isLockedOut, failedAttempts } = useAuthStore()
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const [isFirstTime, setIsFirstTime] = useState(true)
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  
+  useEffect(() => {
+    // Check if password is already initialized
+    if (isInitialized) {
+      setError('')
+    }
+  }, [isInitialized])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setIsLoading(true)
 
-    if (isFirstTime) {
-      if (password.length < 8) {
-        setError('Password must be at least 8 characters long')
-        return
+    try {
+      if (!isInitialized) {
+        // First time setup
+        if (password.length < 8) {
+          setError('Password must be at least 8 characters long')
+          return
+        }
+        if (password !== confirmPassword) {
+          setError('Passwords do not match')
+          return
+        }
+        
+        await initializePassword(password)
+        unlock(password)
+      } else {
+        // Verify existing password
+        if (isLockedOut()) {
+          const remainingTime = Math.ceil((5 * 60 * 1000 - (Date.now() - (useAuthStore.getState().lastFailedAttempt || 0))) / 1000)
+          setError(`Too many failed attempts. Please try again in ${remainingTime} seconds`)
+          return
+        }
+        
+        const isValid = await verifyPassword(password)
+        if (isValid) {
+          unlock(password)
+        } else {
+          const attemptsLeft = 5 - failedAttempts
+          setError(`Invalid password. ${attemptsLeft} attempts remaining`)
+        }
       }
-      if (password !== confirmPassword) {
-        setError('Passwords do not match')
-        return
-      }
+    } catch (err) {
+      setError('An error occurred. Please try again.')
+    } finally {
+      setIsLoading(false)
     }
-
-    // For demo purposes, we'll accept any password
-    // In production, you'd verify against a stored hash
-    unlock(password)
   }
 
   return (
@@ -39,7 +70,7 @@ export function UnlockScreen() {
             </div>
             <h1 className="text-2xl font-bold text-text-primary">SmartWallet AI</h1>
             <p className="text-text-secondary mt-2">
-              {isFirstTime
+              {!isInitialized
                 ? 'Create a password to secure your wallet'
                 : 'Enter your password to unlock'}
             </p>
@@ -61,7 +92,7 @@ export function UnlockScreen() {
               </div>
             </div>
 
-            {isFirstTime && (
+            {!isInitialized && (
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-2">
                   Confirm Password
@@ -87,19 +118,25 @@ export function UnlockScreen() {
 
             <button
               type="submit"
-              className="w-full py-2 bg-gradient-candy-red text-white rounded-lg hover:shadow-lg hover:shadow-accent-500/30 transition-all duration-300 font-semibold"
+              disabled={isLoading || (isLockedOut && isLockedOut())}
+              className="w-full py-2 bg-gradient-candy-red text-white rounded-lg hover:shadow-lg hover:shadow-accent-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-semibold"
             >
-              {isFirstTime ? 'Create Wallet' : 'Unlock'}
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Processing...
+                </span>
+              ) : (
+                !isInitialized ? 'Create Wallet' : 'Unlock'
+              )}
             </button>
           </form>
 
-          {!isFirstTime && (
-            <button
-              onClick={() => setIsFirstTime(true)}
-              className="w-full mt-4 text-sm text-text-tertiary hover:text-text-secondary transition-colors"
-            >
-              Create new wallet
-            </button>
+          {isInitialized && failedAttempts > 0 && failedAttempts < 5 && (
+            <div className="mt-4 flex items-center justify-center gap-2 text-sm text-yellow-500">
+              <AlertCircle className="w-4 h-4" />
+              <span>{5 - failedAttempts} attempts remaining</span>
+            </div>
           )}
         </div>
       </div>

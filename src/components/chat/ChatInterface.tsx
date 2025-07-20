@@ -4,7 +4,7 @@ import { useChatStore } from '../../store/chatStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { ChatMessage } from './ChatMessage'
 import { ModelSelector } from './ModelSelector'
-import { SettingsDialog } from './SettingsDialog'
+import { SettingsDialog } from '../settings/SettingsDialog'
 import { OpenRouterService } from '../../services/ai/openrouter'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
 

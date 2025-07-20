@@ -5,7 +5,7 @@ import { MobileNav } from './MobileNav'
 import { AnimatedPanel, MobileOverlay } from '../common/AnimatedPanel'
 import { WalletDrawer } from '../wallet/WalletDrawer'
 import { ChatSidebar } from '../chat/ChatSidebar'
-import { SettingsDialog } from '../chat/SettingsDialog'
+import { SettingsDialog } from '../settings/SettingsDialog'
 
 interface ResponsiveLayoutProps {
   children: ReactNode

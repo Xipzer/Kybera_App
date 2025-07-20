@@ -18,12 +18,22 @@ export interface StoredMessage extends Omit<Message, 'timestamp'> {
   timestamp: number
 }
 
+export interface StoredAuth {
+  id: string
+  passwordHash: string
+  passwordSalt: string
+  encryptionSalt: string
+  createdAt: number
+  updatedAt?: number
+}
+
 export class SmartWalletDB extends Dexie {
   wallets!: Table<StoredWallet>
   walletGroups!: Table<StoredWalletGroup>
   conversations!: Table<StoredConversation>
   messages!: Table<StoredMessage>
   settings!: Table<{ key: string; value: any }>
+  auth!: Table<StoredAuth>
 
   constructor() {
     super('SmartWalletDB')
@@ -60,6 +70,16 @@ export class SmartWalletDB extends Dexie {
         wallet.groupId = 'default-imported'
         wallet.derivationIndex = -1 // -1 indicates imported wallet
       })
+    })
+    
+    // Version 3 adds auth table
+    this.version(3).stores({
+      wallets: '++id, groupId, address, type',
+      walletGroups: '++id, type, createdAt',
+      conversations: '++id, createdAt',
+      messages: '++id, conversationId, timestamp',
+      settings: 'key',
+      auth: 'id'
     })
   }
 }

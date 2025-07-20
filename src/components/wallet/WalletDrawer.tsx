@@ -17,7 +17,7 @@ import * as Tabs from '@radix-ui/react-tabs'
 import { NetworkSelector } from './NetworkSelector'
 // import { CreateWalletDialog } from './CreateWalletDialog' - Deprecated in favor of groups
 import { ImportWalletDialog } from './ImportWalletDialog'
-import { SettingsDialog } from '../chat/SettingsDialog'
+import { SettingsDialog } from '../settings/SettingsDialog'
 import { EmptyState } from '../common/EmptyState'
 import { RenameWalletDialog } from './RenameWalletDialog'
 import { CreateGroupDialog } from './CreateGroupDialog'
