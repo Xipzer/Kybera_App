@@ -14,7 +14,7 @@ import {
 import { useWalletStore } from '../../store/walletStore'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import * as Tabs from '@radix-ui/react-tabs'
-import { SimpleScrollArea } from '../common/SimpleScrollArea'
+import { BetterScrollArea } from '../common/BetterScrollArea'
 import { NetworkSelector } from './NetworkSelector'
 // import { CreateWalletDialog } from './CreateWalletDialog' - Deprecated in favor of groups
 import { ImportWalletDialog } from './ImportWalletDialog'
@@ -147,7 +147,7 @@ export function WalletDrawer() {
         </Tabs.List>
 
         <Tabs.Content value="groups" className="flex-1 overflow-hidden min-h-0">
-          <SimpleScrollArea>
+          <BetterScrollArea>
             <div className="p-4">
               {actualGroups.length === 0 ? (
                 <EmptyState
@@ -207,11 +207,11 @@ export function WalletDrawer() {
                 </div>
               )}
             </div>
-          </SimpleScrollArea>
+          </BetterScrollArea>
         </Tabs.Content>
 
         <Tabs.Content value="evm" className="flex-1 overflow-hidden min-h-0">
-          <SimpleScrollArea>
+          <BetterScrollArea>
             <div className="p-4">
               {walletsByType.EVM.length === 0 ? (
                 <EmptyState
@@ -241,11 +241,11 @@ export function WalletDrawer() {
                 </div>
               )}
             </div>
-          </SimpleScrollArea>
+          </BetterScrollArea>
         </Tabs.Content>
 
         <Tabs.Content value="svm" className="flex-1 overflow-hidden min-h-0">
-          <SimpleScrollArea>
+          <BetterScrollArea>
             <div className="p-4">
               {walletsByType.SVM.length === 0 ? (
                 <EmptyState
@@ -275,11 +275,11 @@ export function WalletDrawer() {
                 </div>
               )}
             </div>
-          </SimpleScrollArea>
+          </BetterScrollArea>
         </Tabs.Content>
 
         <Tabs.Content value="all" className="flex-1 overflow-hidden min-h-0">
-          <SimpleScrollArea>
+          <BetterScrollArea>
             <div className="p-4">
               <div className="space-y-4">
                 <div>
@@ -323,7 +323,7 @@ export function WalletDrawer() {
                 </div>
               </div>
             </div>
-          </SimpleScrollArea>
+          </BetterScrollArea>
         </Tabs.Content>
       </Tabs.Root>
 
