@@ -10,6 +10,7 @@ import {
   Wallet as WalletIcon,
   Edit2,
   Users,
+  MoreVertical,
 } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
@@ -415,7 +416,7 @@ function WalletItem({
               onClick={(e) => e.stopPropagation()}
               className="p-1 rounded hover:bg-surface-hover"
             >
-              <ChevronDown className="w-4 h-4 text-text-secondary" />
+              <MoreVertical className="w-4 h-4 text-text-secondary" />
             </button>
           </DropdownMenu.Trigger>
 
@@ -525,7 +526,7 @@ function WalletGroupItem({
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
               <button className="p-1 rounded hover:bg-surface-hover">
-                <ChevronDown className="w-4 h-4 text-text-secondary" />
+                <MoreVertical className="w-4 h-4 text-text-secondary" />
               </button>
             </DropdownMenu.Trigger>
 
@@ -613,7 +614,7 @@ function WalletGroupItem({
                           onClick={(e) => e.stopPropagation()}
                           className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-surface-hover transition-all"
                         >
-                          <ChevronDown className="w-3 h-3 text-text-secondary" />
+                          <MoreVertical className="w-3 h-3 text-text-secondary" />
                         </button>
                       </DropdownMenu.Trigger>
                       <DropdownMenu.Portal>
