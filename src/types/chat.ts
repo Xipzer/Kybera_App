@@ -12,6 +12,7 @@ export interface Conversation {
   createdAt: Date
   updatedAt: Date
   messages: Message[]
+  pinned?: boolean
 }
 
 export interface ChatModel {

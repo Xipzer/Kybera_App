@@ -1,19 +1,46 @@
-import { Plus, MessageSquare, Trash2 } from 'lucide-react'
+import { Plus, MessageSquare, Trash2, MoreVertical, Pin, Edit2 } from 'lucide-react'
 import { useChatStore } from '../../store/chatStore'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { EmptyState } from '../common/EmptyState'
+import { useState } from 'react'
 
 export function ChatSidebar() {
-  const { conversations, activeConversationId, createConversation, deleteConversation, setActiveConversation } = useChatStore()
+  const { conversations, activeConversationId, createConversation, deleteConversation, setActiveConversation, updateConversation } = useChatStore()
+  const [renamingId, setRenamingId] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
 
   const handleNewChat = async () => {
     await createConversation()
   }
 
-  const handleDeleteChat = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation()
+  const handleDeleteChat = async (id: string) => {
     await deleteConversation(id)
   }
+  
+  const handleRename = async (id: string) => {
+    if (renameValue.trim()) {
+      await updateConversation(id, { title: renameValue.trim() })
+      setRenamingId(null)
+      setRenameValue('')
+    }
+  }
+  
+  const handlePin = async (id: string, currentPinned: boolean) => {
+    await updateConversation(id, { pinned: !currentPinned })
+  }
+  
+  const startRename = (id: string, currentTitle: string) => {
+    setRenamingId(id)
+    setRenameValue(currentTitle)
+  }
+  
+  // Sort conversations: pinned first, then by date
+  const sortedConversations = [...conversations].sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1
+    if (!a.pinned && b.pinned) return 1
+    return b.updatedAt.getTime() - a.updatedAt.getTime()
+  })
 
   return (
     <div className="h-full bg-surface-base border-r border-border-subtle flex flex-col">
@@ -44,7 +71,7 @@ export function ChatSidebar() {
             />
           ) : (
             <div className="space-y-1">
-              {conversations.map((conversation) => (
+              {sortedConversations.map((conversation) => (
               <div
                 key={conversation.id}
                 onClick={() => setActiveConversation(conversation.id)}
@@ -55,23 +82,93 @@ export function ChatSidebar() {
                 }`}
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <MessageSquare className="w-4 h-4 text-text-secondary flex-shrink-0" />
+                  {conversation.pinned ? (
+                    <Pin className="w-4 h-4 text-accent flex-shrink-0" />
+                  ) : (
+                    <MessageSquare className="w-4 h-4 text-text-secondary flex-shrink-0" />
+                  )}
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-text-primary truncate">
-                      {conversation.title}
-                    </p>
+                    {renamingId === conversation.id ? (
+                      <input
+                        type="text"
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onBlur={() => handleRename(conversation.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleRename(conversation.id)
+                          } else if (e.key === 'Escape') {
+                            setRenamingId(null)
+                            setRenameValue('')
+                          }
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-full px-1 py-0.5 text-sm bg-surface-elevated border border-border-default rounded focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent"
+                        autoFocus
+                      />
+                    ) : (
+                      <p className="text-sm font-medium text-text-primary truncate">
+                        {conversation.title}
+                      </p>
+                    )}
                     <p className="text-xs text-text-tertiary">
                       {conversation.messages.length} messages
                     </p>
                   </div>
                 </div>
                 
-                <button
-                  onClick={(e) => handleDeleteChat(conversation.id, e)}
-                  className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-surface-hover transition-all"
-                >
-                  <Trash2 className="w-4 h-4 text-text-secondary" />
-                </button>
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger asChild>
+                    <button
+                      onClick={(e) => e.stopPropagation()}
+                      className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-surface-hover transition-all"
+                    >
+                      <MoreVertical className="w-4 h-4 text-text-secondary" />
+                    </button>
+                  </DropdownMenu.Trigger>
+                  
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content
+                      className="min-w-[160px] bg-surface-base rounded-lg shadow-lg border border-border-subtle p-1 z-50"
+                      sideOffset={5}
+                    >
+                      <DropdownMenu.Item
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          startRename(conversation.id, conversation.title)
+                        }}
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-surface-hover rounded cursor-pointer"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                        Rename
+                      </DropdownMenu.Item>
+                      
+                      <DropdownMenu.Item
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handlePin(conversation.id, conversation.pinned || false)
+                        }}
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-surface-hover rounded cursor-pointer"
+                      >
+                        <Pin className="w-4 h-4" />
+                        {conversation.pinned ? 'Unpin' : 'Pin'}
+                      </DropdownMenu.Item>
+                      
+                      <DropdownMenu.Separator className="h-px bg-border-subtle my-1" />
+                      
+                      <DropdownMenu.Item
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteChat(conversation.id)
+                        }}
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-accent hover:bg-accent/10 rounded cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete
+                      </DropdownMenu.Item>
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Root>
               </div>
             ))}
             </div>

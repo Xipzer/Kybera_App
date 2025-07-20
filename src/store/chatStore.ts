@@ -101,6 +101,7 @@ export const useChatStore = create<ChatState>()(
           updatedAt: Date.now(),
         }
         if (updates.title) updateData.title = updates.title
+        if (updates.pinned !== undefined) updateData.pinned = updates.pinned
         await db.conversations.update(id, updateData)
 
         set((state) => ({

@@ -102,6 +102,17 @@ export class SmartWalletDB extends Dexie {
       auth: 'id',
       transactions: '++id, hash, from, to, network, timestamp'
     })
+    
+    // Version 5 adds pinned field to conversations
+    this.version(5).stores({
+      wallets: '++id, groupId, address, type',
+      walletGroups: '++id, type, createdAt',
+      conversations: '++id, createdAt, pinned',
+      messages: '++id, conversationId, timestamp',
+      settings: 'key',
+      auth: 'id',
+      transactions: '++id, hash, from, to, network, timestamp'
+    })
   }
 }
 
