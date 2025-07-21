@@ -4,6 +4,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { useUIStore } from '../../store/uiStore'
 import { WalletDrawer } from '../wallet/WalletDrawer'
 import { ChatSidebar } from '../chat/ChatSidebar'
+import { useTheme } from '../../hooks/useTheme'
 
 interface MainLayoutProps {
   children: ReactNode
@@ -14,7 +15,8 @@ const MIN_WALLET_SIZE = 25
 const COLLAPSED_SIZE = 4
 
 export function MainLayout({ children }: MainLayoutProps) {
-  const { theme } = useUIStore()
+  const { theme: uiTheme } = useUIStore()
+  const { theme } = useTheme()
   
   const [isChatCollapsed, setIsChatCollapsed] = useState(false)
   const [isWalletCollapsed, setIsWalletCollapsed] = useState(false)
@@ -31,8 +33,8 @@ export function MainLayout({ children }: MainLayoutProps) {
     // Remove all theme classes first
     document.documentElement.classList.remove('light', 'dark', 'xipz')
     // Add the current theme class
-    document.documentElement.classList.add(theme)
-  }, [theme])
+    document.documentElement.classList.add(uiTheme)
+  }, [uiTheme])
 
   // Double-click handlers for expanding collapsed panels
   const handleChatDoubleClick = () => {
@@ -52,10 +54,10 @@ export function MainLayout({ children }: MainLayoutProps) {
   const handleChatResize = (size: number) => {
     chatSizeRef.current = size
     
-    // Check if we're below minimum size (but not collapsed)
-    if (!isChatCollapsed && size < MIN_CHAT_SIZE && size > COLLAPSED_SIZE) {
+    // Check if we're below minimum size (not including when actually collapsed)
+    if (!isChatCollapsed && size < MIN_CHAT_SIZE) {
       setIsChatDraggingBelowMin(true)
-    } else {
+    } else if (size >= MIN_CHAT_SIZE || isChatCollapsed) {
       setIsChatDraggingBelowMin(false)
     }
   }
@@ -63,10 +65,10 @@ export function MainLayout({ children }: MainLayoutProps) {
   const handleWalletResize = (size: number) => {
     walletSizeRef.current = size
     
-    // Check if we're below minimum size (but not collapsed)
-    if (!isWalletCollapsed && size < MIN_WALLET_SIZE && size > COLLAPSED_SIZE) {
+    // Check if we're below minimum size (not including when actually collapsed)
+    if (!isWalletCollapsed && size < MIN_WALLET_SIZE) {
       setIsWalletDraggingBelowMin(true)
-    } else {
+    } else if (size >= MIN_WALLET_SIZE || isWalletCollapsed) {
       setIsWalletDraggingBelowMin(false)
     }
   }
@@ -109,9 +111,10 @@ export function MainLayout({ children }: MainLayoutProps) {
         >
           <div 
             onDoubleClick={handleChatDoubleClick} 
-            className={`h-full bg-surface-base transition-opacity duration-200 ${
-              isChatDraggingBelowMin ? 'opacity-50' : 'opacity-100'
-            }`}
+            className="h-full bg-surface-base transition-opacity duration-200"
+            style={{
+              opacity: isChatDraggingBelowMin ? 0.5 : 1
+            }}
           >
             <AnimatePresence mode="wait">
               {!isChatDraggingBelowMin && (
@@ -144,7 +147,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         </Panel>
 
         <PanelResizeHandle 
-          className="w-px bg-border-subtle hover:bg-accent transition-colors"
+          className={`w-px transition-colors ${theme.styles.resizeHandle} ${theme.styles.resizeHandleHover}`}
           onDragging={(dragging) => {
             setIsDragging(dragging)
             if (!dragging) {
@@ -158,7 +161,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         </Panel>
 
         <PanelResizeHandle 
-          className="w-px bg-border-subtle hover:bg-accent transition-colors"
+          className={`w-px transition-colors ${theme.styles.resizeHandle} ${theme.styles.resizeHandleHover}`}
           onDragging={(dragging) => {
             setIsDragging(dragging)
             if (!dragging) {
@@ -187,9 +190,10 @@ export function MainLayout({ children }: MainLayoutProps) {
         >
           <div 
             onDoubleClick={handleWalletDoubleClick} 
-            className={`h-full bg-surface-base transition-opacity duration-200 ${
-              isWalletDraggingBelowMin ? 'opacity-50' : 'opacity-100'
-            }`}
+            className="h-full bg-surface-base transition-opacity duration-200"
+            style={{
+              opacity: isWalletDraggingBelowMin ? 0.5 : 1
+            }}
           >
             <AnimatePresence mode="wait">
               {!isWalletDraggingBelowMin && (

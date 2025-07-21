@@ -69,6 +69,10 @@ export interface ThemeConfig {
     iconPrimary: string
     iconSecondary: string
     iconAccent: string
+    
+    // Resize handles
+    resizeHandle: string
+    resizeHandleHover: string
   }
   
   // Dynamic styles that need JS
@@ -151,6 +155,9 @@ export const themes: Record<string, ThemeConfig> = {
       iconPrimary: 'text-gray-900',
       iconSecondary: 'text-gray-600',
       iconAccent: 'text-cyan-600',
+      
+      resizeHandle: 'bg-border-subtle',
+      resizeHandleHover: 'hover:bg-pink-500',
     },
     dynamicStyles: {
       buttonPrimary: {
@@ -226,6 +233,9 @@ export const themes: Record<string, ThemeConfig> = {
       iconPrimary: 'text-gray-100',
       iconSecondary: 'text-gray-400',
       iconAccent: 'text-cyan-400',
+      
+      resizeHandle: 'bg-border-subtle',
+      resizeHandleHover: 'hover:bg-pink-500',
     },
     dynamicStyles: {
       buttonPrimary: {
@@ -301,6 +311,9 @@ export const themes: Record<string, ThemeConfig> = {
       iconPrimary: 'text-primary-100',
       iconSecondary: 'text-primary-400',
       iconAccent: 'text-accent-400',
+      
+      resizeHandle: 'bg-border-subtle',
+      resizeHandleHover: 'hover:bg-accent',
     },
     dynamicStyles: {
       buttonPrimary: {

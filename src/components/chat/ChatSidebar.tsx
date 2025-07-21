@@ -52,7 +52,6 @@ export function ChatSidebar({ onToggle, collapsed }: ChatSidebarProps) {
   if (collapsed) {
     return (
       <div className="h-full w-full border-r border-border-subtle flex flex-col items-center justify-start py-4 gap-4 panel-content-fade">
-        <MessageSquare className="w-5 h-5 text-text-secondary mb-4" />
         <SquarePen 
           onClick={handleNewChat}
           className="w-5 h-5 text-accent cursor-pointer hover:text-accent-400 transition-colors"

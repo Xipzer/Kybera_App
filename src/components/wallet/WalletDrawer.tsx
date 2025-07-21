@@ -71,19 +71,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
 
   if (collapsed) {
     return (
-      <>
-        <div className="h-full w-full border-l border-border-subtle flex flex-col items-center justify-start py-4 panel-content-fade-right">
-          <WalletIcon className="w-5 h-5 text-text-secondary mb-4" />
-          <button
-            onClick={() => setShowCreateGroupDialog(true)}
-            className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
-            title="New Group"
-          >
-            <Users className="w-4 h-4 text-accent" />
-          </button>
-        </div>
-        <CreateGroupDialog open={showCreateGroupDialog} onOpenChange={setShowCreateGroupDialog} />
-      </>
+      <div className="h-full w-full border-l border-border-subtle panel-content-fade-right" />
     )
   }
 
@@ -384,7 +372,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
 
         {activeWalletId && (
           <>
-            <PanelResizeHandle className="h-px bg-border-subtle hover:bg-accent transition-colors" />
+            <PanelResizeHandle className={`h-px transition-colors ${theme.styles.resizeHandle} ${theme.styles.resizeHandleHover}`} />
             <Panel>
               <WalletDetailView />
             </Panel>
