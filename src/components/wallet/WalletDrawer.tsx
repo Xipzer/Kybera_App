@@ -85,10 +85,10 @@ export function WalletDrawer({ onToggle, collapsed }: WalletDrawerProps) {
   }
 
   return (
-    <div className={`h-full border-l ${theme.styles.drawerContainer} panel-content-fade-right`}>
+    <div className={`h-full border-l ${theme.styles.drawerContainer}`}>
       <PanelGroup direction="vertical" className="h-full">
         <Panel defaultSize={50} minSize={30} maxSize={70} className="flex flex-col overflow-hidden">
-      <div className={`p-4 flex-shrink-0 transition-all duration-300 ${theme.styles.panelHeader}`}>
+      <div className={`p-4 flex-shrink-0 ${theme.styles.panelHeader}`}>
         <div className="flex items-center justify-between mb-4">
           <h2 className={`text-lg font-semibold ${theme.styles.textPrimary}`}>Wallets</h2>
           {onToggle && (

@@ -69,7 +69,7 @@ export function ChatSidebar({ onToggle, collapsed }: ChatSidebarProps) {
   }
   
   return (
-    <div className="h-full bg-surface-base border-r border-border-subtle flex flex-col panel-content-fade">
+    <div className="h-full bg-surface-base border-r border-border-subtle flex flex-col">
       <div className="p-4 border-b border-border-subtle">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-text-primary">Chats</h2>

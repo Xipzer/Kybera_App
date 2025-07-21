@@ -80,7 +80,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           {walletDrawerOpen && (
             <>
               <PanelResizeHandle className="w-px bg-border-subtle hover:bg-accent transition-colors" />
-              <Panel id="wallet-drawer" order={3} defaultSize={25} minSize={15} maxSize={40} onResize={handleWalletResize}>
+              <Panel id="wallet-drawer" order={3} defaultSize={25} minSize={25} maxSize={40} onResize={handleWalletResize}>
                 <WalletDrawer onToggle={toggleWalletDrawer} />
               </Panel>
             </>
