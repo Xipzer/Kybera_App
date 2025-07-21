@@ -56,7 +56,7 @@ export function MainLayout({ children }: MainLayoutProps) {
     chatSizeRef.current = size
     
     // Clear dragging below min if we're expanding from collapsed
-    if (wasCollapsedOnDragStart.current.chat && isDragging && size > COLLAPSED_SIZE + 5) {
+    if (wasCollapsedOnDragStart.current.chat && isDragging && size > COLLAPSED_SIZE) {
       setIsChatDraggingBelowMin(false)
     }
     // Only set dragging below min for expanded panels
@@ -71,7 +71,7 @@ export function MainLayout({ children }: MainLayoutProps) {
     walletSizeRef.current = size
     
     // Clear dragging below min if we're expanding from collapsed
-    if (wasCollapsedOnDragStart.current.wallet && isDragging && size > COLLAPSED_SIZE + 5) {
+    if (wasCollapsedOnDragStart.current.wallet && isDragging && size > COLLAPSED_SIZE) {
       setIsWalletDraggingBelowMin(false)
     }
     // Only set dragging below min for expanded panels
@@ -92,12 +92,10 @@ export function MainLayout({ children }: MainLayoutProps) {
   const handleDragEnd = () => {
     setIsDragging(false)
     
-    // Auto-expand if started from collapsed and dragged beyond threshold
-    const EXPAND_THRESHOLD = 5 // 5px beyond collapsed size
-    
     // Handle chat panel
     if (wasCollapsedOnDragStart.current.chat) {
-      if (chatSizeRef.current > COLLAPSED_SIZE + EXPAND_THRESHOLD) {
+      // If started from collapsed, any drag should expand (even 1px)
+      if (chatSizeRef.current > COLLAPSED_SIZE) {
         // Panel was collapsed and dragged out - expand it
         setIsChatCollapsed(false)
         // Force expansion by calling expand after state update
@@ -111,8 +109,9 @@ export function MainLayout({ children }: MainLayoutProps) {
           })
         })
       }
+      // No else - if still at COLLAPSED_SIZE, leave it collapsed
     } else {
-      // Only auto-collapse if started from expanded and below minimum
+      // Started from expanded - auto-collapse if below minimum
       if (chatSizeRef.current < MIN_CHAT_SIZE) {
         chatPanelRef.current?.collapse()
         setIsChatDraggingBelowMin(false)
@@ -121,7 +120,8 @@ export function MainLayout({ children }: MainLayoutProps) {
     
     // Handle wallet panel
     if (wasCollapsedOnDragStart.current.wallet) {
-      if (walletSizeRef.current > COLLAPSED_SIZE + EXPAND_THRESHOLD) {
+      // If started from collapsed, any drag should expand (even 1px)
+      if (walletSizeRef.current > COLLAPSED_SIZE) {
         // Panel was collapsed and dragged out - expand it
         setIsWalletCollapsed(false)
         // Force expansion by calling expand after state update
@@ -135,8 +135,9 @@ export function MainLayout({ children }: MainLayoutProps) {
           })
         })
       }
+      // No else - if still at COLLAPSED_SIZE, leave it collapsed
     } else {
-      // Only auto-collapse if started from expanded and below minimum
+      // Started from expanded - auto-collapse if below minimum
       if (walletSizeRef.current < MIN_WALLET_SIZE) {
         walletPanelRef.current?.collapse()
         setIsWalletDraggingBelowMin(false)
