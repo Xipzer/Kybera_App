@@ -8,11 +8,13 @@ import { ModelSelector } from './ModelSelector'
 import { SettingsDialog } from '../settings/SettingsDialog'
 import { OpenRouterService } from '../../services/ai/openrouter'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
+import { useTheme } from '../../hooks/useTheme'
 
 export function ChatInterface() {
   const { conversations, activeConversationId, addMessage, createConversation, updateConversation, setLoading, isLoading } = useChatStore()
   const { openRouterApiKey, selectedModel } = useSettingsStore()
   const { chatWallpaper, wallpaperOpacity } = useUIStore()
+  const { theme } = useTheme()
   const [input, setInput] = useState('')
   const [showSettings, setShowSettings] = useState(false)
   const [streamingContent, setStreamingContent] = useState('')
@@ -116,7 +118,8 @@ export function ChatInterface() {
           </p>
           <button
             onClick={() => setShowSettings(true)}
-            className="px-4 py-2 bg-gradient-primary text-white rounded-lg hover:shadow-lg hover:primary-glow transition-all duration-300 font-medium"
+            className={theme.styles.buttonPrimary}
+            style={theme.dynamicStyles.buttonPrimary}
           >
             Configure API Key
           </button>
@@ -180,7 +183,13 @@ export function ChatInterface() {
             )}
             {isLoading && !streamingContent && (
               <div className="flex gap-4 mb-6">
-                <div className="flex-shrink-0 w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center primary-glow">
+                <div 
+                  className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{
+                    background: theme.dynamicStyles.buttonPrimary.background,
+                    boxShadow: theme.dynamicStyles.buttonPrimary.hoverShadow
+                  }}
+                >
                   <div className="flex items-center gap-1">
                     <div className="w-1.5 h-1.5 bg-surface-base rounded-full animate-pulse" />
                     <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse animation-delay-200" />
@@ -215,7 +224,8 @@ export function ChatInterface() {
             <button
               onClick={handleSend}
               disabled={!input.trim() || isLoading}
-              className="px-4 py-2 bg-gradient-primary text-white rounded-lg hover:shadow-lg hover:primary-glow disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium"
+              className={`${theme.styles.buttonPrimary} disabled:opacity-50 disabled:cursor-not-allowed`}
+              style={theme.dynamicStyles.buttonPrimary}
             >
               <Send className="w-5 h-5" />
             </button>

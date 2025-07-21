@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
+import * as Tabs from '@radix-ui/react-tabs'
 import { X, AlertCircle, Users, Edit2, ChevronLeft } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 // import { encryptData } from '../../utils/crypto'
 import { EVMWalletService } from '../../services/blockchain/evmWallet'
 import { SVMWalletService } from '../../services/blockchain/svmWallet'
 import { ChainType } from '../../types'
+import { useTheme } from '../../hooks/useTheme'
 
 interface ImportGroupDialogProps {
   open: boolean
@@ -14,6 +16,7 @@ interface ImportGroupDialogProps {
 
 export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps) {
   const { walletGroups, password, importWalletGroup, exportGroupSeed } = useWalletStore()
+  const { theme } = useTheme()
   const [groupName, setGroupName] = useState('')
   const [chainType, setChainType] = useState<ChainType>('EVM')
   const [seedPhrase, setSeedPhrase] = useState('')
@@ -116,36 +119,36 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="dialog-overlay" />
-        <Dialog.Content className="dialog-content bg-white dark:bg-gray-900 rounded-lg shadow-lg w-[500px] max-h-[85vh] overflow-y-auto">
+        <Dialog.Content className={`dialog-content w-[500px] max-h-[85vh] overflow-y-auto ${theme.styles.dialogContainer}`}>
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 {showNameEditor && (
                   <button
                     onClick={() => setShowNameEditor(false)}
-                    className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                    className={theme.styles.buttonIcon}
                   >
-                    <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    <ChevronLeft className={`w-5 h-5 ${theme.styles.iconSecondary}`} />
                   </button>
                 )}
-                <Dialog.Title className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                <Dialog.Title className={theme.styles.heading}>
                   {showNameEditor ? 'Edit Wallet Names' : 'Import Wallet Group'}
                 </Dialog.Title>
               </div>
               <Dialog.Close asChild>
                 <button
                   onClick={handleClose}
-                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                  className={theme.styles.buttonIcon}
                 >
-                  <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  <X className={`w-5 h-5 ${theme.styles.iconSecondary}`} />
                 </button>
               </Dialog.Close>
             </div>
 
-            <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className={theme.styles.info.container}>
               <div className="flex gap-3">
-                <Users className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-blue-800 dark:text-blue-200">
+                <Users className={theme.styles.info.icon} />
+                <div className={theme.styles.info.text}>
                   <p>Import an existing recovery phrase to restore all wallets associated with it. You can then derive new wallets from this group.</p>
                 </div>
               </div>
@@ -156,14 +159,14 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
                 <div className="max-h-[400px] overflow-y-auto space-y-2 pr-2">
                   {walletNames.map((name, index) => (
                     <div key={index} className="flex items-center gap-2">
-                      <span className="text-sm text-gray-500 dark:text-gray-400 w-8">
+                      <span className={`text-sm w-8 ${theme.styles.textTertiary}`}>
                         #{index + 1}
                       </span>
                       <input
                         type="text"
                         value={name}
                         onChange={(e) => updateWalletName(index, e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className={`${theme.styles.input} focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent`}
                       />
                     </div>
                   ))}
@@ -171,13 +174,15 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
                 <div className="flex gap-2 justify-end pt-4 border-t">
                   <button
                     onClick={() => setShowNameEditor(false)}
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className={theme.styles.buttonSecondary}
+                    style={theme.dynamicStyles.buttonSecondary}
                   >
                     Back
                   </button>
                   <button
                     onClick={() => setShowNameEditor(false)}
-                    className="px-4 py-2 bg-gradient-secondary text-white rounded-lg hover:shadow-lg hover:secondary-glow transition-all duration-300 font-medium"
+                    className={theme.styles.buttonSettings || theme.styles.buttonPrimary}
+                    style={theme.dynamicStyles.buttonSettings || theme.dynamicStyles.buttonPrimary}
                   >
                     Confirm Names
                   </button>
@@ -185,38 +190,25 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
               </div>
             ) : (
             <form onSubmit={handleImport} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Chain Type
-                </label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setChainType('EVM')}
-                    className={`flex-1 py-2 px-3 rounded-lg border transition-colors ${
-                      chainType === 'EVM'
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                        : 'border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
-                    }`}
+              <Tabs.Root value={chainType} onValueChange={(v) => setChainType(v as ChainType)}>
+                <Tabs.List className={`${theme.styles.tabs.list} mb-4`}>
+                  <Tabs.Trigger
+                    value="EVM"
+                    className={theme.styles.tabs.trigger}
                   >
                     EVM (Ethereum, Base, BSC)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setChainType('SVM')}
-                    className={`flex-1 py-2 px-3 rounded-lg border transition-colors ${
-                      chainType === 'SVM'
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                        : 'border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
-                    }`}
+                  </Tabs.Trigger>
+                  <Tabs.Trigger
+                    value="SVM"
+                    className={theme.styles.tabs.trigger}
                   >
                     SVM (Solana)
-                  </button>
-                </div>
-              </div>
+                  </Tabs.Trigger>
+                </Tabs.List>
+              </Tabs.Root>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className={theme.styles.label}>
                   Group Name
                 </label>
                 <input
@@ -224,13 +216,13 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
                   value={groupName}
                   onChange={(e) => setGroupName(e.target.value)}
                   placeholder="e.g., My Restored Wallets"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={theme.styles.input}
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className={theme.styles.label}>
                   Recovery Phrase
                 </label>
                 <textarea
@@ -238,7 +230,7 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
                   onChange={(e) => setSeedPhrase(e.target.value)}
                   placeholder="Enter your 12 or 24 word recovery phrase..."
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className={`${theme.styles.textarea} font-mono text-sm`}
                 />
               </div>
 
@@ -249,37 +241,38 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
                     id="preGenerateWallets"
                     checked={preGenerateWallets}
                     onChange={(e) => setPreGenerateWallets(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 rounded focus:ring-blue-500"
+                    className="w-4 h-4 rounded-full border-2 border-gray-300 dark:border-gray-600 checked:bg-accent checked:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1 dark:checked:bg-accent dark:focus:ring-offset-gray-900 transition-all duration-200"
                   />
-                  <label htmlFor="preGenerateWallets" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label htmlFor="preGenerateWallets" className={`text-sm font-medium ${theme.styles.textSecondary}`}>
                     Pre-Generate Wallets
                   </label>
                 </div>
 
                 {preGenerateWallets && (
                   <div className="ml-6 space-y-2">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label className={theme.styles.label}>
                       Number of Wallets to Generate
                     </label>
                     <div className="flex items-center gap-2">
                       <input
                         type="number"
                         value={walletCount}
-                        onChange={(e) => setWalletCount(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))}
+                        onChange={(e) => setWalletCount(Math.max(1, Math.min(99, parseInt(e.target.value) || 1)))}
                         min="1"
-                        max="20"
-                        className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        max="99"
+                        className={`${theme.styles.input} w-16`}
                       />
                       <button
                         type="button"
                         onClick={handleEditNames}
-                        className="flex items-center gap-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        className={`${theme.styles.buttonSecondary} flex items-center gap-1 text-sm`}
+                        style={theme.dynamicStyles.buttonSecondary}
                       >
                         <Edit2 className="w-4 h-4" />
                         Edit Names
                       </button>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className={`text-xs ${theme.styles.textTertiary}`}>
                       {walletNames.length > 0 ? 'Custom names configured' : 'Default names will be used'}
                     </p>
                   </div>
@@ -287,24 +280,18 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
               </div>
 
               {error && (
-                <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                  <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
-                  <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                <div className={theme.styles.error.container}>
+                  <AlertCircle className={theme.styles.error.icon} />
+                  <p className={theme.styles.error.text}>{error}</p>
                 </div>
               )}
 
-              <div className="flex gap-2 justify-end">
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                >
-                  Cancel
-                </button>
+              <div className="flex justify-end">
                 <button
                   type="submit"
                   disabled={!groupName.trim() || !seedPhrase.trim() || isLoading}
-                  className="px-4 py-2 bg-gradient-secondary text-white rounded-lg hover:shadow-lg hover:secondary-glow disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium"
+                  className={`${theme.styles.buttonSettings || theme.styles.buttonPrimary} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  style={theme.dynamicStyles.buttonSettings || theme.dynamicStyles.buttonPrimary}
                 >
                   {isLoading ? 'Importing...' : 'Import Group'}
                 </button>

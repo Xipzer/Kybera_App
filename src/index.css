@@ -79,8 +79,9 @@
     box-shadow: 0 0 20px rgba(255, 0, 153, 0.5);
   }
   
-  /* Theme-aware button classes */
-  /* Primary button - theme-aware gradients */
+  /* Theme-aware button classes - DEPRECATED: Use modular theme system instead */
+  /* Keeping for backward compatibility but should be removed once all components are updated */
+  /*
   .bg-gradient-primary {
     background: linear-gradient(135deg, rgb(0, 225, 255) 0%, rgb(255, 0, 153) 100%);
   }
@@ -91,15 +92,16 @@
     background: linear-gradient(135deg, rgb(239, 68, 68) 0%, rgb(220, 38, 38) 100%) !important;
   }
   
-  /* Secondary button - pink in light/dark, candy red in xipz */
   .bg-gradient-secondary {
     background: linear-gradient(135deg, rgb(255, 0, 153) 0%, rgb(219, 39, 119) 100%);
   }
   :root.xipz .bg-gradient-secondary {
     background: linear-gradient(135deg, rgb(239, 68, 68) 0%, rgb(220, 38, 38) 100%) !important;
   }
+  */
   
-  /* Outline button styles - transparent bg with theme borders */
+  /* Outline button styles - DEPRECATED: Use modular theme system instead */
+  /*
   .btn-outline-primary {
     background: transparent;
     border: 2px solid rgb(0, 225, 255);
@@ -118,7 +120,6 @@
     box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
   }
   
-  /* Theme-aware outline buttons */
   .btn-outline-secondary {
     background: transparent;
     border: 2px solid rgb(255, 0, 153);
@@ -147,6 +148,7 @@
     background: rgba(239, 68, 68, 0.1) !important;
     box-shadow: 0 0 20px rgba(239, 68, 68, 0.3) !important;
   }
+  */
   
   /* Theme-aware glow effects */
   .primary-glow {

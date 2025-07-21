@@ -3,6 +3,7 @@ import { Lock, Wallet, AlertCircle } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import { useAuthStore } from '../../store/authStore'
 import { useUIStore } from '../../store/uiStore'
+import { useTheme } from '../../hooks/useTheme'
 
 export function UnlockScreen() {
   const { unlock } = useWalletStore()
@@ -12,6 +13,7 @@ export function UnlockScreen() {
   const [error, setError] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const { theme } = useTheme()
   
   useEffect(() => {
     // Check if password is already initialized
@@ -76,7 +78,12 @@ export function UnlockScreen() {
                 />
               </div>
             ) : (
-              <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mb-4 primary-glow">
+              <div 
+                className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+                style={{
+                  background: theme.dynamicStyles.buttonPrimary.background
+                }}
+              >
                 <Wallet className="w-8 h-8 text-white" />
               </div>
             )}
@@ -98,7 +105,7 @@ export function UnlockScreen() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter password"
-                  className="w-full pl-10 pr-3 py-2 border border-border-subtle rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
+                  className="w-full pl-10 pr-3 py-2 border border-border-subtle rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-colors"
                   autoFocus
                 />
               </div>
@@ -116,7 +123,7 @@ export function UnlockScreen() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirm password"
-                    className="w-full pl-10 pr-3 py-2 border border-border-subtle rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
+                    className="w-full pl-10 pr-3 py-2 border border-border-subtle rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-colors"
                   />
                 </div>
               </div>
@@ -131,7 +138,8 @@ export function UnlockScreen() {
             <button
               type="submit"
               disabled={isLoading || (isLockedOut && isLockedOut())}
-              className="w-full py-2 bg-gradient-primary text-white rounded-lg hover:shadow-lg hover:primary-glow disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-semibold"
+              className={`w-full py-2 ${theme.styles.buttonPrimary} font-semibold disabled:opacity-50 disabled:cursor-not-allowed`}
+              style={theme.dynamicStyles.buttonPrimary}
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">

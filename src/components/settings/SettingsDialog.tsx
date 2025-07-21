@@ -20,6 +20,7 @@ import { useUIStore } from '../../store/uiStore'
 import { useAuthStore } from '../../store/authStore'
 import { useWalletStore } from '../../store/walletStore'
 import { ImageUpload } from '../common/ImageUpload'
+import { useTheme } from '../../hooks/useTheme'
 
 interface SettingsDialogProps {
   open: boolean
@@ -28,6 +29,7 @@ interface SettingsDialogProps {
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const { openRouterApiKey, autoLockTimeout, setOpenRouterApiKey, setAutoLockTimeout } = useSettingsStore()
+  const { theme: themeConfig } = useTheme()
   const { theme, setTheme, profilePicture, setProfilePicture, chatWallpaper, setChatWallpaper, wallpaperOpacity, setWallpaperOpacity } = useUIStore()
   const { changePassword } = useAuthStore()
   const { password: currentSessionPassword } = useWalletStore()
@@ -191,7 +193,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         value={apiKey}
                         onChange={(e) => setApiKey(e.target.value)}
                         placeholder="sk-or-v1-..."
-                        className="w-full px-3 py-2 pr-10 border border-border-default rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
+                        className={`${themeConfig.styles.input} pr-10`}
                       />
                       <button
                         type="button"
@@ -220,7 +222,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       <button
                         onClick={handleSaveApiKey}
                         disabled={!isApiKeyChanged}
-                        className="px-4 py-2 bg-gradient-secondary text-white rounded-lg hover:shadow-lg hover:secondary-glow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none transition-all duration-300 font-medium"
+                        className={`${themeConfig.styles.buttonSettings || themeConfig.styles.buttonPrimary} disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none`}
+                        style={themeConfig.dynamicStyles.buttonSettings || themeConfig.dynamicStyles.buttonPrimary}
                       >
                         Save
                       </button>
@@ -246,7 +249,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                           value={currentPassword}
                           onChange={(e) => setCurrentPassword(e.target.value)}
                           placeholder="Enter current password"
-                          className="w-full px-3 py-2 pr-10 border border-border-default rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
+                          className={`${themeConfig.styles.input} pr-10`}
                         />
                         <button
                           type="button"
@@ -272,7 +275,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
                           placeholder="Enter new password"
-                          className="w-full px-3 py-2 pr-10 border border-border-default rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
+                          className={`${themeConfig.styles.input} pr-10`}
                         />
                         <button
                           type="button"
@@ -297,7 +300,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         value={confirmNewPassword}
                         onChange={(e) => setConfirmNewPassword(e.target.value)}
                         placeholder="Confirm new password"
-                        className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
+                        className={themeConfig.styles.input}
                       />
                     </div>
                     
@@ -318,7 +321,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     <button
                       onClick={handlePasswordChange}
                       disabled={isChangingPassword || !currentPassword || !newPassword || !confirmNewPassword}
-                      className="px-4 py-2 bg-gradient-secondary text-white rounded-lg hover:shadow-lg hover:secondary-glow disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium"
+                      className={`${themeConfig.styles.buttonSettings || themeConfig.styles.buttonPrimary} disabled:opacity-50 disabled:cursor-not-allowed`}
+                      style={themeConfig.dynamicStyles.buttonSettings || themeConfig.dynamicStyles.buttonPrimary}
                     >
                       {isChangingPassword ? (
                         <span className="flex items-center gap-2">
@@ -377,7 +381,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                           }}
                           min="1"
                           max="60"
-                          className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-elevated text-text-primary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
+                          className={themeConfig.styles.input}
                         />
                       </div>
                     )}

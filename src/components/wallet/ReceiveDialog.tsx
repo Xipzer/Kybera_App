@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { X, Copy } from 'lucide-react'
 import { Wallet } from '../../types'
 import QRCode from 'qrcode'
-import { useEffect } from 'react'
+import { useTheme } from '../../hooks/useTheme'
 
 interface ReceiveDialogProps {
   open: boolean
@@ -12,6 +12,7 @@ interface ReceiveDialogProps {
 }
 
 export function ReceiveDialog({ open, onOpenChange, wallet }: ReceiveDialogProps) {
+  const { theme } = useTheme()
   const [qrCodeUrl, setQrCodeUrl] = useState('')
   const [copied, setCopied] = useState(false)
 
@@ -96,21 +97,6 @@ export function ReceiveDialog({ open, onOpenChange, wallet }: ReceiveDialogProps
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-2">
-                <button
-                  onClick={() => onOpenChange(false)}
-                  className="flex-1 px-4 py-2 border border-border-default rounded-lg hover:bg-surface-hover transition-colors text-text-primary"
-                >
-                  Close
-                </button>
-                <button
-                  onClick={copyAddress}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gradient-candy-red text-white rounded-lg hover:shadow-lg hover:shadow-accent-500/30 transition-all duration-300 font-medium"
-                >
-                  <Copy className="w-4 h-4" />
-                  Copy Address
-                </button>
-              </div>
             </div>
           </div>
         </Dialog.Content>

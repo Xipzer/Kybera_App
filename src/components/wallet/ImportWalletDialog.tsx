@@ -6,6 +6,7 @@ import { useWalletStore } from '../../store/walletStore'
 import { EVMWalletService } from '../../services/blockchain/evmWallet'
 import { SVMWalletService } from '../../services/blockchain/svmWallet'
 import { ChainType, Wallet } from '../../types'
+import { useTheme } from '../../hooks/useTheme'
 
 interface ImportWalletDialogProps {
   open: boolean
@@ -14,6 +15,7 @@ interface ImportWalletDialogProps {
 
 export function ImportWalletDialog({ open, onOpenChange }: ImportWalletDialogProps) {
   const { addWallet, password } = useWalletStore()
+  const { theme } = useTheme()
   const [walletType, setWalletType] = useState<ChainType>('EVM')
   const [importMethod, setImportMethod] = useState<'privateKey' | 'mnemonic'>('privateKey')
   const [walletName, setWalletName] = useState('')
@@ -111,33 +113,33 @@ export function ImportWalletDialog({ open, onOpenChange }: ImportWalletDialogPro
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="dialog-overlay" />
-        <Dialog.Content className="dialog-content bg-white dark:bg-gray-900 rounded-lg shadow-lg w-[500px] max-h-[85vh] overflow-y-auto">
+        <Dialog.Content className={`dialog-content w-[500px] max-h-[85vh] overflow-y-auto ${theme.styles.dialogContainer}`}>
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <Dialog.Title className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+              <Dialog.Title className={theme.styles.heading}>
                 Import Wallet
               </Dialog.Title>
               <Dialog.Close asChild>
                 <button
                   onClick={handleClose}
-                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                  className={theme.styles.buttonIcon}
                 >
-                  <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  <X className={`w-5 h-5 ${theme.styles.iconSecondary}`} />
                 </button>
               </Dialog.Close>
             </div>
 
             <Tabs.Root value={walletType} onValueChange={(v) => setWalletType(v as ChainType)}>
-              <Tabs.List className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1 mb-6">
+              <Tabs.List className={`${theme.styles.tabs.list} mb-6`}>
                 <Tabs.Trigger
                   value="EVM"
-                  className="flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 text-gray-600 dark:text-gray-400"
+                  className={theme.styles.tabs.trigger}
                 >
                   EVM (Ethereum, Base, BSC)
                 </Tabs.Trigger>
                 <Tabs.Trigger
                   value="SVM"
-                  className="flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 text-gray-600 dark:text-gray-400"
+                  className={theme.styles.tabs.trigger}
                 >
                   SVM (Solana)
                 </Tabs.Trigger>
@@ -146,7 +148,7 @@ export function ImportWalletDialog({ open, onOpenChange }: ImportWalletDialogPro
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className={theme.styles.label}>
                   Wallet Name
                 </label>
                 <input
@@ -154,7 +156,7 @@ export function ImportWalletDialog({ open, onOpenChange }: ImportWalletDialogPro
                   value={walletName}
                   onChange={(e) => setWalletName(e.target.value)}
                   placeholder="My Imported Wallet"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={theme.styles.input}
                 />
               </div>
 
@@ -162,16 +164,16 @@ export function ImportWalletDialog({ open, onOpenChange }: ImportWalletDialogPro
                 value={importMethod}
                 onValueChange={(v) => setImportMethod(v as 'privateKey' | 'mnemonic')}
               >
-                <Tabs.List className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1 mb-4">
+                <Tabs.List className={`${theme.styles.tabs.list} mb-4`}>
                   <Tabs.Trigger
                     value="privateKey"
-                    className="flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 text-gray-600 dark:text-gray-400"
+                    className={theme.styles.tabs.trigger}
                   >
                     Private Key
                   </Tabs.Trigger>
                   <Tabs.Trigger
                     value="mnemonic"
-                    className="flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:text-gray-900 dark:data-[state=active]:text-gray-100 text-gray-600 dark:text-gray-400"
+                    className={theme.styles.tabs.trigger}
                   >
                     Recovery Phrase
                   </Tabs.Trigger>
@@ -179,7 +181,7 @@ export function ImportWalletDialog({ open, onOpenChange }: ImportWalletDialogPro
 
                 <Tabs.Content value="privateKey">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className={theme.styles.label}>
                       Private Key
                     </label>
                     <textarea
@@ -187,14 +189,14 @@ export function ImportWalletDialog({ open, onOpenChange }: ImportWalletDialogPro
                       onChange={(e) => setPrivateKey(e.target.value)}
                       placeholder="Enter your private key..."
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                      className={`${theme.styles.textarea} font-mono text-sm`}
                     />
                   </div>
                 </Tabs.Content>
 
                 <Tabs.Content value="mnemonic">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className={theme.styles.label}>
                       Recovery Phrase
                     </label>
                     <textarea
@@ -202,26 +204,29 @@ export function ImportWalletDialog({ open, onOpenChange }: ImportWalletDialogPro
                       onChange={(e) => setMnemonic(e.target.value)}
                       placeholder="Enter your 12 or 24 word recovery phrase..."
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                      className={`${theme.styles.textarea} font-mono text-sm`}
                     />
                   </div>
                 </Tabs.Content>
               </Tabs.Root>
 
               {error && (
-                <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                  <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
-                  <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                <div className={theme.styles.error.container}>
+                  <AlertCircle className={theme.styles.error.icon} />
+                  <p className={theme.styles.error.text}>{error}</p>
                 </div>
               )}
 
-              <button
-                onClick={handleImport}
-                disabled={!walletName.trim() || isLoading}
-                className="w-full py-2 bg-gradient-secondary text-white rounded-lg hover:shadow-lg hover:secondary-glow disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium"
-              >
-                {isLoading ? 'Importing...' : 'Import Wallet'}
-              </button>
+              <div className="flex justify-end">
+                <button
+                  onClick={handleImport}
+                  disabled={!walletName.trim() || isLoading}
+                  className={`${theme.styles.buttonSettings || theme.styles.buttonPrimary} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  style={theme.dynamicStyles.buttonSettings || theme.dynamicStyles.buttonPrimary}
+                >
+                  {isLoading ? 'Importing...' : 'Import Wallet'}
+                </button>
+              </div>
             </div>
           </div>
         </Dialog.Content>

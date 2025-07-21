@@ -48,8 +48,8 @@
 
   /* Border Colors */
   --color-border-subtle: 44 28 67;    /* Subtle borders */
-  --color-border-default: 66 45 95;   /* Default borders */
-  --color-border-strong: 89 65 123;   /* Strong borders */
+  --color-border-default: 44 28 67;   /* Default borders - made more subtle */
+  --color-border-strong: 66 45 95;   /* Strong borders */
 
   /* Interactive States */
   --color-interactive-hover: 239 68 68 / 0.1;  /* Hover with red tint */
@@ -204,7 +204,7 @@
   --color-surface-base: 26 26 26;     /* Base surface */
   --color-surface-elevated: 33 33 33; /* Elevated surface */
   --color-surface-overlay: 46 46 46;  /* Overlay surface */
-  --color-surface-hover: 38 38 38;    /* Hover state */
+  --color-surface-hover: 29 29 29;    /* Hover state - subtly lighter than base */
 
   /* Text Colors */
   --color-text-primary: 245 245 245;
@@ -214,8 +214,8 @@
 
   /* Border Colors */
   --color-border-subtle: 38 38 38;    /* Subtle borders */
-  --color-border-default: 51 51 51;   /* Default borders */
-  --color-border-strong: 77 77 77;    /* Strong borders */
+  --color-border-default: 38 38 38;   /* Default borders - made more subtle */
+  --color-border-strong: 51 51 51;    /* Strong borders */
 
   /* Interactive States */
   --color-interactive-hover: 0 225 255 / 0.1;

@@ -3,6 +3,7 @@ import { Message } from '../../types'
 import MarkdownIt from 'markdown-it'
 import { useMemo } from 'react'
 import { useUIStore } from '../../store/uiStore'
+import { useTheme } from '../../hooks/useTheme'
 
 const md = new MarkdownIt({
   html: false,
@@ -16,6 +17,7 @@ interface ChatMessageProps {
 
 export function ChatMessage({ message }: ChatMessageProps) {
   const { profilePicture } = useUIStore()
+  const { theme } = useTheme()
   const renderedContent = useMemo(() => {
     return message.role === 'assistant'
       ? md.render(message.content)
@@ -25,7 +27,13 @@ export function ChatMessage({ message }: ChatMessageProps) {
   return (
     <div className={`flex gap-4 mb-6 ${message.role === 'user' ? 'justify-end' : ''}`}>
       {message.role === 'assistant' && (
-        <div className="flex-shrink-0 w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center primary-glow">
+        <div 
+          className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center"
+          style={{
+            background: theme.dynamicStyles.buttonPrimary.background,
+            boxShadow: theme.dynamicStyles.buttonPrimary.hoverShadow
+          }}
+        >
           <Bot className="w-5 h-5 text-white" />
         </div>
       )}

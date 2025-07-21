@@ -4,11 +4,13 @@ import * as ScrollArea from '@radix-ui/react-scroll-area'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { EmptyState } from '../common/EmptyState'
 import { useState } from 'react'
+import { useTheme } from '../../hooks/useTheme'
 
 export function ChatSidebar() {
   const { conversations, activeConversationId, createConversation, deleteConversation, setActiveConversation, updateConversation } = useChatStore()
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
+  const { theme } = useTheme()
 
   const handleNewChat = async () => {
     await createConversation()
@@ -49,7 +51,8 @@ export function ChatSidebar() {
         
         <button
           onClick={handleNewChat}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gradient-primary text-white rounded-lg hover:shadow-lg hover:primary-glow transition-all duration-300 font-medium"
+          className={`w-full flex items-center justify-center gap-2 px-3 py-2 ${theme.styles.buttonPrimary}`}
+          style={theme.dynamicStyles.buttonPrimary}
         >
           <Plus className="w-4 h-4" />
           New Chat

@@ -18,11 +18,13 @@ import { ReceiveDialog } from './ReceiveDialog'
 import { TokenList } from './TokenList'
 import { TransactionHistory } from './TransactionHistory'
 import { useWalletBalance } from '../../hooks/useWalletBalance'
+import { useTheme } from '../../hooks/useTheme'
 
 export function WalletDetailView() {
   const { activeWalletId, wallets, activeNetwork } = useWalletStore()
   const [showSendDialog, setShowSendDialog] = useState(false)
   const [showReceiveDialog, setShowReceiveDialog] = useState(false)
+  const { theme: themeConfig, themeName } = useTheme()
   const [theme, setTheme] = useState(() => {
     if (document.documentElement.classList.contains('xipz')) return 'xipz'
     if (document.documentElement.classList.contains('dark')) return 'dark'
@@ -199,36 +201,23 @@ export function WalletDetailView() {
         <div className="flex gap-3">
           <button
             onClick={() => setShowSendDialog(true)}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-white rounded-lg hover:shadow-lg transition-all duration-300 font-medium"
-            style={{
-              background: theme === 'xipz'
-                ? 'linear-gradient(135deg, rgb(239, 68, 68) 0%, rgb(220, 38, 38) 100%)'
-                : 'linear-gradient(135deg, rgb(0, 225, 255) 0%, rgb(255, 0, 153) 100%)'
-            }}
+            className={`flex-1 flex items-center justify-center gap-2 ${themeConfig.styles.buttonPrimary}`}
+            style={themeConfig.dynamicStyles.buttonPrimary}
           >
             <Send className="w-4 h-4" />
             Send
           </button>
           <button
             onClick={() => setShowReceiveDialog(true)}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 font-medium hover:shadow-lg"
-            style={{
-              background: 'transparent',
-              border: '2px solid',
-              borderColor: theme === 'xipz'
-                ? 'rgb(239, 68, 68)'
-                : 'rgb(255, 0, 153)',
-              color: theme === 'xipz'
-                ? 'rgb(239, 68, 68)'
-                : 'rgb(255, 0, 153)'
-            }}
+            className={`flex-1 flex items-center justify-center gap-2 ${themeConfig.styles.buttonSecondary}`}
+            style={themeConfig.dynamicStyles.buttonSecondary}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = theme === 'xipz'
-                ? 'rgba(239, 68, 68, 0.1)'
+              e.currentTarget.style.backgroundColor = themeName === 'xipz' 
+                ? 'rgba(239, 68, 68, 0.1)' 
                 : 'rgba(255, 0, 153, 0.1)'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.backgroundColor = 'transparent'
             }}
           >
             <Download className="w-4 h-4" />
@@ -239,29 +228,17 @@ export function WalletDetailView() {
 
       {/* Tabs Content */}
       <Tabs.Root defaultValue="tokens" className="flex-1 flex flex-col overflow-hidden">
-        <Tabs.List className={`flex transition-all duration-300 ${
-          theme === 'xipz'
-            ? 'border-b border-primary-800/50 bg-primary-900/20'
-            : 'border-b border-border-subtle'
-        }`}>
+        <Tabs.List className={themeConfig.styles.tabs.list}>
           <Tabs.Trigger
             value="tokens"
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-all duration-300 ${
-              theme === 'xipz'
-                ? 'text-primary-300 hover:text-primary-100 data-[state=active]:text-accent-400 data-[state=active]:border-b-2 data-[state=active]:border-accent-500'
-                : 'text-text-secondary hover:text-text-primary data-[state=active]:text-accent data-[state=active]:border-b-2 data-[state=active]:border-accent'
-            }`}
+            className={`${themeConfig.styles.tabs.trigger} flex items-center justify-center gap-2`}
           >
             <Coins className="w-4 h-4" />
             Tokens
           </Tabs.Trigger>
           <Tabs.Trigger
             value="history"
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-all duration-300 ${
-              theme === 'xipz'
-                ? 'text-primary-300 hover:text-primary-100 data-[state=active]:text-accent-400 data-[state=active]:border-b-2 data-[state=active]:border-accent-500'
-                : 'text-text-secondary hover:text-text-primary data-[state=active]:text-accent data-[state=active]:border-b-2 data-[state=active]:border-accent'
-            }`}
+            className={`${themeConfig.styles.tabs.trigger} flex items-center justify-center gap-2`}
           >
             <History className="w-4 h-4" />
             History

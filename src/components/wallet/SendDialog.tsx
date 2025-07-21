@@ -5,6 +5,7 @@ import { Wallet } from '../../types'
 import { Network } from '../../utils/networks'
 import { blockchainService } from '../../services/blockchain/blockchainService'
 import { useWalletStore } from '../../store/walletStore'
+import { useTheme } from '../../hooks/useTheme'
 
 interface SendDialogProps {
   open: boolean
@@ -15,6 +16,7 @@ interface SendDialogProps {
 
 export function SendDialog({ open, onOpenChange, wallet, network }: SendDialogProps) {
   const { password } = useWalletStore()
+  const { theme } = useTheme()
   const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState('')
   const [memo, setMemo] = useState('')
@@ -124,7 +126,7 @@ export function SendDialog({ open, onOpenChange, wallet, network }: SendDialogPr
                   value={recipient}
                   onChange={(e) => setRecipient(e.target.value)}
                   placeholder={`Enter ${network.type} address`}
-                  className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
+                  className={theme.styles.input}
                 />
               </div>
 
@@ -140,7 +142,7 @@ export function SendDialog({ open, onOpenChange, wallet, network }: SendDialogPr
                     placeholder="0.0"
                     step="0.000001"
                     min="0"
-                    className="w-full px-3 py-2 pr-16 border border-border-default rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
+                    className={`${theme.styles.input} pr-16`}
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary">
                     {nativeCurrency.symbol}
@@ -158,7 +160,7 @@ export function SendDialog({ open, onOpenChange, wallet, network }: SendDialogPr
                     value={memo}
                     onChange={(e) => setMemo(e.target.value)}
                     placeholder="Add a memo"
-                    className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
+                    className={theme.styles.input}
                   />
                 </div>
               )}
@@ -188,18 +190,12 @@ export function SendDialog({ open, onOpenChange, wallet, network }: SendDialogPr
                 </div>
               )}
 
-              <div className="flex gap-2 pt-2">
-                <button
-                  onClick={() => onOpenChange(false)}
-                  disabled={isLoading}
-                  className="flex-1 px-4 py-2 border border-border-default rounded-lg hover:bg-surface-hover transition-colors text-text-primary"
-                >
-                  Cancel
-                </button>
+              <div className="pt-2">
                 <button
                   onClick={handleSend}
                   disabled={isLoading || !recipient || !amount}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gradient-candy-red text-white rounded-lg hover:shadow-lg hover:shadow-accent-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium"
+                  className={`w-full flex items-center justify-center gap-2 ${theme.styles.buttonSettings || theme.styles.buttonPrimary} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  style={theme.dynamicStyles.buttonSettings || theme.dynamicStyles.buttonPrimary}
                 >
                   {isLoading ? (
                     <>
