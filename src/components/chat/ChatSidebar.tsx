@@ -51,7 +51,7 @@ export function ChatSidebar({ onToggle, collapsed }: ChatSidebarProps) {
 
   if (collapsed) {
     return (
-      <div className="h-full w-full bg-surface-base flex flex-col items-center justify-start py-4 gap-4 panel-content-fade">
+      <div className="h-full w-full bg-surface-base border-r border-border-subtle flex flex-col items-center justify-start py-4 gap-4 panel-content-fade">
         <button
           onClick={onToggle}
           className="p-2 rounded-lg hover:bg-surface-hover transition-colors mb-4"
@@ -71,8 +71,9 @@ export function ChatSidebar({ onToggle, collapsed }: ChatSidebarProps) {
   return (
     <div className="h-full bg-surface-base flex flex-col panel-content-fade">
       <div className="p-4 border-b border-border-subtle">
-        {onToggle && (
-          <div className="flex items-center justify-end mb-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-text-primary">Chats</h2>
+          {onToggle && (
             <button
               onClick={onToggle}
               className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
@@ -80,8 +81,8 @@ export function ChatSidebar({ onToggle, collapsed }: ChatSidebarProps) {
             >
               <PanelLeftClose className="w-5 h-5 text-text-secondary" />
             </button>
-          </div>
-        )}
+          )}
+        </div>
         
         <button
           onClick={handleNewChat}

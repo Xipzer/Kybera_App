@@ -47,12 +47,9 @@ export function MainLayout({ children }: MainLayoutProps) {
     <div className="h-screen bg-bg-subtle">
         <PanelGroup direction="horizontal" className="h-full" autoSaveId="main-layout">
           {!chatSidebarOpen && (
-            <>
-              <Panel id="chat-sidebar-collapsed" order={1} style={{ width: '52px', minWidth: '52px', maxWidth: '52px', flexShrink: 0 }}>
-                <ChatSidebar collapsed onToggle={toggleChatSidebar} />
-              </Panel>
-              <PanelResizeHandle className="w-px bg-border-subtle hover:bg-accent transition-colors" />
-            </>
+            <Panel id="chat-sidebar-collapsed" order={1} style={{ width: '52px', minWidth: '52px', maxWidth: '52px', flexShrink: 0 }}>
+              <ChatSidebar collapsed onToggle={toggleChatSidebar} />
+            </Panel>
           )}
           
           {chatSidebarOpen && (
@@ -69,12 +66,9 @@ export function MainLayout({ children }: MainLayoutProps) {
           </Panel>
 
           {!walletDrawerOpen && (
-            <>
-              <PanelResizeHandle className="w-px bg-border-subtle hover:bg-accent transition-colors" />
-              <Panel id="wallet-drawer-collapsed" order={3} style={{ width: '52px', minWidth: '52px', maxWidth: '52px', flexShrink: 0 }}>
-                <WalletDrawer collapsed onToggle={toggleWalletDrawer} />
-              </Panel>
-            </>
+            <Panel id="wallet-drawer-collapsed" order={3} style={{ width: '52px', minWidth: '52px', maxWidth: '52px', flexShrink: 0 }}>
+              <WalletDrawer collapsed onToggle={toggleWalletDrawer} />
+            </Panel>
           )}
           
           {walletDrawerOpen && (
