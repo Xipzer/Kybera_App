@@ -72,7 +72,7 @@ export function WalletDrawer({ onToggle, collapsed }: WalletDrawerProps) {
 
   if (collapsed) {
     return (
-      <div className="h-full w-full bg-surface-base border-l border-border-subtle flex flex-col items-center justify-start py-4">
+      <div className="h-full w-full bg-surface-base flex flex-col items-center justify-start py-4 panel-content-fade-right">
         <button
           onClick={onToggle}
           className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
@@ -85,13 +85,12 @@ export function WalletDrawer({ onToggle, collapsed }: WalletDrawerProps) {
   }
 
   return (
-    <div className={`h-full border-l ${theme.styles.drawerContainer}`}>
+    <div className={`h-full ${theme.styles.drawerContainer} panel-content-fade-right`}>
       <PanelGroup direction="vertical" className="h-full">
         <Panel defaultSize={50} minSize={30} maxSize={70} className="flex flex-col overflow-hidden">
       <div className={`p-4 flex-shrink-0 ${theme.styles.panelHeader}`}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className={`text-lg font-semibold ${theme.styles.textPrimary}`}>Wallets</h2>
-          {onToggle && (
+        {onToggle && (
+          <div className="flex items-center justify-end mb-4">
             <button
               onClick={onToggle}
               className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
@@ -99,8 +98,8 @@ export function WalletDrawer({ onToggle, collapsed }: WalletDrawerProps) {
             >
               <PanelRightClose className="w-5 h-5 text-text-secondary" />
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         <NetworkSelector />
 
