@@ -27,13 +27,13 @@ interface WalletState {
   updateWallet: (id: string, updates: Partial<Wallet>) => Promise<void>
   
   // Group Actions
-  createWalletGroup: (name: string, type: ChainType, password: string) => Promise<WalletGroup>
+  createWalletGroup: (name: string, type: ChainType, password: string, initialWalletCount?: number, walletNames?: string[]) => Promise<WalletGroup>
   removeWalletGroup: (id: string) => Promise<void>
   addWalletToGroup: (groupId: string, name: string) => Promise<Wallet>
   loadWalletGroups: () => Promise<void>
   exportGroupSeed: (groupId: string, password: string) => Promise<string>
   getWalletPrivateKey: (walletId: string, password: string) => Promise<string>
-  importWalletGroup: (name: string, type: ChainType, seedPhrase: string, password: string) => Promise<WalletGroup>
+  importWalletGroup: (name: string, type: ChainType, seedPhrase: string, password: string, walletCount?: number, walletNames?: string[]) => Promise<WalletGroup>
 }
 
 export const useWalletStore = create<WalletState>()(
@@ -90,7 +90,7 @@ export const useWalletStore = create<WalletState>()(
         set({ wallets })
       },
       
-      createWalletGroup: async (name, type, password) => {
+      createWalletGroup: async (name, type, password, initialWalletCount, walletNames) => {
         // Generate new seed phrase
         const mnemonic = await EVMWalletService.createSeedPhrase()
         const encryptedSeed = encryptData(mnemonic, password)
@@ -227,7 +227,7 @@ export const useWalletStore = create<WalletState>()(
         }
       },
       
-      importWalletGroup: async (name, type, seedPhrase, password) => {
+      importWalletGroup: async (name, type, seedPhrase, password, walletCount = 1, walletNames) => {
         const encryptedSeed = encryptData(seedPhrase, password)
         
         const group: WalletGroup = {
@@ -247,6 +247,12 @@ export const useWalletStore = create<WalletState>()(
         set((state) => ({
           walletGroups: [...state.walletGroups, group]
         }))
+        
+        // Generate the specified number of wallets
+        for (let i = 0; i < walletCount; i++) {
+          const walletName = walletNames?.[i] || `${name} - Wallet #${i + 1}`
+          await get().addWalletToGroup(group.id, walletName)
+        }
         
         return group
       },

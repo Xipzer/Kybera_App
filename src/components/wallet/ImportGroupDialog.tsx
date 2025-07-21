@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { X, AlertCircle, Users } from 'lucide-react'
+import { X, AlertCircle, Users, Edit2, ChevronLeft } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 // import { encryptData } from '../../utils/crypto'
 import { EVMWalletService } from '../../services/blockchain/evmWallet'
@@ -19,6 +19,9 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
   const [seedPhrase, setSeedPhrase] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [walletCount, setWalletCount] = useState(1)
+  const [showNameEditor, setShowNameEditor] = useState(false)
+  const [walletNames, setWalletNames] = useState<string[]>([])
 
   const validateSeedPhrase = (phrase: string): boolean => {
     const words = phrase.trim().split(/\s+/)
@@ -68,7 +71,7 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
       }
 
       // Import the group
-      await importWalletGroup(groupName.trim(), chainType, seedPhrase.trim(), password)
+      await importWalletGroup(groupName.trim(), chainType, seedPhrase.trim(), password, walletCount, walletNames.length > 0 ? walletNames : undefined)
       handleClose()
     } catch (err) {
       console.error('Failed to import group:', err)
@@ -83,7 +86,24 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
     setChainType('EVM')
     setSeedPhrase('')
     setError('')
+    setWalletCount(1)
+    setShowNameEditor(false)
+    setWalletNames([])
     onOpenChange(false)
+  }
+
+  const handleEditNames = () => {
+    const defaultNames = Array.from({ length: walletCount }, (_, i) => 
+      `${groupName.trim() || 'Group'} - Wallet #${i + 1}`
+    )
+    setWalletNames(defaultNames)
+    setShowNameEditor(true)
+  }
+
+  const updateWalletName = (index: number, name: string) => {
+    const newNames = [...walletNames]
+    newNames[index] = name
+    setWalletNames(newNames)
   }
 
   return (
@@ -93,9 +113,19 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
         <Dialog.Content className="fixed top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] bg-white dark:bg-gray-900 rounded-lg shadow-lg w-[500px] max-h-[85vh] overflow-y-auto">
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <Dialog.Title className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                Import Wallet Group
-              </Dialog.Title>
+              <div className="flex items-center gap-3">
+                {showNameEditor && (
+                  <button
+                    onClick={() => setShowNameEditor(false)}
+                    className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
+                    <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  </button>
+                )}
+                <Dialog.Title className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                  {showNameEditor ? 'Edit Wallet Names' : 'Import Wallet Group'}
+                </Dialog.Title>
+              </div>
               <Dialog.Close asChild>
                 <button
                   onClick={handleClose}
@@ -115,6 +145,39 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
               </div>
             </div>
 
+            {showNameEditor ? (
+              <div className="space-y-4">
+                <div className="max-h-[400px] overflow-y-auto space-y-2 pr-2">
+                  {walletNames.map((name, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <span className="text-sm text-gray-500 dark:text-gray-400 w-8">
+                        #{index + 1}
+                      </span>
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => updateWalletName(index, e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2 justify-end pt-4 border-t">
+                  <button
+                    onClick={() => setShowNameEditor(false)}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={() => setShowNameEditor(false)}
+                    className="px-4 py-2 bg-gradient-secondary text-white rounded-lg hover:shadow-lg hover:secondary-glow transition-all duration-300 font-medium"
+                  >
+                    Confirm Names
+                  </button>
+                </div>
+              </div>
+            ) : (
             <form onSubmit={handleImport} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -173,6 +236,33 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Number of Wallets to Generate
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={walletCount}
+                    onChange={(e) => setWalletCount(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))}
+                    min="1"
+                    max="20"
+                    className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleEditNames}
+                    className="flex items-center gap-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                    Edit Names
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {walletNames.length > 0 ? 'Custom names configured' : 'Default names will be used'}
+                </p>
+              </div>
+
               {error && (
                 <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                   <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
@@ -197,6 +287,7 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
                 </button>
               </div>
             </form>
+            )}
           </div>
         </Dialog.Content>
       </Dialog.Portal>

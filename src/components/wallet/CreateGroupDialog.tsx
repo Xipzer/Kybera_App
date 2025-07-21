@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { X, Users, AlertCircle } from 'lucide-react'
+import { X, Users, AlertCircle, Edit2, ChevronLeft } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import { ChainType } from '../../types'
 
@@ -10,12 +10,15 @@ interface CreateGroupDialogProps {
 }
 
 export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps) {
-  const { createWalletGroup, password } = useWalletStore()
+  const { createWalletGroup, password, addWalletToGroup } = useWalletStore()
   const [groupName, setGroupName] = useState('')
   const [chainType, setChainType] = useState<ChainType>('EVM')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [createdGroup, setCreatedGroup] = useState<{ name: string; seed: string } | null>(null)
+  const [createdGroup, setCreatedGroup] = useState<{ id: string; name: string; seed: string } | null>(null)
+  const [walletCount, setWalletCount] = useState(1)
+  const [showNameEditor, setShowNameEditor] = useState(false)
+  const [walletNames, setWalletNames] = useState<string[]>([])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,7 +31,14 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
       const group = await createWalletGroup(groupName.trim(), chainType, password)
       // Get the seed phrase to show to user
       const seed = await useWalletStore.getState().exportGroupSeed(group.id, password)
-      setCreatedGroup({ name: group.name, seed })
+      
+      // Generate the specified number of wallets
+      for (let i = 0; i < walletCount; i++) {
+        const walletName = walletNames[i] || `${groupName.trim()} - Wallet #${i + 1}`
+        await addWalletToGroup(group.id, walletName)
+      }
+      
+      setCreatedGroup({ id: group.id, name: group.name, seed })
     } catch (err) {
       console.error('Failed to create wallet group:', err)
       setError(err instanceof Error ? err.message : 'Failed to create wallet group')
@@ -42,7 +52,24 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
     setChainType('EVM')
     setError('')
     setCreatedGroup(null)
+    setWalletCount(1)
+    setShowNameEditor(false)
+    setWalletNames([])
     onOpenChange(false)
+  }
+
+  const handleEditNames = () => {
+    const defaultNames = Array.from({ length: walletCount }, (_, i) => 
+      `${groupName.trim() || 'Group'} - Wallet #${i + 1}`
+    )
+    setWalletNames(defaultNames)
+    setShowNameEditor(true)
+  }
+
+  const updateWalletName = (index: number, name: string) => {
+    const newNames = [...walletNames]
+    newNames[index] = name
+    setWalletNames(newNames)
   }
 
   const copySeedPhrase = () => {
@@ -58,9 +85,19 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
         <Dialog.Content className="fixed top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] bg-white dark:bg-gray-900 rounded-lg shadow-lg w-[600px] max-h-[85vh] overflow-y-auto">
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <Dialog.Title className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                {createdGroup ? 'Wallet Group Created' : 'Create Wallet Group'}
-              </Dialog.Title>
+              <div className="flex items-center gap-3">
+                {showNameEditor && !createdGroup && (
+                  <button
+                    onClick={() => setShowNameEditor(false)}
+                    className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
+                    <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  </button>
+                )}
+                <Dialog.Title className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                  {createdGroup ? 'Wallet Group Created' : showNameEditor ? 'Edit Wallet Names' : 'Create Wallet Group'}
+                </Dialog.Title>
+              </div>
               <Dialog.Close asChild>
                 <button
                   onClick={handleClose}
@@ -71,7 +108,39 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
               </Dialog.Close>
             </div>
 
-            {!createdGroup ? (
+            {!createdGroup && showNameEditor ? (
+              <div className="space-y-4">
+                <div className="max-h-[400px] overflow-y-auto space-y-2 pr-2">
+                  {walletNames.map((name, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <span className="text-sm text-gray-500 dark:text-gray-400 w-8">
+                        #{index + 1}
+                      </span>
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => updateWalletName(index, e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2 justify-end pt-4 border-t">
+                  <button
+                    onClick={() => setShowNameEditor(false)}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={() => setShowNameEditor(false)}
+                    className="px-4 py-2 bg-gradient-primary text-white rounded-lg hover:shadow-lg hover:primary-glow transition-all duration-300 font-medium"
+                  >
+                    Confirm Names
+                  </button>
+                </div>
+              </div>
+            ) : !createdGroup ? (
               <>
                 <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                   <div className="flex gap-3">
@@ -126,6 +195,33 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       autoFocus
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Number of Wallets to Generate
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        value={walletCount}
+                        onChange={(e) => setWalletCount(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))}
+                        min="1"
+                        max="20"
+                        className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleEditNames}
+                        className="flex items-center gap-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                        Edit Names
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {walletNames.length > 0 ? 'Custom names configured' : 'Default names will be used'}
+                    </p>
                   </div>
 
                   {error && (
