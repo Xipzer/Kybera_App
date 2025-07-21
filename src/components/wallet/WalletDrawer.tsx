@@ -10,6 +10,7 @@ import {
   Edit2,
   Users,
   MoreVertical,
+  PanelRightClose,
 } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
@@ -28,7 +29,12 @@ import { WalletDetailView } from './WalletDetailView'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { useTheme } from '../../hooks/useTheme'
 
-export function WalletDrawer() {
+interface WalletDrawerProps {
+  onToggle?: () => void
+  collapsed?: boolean
+}
+
+export function WalletDrawer({ onToggle, collapsed }: WalletDrawerProps) {
   const { wallets, walletGroups, activeWalletId, setActiveWallet, removeWallet } =
     useWalletStore()
   
@@ -64,12 +70,37 @@ export function WalletDrawer() {
     console.log('Export wallet:', wallet)
   }
 
+  if (collapsed) {
+    return (
+      <div className="h-full w-full bg-surface-base border-l border-border-subtle flex flex-col items-center justify-start py-4">
+        <button
+          onClick={onToggle}
+          className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
+          title="Expand drawer"
+        >
+          <WalletIcon className="w-5 h-5 text-text-secondary" />
+        </button>
+      </div>
+    )
+  }
+
   return (
-    <div className={`h-full border-l transition-all duration-300 ${theme.styles.drawerContainer}`}>
+    <div className={`h-full border-l ${theme.styles.drawerContainer} panel-content-fade-right`}>
       <PanelGroup direction="vertical" className="h-full">
         <Panel defaultSize={50} minSize={30} maxSize={70} className="flex flex-col overflow-hidden">
       <div className={`p-4 flex-shrink-0 transition-all duration-300 ${theme.styles.panelHeader}`}>
-        <h2 className={`text-lg font-semibold mb-4 ${theme.styles.textPrimary}`}>Wallets</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className={`text-lg font-semibold ${theme.styles.textPrimary}`}>Wallets</h2>
+          {onToggle && (
+            <button
+              onClick={onToggle}
+              className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
+              title="Collapse drawer"
+            >
+              <PanelRightClose className="w-5 h-5 text-text-secondary" />
+            </button>
+          )}
+        </div>
 
         <NetworkSelector />
 

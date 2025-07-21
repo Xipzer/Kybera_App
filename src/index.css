@@ -32,6 +32,27 @@
     background: var(--gradient-candy-red);
   }
   
+  /* Panel animation styles - disabled due to library conflicts */
+  /* The react-resizable-panels library appears to have its own spring animations */
+  
+  /* Content fade animations */
+  .panel-content-fade {
+    animation: fadeIn 300ms ease-out;
+  }
+  
+  .panel-content-fade-right {
+    animation: fadeIn 300ms ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
   /* Theme-aware background gradient for lock screen */
   .bg-gradient-lockscreen {
     background: linear-gradient(135deg, rgb(0, 225, 255) 0%, rgb(255, 0, 153) 100%);

@@ -1,4 +1,4 @@
-import { Plus, MessageSquare, Trash2, MoreVertical, Pin, Edit2 } from 'lucide-react'
+import { Plus, MessageSquare, Trash2, MoreVertical, Pin, Edit2, PanelLeftClose, SquarePen } from 'lucide-react'
 import { useChatStore } from '../../store/chatStore'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
@@ -6,7 +6,12 @@ import { EmptyState } from '../common/EmptyState'
 import { useState } from 'react'
 import { useTheme } from '../../hooks/useTheme'
 
-export function ChatSidebar() {
+interface ChatSidebarProps {
+  onToggle?: () => void
+  collapsed?: boolean
+}
+
+export function ChatSidebar({ onToggle, collapsed }: ChatSidebarProps) {
   const { conversations, activeConversationId, createConversation, deleteConversation, setActiveConversation, updateConversation } = useChatStore()
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
@@ -44,17 +49,47 @@ export function ChatSidebar() {
     return b.updatedAt.getTime() - a.updatedAt.getTime()
   })
 
+  if (collapsed) {
+    return (
+      <div className="h-full w-full bg-surface-base border-r border-border-subtle flex flex-col items-center justify-start py-4 gap-4">
+        <button
+          onClick={onToggle}
+          className="p-2 rounded-lg hover:bg-surface-hover transition-colors mb-4"
+          title="Expand sidebar"
+        >
+          <MessageSquare className="w-5 h-5 text-text-secondary" />
+        </button>
+        <SquarePen 
+          onClick={handleNewChat}
+          className="w-5 h-5 text-accent cursor-pointer hover:text-accent-400 transition-colors"
+          title="New Chat"
+        />
+      </div>
+    )
+  }
+  
   return (
-    <div className="h-full bg-surface-base border-r border-border-subtle flex flex-col">
+    <div className="h-full bg-surface-base border-r border-border-subtle flex flex-col panel-content-fade">
       <div className="p-4 border-b border-border-subtle">
-        <h2 className="text-lg font-semibold text-text-primary mb-4">Chats</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-text-primary">Chats</h2>
+          {onToggle && (
+            <button
+              onClick={onToggle}
+              className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
+              title="Collapse sidebar"
+            >
+              <PanelLeftClose className="w-5 h-5 text-text-secondary" />
+            </button>
+          )}
+        </div>
         
         <button
           onClick={handleNewChat}
           className={`w-full flex items-center justify-center gap-2 px-3 py-2 ${theme.styles.buttonPrimary}`}
           style={theme.dynamicStyles.buttonPrimary}
         >
-          <Plus className="w-4 h-4" />
+          <SquarePen className="w-4 h-4" />
           New Chat
         </button>
       </div>
