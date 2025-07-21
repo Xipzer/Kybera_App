@@ -90,7 +90,7 @@ export const useWalletStore = create<WalletState>()(
         set({ wallets })
       },
       
-      createWalletGroup: async (name, type, password, initialWalletCount, walletNames) => {
+      createWalletGroup: async (name, type, password) => {
         // Generate new seed phrase
         const mnemonic = await EVMWalletService.createSeedPhrase()
         const encryptedSeed = encryptData(mnemonic, password)

@@ -1,4 +1,4 @@
-import { ReactNode, useRef, useState, useEffect } from 'react'
+import { ReactNode } from 'react'
 
 interface BetterScrollAreaProps {
   children: ReactNode
