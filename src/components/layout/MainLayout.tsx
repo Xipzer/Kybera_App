@@ -78,24 +78,24 @@ export function MainLayout({ children }: MainLayoutProps) {
       </header>
 
       <div className="flex-1 overflow-hidden">
-        <PanelGroup direction="horizontal" className="h-full">
+        <PanelGroup direction="horizontal" className="h-full" autoSaveId="main-layout">
           {chatSidebarOpen && (
             <>
-              <Panel defaultSize={20} minSize={15} maxSize={30}>
+              <Panel id="chat-sidebar" order={1} defaultSize={20} minSize={15} maxSize={30}>
                 <ChatSidebar />
               </Panel>
               <PanelResizeHandle className="w-px bg-border-subtle hover:bg-accent transition-colors" />
             </>
           )}
 
-          <Panel>
+          <Panel id="main-content" order={2}>
             <div className="h-full">{children}</div>
           </Panel>
 
           {walletDrawerOpen && (
             <>
               <PanelResizeHandle className="w-px bg-border-subtle hover:bg-accent transition-colors" />
-              <Panel defaultSize={25} minSize={15} maxSize={40} onResize={handleWalletResize}>
+              <Panel id="wallet-drawer" order={3} defaultSize={25} minSize={15} maxSize={40} onResize={handleWalletResize}>
                 <WalletDrawer />
               </Panel>
             </>
