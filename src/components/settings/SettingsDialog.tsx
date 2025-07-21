@@ -174,7 +174,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             </div>
 
             <div className="flex-1 overflow-hidden relative min-h-0">
-              <Tabs.Content value="ai" className="absolute inset-0 overflow-y-auto px-6 py-2 space-y-6 settings-scroll">
+              <div className="absolute inset-0 top-[60px] overflow-hidden">
+                <Tabs.Content value="ai" className="h-full overflow-y-auto px-6 py-6 space-y-6 settings-scroll">
                 <div>
                   <h3 className="text-lg font-medium text-text-primary mb-4">
                     AI Assistant Settings
@@ -228,7 +229,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 </div>
               </Tabs.Content>
 
-              <Tabs.Content value="security" className="absolute inset-0 overflow-y-auto px-6 py-2 space-y-6 settings-scroll">
+                <Tabs.Content value="security" className="h-full overflow-y-auto px-6 py-6 space-y-6 settings-scroll">
                 <div>
                   <h3 className="text-lg font-medium text-text-primary mb-4">
                     Password & Authentication
@@ -384,7 +385,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 </div>
               </Tabs.Content>
 
-              <Tabs.Content value="appearance" className="absolute inset-0 overflow-y-auto p-6 space-y-6 settings-scroll">
+                <Tabs.Content value="appearance" className="h-full overflow-y-auto px-6 py-6 space-y-6 settings-scroll">
                 <div>
                   <h3 className="text-lg font-medium text-text-primary mb-4">
                     Theme Settings
@@ -549,6 +550,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   </div>
                 </div>
               </Tabs.Content>
+              </div>
             </div>
           </Tabs.Root>
         </Dialog.Content>
