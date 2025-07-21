@@ -21,7 +21,7 @@ export const useSettingsStore = create<SettingsState>()(
     (set) => ({
       openRouterApiKey: null,
       selectedModel: 'openai/gpt-4-turbo-preview',
-      autoLockTimeout: 15, // minutes
+      autoLockTimeout: 15, // minutes (0 means disabled)
       defaultNetwork: 'ethereum',
 
       setOpenRouterApiKey: async (key) => {

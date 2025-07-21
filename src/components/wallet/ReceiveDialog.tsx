@@ -37,8 +37,8 @@ export function ReceiveDialog({ open, onOpenChange, wallet }: ReceiveDialogProps
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
-        <Dialog.Content className="fixed top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] bg-surface-base rounded-lg shadow-2xl border border-border-subtle w-[450px]">
+        <Dialog.Overlay className="dialog-overlay" />
+        <Dialog.Content className="dialog-content bg-surface-base rounded-lg shadow-2xl border border-border-subtle w-[450px]">
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <Dialog.Title className="text-xl font-semibold text-text-primary">

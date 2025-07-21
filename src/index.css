@@ -13,6 +13,16 @@
     animation-delay: 400ms;
   }
   
+  /* Global dialog overlay - ensures proper darkening over all content */
+  .dialog-overlay {
+    @apply fixed inset-0 bg-black/50 z-40;
+  }
+  
+  /* Global dialog content - ensures proper stacking */
+  .dialog-content {
+    @apply fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50;
+  }
+  
   /* Gradient backgrounds */
   .bg-gradient-pearlescent {
     background: var(--gradient-pearlescent);

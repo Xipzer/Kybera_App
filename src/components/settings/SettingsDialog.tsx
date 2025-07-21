@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Tabs from '@radix-ui/react-tabs'
 import * as Select from '@radix-ui/react-select'
@@ -35,6 +35,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [apiKey, setApiKey] = useState(openRouterApiKey || '')
   const [showApiKey, setShowApiKey] = useState(false)
   const [lockTimeout, setLockTimeout] = useState(autoLockTimeout.toString())
+  const [autoLockEnabled, setAutoLockEnabled] = useState(autoLockTimeout > 0)
   
   // Password change state
   const [currentPassword, setCurrentPassword] = useState('')
@@ -48,10 +49,35 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   
   const [activeTab, setActiveTab] = useState('ai')
 
-  const handleSave = async () => {
+  // Reset API key to original value when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setApiKey(openRouterApiKey || '')
+    }
+  }, [open, openRouterApiKey])
+
+  const handleSaveApiKey = async () => {
     await setOpenRouterApiKey(apiKey.trim() || null)
-    await setAutoLockTimeout(parseInt(lockTimeout) || 15)
-    onOpenChange(false)
+  }
+
+  const isApiKeyChanged = apiKey.trim() !== (openRouterApiKey || '')
+
+  const handleAutoLockTimeoutChange = async (value: string) => {
+    setLockTimeout(value)
+    const timeout = parseInt(value) || 1
+    if (autoLockEnabled && timeout > 0) {
+      await setAutoLockTimeout(timeout)
+    }
+  }
+
+  const handleAutoLockToggle = async (enabled: boolean) => {
+    setAutoLockEnabled(enabled)
+    if (enabled) {
+      const timeout = parseInt(lockTimeout) || 1
+      await setAutoLockTimeout(timeout)
+    } else {
+      await setAutoLockTimeout(0) // 0 means disabled
+    }
   }
 
   const handlePasswordChange = async () => {
@@ -107,48 +133,48 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-md z-40" />
-        <Dialog.Content className="fixed top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] bg-surface-base rounded-lg shadow-2xl border border-border-subtle w-[650px] h-[600px] flex flex-col z-50 overflow-hidden">
-          <div className="p-6 border-b border-border-subtle flex-shrink-0 bg-surface-base relative z-10">
-            <div className="flex items-center justify-between">
-              <Dialog.Title className="text-xl font-semibold text-text-primary">
-                Settings
-              </Dialog.Title>
-              <Dialog.Close asChild>
-                <button className="p-1 rounded hover:bg-surface-hover transition-colors">
-                  <X className="w-5 h-5 text-text-secondary" />
-                </button>
-              </Dialog.Close>
-            </div>
+        <Dialog.Overlay className="dialog-overlay" />
+        <Dialog.Content className="dialog-content bg-surface-base rounded-lg shadow-2xl border border-border-subtle w-[800px] h-[600px] flex overflow-hidden">
+          <div className="absolute top-4 right-4 z-10">
+            <Dialog.Close asChild>
+              <button className="p-2 rounded-lg hover:bg-surface-hover transition-colors">
+                <X className="w-5 h-5 text-text-secondary" />
+              </button>
+            </Dialog.Close>
           </div>
 
-          <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-            <Tabs.List className="flex border-b border-border-subtle px-6 flex-shrink-0">
-              <Tabs.Trigger
-                value="ai"
-                className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent data-state-active:border-b-2 data-[state=active]:border-accent transition-colors"
-              >
-                <Brain className="w-4 h-4" />
-                AI Configuration
-              </Tabs.Trigger>
-              <Tabs.Trigger
-                value="security"
-                className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent data-state-active:border-b-2 data-[state=active]:border-accent transition-colors"
-              >
-                <Shield className="w-4 h-4" />
-                Security
-              </Tabs.Trigger>
-              <Tabs.Trigger
-                value="appearance"
-                className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-text-secondary hover:text-text-primary data-[state=active]:text-accent data-state-active:border-b-2 data-[state=active]:border-accent transition-colors"
-              >
-                <Palette className="w-4 h-4" />
-                Appearance
-              </Tabs.Trigger>
-            </Tabs.List>
+          <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="flex-1 flex min-h-0">
+            <div className="w-48 bg-surface-elevated border-r border-border-subtle flex-shrink-0">
+              <div className="p-4 border-b border-border-subtle">
+                <h2 className="text-lg font-semibold text-text-primary">Settings</h2>
+              </div>
+              <Tabs.List className="flex flex-col space-y-1 p-2">
+                <Tabs.Trigger
+                  value="ai"
+                  className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent data-[state=active]:bg-accent/10 transition-colors w-full text-left"
+                >
+                  <Brain className="w-4 h-4" />
+                  AI Configuration
+                </Tabs.Trigger>
+                <Tabs.Trigger
+                  value="security"
+                  className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent data-[state=active]:bg-accent/10 transition-colors w-full text-left"
+                >
+                  <Shield className="w-4 h-4" />
+                  Security
+                </Tabs.Trigger>
+                <Tabs.Trigger
+                  value="appearance"
+                  className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent data-[state=active]:bg-accent/10 transition-colors w-full text-left"
+                >
+                  <Palette className="w-4 h-4" />
+                  Appearance
+                </Tabs.Trigger>
+              </Tabs.List>
+            </div>
 
             <div className="flex-1 overflow-hidden relative min-h-0">
-              <Tabs.Content value="ai" className="absolute inset-0 overflow-y-auto p-6 space-y-6 settings-scroll">
+              <Tabs.Content value="ai" className="absolute inset-0 overflow-y-auto px-6 py-2 space-y-6 settings-scroll">
                 <div>
                   <h3 className="text-lg font-medium text-text-primary mb-4">
                     AI Assistant Settings
@@ -189,11 +215,20 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         openrouter.ai/keys
                       </a>
                     </p>
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        onClick={handleSaveApiKey}
+                        disabled={!isApiKeyChanged}
+                        className="px-4 py-2 bg-gradient-secondary text-white rounded-lg hover:shadow-lg hover:secondary-glow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none transition-all duration-300 font-medium"
+                      >
+                        Save
+                      </button>
+                    </div>
                   </div>
                 </div>
               </Tabs.Content>
 
-              <Tabs.Content value="security" className="absolute inset-0 overflow-y-auto p-6 space-y-6 settings-scroll">
+              <Tabs.Content value="security" className="absolute inset-0 overflow-y-auto px-6 py-2 space-y-6 settings-scroll">
                 <div>
                   <h3 className="text-lg font-medium text-text-primary mb-4">
                     Password & Authentication
@@ -301,21 +336,50 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     Auto-lock Settings
                   </h3>
                   
-                  <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-2">
-                      Auto-lock Timeout (minutes)
-                    </label>
-                    <input
-                      type="number"
-                      value={lockTimeout}
-                      onChange={(e) => setLockTimeout(e.target.value)}
-                      min="1"
-                      max="60"
-                      className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-elevated text-text-primary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
-                    />
-                    <p className="mt-1 text-xs text-text-tertiary">
-                      Automatically lock the wallet after this period of inactivity
-                    </p>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label className="text-sm font-medium text-text-secondary">
+                          Enable Auto-lock
+                        </label>
+                        <p className="text-xs text-text-tertiary mt-1">
+                          Automatically lock the wallet after inactivity
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleAutoLockToggle(!autoLockEnabled)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                          autoLockEnabled ? 'bg-accent' : 'bg-surface-elevated border border-border-default'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            autoLockEnabled ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                    
+                    {autoLockEnabled && (
+                      <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-2">
+                          Timeout (minutes)
+                        </label>
+                        <input
+                          type="number"
+                          value={lockTimeout}
+                          onChange={(e) => handleAutoLockTimeoutChange(e.target.value)}
+                          onBlur={(e) => {
+                            if (!e.target.value || parseInt(e.target.value) < 1) {
+                              handleAutoLockTimeoutChange('1')
+                            }
+                          }}
+                          min="1"
+                          max="60"
+                          className="w-full px-3 py-2 border border-border-default rounded-lg bg-surface-elevated text-text-primary focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </Tabs.Content>
@@ -485,23 +549,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   </div>
                 </div>
               </Tabs.Content>
-            </div>
-
-            <div className="p-6 border-t border-border-subtle flex-shrink-0 bg-surface-base">
-              <div className="flex gap-2 justify-end">
-                <button
-                  onClick={() => onOpenChange(false)}
-                  className="px-4 py-2 border border-border-default rounded-lg hover:bg-surface-hover transition-colors text-text-primary"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="px-4 py-2 bg-gradient-primary text-white rounded-lg hover:shadow-lg hover:primary-glow transition-all duration-300 font-medium"
-                >
-                  Save Changes
-                </button>
-              </div>
             </div>
           </Tabs.Root>
         </Dialog.Content>

@@ -6,7 +6,6 @@ import {
   Trash2,
   Download,
   Upload,
-  Settings,
   Wallet as WalletIcon,
   Edit2,
   Users,
@@ -19,7 +18,6 @@ import { BetterScrollArea } from '../common/BetterScrollArea'
 import { NetworkSelector } from './NetworkSelector'
 // import { CreateWalletDialog } from './CreateWalletDialog' - Deprecated in favor of groups
 import { ImportWalletDialog } from './ImportWalletDialog'
-import { SettingsDialog } from '../settings/SettingsDialog'
 import { EmptyState } from '../common/EmptyState'
 import { RenameWalletDialog } from './RenameWalletDialog'
 import { CreateGroupDialog } from './CreateGroupDialog'
@@ -34,7 +32,6 @@ export function WalletDrawer() {
     useWalletStore()
   
   const [showImportDialog, setShowImportDialog] = useState(false)
-  const [showSettingsDialog, setShowSettingsDialog] = useState(false)
   const [renameWallet, setRenameWallet] = useState<(typeof wallets)[0] | null>(null)
   const [showCreateGroupDialog, setShowCreateGroupDialog] = useState(false)
   const [showAddToGroupDialog, setShowAddToGroupDialog] = useState(false)
@@ -70,16 +67,7 @@ export function WalletDrawer() {
       <PanelGroup direction="vertical" className="h-full">
         <Panel defaultSize={50} minSize={30} maxSize={70} className="flex flex-col overflow-hidden">
       <div className="p-4 border-b border-border-subtle flex-shrink-0">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-text-primary">Wallets</h2>
-          <button
-            onClick={() => setShowSettingsDialog(true)}
-            className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
-            title="Settings"
-          >
-            <Settings className="w-5 h-5 text-text-secondary" />
-          </button>
-        </div>
+        <h2 className="text-lg font-semibold text-text-primary mb-4">Wallets</h2>
 
         <NetworkSelector />
 
@@ -336,7 +324,6 @@ export function WalletDrawer() {
       </Tabs.Root>
 
       <ImportWalletDialog open={showImportDialog} onOpenChange={setShowImportDialog} />
-      <SettingsDialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog} />
       <RenameWalletDialog
         open={renameWallet !== null}
         onOpenChange={(open) => !open && setRenameWallet(null)}
