@@ -28,6 +28,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const walletPanelRef = useRef<any>(null)
   const chatSizeRef = useRef(20)
   const walletSizeRef = useRef(25)
+  const wasCollapsedOnDragStart = useRef({ chat: false, wallet: false })
 
   useEffect(() => {
     // Remove all theme classes first
@@ -54,10 +55,14 @@ export function MainLayout({ children }: MainLayoutProps) {
   const handleChatResize = (size: number) => {
     chatSizeRef.current = size
     
-    // Check if we're below minimum size (not including when actually collapsed)
-    if (!isChatCollapsed && size < MIN_CHAT_SIZE) {
+    // Clear dragging below min if we're expanding from collapsed
+    if (wasCollapsedOnDragStart.current.chat && isDragging && size > COLLAPSED_SIZE + 5) {
+      setIsChatDraggingBelowMin(false)
+    }
+    // Only set dragging below min for expanded panels
+    else if (!isChatCollapsed && size < MIN_CHAT_SIZE) {
       setIsChatDraggingBelowMin(true)
-    } else if (size >= MIN_CHAT_SIZE || isChatCollapsed) {
+    } else if (!isChatCollapsed && size >= MIN_CHAT_SIZE) {
       setIsChatDraggingBelowMin(false)
     }
   }
@@ -65,26 +70,77 @@ export function MainLayout({ children }: MainLayoutProps) {
   const handleWalletResize = (size: number) => {
     walletSizeRef.current = size
     
-    // Check if we're below minimum size (not including when actually collapsed)
-    if (!isWalletCollapsed && size < MIN_WALLET_SIZE) {
-      setIsWalletDraggingBelowMin(true)
-    } else if (size >= MIN_WALLET_SIZE || isWalletCollapsed) {
+    // Clear dragging below min if we're expanding from collapsed
+    if (wasCollapsedOnDragStart.current.wallet && isDragging && size > COLLAPSED_SIZE + 5) {
       setIsWalletDraggingBelowMin(false)
     }
+    // Only set dragging below min for expanded panels
+    else if (!isWalletCollapsed && size < MIN_WALLET_SIZE) {
+      setIsWalletDraggingBelowMin(true)
+    } else if (!isWalletCollapsed && size >= MIN_WALLET_SIZE) {
+      setIsWalletDraggingBelowMin(false)
+    }
+  }
+
+  const handleDragStart = () => {
+    // Track initial collapsed state when drag starts
+    wasCollapsedOnDragStart.current.chat = isChatCollapsed
+    wasCollapsedOnDragStart.current.wallet = isWalletCollapsed
+    setIsDragging(true)
   }
 
   const handleDragEnd = () => {
     setIsDragging(false)
     
-    // Auto-collapse if below minimum when drag ends
-    if (isChatDraggingBelowMin && chatSizeRef.current < MIN_CHAT_SIZE) {
-      chatPanelRef.current?.collapse()
-      setIsChatDraggingBelowMin(false)
+    // Auto-expand if started from collapsed and dragged beyond threshold
+    const EXPAND_THRESHOLD = 5 // 5px beyond collapsed size
+    
+    // Handle chat panel
+    if (wasCollapsedOnDragStart.current.chat) {
+      if (chatSizeRef.current > COLLAPSED_SIZE + EXPAND_THRESHOLD) {
+        // Panel was collapsed and dragged out - expand it
+        setIsChatCollapsed(false)
+        // Force expansion by calling expand after state update
+        requestAnimationFrame(() => {
+          chatPanelRef.current?.expand()
+          // Double-check and resize if needed
+          requestAnimationFrame(() => {
+            if (chatSizeRef.current < MIN_CHAT_SIZE) {
+              chatPanelRef.current?.resize(MIN_CHAT_SIZE)
+            }
+          })
+        })
+      }
+    } else {
+      // Only auto-collapse if started from expanded and below minimum
+      if (chatSizeRef.current < MIN_CHAT_SIZE) {
+        chatPanelRef.current?.collapse()
+        setIsChatDraggingBelowMin(false)
+      }
     }
     
-    if (isWalletDraggingBelowMin && walletSizeRef.current < MIN_WALLET_SIZE) {
-      walletPanelRef.current?.collapse()
-      setIsWalletDraggingBelowMin(false)
+    // Handle wallet panel
+    if (wasCollapsedOnDragStart.current.wallet) {
+      if (walletSizeRef.current > COLLAPSED_SIZE + EXPAND_THRESHOLD) {
+        // Panel was collapsed and dragged out - expand it
+        setIsWalletCollapsed(false)
+        // Force expansion by calling expand after state update
+        requestAnimationFrame(() => {
+          walletPanelRef.current?.expand()
+          // Double-check and resize if needed
+          requestAnimationFrame(() => {
+            if (walletSizeRef.current < MIN_WALLET_SIZE) {
+              walletPanelRef.current?.resize(MIN_WALLET_SIZE)
+            }
+          })
+        })
+      }
+    } else {
+      // Only auto-collapse if started from expanded and below minimum
+      if (walletSizeRef.current < MIN_WALLET_SIZE) {
+        walletPanelRef.current?.collapse()
+        setIsWalletDraggingBelowMin(false)
+      }
     }
   }
 
@@ -149,8 +205,9 @@ export function MainLayout({ children }: MainLayoutProps) {
         <PanelResizeHandle 
           className={`w-px transition-colors ${theme.styles.resizeHandle} ${theme.styles.resizeHandleHover}`}
           onDragging={(dragging) => {
-            setIsDragging(dragging)
-            if (!dragging) {
+            if (dragging) {
+              handleDragStart()
+            } else {
               handleDragEnd()
             }
           }}
@@ -163,8 +220,9 @@ export function MainLayout({ children }: MainLayoutProps) {
         <PanelResizeHandle 
           className={`w-px transition-colors ${theme.styles.resizeHandle} ${theme.styles.resizeHandleHover}`}
           onDragging={(dragging) => {
-            setIsDragging(dragging)
-            if (!dragging) {
+            if (dragging) {
+              handleDragStart()
+            } else {
               handleDragEnd()
             }
           }}
