@@ -108,7 +108,7 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
               <Dialog.Close asChild>
                 <button
                   onClick={handleClose}
-                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                  className={theme.styles.buttonIcon}
                 >
                   <X className={`w-5 h-5 ${theme.styles.iconSecondary}`} />
                 </button>
@@ -132,7 +132,7 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                     </div>
                   ))}
                 </div>
-                <div className="flex gap-2 justify-end pt-4 border-t">
+                <div className="flex gap-2 justify-end pt-4 border-t border-border-subtle">
                   <button
                     onClick={() => setShowNameEditor(false)}
                     className={theme.styles.buttonSecondary}
@@ -142,10 +142,8 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                   </button>
                   <button
                     onClick={() => setShowNameEditor(false)}
-                    className="px-4 py-2 text-white rounded-lg hover:shadow-lg transition-all duration-300 font-medium"
-                    style={{
-                      ...theme.dynamicStyles.buttonPrimary
-                    }}
+                    className={theme.styles.buttonPrimary}
+                    style={theme.dynamicStyles.buttonPrimary}
                   >
                     Confirm Names
                   </button>
@@ -176,7 +174,7 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                   </Tabs.Root>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className={theme.styles.label}>
                       Group Name
                     </label>
                     <input
@@ -196,16 +194,15 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                         id="preGenerateWallets"
                         checked={preGenerateWallets}
                         onChange={(e) => setPreGenerateWallets(e.target.checked)}
-                        className="w-4 h-4 rounded-full border-2 border-gray-300 dark:border-gray-600 checked:bg-accent checked:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1 dark:checked:bg-accent dark:focus:ring-offset-gray-900 transition-all duration-200"
+                        className={theme.styles.checkbox}
                       />
-                      <label htmlFor="preGenerateWallets" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <label htmlFor="preGenerateWallets" className={`text-sm font-medium ${theme.styles.textSecondary}`}>
                         Pre-Generate Wallets
                       </label>
                     </div>
 
-                    {preGenerateWallets && (
-                      <div className="ml-6 space-y-2">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <div className={`ml-6 space-y-2 transition-opacity ${preGenerateWallets ? 'opacity-100' : 'opacity-40'}`}>
+                        <label className={`${theme.styles.label} ${!preGenerateWallets ? theme.styles.textTertiary : ''}`}>
                           Number of Wallets to Generate
                         </label>
                         <div className="flex items-center gap-2">
@@ -215,22 +212,24 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                             onChange={(e) => setWalletCount(Math.max(1, Math.min(99, parseInt(e.target.value) || 1)))}
                             min="1"
                             max="99"
-                            className={`w-16 ${theme.styles.input} focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent`}
+                            className="w-20 px-3 py-2 text-sm border rounded-lg bg-surface-elevated border-border-subtle text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={!preGenerateWallets}
                           />
                           <button
                             type="button"
                             onClick={handleEditNames}
-                            className="flex items-center gap-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                            className={`${theme.styles.buttonSecondary} flex items-center gap-1 text-sm ${!preGenerateWallets ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            style={theme.dynamicStyles.buttonSecondary}
+                            disabled={!preGenerateWallets}
                           >
                             <Edit2 className="w-4 h-4" />
                             Edit Names
                           </button>
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className={`text-xs ${theme.styles.textTertiary}`}>
                           {walletNames.length > 0 ? 'Custom names configured' : 'Default names will be used'}
                         </p>
                       </div>
-                    )}
                   </div>
 
                   {error && (
@@ -255,35 +254,36 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
             ) : (
               <div className="space-y-6">
                 <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                  <p className="text-green-800 dark:text-green-200 font-medium">
+                  <p className="text-green-600 dark:text-green-400 font-medium">
                     Wallet group "{createdGroup.name}" created successfully!
                   </p>
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                  <h3 className={`text-lg font-medium ${theme.styles.textPrimary} mb-2`}>
                     Recovery Phrase
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  <p className={`text-sm ${theme.styles.textSecondary} mb-4`}>
                     Write down this recovery phrase and store it securely. You'll need it to recover all wallets in this group.
                   </p>
                   
                   <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg mb-4">
                     <div className="flex items-start gap-2">
-                      <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-                      <p className="text-sm text-amber-800 dark:text-amber-200">
+                      <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                      <p className="text-sm text-amber-600 dark:text-amber-400">
                         <strong>Important:</strong> This is the only time you'll see this recovery phrase. Make sure to save it before closing this dialog.
                       </p>
                     </div>
                   </div>
 
-                  <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg font-mono text-sm break-all">
+                  <div className={`p-4 bg-surface-elevated rounded-lg font-mono text-sm break-all ${theme.styles.textPrimary}`}>
                     {createdGroup.seed}
                   </div>
 
                   <button
                     onClick={copySeedPhrase}
-                    className="mt-3 w-full py-2 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className={`mt-3 w-full ${theme.styles.buttonSecondary}`}
+                    style={theme.dynamicStyles.buttonSecondary}
                   >
                     Copy to Clipboard
                   </button>

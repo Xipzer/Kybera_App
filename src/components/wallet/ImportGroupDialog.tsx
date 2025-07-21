@@ -230,7 +230,7 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
                   onChange={(e) => setSeedPhrase(e.target.value)}
                   placeholder="Enter your 12 or 24 word recovery phrase..."
                   rows={4}
-                  className={`${theme.styles.textarea} font-mono text-sm`}
+                  className={`${theme.styles.textarea} font-mono text-sm focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent`}
                 />
               </div>
 
@@ -241,16 +241,15 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
                     id="preGenerateWallets"
                     checked={preGenerateWallets}
                     onChange={(e) => setPreGenerateWallets(e.target.checked)}
-                    className="w-4 h-4 rounded-full border-2 border-gray-300 dark:border-gray-600 checked:bg-accent checked:border-accent focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1 dark:checked:bg-accent dark:focus:ring-offset-gray-900 transition-all duration-200"
+                    className={theme.styles.checkbox}
                   />
                   <label htmlFor="preGenerateWallets" className={`text-sm font-medium ${theme.styles.textSecondary}`}>
                     Pre-Generate Wallets
                   </label>
                 </div>
 
-                {preGenerateWallets && (
-                  <div className="ml-6 space-y-2">
-                    <label className={theme.styles.label}>
+                <div className={`ml-6 space-y-2 transition-opacity ${preGenerateWallets ? 'opacity-100' : 'opacity-40'}`}>
+                    <label className={`${theme.styles.label} ${!preGenerateWallets ? 'text-gray-500 dark:text-gray-500' : ''}`}>
                       Number of Wallets to Generate
                     </label>
                     <div className="flex items-center gap-2">
@@ -260,13 +259,15 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
                         onChange={(e) => setWalletCount(Math.max(1, Math.min(99, parseInt(e.target.value) || 1)))}
                         min="1"
                         max="99"
-                        className={`${theme.styles.input} w-16`}
+                        className="w-20 px-3 py-2 text-sm border rounded-lg bg-surface-elevated border-border-subtle text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={!preGenerateWallets}
                       />
                       <button
                         type="button"
                         onClick={handleEditNames}
-                        className={`${theme.styles.buttonSecondary} flex items-center gap-1 text-sm`}
+                        className={`${theme.styles.buttonSecondary} flex items-center gap-1 text-sm ${!preGenerateWallets ? 'opacity-50 cursor-not-allowed' : ''}`}
                         style={theme.dynamicStyles.buttonSecondary}
+                        disabled={!preGenerateWallets}
                       >
                         <Edit2 className="w-4 h-4" />
                         Edit Names
@@ -276,7 +277,6 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
                       {walletNames.length > 0 ? 'Custom names configured' : 'Default names will be used'}
                     </p>
                   </div>
-                )}
               </div>
 
               {error && (

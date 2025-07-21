@@ -114,7 +114,7 @@ export const themes: Record<string, ThemeConfig> = {
       
       input: `${baseInputStyles} bg-white border-gray-300 text-gray-900 focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500`,
       textarea: `${baseInputStyles} bg-white border-gray-300 text-gray-900 focus:ring-cyan-500 resize-none`,
-      checkbox: 'w-4 h-4 text-cyan-600 bg-white border-gray-300 rounded focus:ring-cyan-500',
+      checkbox: 'w-4 h-4 rounded accent-cyan-500 focus:outline-none cursor-pointer',
       label: 'block text-sm font-medium text-gray-700 mb-2',
       
       tabs: {
@@ -189,7 +189,7 @@ export const themes: Record<string, ThemeConfig> = {
       
       input: `${baseInputStyles} bg-surface-elevated border-border-subtle text-gray-100 focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500`,
       textarea: `${baseInputStyles} bg-surface-elevated border-border-subtle text-gray-100 focus:ring-cyan-500 resize-none`,
-      checkbox: 'w-4 h-4 text-cyan-600 bg-surface-elevated border-border-subtle rounded focus:ring-cyan-500',
+      checkbox: 'w-4 h-4 rounded accent-cyan-500 focus:outline-none cursor-pointer',
       label: 'block text-sm font-medium text-gray-300 mb-2',
       
       tabs: {
@@ -264,7 +264,7 @@ export const themes: Record<string, ThemeConfig> = {
       
       input: `${baseInputStyles} bg-primary-900/50 border-primary-800/50 text-primary-100 focus:ring-1 focus:ring-accent-500 focus:border-accent-500`,
       textarea: `${baseInputStyles} bg-primary-900/50 border-primary-800/50 text-primary-100 focus:ring-accent-500 resize-none`,
-      checkbox: 'w-4 h-4 text-accent-500 bg-primary-900/50 border-primary-800/50 rounded focus:ring-accent-500',
+      checkbox: 'w-4 h-4 rounded accent-accent-500 focus:outline-none cursor-pointer',
       label: 'block text-sm font-medium text-primary-300 mb-2',
       
       tabs: {

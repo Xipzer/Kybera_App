@@ -189,7 +189,7 @@ export function ImportWalletDialog({ open, onOpenChange }: ImportWalletDialogPro
                       onChange={(e) => setPrivateKey(e.target.value)}
                       placeholder="Enter your private key..."
                       rows={3}
-                      className={`${theme.styles.textarea} font-mono text-sm`}
+                      className={`${theme.styles.textarea} font-mono text-sm focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent`}
                     />
                   </div>
                 </Tabs.Content>
@@ -204,7 +204,7 @@ export function ImportWalletDialog({ open, onOpenChange }: ImportWalletDialogPro
                       onChange={(e) => setMnemonic(e.target.value)}
                       placeholder="Enter your 12 or 24 word recovery phrase..."
                       rows={3}
-                      className={`${theme.styles.textarea} font-mono text-sm`}
+                      className={`${theme.styles.textarea} font-mono text-sm focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent`}
                     />
                   </div>
                 </Tabs.Content>
