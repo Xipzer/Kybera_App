@@ -17,6 +17,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   
   const chatPanelRef = useRef<any>(null)
   const walletPanelRef = useRef<any>(null)
+  const lastSizeRef = useRef<{ chat: number; wallet: number }>({ chat: 20, wallet: 25 })
 
   useEffect(() => {
     // Remove all theme classes first
@@ -52,8 +53,12 @@ export function MainLayout({ children }: MainLayoutProps) {
           maxSize={30}
           collapsible={true}
           collapsedSize={4}
-          onCollapse={() => setIsChatCollapsed(true)}
-          onExpand={() => setIsChatCollapsed(false)}
+          onCollapse={() => {
+            setIsChatCollapsed(true)
+          }}
+          onExpand={() => {
+            setIsChatCollapsed(false)
+          }}
         >
           <div onDoubleClick={handleChatDoubleClick} className="h-full bg-surface-base">
             <AnimatePresence mode="wait">
@@ -101,8 +106,12 @@ export function MainLayout({ children }: MainLayoutProps) {
           maxSize={40}
           collapsible={true}
           collapsedSize={4}
-          onCollapse={() => setIsWalletCollapsed(true)}
-          onExpand={() => setIsWalletCollapsed(false)}
+          onCollapse={() => {
+            setIsWalletCollapsed(true)
+          }}
+          onExpand={() => {
+            setIsWalletCollapsed(false)
+          }}
         >
           <div onDoubleClick={handleWalletDoubleClick} className="h-full bg-surface-base">
             <AnimatePresence mode="wait">
