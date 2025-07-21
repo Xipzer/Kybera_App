@@ -1,4 +1,4 @@
-import { Plus, MessageSquare, Trash2, MoreVertical, Pin, Edit2, PanelLeftClose, SquarePen } from 'lucide-react'
+import { Plus, MessageSquare, Trash2, MoreVertical, Pin, Edit2, SquarePen } from 'lucide-react'
 import { useChatStore } from '../../store/chatStore'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
@@ -51,14 +51,8 @@ export function ChatSidebar({ onToggle, collapsed }: ChatSidebarProps) {
 
   if (collapsed) {
     return (
-      <div className="h-full w-full bg-surface-base border-r border-border-subtle flex flex-col items-center justify-start py-4 gap-4 panel-content-fade">
-        <button
-          onClick={onToggle}
-          className="p-2 rounded-lg hover:bg-surface-hover transition-colors mb-4"
-          title="Expand sidebar"
-        >
-          <MessageSquare className="w-5 h-5 text-text-secondary" />
-        </button>
+      <div className="h-full w-full border-r border-border-subtle flex flex-col items-center justify-start py-4 gap-4 panel-content-fade">
+        <MessageSquare className="w-5 h-5 text-text-secondary mb-4" />
         <SquarePen 
           onClick={handleNewChat}
           className="w-5 h-5 text-accent cursor-pointer hover:text-accent-400 transition-colors"
@@ -69,19 +63,10 @@ export function ChatSidebar({ onToggle, collapsed }: ChatSidebarProps) {
   }
   
   return (
-    <div className="h-full bg-surface-base flex flex-col panel-content-fade">
+    <div className="h-full flex flex-col panel-content-fade">
       <div className="p-4 border-b border-border-subtle">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-text-primary">Chats</h2>
-          {onToggle && (
-            <button
-              onClick={onToggle}
-              className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
-              title="Collapse sidebar"
-            >
-              <PanelLeftClose className="w-5 h-5 text-text-secondary" />
-            </button>
-          )}
         </div>
         
         <button

@@ -1,6 +1,6 @@
 import { ReactNode, useState, useEffect } from 'react'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
-import { MainLayout } from './MainLayout'
+import { MainLayout } from './AnimatedMainLayout'
 import { MobileNav } from './MobileNav'
 import { AnimatedPanel, MobileOverlay } from '../common/AnimatedPanel'
 import { WalletDrawer } from '../wallet/WalletDrawer'

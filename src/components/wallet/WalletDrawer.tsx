@@ -10,7 +10,6 @@ import {
   Edit2,
   Users,
   MoreVertical,
-  PanelRightClose,
 } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
@@ -34,7 +33,7 @@ interface WalletDrawerProps {
   collapsed?: boolean
 }
 
-export function WalletDrawer({ onToggle, collapsed }: WalletDrawerProps) {
+export function WalletDrawer({ collapsed }: WalletDrawerProps) {
   const { wallets, walletGroups, activeWalletId, setActiveWallet, removeWallet } =
     useWalletStore()
   
@@ -72,15 +71,19 @@ export function WalletDrawer({ onToggle, collapsed }: WalletDrawerProps) {
 
   if (collapsed) {
     return (
-      <div className="h-full w-full bg-surface-base border-l border-border-subtle flex flex-col items-center justify-start py-4 panel-content-fade-right">
-        <button
-          onClick={onToggle}
-          className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
-          title="Expand drawer"
-        >
-          <WalletIcon className="w-5 h-5 text-text-secondary" />
-        </button>
-      </div>
+      <>
+        <div className="h-full w-full border-l border-border-subtle flex flex-col items-center justify-start py-4 panel-content-fade-right">
+          <WalletIcon className="w-5 h-5 text-text-secondary mb-4" />
+          <button
+            onClick={() => setShowCreateGroupDialog(true)}
+            className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
+            title="New Group"
+          >
+            <Users className="w-4 h-4 text-accent" />
+          </button>
+        </div>
+        <CreateGroupDialog open={showCreateGroupDialog} onOpenChange={setShowCreateGroupDialog} />
+      </>
     )
   }
 
@@ -91,15 +94,6 @@ export function WalletDrawer({ onToggle, collapsed }: WalletDrawerProps) {
       <div className={`p-4 flex-shrink-0 ${theme.styles.panelHeader}`}>
         <div className="flex items-center justify-between mb-4">
           <h2 className={`text-lg font-semibold ${theme.styles.textPrimary}`}>Wallets</h2>
-          {onToggle && (
-            <button
-              onClick={onToggle}
-              className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
-              title="Collapse drawer"
-            >
-              <PanelRightClose className="w-5 h-5 text-text-secondary" />
-            </button>
-          )}
         </div>
 
         <NetworkSelector />
