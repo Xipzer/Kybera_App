@@ -165,6 +165,41 @@ export class SmartWalletDB extends Dexie {
         }
       }
     })
+    
+    // Version 8 adds order field for drag and drop support
+    this.version(8).stores({
+      wallets: '++id, groupId, address, type, order',
+      walletGroups: '++id, createdAt, order',
+      conversations: '++id, createdAt, pinned',
+      messages: '++id, conversationId, timestamp',
+      settings: 'key',
+      auth: 'id',
+      transactions: '++id, hash, from, to, network, timestamp'
+    }).upgrade(async trans => {
+      // Add order to existing wallets and groups
+      const groups = await trans.table('walletGroups').toArray()
+      const wallets = await trans.table('wallets').toArray()
+      
+      // Set order for groups based on creation date
+      const sortedGroups = groups.sort((a, b) => a.createdAt - b.createdAt)
+      for (let i = 0; i < sortedGroups.length; i++) {
+        await trans.table('walletGroups').update(sortedGroups[i].id, { order: i })
+      }
+      
+      // Set order for wallets within each group
+      const walletsByGroup: { [key: string]: any[] } = {}
+      wallets.forEach(w => {
+        if (!walletsByGroup[w.groupId]) walletsByGroup[w.groupId] = []
+        walletsByGroup[w.groupId].push(w)
+      })
+      
+      for (const groupId in walletsByGroup) {
+        const groupWallets = walletsByGroup[groupId].sort((a, b) => a.createdAt - b.createdAt)
+        for (let i = 0; i < groupWallets.length; i++) {
+          await trans.table('wallets').update(groupWallets[i].id, { order: i })
+        }
+      }
+    })
   }
 }
 

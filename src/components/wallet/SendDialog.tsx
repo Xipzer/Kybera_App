@@ -313,7 +313,8 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                   <Popover.Root open={tokenSelectorOpen} onOpenChange={setTokenSelectorOpen}>
                     <Popover.Trigger asChild>
                       <button
-                        className={`w-[140px] flex items-center gap-2 px-3 py-3 ${theme.styles.input} hover:border-border-default transition-colors`}
+                        className={`flex items-center gap-2 px-3 py-3 ${theme.styles.input} hover:border-border-default transition-colors`}
+                        style={{ minWidth: '140px', maxWidth: '140px' }}
                         disabled={isLoadingBalances || availableTokens.length === 0}
                       >
                         <div className="w-8 h-8 bg-surface-elevated rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">

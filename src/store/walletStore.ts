@@ -35,6 +35,9 @@ interface WalletState {
   exportGroupSeed: (groupId: string, password: string) => Promise<string>
   getWalletPrivateKey: (walletId: string, password: string) => Promise<string>
   importWalletGroup: (name: string, seedPhrase: string, password: string, walletNames?: string[], evmCount?: number, svmCount?: number) => Promise<WalletGroup>
+  updateWalletGroup: (id: string, updates: Partial<WalletGroup>) => Promise<void>
+  reorderWalletGroups: (groupIds: string[]) => Promise<void>
+  reorderWallets: (walletIds: string[]) => Promise<void>
 }
 
 export const useWalletStore = create<WalletState>()(
@@ -329,6 +332,58 @@ export const useWalletStore = create<WalletState>()(
         await db.wallets.update(id, updateData)
         set((state) => ({
           wallets: state.wallets.map((w) => (w.id === id ? { ...w, ...updates } : w)),
+        }))
+      },
+      
+      updateWalletGroup: async (id, updates) => {
+        const updateData: any = {}
+        if (updates.createdAt) {
+          updateData.createdAt = updates.createdAt.getTime()
+        }
+        Object.keys(updates).forEach((key) => {
+          if (key !== 'createdAt') {
+            updateData[key] = (updates as any)[key]
+          }
+        })
+        await db.walletGroups.update(id, updateData)
+        set((state) => ({
+          walletGroups: state.walletGroups.map((g) => (g.id === id ? { ...g, ...updates } : g)),
+        }))
+      },
+      
+      reorderWalletGroups: async (groupIds) => {
+        // Update order for each group
+        const updates = groupIds.map((id, index) => ({ id, order: index }))
+        
+        // Update database
+        for (const update of updates) {
+          await db.walletGroups.update(update.id, { order: update.order })
+        }
+        
+        // Update state
+        set((state) => ({
+          walletGroups: state.walletGroups.map(group => {
+            const newOrder = groupIds.indexOf(group.id)
+            return newOrder !== -1 ? { ...group, order: newOrder } : group
+          })
+        }))
+      },
+      
+      reorderWallets: async (walletIds) => {
+        // Update order for each wallet
+        const updates = walletIds.map((id, index) => ({ id, order: index }))
+        
+        // Update database
+        for (const update of updates) {
+          await db.wallets.update(update.id, { order: update.order })
+        }
+        
+        // Update state
+        set((state) => ({
+          wallets: state.wallets.map(wallet => {
+            const newOrder = walletIds.indexOf(wallet.id)
+            return newOrder !== -1 ? { ...wallet, order: newOrder } : wallet
+          })
         }))
       },
     }),

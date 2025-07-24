@@ -25,6 +25,7 @@ export interface WalletGroup {
   // Track wallet counts per chain type
   evmWalletCount: number
   svmWalletCount: number
+  order?: number
 }
 
 export interface Wallet {
@@ -38,6 +39,7 @@ export interface Wallet {
   // For imported wallets that don't belong to a group
   encryptedPrivateKey?: string
   isImported?: boolean
+  order?: number
 }
 
 export interface WalletBalance {
