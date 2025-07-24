@@ -303,7 +303,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                         className={`w-[140px] flex items-center gap-2 px-3 py-3 ${theme.styles.input} hover:border-border-default transition-colors`}
                         disabled={isLoadingBalances || availableTokens.length === 0}
                       >
-                        <div className="w-6 h-6 bg-surface-elevated rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
+                        <div className="w-8 h-8 bg-surface-elevated rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
                           {selectedToken?.logoURI ? (
                             <img 
                               src={selectedToken.logoURI} 
@@ -315,7 +315,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                               }}
                             />
                           ) : null}
-                          <span className={`text-xs font-medium ${selectedToken?.logoURI ? 'hidden' : ''}`}>
+                          <span className={`text-sm font-medium ${selectedToken?.logoURI ? 'hidden' : 'block w-full h-full flex items-center justify-center'}`}>
                             {selectedToken?.symbol.slice(0, 2).toUpperCase() || '?'}
                           </span>
                         </div>
@@ -408,9 +408,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                                       </div>
                                       <div className="text-right">
                                         <p className="text-sm font-medium text-text-primary">{formatBalance(token.balance)}</p>
-                                        {token.usdValue > 0 && (
-                                          <p className="text-xs text-text-tertiary">{formatUSD(token.usdValue)}</p>
-                                        )}
+                                        <p className="text-xs text-text-tertiary">{formatUSD(token.usdValue)}</p>
                                       </div>
                                     </button>
                                   )
@@ -433,7 +431,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                         min="0"
                         className="w-full h-full pb-5 bg-transparent border-0 focus:outline-none text-right text-text-primary placeholder-text-tertiary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
-                      {amount && usdAmount > 0 && (
+                      {amount && (
                         <div className="absolute right-3 bottom-2 text-xs text-text-tertiary text-right">
                           ≈ {formatUSD(usdAmount)}
                         </div>
@@ -534,8 +532,19 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                     <div className={`${theme.styles.input} p-3`}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 bg-surface-elevated rounded-full flex items-center justify-center">
-                            <span className="text-xs font-medium">
+                          <div className="w-8 h-8 bg-surface-elevated rounded-full flex items-center justify-center overflow-hidden">
+                            {selectedToken.logoURI ? (
+                              <img 
+                                src={selectedToken.logoURI} 
+                                alt={selectedToken.symbol}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none'
+                                  e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                                }}
+                              />
+                            ) : null}
+                            <span className={`text-sm font-medium ${selectedToken.logoURI ? 'hidden' : 'block w-full h-full flex items-center justify-center'}`}>
                               {selectedToken.symbol.slice(0, 2).toUpperCase()}
                             </span>
                           </div>
@@ -545,9 +554,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-medium text-text-primary">{amount}</p>
-                          {usdAmount > 0 && (
-                            <p className="text-xs text-text-tertiary">≈ {formatUSD(usdAmount)}</p>
-                          )}
+                          <p className="text-xs text-text-tertiary">≈ {formatUSD(usdAmount)}</p>
                         </div>
                       </div>
                     </div>
