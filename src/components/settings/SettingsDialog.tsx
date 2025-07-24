@@ -539,7 +539,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                             type="checkbox"
                             checked={syncWallpaper}
                             onChange={(e) => setSyncWallpaper(e.target.checked)}
-                            className="w-4 h-4 rounded accent-accent focus:outline-none cursor-pointer"
+                            className={themeConfig.styles.checkbox}
                           />
                           <span className="text-sm text-text-secondary">
                             Sync Wallpaper
@@ -554,7 +554,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                             type="checkbox"
                             checked={syncOpacity}
                             onChange={(e) => setSyncOpacity(e.target.checked)}
-                            className="w-4 h-4 rounded accent-accent focus:outline-none cursor-pointer"
+                            className={themeConfig.styles.checkbox}
                           />
                           <span className="text-sm text-text-secondary">
                             Sync Opacity

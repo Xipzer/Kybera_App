@@ -54,6 +54,10 @@
   .bg-gradient-lockscreen {
     background: linear-gradient(135deg, rgb(0, 225, 255) 0%, rgb(255, 0, 153) 100%);
   }
+  :root.dark .bg-gradient-lockscreen,
+  .dark .bg-gradient-lockscreen {
+    background: linear-gradient(135deg, rgb(0, 90, 102) 0%, rgb(102, 0, 61) 100%);
+  }
   :root.xipz .bg-gradient-lockscreen,
   .xipz .bg-gradient-lockscreen {
     background: linear-gradient(
