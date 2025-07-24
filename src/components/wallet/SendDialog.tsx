@@ -70,6 +70,8 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
       if (!fromWallet) return
       
       setIsLoadingBalances(true)
+      // Don't reset to null to avoid controlled/uncontrolled warning
+      
       try {
         const data = await blockchainService.getBalance(fromWallet, network)
         setBalanceData(data)
@@ -98,18 +100,19 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
         setAvailableTokens(tokens)
         
         // Select native token by default
-        if (!selectedToken && tokens.length > 0) {
+        if (tokens.length > 0) {
           setSelectedToken(tokens[0])
         }
       } catch (err) {
         console.error('Failed to fetch balances:', err)
+        setAvailableTokens([]) // Clear tokens on error
       } finally {
         setIsLoadingBalances(false)
       }
     }
     
     fetchBalances()
-  }, [fromWallet, network])
+  }, [fromWallet?.address, network.id]) // Use specific properties to avoid infinite loops
   
   // Calculate USD value when amount changes
   useEffect(() => {
@@ -219,9 +222,14 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
         <Dialog.Content className={`dialog-content ${theme.styles.dialogContainer} w-[600px] max-h-[85vh] overflow-y-auto`}>
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <Dialog.Title className={theme.styles.heading}>
-                Send
-              </Dialog.Title>
+              <div>
+                <Dialog.Title className={theme.styles.heading}>
+                  Send
+                </Dialog.Title>
+                <Dialog.Description className="sr-only">
+                  Send tokens from your wallet
+                </Dialog.Description>
+              </div>
               <Dialog.Close asChild>
                 <button className={theme.styles.buttonIcon}>
                   <X className={`w-5 h-5 ${theme.styles.iconSecondary}`} />
@@ -253,7 +261,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                   </Select.Trigger>
                   
                   <Select.Portal>
-                    <Select.Content className={`${theme.styles.dropdown.content} max-h-[300px] overflow-y-auto`}>
+                    <Select.Content className={`${theme.styles.dropdown?.content || 'bg-surface-elevated border border-border-subtle rounded-lg shadow-lg'} max-h-[300px] overflow-y-auto`} style={{ zIndex: 9999 }}>
                       <Select.Viewport>
                         {groupedWallets.map(({ group, wallets }) => (
                           <div key={group.id}>
@@ -264,7 +272,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                               <Select.Item
                                 key={wallet.id}
                                 value={wallet.address}
-                                className={`${theme.styles.dropdown.item} cursor-pointer`}
+                                className={`${theme.styles.dropdown?.item || 'p-2 hover:bg-surface-hover outline-none'} cursor-pointer`}
                               >
                                 <Select.ItemText>
                                   <div>
@@ -286,50 +294,61 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                   <div className={`relative ${theme.styles.input} p-0 flex items-stretch overflow-hidden`}>
                     {/* Token Selector */}
                     <Select.Root 
-                      value={selectedToken?.symbol} 
-                      onValueChange={(symbol) => {
-                        const token = availableTokens.find(t => t.symbol === symbol)
+                      value={selectedToken ? (selectedToken.isNative ? 'native' : selectedToken.address) : ''}
+                      onValueChange={(value) => {
+                        const token = availableTokens.find(t => 
+                          t.isNative ? value === 'native' : t.address === value
+                        )
                         if (token) setSelectedToken(token)
                       }}
                       disabled={isLoadingBalances || availableTokens.length === 0}
                     >
-                      <Select.Trigger className="flex items-center gap-2 px-3 border-r border-border-subtle hover:bg-surface-hover transition-colors">
-                        <div className="w-6 h-6 bg-surface-elevated rounded-full flex items-center justify-center">
-                          <span className="text-xs font-medium">
-                            {selectedToken?.symbol.slice(0, 2).toUpperCase() || '?'}
-                          </span>
-                        </div>
+                      <Select.Trigger className="flex items-center gap-2 px-3 py-2 border-r border-border-subtle hover:bg-surface-hover transition-colors focus:outline-none">
                         <span className="text-sm font-medium text-text-primary">
-                          {selectedToken?.symbol || 'Select'}
+                          {isLoadingBalances ? 'Loading...' : (selectedToken?.symbol || 'Select')}
                         </span>
                         <ChevronDown className="w-4 h-4 text-text-secondary" />
                       </Select.Trigger>
                       
                       <Select.Portal>
-                        <Select.Content className={`${theme.styles.dropdown.content} min-w-[200px]`}>
+                        <Select.Content className={`${theme.styles.dropdown?.content || 'bg-surface-elevated border border-border-subtle rounded-lg shadow-lg'} min-w-[280px] max-h-[300px] overflow-y-auto`} style={{ zIndex: 9999 }} position="popper" sideOffset={5}>
                           <Select.Viewport>
-                            {availableTokens.map((token) => (
-                              <Select.Item
-                                key={token.symbol + (token.isNative ? '-native' : token.address || '')}
-                                value={token.symbol}
-                                className={`${theme.styles.dropdown.item} cursor-pointer`}
-                              >
-                                <Select.ItemText>
-                                  <div className="flex items-center justify-between">
-                                    <div>
-                                      <p className="text-sm font-medium">{token.symbol}</p>
-                                      <p className="text-xs text-text-tertiary">{token.name}</p>
+                            {availableTokens.length === 0 ? (
+                              <div className="p-3 text-center text-sm text-text-tertiary">
+                                No tokens available
+                              </div>
+                            ) : (
+                              availableTokens.map((token) => {
+                                const isSelected = selectedToken && (
+                                  (token.isNative && selectedToken.isNative) ||
+                                  (!token.isNative && !selectedToken.isNative && token.address === selectedToken.address)
+                                )
+                                return (
+                                  <Select.Item
+                                    key={token.isNative ? 'native' : token.address}
+                                    value={token.isNative ? 'native' : token.address!}
+                                    className={`${theme.styles.dropdown?.item || 'p-3 hover:bg-surface-hover outline-none'} cursor-pointer ${
+                                      isSelected ? 'bg-accent/10' : ''
+                                    }`}
+                                  >
+                                  <Select.ItemText>
+                                    <div className="flex items-center justify-between">
+                                      <div>
+                                        <p className="text-sm font-medium">{token.symbol}</p>
+                                        <p className="text-xs text-text-tertiary">{token.name}</p>
+                                      </div>
+                                      <div className="text-right">
+                                        <p className="text-sm">{formatBalance(token.balance)}</p>
+                                        {token.usdValue > 0 && (
+                                          <p className="text-xs text-text-tertiary">{formatUSD(token.usdValue)}</p>
+                                        )}
+                                      </div>
                                     </div>
-                                    <div className="text-right">
-                                      <p className="text-sm">{formatBalance(token.balance)}</p>
-                                      {token.usdValue > 0 && (
-                                        <p className="text-xs text-text-tertiary">{formatUSD(token.usdValue)}</p>
-                                      )}
-                                    </div>
-                                  </div>
-                                </Select.ItemText>
-                              </Select.Item>
-                            ))}
+                                  </Select.ItemText>
+                                </Select.Item>
+                                )
+                              })
+                            )}
                           </Select.Viewport>
                         </Select.Content>
                       </Select.Portal>
