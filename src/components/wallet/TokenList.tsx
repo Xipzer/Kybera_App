@@ -93,6 +93,12 @@ export function TokenList({ wallet, network }: TokenListProps) {
     'DAI': 'dai',
     'WBTC': 'wrapped-bitcoin',
     'BUSD': 'binance-usd',
+    'wSOL': 'solana',
+    'mSOL': 'marinade-staked-sol',
+    'BONK': 'bonk',
+    'JUP': 'jupiter-exchange-solana',
+    'PYTH': 'pyth-network',
+    'UXD': 'uxd-stablecoin',
   }
 
   // Create token list including native currency
@@ -146,8 +152,22 @@ export function TokenList({ wallet, network }: TokenListProps) {
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-surface-elevated rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-text-primary">
+                <div className="w-10 h-10 bg-surface-elevated rounded-full flex items-center justify-center overflow-hidden">
+                  {!token.isNative && token.address && balanceData.tokens.find(t => t.address === token.address)?.logoURI ? (
+                    <img 
+                      src={balanceData.tokens.find(t => t.address === token.address)?.logoURI} 
+                      alt={token.symbol}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // Fallback to text if image fails to load
+                        e.currentTarget.style.display = 'none'
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                      }}
+                    />
+                  ) : null}
+                  <span className={`text-sm font-medium text-text-primary ${
+                    !token.isNative && token.address && balanceData.tokens.find(t => t.address === token.address)?.logoURI ? 'hidden' : ''
+                  }`}>
                     {token.symbol.slice(0, 2).toUpperCase()}
                   </span>
                 </div>

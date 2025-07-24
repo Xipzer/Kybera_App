@@ -66,6 +66,12 @@ class BlockchainService {
             'DAI': 'dai',
             'WBTC': 'wrapped-bitcoin',
             'BUSD': 'binance-usd',
+            'wSOL': 'solana',
+            'mSOL': 'marinade-staked-sol',
+            'BONK': 'bonk',
+            'JUP': 'jupiter-exchange-solana',
+            'PYTH': 'pyth-network',
+            'UXD': 'uxd-stablecoin',
           }
           
           const priceIdsToFetch = tokens
@@ -314,6 +320,7 @@ class BlockchainService {
   private async getSPLTokenBalances(walletAddress: string, rpcUrl: string): Promise<TokenBalance[]> {
     try {
       const { Connection, PublicKey } = await import('@solana/web3.js')
+      const { getMint } = await import('@solana/spl-token')
       const connection = new Connection(rpcUrl, 'confirmed')
       const walletPublicKey = new PublicKey(walletAddress)
       
@@ -324,20 +331,158 @@ class BlockchainService {
       
       const tokens: TokenBalance[] = []
       
+      // First, let's get all tokens and their basic info
+      const tokenInfoMap = new Map<string, {symbol: string, name: string, logoURI?: string}>()
+      
+      // Fetch token registry once
+      try {
+        const response = await fetch('https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/src/tokens/solana.tokenlist.json', {
+          signal: AbortSignal.timeout(5000)
+        })
+        if (response.ok) {
+          const tokenList = await response.json()
+          tokenList.tokens.forEach((token: any) => {
+            tokenInfoMap.set(token.address, {
+              symbol: token.symbol,
+              name: token.name,
+              logoURI: token.logoURI
+            })
+          })
+        }
+      } catch (error) {
+        console.error('Failed to fetch token registry:', error)
+      }
+      
+      
       for (const account of tokenAccounts.value) {
         const parsedInfo = account.account.data.parsed.info
         const balance = parsedInfo.tokenAmount.uiAmountString
         
         if (parseFloat(balance) > 0) {
-          // For now, we'll use the mint address as the token name
-          // In a real implementation, you'd want to fetch token metadata
+          const mintAddress = parsedInfo.mint
+          
+          // Start with default values
+          let symbol = 'Unknown'
+          let name = 'Unknown Token'
+          let logoURI: string | undefined
+          
+          // Check the token registry first
+          if (tokenInfoMap.has(mintAddress)) {
+            const tokenInfo = tokenInfoMap.get(mintAddress)!
+            symbol = tokenInfo.symbol
+            name = tokenInfo.name
+            logoURI = tokenInfo.logoURI
+          }
+          // For tokens not in registry, try to fetch metadata from multiple sources
+          else {
+            try {
+              // First try Jupiter's token list (more comprehensive)
+              const jupiterResponse = await fetch(`https://token.jup.ag/strict/token/${mintAddress}`, {
+                signal: AbortSignal.timeout(3000)
+              })
+              
+              if (jupiterResponse.ok) {
+                const jupiterData = await jupiterResponse.json()
+                if (jupiterData) {
+                  symbol = jupiterData.symbol || symbol
+                  name = jupiterData.name || name
+                  logoURI = jupiterData.logoURI || logoURI
+                }
+              }
+            } catch (err) {
+              console.log(`Token ${mintAddress} not found in Jupiter registry`)
+            }
+            
+            // If still unknown, try to parse on-chain metadata
+            if (symbol === 'Unknown' || name === 'Unknown Token') {
+              try {
+                const METADATA_PROGRAM_ID = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s')
+                const [metadataPDA] = PublicKey.findProgramAddressSync(
+                  [
+                    Buffer.from('metadata'),
+                    METADATA_PROGRAM_ID.toBuffer(),
+                    new PublicKey(mintAddress).toBuffer(),
+                  ],
+                  METADATA_PROGRAM_ID
+                )
+                
+                const metadataAccount = await connection.getAccountInfo(metadataPDA)
+                
+                if (metadataAccount && metadataAccount.data) {
+                  // Use a more robust parsing approach
+                  const data = metadataAccount.data
+                  
+                  // The metadata structure has fixed offsets
+                  // Skip: discriminator (1) + update_authority (32) + mint (32) = 65
+                  let offset = 65
+                  
+                  // Read name (4 bytes length + up to 32 bytes data)
+                  const nameLen = data.readUInt32LE(offset)
+                  offset += 4
+                  if (nameLen > 0 && nameLen <= 32) {
+                    const nameStr = data.slice(offset, offset + nameLen).toString('utf8').replace(/\0/g, '').trim()
+                    if (nameStr) name = nameStr
+                  }
+                  offset += 32 // Skip to next field regardless of actual name length
+                  
+                  // Read symbol (4 bytes length + up to 10 bytes data)
+                  const symbolLen = data.readUInt32LE(offset)
+                  offset += 4
+                  if (symbolLen > 0 && symbolLen <= 10) {
+                    const symbolStr = data.slice(offset, offset + symbolLen).toString('utf8').replace(/\0/g, '').trim()
+                    if (symbolStr) symbol = symbolStr
+                  }
+                  offset += 10 // Skip to next field
+                  
+                  // Read URI (4 bytes length + up to 200 bytes data)
+                  const uriLen = data.readUInt32LE(offset)
+                  offset += 4
+                  if (uriLen > 0 && uriLen <= 200) {
+                    const uri = data.slice(offset, offset + uriLen).toString('utf8').replace(/\0/g, '').trim()
+                    
+                    // Fetch metadata from URI if available
+                    if (uri && uri.includes('.')) {
+                      try {
+                        let metadataUrl = uri
+                        if (uri.startsWith('ipfs://')) {
+                          metadataUrl = uri.replace('ipfs://', 'https://ipfs.io/ipfs/')
+                        }
+                        
+                        const metadataResponse = await fetch(metadataUrl, { 
+                          signal: AbortSignal.timeout(3000)
+                        })
+                        
+                        if (metadataResponse.ok) {
+                          const jsonMetadata = await metadataResponse.json()
+                          // Prefer off-chain metadata as it's usually more complete
+                          if (jsonMetadata.symbol) symbol = jsonMetadata.symbol
+                          if (jsonMetadata.name) name = jsonMetadata.name
+                          if (jsonMetadata.image) {
+                            logoURI = jsonMetadata.image
+                            if (logoURI?.startsWith('ipfs://')) {
+                              logoURI = logoURI.replace('ipfs://', 'https://ipfs.io/ipfs/')
+                            }
+                          }
+                        }
+                      } catch (err) {
+                        console.log('Failed to fetch off-chain metadata')
+                      }
+                    }
+                  }
+                }
+              } catch (err) {
+                console.log(`Could not fetch on-chain metadata for ${mintAddress}`)
+              }
+            }
+          }
+          
           tokens.push({
-            address: parsedInfo.mint,
-            symbol: 'Unknown', // TODO: Fetch actual token symbol
-            name: 'Unknown Token', // TODO: Fetch actual token name
+            address: mintAddress,
+            symbol,
+            name,
             decimals: parsedInfo.tokenAmount.decimals,
             balance: balance,
-            logoURI: undefined
+            logoURI
           })
         }
       }
