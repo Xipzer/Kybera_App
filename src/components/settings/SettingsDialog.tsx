@@ -30,7 +30,24 @@ interface SettingsDialogProps {
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const { openRouterApiKey, autoLockTimeout, setOpenRouterApiKey, setAutoLockTimeout } = useSettingsStore()
   const { theme: themeConfig } = useTheme()
-  const { theme, setTheme, profilePicture, setProfilePicture, chatWallpaper, setChatWallpaper, wallpaperOpacity, setWallpaperOpacity } = useUIStore()
+  const { 
+    theme, 
+    setTheme, 
+    profilePicture, 
+    setProfilePicture, 
+    chatWallpaper, 
+    setChatWallpaper, 
+    wallpaperOpacity, 
+    setWallpaperOpacity,
+    lockscreenWallpaper,
+    setLockscreenWallpaper,
+    lockscreenOpacity,
+    setLockscreenOpacity,
+    syncWallpaper,
+    setSyncWallpaper,
+    syncOpacity,
+    setSyncOpacity
+  } = useUIStore()
   const { changePassword } = useAuthStore()
   const { password: currentSessionPassword } = useWalletStore()
   
@@ -514,41 +531,220 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       maxSizeInMB={2}
                     />
                     
-                    <div className="border-t border-border-subtle pt-6">
-                      <ImageUpload
-                        currentImage={chatWallpaper}
-                        onImageChange={setChatWallpaper}
-                        label="Chat Background"
-                        description="Set a custom wallpaper for the chat interface"
-                        maxSizeInMB={5}
-                      />
+                    <div className="mt-6">
+                      {/* Sync toggles */}
+                      <div className="space-y-3 mb-6">
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={syncWallpaper}
+                            onChange={(e) => setSyncWallpaper(e.target.checked)}
+                            className="w-4 h-4 rounded accent-accent focus:outline-none cursor-pointer"
+                          />
+                          <span className="text-sm text-text-secondary">
+                            Sync Wallpaper
+                          </span>
+                        </label>
+                        <p className="text-xs text-text-tertiary ml-7">
+                          Use the same wallpaper for chat and lockscreen
+                        </p>
+                        
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={syncOpacity}
+                            onChange={(e) => setSyncOpacity(e.target.checked)}
+                            className="w-4 h-4 rounded accent-accent focus:outline-none cursor-pointer"
+                          />
+                          <span className="text-sm text-text-secondary">
+                            Sync Opacity
+                          </span>
+                        </label>
+                        <p className="text-xs text-text-tertiary ml-7">
+                          Use the same opacity for chat and lockscreen wallpapers
+                        </p>
+                      </div>
                       
-                      {chatWallpaper && (
-                        <div className="mt-4">
-                          <label className="block text-sm font-medium text-text-secondary mb-2">
-                            Wallpaper Opacity
-                          </label>
-                          <div className="flex items-center gap-4">
-                            <input
-                              type="range"
-                              min="0"
-                              max="50"
-                              step="5"
-                              value={wallpaperOpacity * 100}
-                              onChange={(e) => setWallpaperOpacity(parseInt(e.target.value) / 100)}
-                              className="flex-1 h-2 bg-surface-elevated rounded-lg appearance-none cursor-pointer"
-                              style={{
-                                background: `linear-gradient(to right, rgb(var(--color-accent-500)) 0%, rgb(var(--color-accent-500)) ${wallpaperOpacity * 200}%, rgb(var(--color-surface-elevated)) ${wallpaperOpacity * 200}%, rgb(var(--color-surface-elevated)) 100%)`
-                              }}
+                      {/* Wallpaper settings */}
+                      {syncWallpaper ? (
+                        <>
+                          <ImageUpload
+                            currentImage={chatWallpaper}
+                            onImageChange={(url) => {
+                              setChatWallpaper(url)
+                              setLockscreenWallpaper(url)
+                            }}
+                            label="Wallpaper"
+                            description="Set a custom wallpaper to be used for the chat and lockscreen"
+                            maxSizeInMB={5}
+                          />
+                          
+                          {chatWallpaper && (
+                            <div className="mt-4 space-y-4">
+                              {syncOpacity ? (
+                                <div>
+                                  <label className="block text-sm font-medium text-text-secondary mb-2">
+                                    Wallpaper Opacity
+                                  </label>
+                                  <div className="flex items-center gap-4">
+                                    <input
+                                      type="range"
+                                      min="0"
+                                      max="50"
+                                      step="5"
+                                      value={wallpaperOpacity * 100}
+                                      onChange={(e) => {
+                                        const opacity = parseInt(e.target.value) / 100
+                                        setWallpaperOpacity(opacity)
+                                        setLockscreenOpacity(opacity)
+                                      }}
+                                      className="flex-1 h-2 bg-surface-elevated rounded-lg appearance-none cursor-pointer"
+                                      style={{
+                                        background: `linear-gradient(to right, rgb(var(--color-accent-500)) 0%, rgb(var(--color-accent-500)) ${wallpaperOpacity * 200}%, rgb(var(--color-surface-elevated)) ${wallpaperOpacity * 200}%, rgb(var(--color-surface-elevated)) 100%)`
+                                      }}
+                                    />
+                                    <span className="text-sm text-text-secondary w-12 text-right">
+                                      {Math.round(wallpaperOpacity * 100)}%
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-text-tertiary mt-1">
+                                    Adjust the transparency of the wallpaper
+                                  </p>
+                                </div>
+                              ) : (
+                                <>
+                                  <div>
+                                    <label className="block text-sm font-medium text-text-secondary mb-2">
+                                      Wallpaper Opacity (Chat)
+                                    </label>
+                                    <div className="flex items-center gap-4">
+                                      <input
+                                        type="range"
+                                        min="0"
+                                        max="50"
+                                        step="5"
+                                        value={wallpaperOpacity * 100}
+                                        onChange={(e) => setWallpaperOpacity(parseInt(e.target.value) / 100)}
+                                        className="flex-1 h-2 bg-surface-elevated rounded-lg appearance-none cursor-pointer"
+                                        style={{
+                                          background: `linear-gradient(to right, rgb(var(--color-accent-500)) 0%, rgb(var(--color-accent-500)) ${wallpaperOpacity * 200}%, rgb(var(--color-surface-elevated)) ${wallpaperOpacity * 200}%, rgb(var(--color-surface-elevated)) 100%)`
+                                        }}
+                                      />
+                                      <span className="text-sm text-text-secondary w-12 text-right">
+                                        {Math.round(wallpaperOpacity * 100)}%
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-text-tertiary mt-1">
+                                      Adjust the transparency of the chat wallpaper
+                                    </p>
+                                  </div>
+                                  
+                                  <div>
+                                    <label className="block text-sm font-medium text-text-secondary mb-2">
+                                      Wallpaper Opacity (Lockscreen)
+                                    </label>
+                                    <div className="flex items-center gap-4">
+                                      <input
+                                        type="range"
+                                        min="0"
+                                        max="50"
+                                        step="5"
+                                        value={lockscreenOpacity * 100}
+                                        onChange={(e) => setLockscreenOpacity(parseInt(e.target.value) / 100)}
+                                        className="flex-1 h-2 bg-surface-elevated rounded-lg appearance-none cursor-pointer"
+                                        style={{
+                                          background: `linear-gradient(to right, rgb(var(--color-accent-500)) 0%, rgb(var(--color-accent-500)) ${lockscreenOpacity * 200}%, rgb(var(--color-surface-elevated)) ${lockscreenOpacity * 200}%, rgb(var(--color-surface-elevated)) 100%)`
+                                        }}
+                                      />
+                                      <span className="text-sm text-text-secondary w-12 text-right">
+                                        {Math.round(lockscreenOpacity * 100)}%
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-text-tertiary mt-1">
+                                      Adjust the transparency of the lockscreen wallpaper
+                                    </p>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <ImageUpload
+                            currentImage={chatWallpaper}
+                            onImageChange={setChatWallpaper}
+                            label="Chat Wallpaper"
+                            description="Set a custom wallpaper for the chat interface"
+                            maxSizeInMB={5}
+                          />
+                          
+                          {chatWallpaper && (
+                            <div className="mt-4">
+                              <label className="block text-sm font-medium text-text-secondary mb-2">
+                                Wallpaper Opacity
+                              </label>
+                              <div className="flex items-center gap-4">
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="50"
+                                  step="5"
+                                  value={wallpaperOpacity * 100}
+                                  onChange={(e) => setWallpaperOpacity(parseInt(e.target.value) / 100)}
+                                  className="flex-1 h-2 bg-surface-elevated rounded-lg appearance-none cursor-pointer"
+                                  style={{
+                                    background: `linear-gradient(to right, rgb(var(--color-accent-500)) 0%, rgb(var(--color-accent-500)) ${wallpaperOpacity * 200}%, rgb(var(--color-surface-elevated)) ${wallpaperOpacity * 200}%, rgb(var(--color-surface-elevated)) 100%)`
+                                  }}
+                                />
+                                <span className="text-sm text-text-secondary w-12 text-right">
+                                  {Math.round(wallpaperOpacity * 100)}%
+                                </span>
+                              </div>
+                              <p className="text-xs text-text-tertiary mt-1">
+                                Adjust the transparency of the chat wallpaper
+                              </p>
+                            </div>
+                          )}
+                          
+                          <div className="mt-6">
+                            <ImageUpload
+                              currentImage={lockscreenWallpaper}
+                              onImageChange={setLockscreenWallpaper}
+                              label="Lockscreen Wallpaper"
+                              description="Set a custom background for the lock screen"
+                              maxSizeInMB={5}
                             />
-                            <span className="text-sm text-text-secondary w-12 text-right">
-                              {Math.round(wallpaperOpacity * 100)}%
-                            </span>
+                            
+                            {lockscreenWallpaper && (
+                              <div className="mt-4">
+                                <label className="block text-sm font-medium text-text-secondary mb-2">
+                                  Wallpaper Opacity
+                                </label>
+                                <div className="flex items-center gap-4">
+                                  <input
+                                    type="range"
+                                    min="0"
+                                    max="50"
+                                    step="5"
+                                    value={lockscreenOpacity * 100}
+                                    onChange={(e) => setLockscreenOpacity(parseInt(e.target.value) / 100)}
+                                    className="flex-1 h-2 bg-surface-elevated rounded-lg appearance-none cursor-pointer"
+                                    style={{
+                                      background: `linear-gradient(to right, rgb(var(--color-accent-500)) 0%, rgb(var(--color-accent-500)) ${lockscreenOpacity * 200}%, rgb(var(--color-surface-elevated)) ${lockscreenOpacity * 200}%, rgb(var(--color-surface-elevated)) 100%)`
+                                    }}
+                                  />
+                                  <span className="text-sm text-text-secondary w-12 text-right">
+                                    {Math.round(lockscreenOpacity * 100)}%
+                                  </span>
+                                </div>
+                                <p className="text-xs text-text-tertiary mt-1">
+                                  Adjust the transparency of the lockscreen wallpaper
+                                </p>
+                              </div>
+                            )}
                           </div>
-                          <p className="text-xs text-text-tertiary mt-1">
-                            Adjust the transparency of the background image
-                          </p>
-                        </div>
+                        </>
                       )}
                     </div>
                   </div>

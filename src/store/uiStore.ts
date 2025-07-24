@@ -9,6 +9,10 @@ interface UIState {
   profilePicture: string | null
   chatWallpaper: string | null
   wallpaperOpacity: number
+  lockscreenWallpaper: string | null
+  lockscreenOpacity: number
+  syncWallpaper: boolean
+  syncOpacity: boolean
 
   // Actions
   toggleWalletDrawer: () => void
@@ -19,6 +23,10 @@ interface UIState {
   setProfilePicture: (dataUrl: string | null) => void
   setChatWallpaper: (dataUrl: string | null) => void
   setWallpaperOpacity: (opacity: number) => void
+  setLockscreenWallpaper: (dataUrl: string | null) => void
+  setLockscreenOpacity: (opacity: number) => void
+  setSyncWallpaper: (sync: boolean) => void
+  setSyncOpacity: (sync: boolean) => void
 }
 
 export const useUIStore = create<UIState>()(
@@ -31,6 +39,10 @@ export const useUIStore = create<UIState>()(
       profilePicture: null,
       chatWallpaper: null,
       wallpaperOpacity: 0.1,
+      lockscreenWallpaper: null,
+      lockscreenOpacity: 0.2,
+      syncWallpaper: false,
+      syncOpacity: false,
 
       toggleWalletDrawer: () => {
         set((state) => ({ walletDrawerOpen: !state.walletDrawerOpen }))
@@ -64,6 +76,22 @@ export const useUIStore = create<UIState>()(
 
       setWallpaperOpacity: (opacity) => {
         set({ wallpaperOpacity: opacity })
+      },
+
+      setLockscreenWallpaper: (dataUrl) => {
+        set({ lockscreenWallpaper: dataUrl })
+      },
+
+      setLockscreenOpacity: (opacity) => {
+        set({ lockscreenOpacity: opacity })
+      },
+
+      setSyncWallpaper: (sync) => {
+        set({ syncWallpaper: sync })
+      },
+
+      setSyncOpacity: (sync) => {
+        set({ syncOpacity: sync })
       },
     }),
     {
