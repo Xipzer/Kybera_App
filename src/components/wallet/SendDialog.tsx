@@ -4,7 +4,7 @@ import * as Tabs from '@radix-ui/react-tabs'
 import * as Select from '@radix-ui/react-select'
 import * as Popover from '@radix-ui/react-popover'
 import { X, Send, AlertCircle, ExternalLink, ChevronDown, Wallet as WalletIcon, Users, Search } from 'lucide-react'
-import { Wallet, TokenBalance } from '../../types'
+import { Wallet } from '../../types'
 import { Network } from '../../utils/networks'
 import { blockchainService, BlockchainBalance } from '../../services/blockchain/blockchainService'
 import { useWalletStore } from '../../store/walletStore'
@@ -30,7 +30,7 @@ interface TokenOption {
 }
 
 export function SendDialog({ open, onOpenChange, wallet: initialWallet, network }: SendDialogProps) {
-  const { password, wallets, walletGroups, setActiveWalletId } = useWalletStore()
+  const { password, wallets, walletGroups, setActiveWallet } = useWalletStore()
   const { theme } = useTheme()
   
   // Form state
@@ -252,7 +252,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                     const wallet = wallets.find(w => w.address === addr)
                     if (wallet) {
                       setFromWallet(wallet)
-                      setActiveWalletId(wallet.id)
+                      setActiveWallet(wallet.id)
                     }
                   }}
                   open={undefined}
@@ -398,7 +398,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                                       }`}
                                     >
                                       <div className="flex items-center gap-3">
-                                        <div className={`w-8 h-8 ${theme.styles.surface || 'bg-surface-elevated'} rounded-full flex items-center justify-center overflow-hidden`}>
+                                        <div className={`w-8 h-8 bg-surface-elevated rounded-full flex items-center justify-center overflow-hidden`}>
                                           {token.logoURI ? (
                                             <img 
                                               src={token.logoURI} 

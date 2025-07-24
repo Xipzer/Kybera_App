@@ -534,7 +534,20 @@ function WalletGroupItem({
             <div>
               <h3 className={`font-medium ${theme.styles.textPrimary}`}>{group.name}</h3>
               <p className={`text-sm ${theme.styles.textSecondary}`}>
-                {group.type} • {wallets.length} wallet{wallets.length !== 1 ? 's' : ''}
+                {(() => {
+                  const evmCount = group.evmWalletCount || 0
+                  const svmCount = group.svmWalletCount || 0
+                  
+                  if (evmCount > 0 && svmCount > 0) {
+                    return `EVM & SVM • ${evmCount} EVM, ${svmCount} SVM`
+                  } else if (evmCount > 0) {
+                    return `EVM • ${evmCount} wallet${evmCount !== 1 ? 's' : ''}`
+                  } else if (svmCount > 0) {
+                    return `SVM • ${svmCount} wallet${svmCount !== 1 ? 's' : ''}`
+                  } else {
+                    return `No wallets`
+                  }
+                })()}
               </p>
             </div>
           </button>
@@ -595,7 +608,7 @@ function WalletGroupItem({
               </p>
               <button
                 onClick={onAddWallet}
-                className={`text-sm hover:underline transition-colors ${theme.styles.iconAccent}`}
+                className={`text-sm ${theme.styles.buttonLink || 'text-accent hover:text-accent-hover hover:underline transition-colors'}`}
               >
                 Add a wallet
               </button>

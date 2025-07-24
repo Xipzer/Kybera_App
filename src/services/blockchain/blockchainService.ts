@@ -2,6 +2,7 @@ import { EVMWalletService } from './evmWallet'
 import { SVMWalletService } from './svmWallet'
 import { Wallet, Network, Transaction, TokenBalance } from '../../types'
 import { db } from '../storage/database'
+import { memoryProtection } from '../security/memoryProtection'
 
 export interface BlockchainBalance {
   native: string
@@ -119,9 +120,13 @@ class BlockchainService {
     amount: string,
     password: string
   ): Promise<string> {
+    // Store private key in secure memory temporarily
+    const keyId = `send_tx_${Date.now()}`
+    
     try {
-      // Get private key
+      // Get private key and store securely
       const privateKey = await this.getWalletPrivateKey(wallet, password)
+      memoryProtection.storeSensitive(keyId, privateKey, 30000) // 30 seconds max
       
       // Send transaction
       const txHash = wallet.type === 'EVM'
@@ -143,6 +148,9 @@ class BlockchainService {
     } catch (error) {
       console.error('Failed to send transaction:', error)
       throw error
+    } finally {
+      // Always wipe sensitive data
+      memoryProtection.wipeSensitive(keyId)
     }
   }
 
@@ -155,8 +163,12 @@ class BlockchainService {
     decimals: number,
     password: string
   ): Promise<string> {
+    // Store private key in secure memory temporarily
+    const keyId = `send_token_${Date.now()}`
+    
     try {
       const privateKey = await this.getWalletPrivateKey(wallet, password)
+      memoryProtection.storeSensitive(keyId, privateKey, 30000) // 30 seconds max
       
       const txHash = wallet.type === 'EVM'
         ? await EVMWalletService.sendERC20Token(privateKey, tokenAddress, to, amount, decimals, network.rpcUrl)
@@ -177,6 +189,9 @@ class BlockchainService {
     } catch (error) {
       console.error('Failed to send token:', error)
       throw error
+    } finally {
+      // Always wipe sensitive data
+      memoryProtection.wipeSensitive(keyId)
     }
   }
 

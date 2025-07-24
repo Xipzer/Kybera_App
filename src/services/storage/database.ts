@@ -7,6 +7,8 @@ export interface StoredWallet extends Omit<Wallet, 'createdAt'> {
 
 export interface StoredWalletGroup extends Omit<WalletGroup, 'createdAt'> {
   createdAt: number
+  evmWalletCount?: number
+  svmWalletCount?: number
 }
 
 export interface StoredConversation extends Omit<Conversation, 'createdAt' | 'updatedAt'> {
@@ -112,6 +114,56 @@ export class SmartWalletDB extends Dexie {
       settings: 'key',
       auth: 'id',
       transactions: '++id, hash, from, to, network, timestamp'
+    })
+    
+    // Version 6 adds support for MULTI wallet groups
+    this.version(6).stores({
+      wallets: '++id, groupId, address, type',
+      walletGroups: '++id, type, createdAt',
+      conversations: '++id, createdAt, pinned',
+      messages: '++id, conversationId, timestamp',
+      settings: 'key',
+      auth: 'id',
+      transactions: '++id, hash, from, to, network, timestamp'
+    }).upgrade(async trans => {
+      // No data migration needed, just schema update for optional fields
+    })
+    
+    // Version 7 removes type restriction from wallet groups
+    this.version(7).stores({
+      wallets: '++id, groupId, address, type',
+      walletGroups: '++id, createdAt',
+      conversations: '++id, createdAt, pinned',
+      messages: '++id, conversationId, timestamp',
+      settings: 'key',
+      auth: 'id',
+      transactions: '++id, hash, from, to, network, timestamp'
+    }).upgrade(async trans => {
+      // Migrate existing groups to have evmWalletCount and svmWalletCount
+      const groups = await trans.table('walletGroups').toArray()
+      const wallets = await trans.table('wallets').toArray()
+      
+      for (const group of groups) {
+        const groupWallets = wallets.filter(w => w.groupId === group.id)
+        const evmCount = groupWallets.filter(w => w.type === 'EVM').length
+        const svmCount = groupWallets.filter(w => w.type === 'SVM').length
+        
+        await trans.table('walletGroups').update(group.id, {
+          evmWalletCount: evmCount,
+          svmWalletCount: svmCount
+        })
+        
+        // Remove the type field if it exists
+        if (group.type) {
+          const { type, ...groupWithoutType } = group
+          await trans.table('walletGroups').put({
+            ...groupWithoutType,
+            id: group.id,
+            evmWalletCount: evmCount,
+            svmWalletCount: svmCount
+          })
+        }
+      }
     })
   }
 }

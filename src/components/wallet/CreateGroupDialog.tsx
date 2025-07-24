@@ -1,9 +1,7 @@
 import { useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import * as Tabs from '@radix-ui/react-tabs'
 import { X, Users, AlertCircle, Edit2, ChevronLeft } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
-import { ChainType } from '../../types'
 import { useTheme } from '../../hooks/useTheme'
 
 interface CreateGroupDialogProps {
@@ -15,14 +13,16 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
   const { createWalletGroup, password, addWalletToGroup } = useWalletStore()
   const { theme } = useTheme()
   const [groupName, setGroupName] = useState('')
-  const [chainType, setChainType] = useState<ChainType>('EVM')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [createdGroup, setCreatedGroup] = useState<{ id: string; name: string; seed: string } | null>(null)
-  const [preGenerateWallets, setPreGenerateWallets] = useState(false)
-  const [walletCount, setWalletCount] = useState(1)
   const [showNameEditor, setShowNameEditor] = useState(false)
   const [walletNames, setWalletNames] = useState<string[]>([])
+  // For MULTI wallet groups
+  const [preGenerateEVM, setPreGenerateEVM] = useState(true)
+  const [preGenerateSVM, setPreGenerateSVM] = useState(true)
+  const [evmWalletCount, setEvmWalletCount] = useState(1)
+  const [svmWalletCount, setSvmWalletCount] = useState(1)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,15 +32,26 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
     setError('')
 
     try {
-      const group = await createWalletGroup(groupName.trim(), chainType, password)
+      const group = await createWalletGroup(groupName.trim(), password)
       // Get the seed phrase to show to user
       const seed = await useWalletStore.getState().exportGroupSeed(group.id, password)
       
-      // Generate the specified number of wallets if enabled
-      if (preGenerateWallets) {
-        for (let i = 0; i < walletCount; i++) {
-          const walletName = walletNames[i] || `${groupName.trim()} - Wallet #${i + 1}`
-          await addWalletToGroup(group.id, walletName)
+      // Generate wallets based on user selection
+      let walletIndex = 0
+      
+      if (preGenerateEVM) {
+        for (let i = 0; i < evmWalletCount; i++) {
+          const walletName = walletNames[walletIndex] || `${groupName.trim()} - EVM Wallet #${i + 1}`
+          await addWalletToGroup(group.id, walletName, 'EVM')
+          walletIndex++
+        }
+      }
+      
+      if (preGenerateSVM) {
+        for (let i = 0; i < svmWalletCount; i++) {
+          const walletName = walletNames[walletIndex] || `${groupName.trim()} - SVM Wallet #${i + 1}`
+          await addWalletToGroup(group.id, walletName, 'SVM')
+          walletIndex++
         }
       }
       
@@ -55,20 +66,32 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
 
   const handleClose = () => {
     setGroupName('')
-    setChainType('EVM')
     setError('')
     setCreatedGroup(null)
-    setPreGenerateWallets(false)
-    setWalletCount(1)
     setShowNameEditor(false)
     setWalletNames([])
+    setPreGenerateEVM(true)
+    setPreGenerateSVM(true)
+    setEvmWalletCount(1)
+    setSvmWalletCount(1)
     onOpenChange(false)
   }
 
   const handleEditNames = () => {
-    const defaultNames = Array.from({ length: walletCount }, (_, i) => 
-      `${groupName.trim() || 'Group'} - Wallet #${i + 1}`
-    )
+    let defaultNames: string[] = []
+    
+    // Generate names for both EVM and SVM wallets
+    if (preGenerateEVM) {
+      for (let i = 0; i < evmWalletCount; i++) {
+        defaultNames.push(`${groupName.trim() || 'Group'} - EVM Wallet #${i + 1}`)
+      }
+    }
+    if (preGenerateSVM) {
+      for (let i = 0; i < svmWalletCount; i++) {
+        defaultNames.push(`${groupName.trim() || 'Group'} - SVM Wallet #${i + 1}`)
+      }
+    }
+    
     setWalletNames(defaultNames)
     setShowNameEditor(true)
   }
@@ -162,16 +185,6 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <Tabs.Root value={chainType} onValueChange={(v) => setChainType(v as ChainType)}>
-                    <Tabs.List className={`${theme.styles.tabs.list} mb-4`}>
-                      <Tabs.Trigger value="EVM" className={theme.styles.tabs.trigger}>
-                        EVM (Ethereum, Base, BSC)
-                      </Tabs.Trigger>
-                      <Tabs.Trigger value="SVM" className={theme.styles.tabs.trigger}>
-                        SVM (Solana)
-                      </Tabs.Trigger>
-                    </Tabs.List>
-                  </Tabs.Root>
 
                   <div>
                     <label className={theme.styles.label}>
@@ -188,48 +201,79 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                   </div>
 
                   <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="preGenerateWallets"
-                        checked={preGenerateWallets}
-                        onChange={(e) => setPreGenerateWallets(e.target.checked)}
-                        className={theme.styles.checkbox}
-                      />
-                      <label htmlFor="preGenerateWallets" className={`text-sm font-medium ${theme.styles.textSecondary}`}>
-                        Pre-Generate Wallets
-                      </label>
+                    {/* EVM Wallets */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="preGenerateEVM"
+                          checked={preGenerateEVM}
+                          onChange={(e) => setPreGenerateEVM(e.target.checked)}
+                          className={theme.styles.checkbox}
+                        />
+                        <label htmlFor="preGenerateEVM" className={`text-sm font-medium ${theme.styles.textSecondary}`}>
+                          Pre-Generate EVM Wallets
+                        </label>
+                      </div>
+                      <div className={`ml-6 space-y-2 transition-opacity ${preGenerateEVM ? 'opacity-100' : 'opacity-40'}`}>
+                        <label className={`${theme.styles.label} ${!preGenerateEVM ? theme.styles.textTertiary : ''}`}>
+                          Number of EVM Wallets
+                        </label>
+                        <input
+                          type="number"
+                          value={evmWalletCount}
+                          onChange={(e) => setEvmWalletCount(Math.max(1, Math.min(99, parseInt(e.target.value) || 1)))}
+                          min="1"
+                          max="99"
+                          className="w-20 px-3 py-2 text-sm border rounded-lg bg-surface-elevated border-border-subtle text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={!preGenerateEVM}
+                        />
+                      </div>
                     </div>
 
-                    <div className={`ml-6 space-y-2 transition-opacity ${preGenerateWallets ? 'opacity-100' : 'opacity-40'}`}>
-                        <label className={`${theme.styles.label} ${!preGenerateWallets ? theme.styles.textTertiary : ''}`}>
-                          Number of Wallets to Generate
+                    {/* SVM Wallets */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="preGenerateSVM"
+                          checked={preGenerateSVM}
+                          onChange={(e) => setPreGenerateSVM(e.target.checked)}
+                          className={theme.styles.checkbox}
+                        />
+                        <label htmlFor="preGenerateSVM" className={`text-sm font-medium ${theme.styles.textSecondary}`}>
+                          Pre-Generate SVM Wallets
                         </label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            value={walletCount}
-                            onChange={(e) => setWalletCount(Math.max(1, Math.min(99, parseInt(e.target.value) || 1)))}
-                            min="1"
-                            max="99"
-                            className="w-20 px-3 py-2 text-sm border rounded-lg bg-surface-elevated border-border-subtle text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={!preGenerateWallets}
-                          />
-                          <button
-                            type="button"
-                            onClick={handleEditNames}
-                            className={`${theme.styles.buttonSecondary} flex items-center gap-1 text-sm ${!preGenerateWallets ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            style={theme.dynamicStyles.buttonSecondary}
-                            disabled={!preGenerateWallets}
-                          >
-                            <Edit2 className="w-4 h-4" />
-                            Edit Names
-                          </button>
-                        </div>
-                        <p className={`text-xs ${theme.styles.textTertiary}`}>
-                          {walletNames.length > 0 ? 'Custom names configured' : 'Default names will be used'}
-                        </p>
                       </div>
+                      <div className={`ml-6 space-y-2 transition-opacity ${preGenerateSVM ? 'opacity-100' : 'opacity-40'}`}>
+                        <label className={`${theme.styles.label} ${!preGenerateSVM ? theme.styles.textTertiary : ''}`}>
+                          Number of SVM Wallets
+                        </label>
+                        <input
+                          type="number"
+                          value={svmWalletCount}
+                          onChange={(e) => setSvmWalletCount(Math.max(1, Math.min(99, parseInt(e.target.value) || 1)))}
+                          min="1"
+                          max="99"
+                          className="w-20 px-3 py-2 text-sm border rounded-lg bg-surface-elevated border-border-subtle text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={!preGenerateSVM}
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleEditNames}
+                      className={`${theme.styles.buttonSecondary} flex items-center gap-1 text-sm ${(!preGenerateEVM && !preGenerateSVM) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      style={theme.dynamicStyles.buttonSecondary}
+                      disabled={!preGenerateEVM && !preGenerateSVM}
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      Edit Names
+                    </button>
+                    <p className={`text-xs ${theme.styles.textTertiary}`}>
+                      {walletNames.length > 0 ? 'Custom names configured' : 'Default names will be used'}
+                    </p>
                   </div>
 
                   {error && (

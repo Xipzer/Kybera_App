@@ -19,10 +19,12 @@ export interface Network {
 export interface WalletGroup {
   id: string
   name: string
-  type: ChainType // Groups are restricted to a single chain type
   encryptedSeed: string // Encrypted mnemonic seed phrase
   createdAt: Date
-  walletCount: number // Track number of wallets in group
+  walletCount: number // Track total number of wallets in group
+  // Track wallet counts per chain type
+  evmWalletCount: number
+  svmWalletCount: number
 }
 
 export interface Wallet {

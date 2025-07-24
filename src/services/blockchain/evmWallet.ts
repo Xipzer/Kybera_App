@@ -1,5 +1,6 @@
 import { ethers } from 'ethers'
 import { encryptData, decryptData } from '../../utils/crypto'
+import { memoryProtection, SecureString } from '../security/memoryProtection'
 
 export class EVMWalletService {
   static async createWallet(): Promise<{ address: string; privateKey: string; mnemonic: string }> {
@@ -58,16 +59,28 @@ export class EVMWalletService {
     amount: string,
     rpcUrl: string,
   ): Promise<string> {
-    const provider = new ethers.JsonRpcProvider(rpcUrl)
-    const wallet = new ethers.Wallet(privateKey, provider)
+    // Store private key securely during transaction
+    const keyId = `eth_tx_${Date.now()}`
+    memoryProtection.storeSensitive(keyId, privateKey, 30000) // 30 second timeout
+    
+    try {
+      const provider = new ethers.JsonRpcProvider(rpcUrl)
+      const securePrivateKey = memoryProtection.getSensitive(keyId)
+      if (!securePrivateKey) throw new Error('Failed to retrieve secure key')
+      
+      const wallet = new ethers.Wallet(securePrivateKey, provider)
 
-    const tx = await wallet.sendTransaction({
-      to,
-      value: ethers.parseEther(amount),
-    })
+      const tx = await wallet.sendTransaction({
+        to,
+        value: ethers.parseEther(amount),
+      })
 
-    await tx.wait()
-    return tx.hash
+      await tx.wait()
+      return tx.hash
+    } finally {
+      // Always wipe the key
+      memoryProtection.wipeSensitive(keyId)
+    }
   }
 
   static encryptPrivateKey(privateKey: string, password: string): string {
@@ -130,8 +143,16 @@ export class EVMWalletService {
     decimals: number,
     rpcUrl: string,
   ): Promise<string> {
-    const provider = new ethers.JsonRpcProvider(rpcUrl)
-    const wallet = new ethers.Wallet(privateKey, provider)
+    // Store private key securely
+    const keyId = `erc20_key_${Date.now()}`
+    memoryProtection.storeSensitive(keyId, privateKey, 30000)
+    
+    try {
+      const provider = new ethers.JsonRpcProvider(rpcUrl)
+      const securePrivateKey = memoryProtection.getSensitive(keyId)
+      if (!securePrivateKey) throw new Error('Failed to retrieve secure key')
+      
+      const wallet = new ethers.Wallet(securePrivateKey, provider)
 
     // ERC20 ABI for transfer function
     const erc20Abi = [
@@ -145,11 +166,15 @@ export class EVMWalletService {
     // Convert amount to smallest unit based on decimals
     const amountInWei = ethers.parseUnits(amount, decimals)
     
-    // Send the transaction
-    const tx = await tokenContract.transfer(to, amountInWei)
-    await tx.wait()
-    
-    return tx.hash
+      // Send the transaction
+      const tx = await tokenContract.transfer(to, amountInWei)
+      await tx.wait()
+      
+      return tx.hash
+    } finally {
+      // Always wipe the key
+      memoryProtection.wipeSensitive(keyId)
+    }
   }
 
   static async getERC20Balance(

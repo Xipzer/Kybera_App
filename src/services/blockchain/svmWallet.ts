@@ -3,6 +3,7 @@ import { getAssociatedTokenAddress, createTransferInstruction, TOKEN_PROGRAM_ID,
 import * as bip39 from 'bip39'
 import { derivePath } from 'ed25519-hd-key'
 import { encryptData, decryptData } from '../../utils/crypto'
+import { memoryProtection, SecureString, ObfuscatedValue } from '../security/memoryProtection'
 
 export class SVMWalletService {
   static async createWallet(): Promise<{ address: string; privateKey: string; mnemonic: string }> {
@@ -80,23 +81,38 @@ export class SVMWalletService {
     amount: string,
     rpcUrl: string,
   ): Promise<string> {
-    const connection = new Connection(rpcUrl)
-    const secretKey = Uint8Array.from(Buffer.from(privateKey, 'hex'))
-    const fromKeypair = Keypair.fromSecretKey(secretKey)
-    const toPublicKey = new PublicKey(to)
+    // Store private key securely during transaction
+    const keyId = `tx_key_${Date.now()}`
+    memoryProtection.storeSensitive(keyId, privateKey, 30000) // 30 second timeout
+    
+    try {
+      const connection = new Connection(rpcUrl)
+      const securePrivateKey = memoryProtection.getSensitive(keyId)
+      if (!securePrivateKey) throw new Error('Failed to retrieve secure key')
+      
+      const secretKey = Uint8Array.from(Buffer.from(securePrivateKey, 'hex'))
+      const fromKeypair = Keypair.fromSecretKey(secretKey)
+      const toPublicKey = new PublicKey(to)
 
-    const transaction = new Transaction().add(
-      SystemProgram.transfer({
-        fromPubkey: fromKeypair.publicKey,
-        toPubkey: toPublicKey,
-        lamports: Number(amount) * LAMPORTS_PER_SOL,
-      }),
-    )
+      const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: fromKeypair.publicKey,
+          toPubkey: toPublicKey,
+          lamports: Number(amount) * LAMPORTS_PER_SOL,
+        }),
+      )
 
-    const signature = await connection.sendTransaction(transaction, [fromKeypair])
-    await connection.confirmTransaction(signature)
+      const signature = await connection.sendTransaction(transaction, [fromKeypair])
+      await connection.confirmTransaction(signature)
+      
+      // Clear sensitive data from keypair
+      secretKey.fill(0)
 
-    return signature
+      return signature
+    } finally {
+      // Always wipe the key
+      memoryProtection.wipeSensitive(keyId)
+    }
   }
 
   static encryptPrivateKey(privateKey: string, password: string): string {
@@ -191,11 +207,19 @@ export class SVMWalletService {
     amount: string,
     rpcUrl: string,
   ): Promise<string> {
-    const connection = new Connection(rpcUrl)
-    const secretKey = Uint8Array.from(Buffer.from(privateKey, 'hex'))
-    const fromKeypair = Keypair.fromSecretKey(secretKey)
-    const toPublicKey = new PublicKey(to)
-    const mintPublicKey = new PublicKey(tokenMintAddress)
+    // Store private key securely
+    const keyId = `spl_key_${Date.now()}`
+    memoryProtection.storeSensitive(keyId, privateKey, 30000)
+    
+    try {
+      const connection = new Connection(rpcUrl)
+      const securePrivateKey = memoryProtection.getSensitive(keyId)
+      if (!securePrivateKey) throw new Error('Failed to retrieve secure key')
+      
+      const secretKey = Uint8Array.from(Buffer.from(securePrivateKey, 'hex'))
+      const fromKeypair = Keypair.fromSecretKey(secretKey)
+      const toPublicKey = new PublicKey(to)
+      const mintPublicKey = new PublicKey(tokenMintAddress)
 
     // Get the token mint info to determine decimals
     const mintInfo = await getMint(connection, mintPublicKey)
@@ -230,12 +254,19 @@ export class SVMWalletService {
       TOKEN_PROGRAM_ID
     )
 
-    // Create and send transaction
-    const transaction = new Transaction().add(transferInstruction)
-    const signature = await connection.sendTransaction(transaction, [fromKeypair])
-    await connection.confirmTransaction(signature)
+      // Create and send transaction
+      const transaction = new Transaction().add(transferInstruction)
+      const signature = await connection.sendTransaction(transaction, [fromKeypair])
+      await connection.confirmTransaction(signature)
+      
+      // Clear sensitive data
+      secretKey.fill(0)
 
-    return signature
+      return signature
+    } finally {
+      // Always wipe the key
+      memoryProtection.wipeSensitive(keyId)
+    }
   }
 
   static async getSPLTokenBalance(

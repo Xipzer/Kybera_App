@@ -6,6 +6,7 @@ import { db } from '../services/storage/database'
 import { EVMWalletService } from '../services/blockchain/evmWallet'
 import { SVMWalletService } from '../services/blockchain/svmWallet'
 import { encryptData, decryptData } from '../utils/crypto'
+import { memoryProtection } from '../services/security/memoryProtection'
 
 interface WalletState {
   wallets: Wallet[]
@@ -27,13 +28,13 @@ interface WalletState {
   updateWallet: (id: string, updates: Partial<Wallet>) => Promise<void>
   
   // Group Actions
-  createWalletGroup: (name: string, type: ChainType, password: string, initialWalletCount?: number, walletNames?: string[]) => Promise<WalletGroup>
+  createWalletGroup: (name: string, password: string, initialWalletCount?: number, walletNames?: string[]) => Promise<WalletGroup>
   removeWalletGroup: (id: string) => Promise<void>
-  addWalletToGroup: (groupId: string, name: string) => Promise<Wallet>
+  addWalletToGroup: (groupId: string, name: string, walletType: ChainType) => Promise<Wallet>
   loadWalletGroups: () => Promise<void>
   exportGroupSeed: (groupId: string, password: string) => Promise<string>
   getWalletPrivateKey: (walletId: string, password: string) => Promise<string>
-  importWalletGroup: (name: string, type: ChainType, seedPhrase: string, password: string, walletCount?: number, walletNames?: string[]) => Promise<WalletGroup>
+  importWalletGroup: (name: string, seedPhrase: string, password: string, walletNames?: string[], evmCount?: number, svmCount?: number) => Promise<WalletGroup>
 }
 
 export const useWalletStore = create<WalletState>()(
@@ -74,10 +75,17 @@ export const useWalletStore = create<WalletState>()(
       },
 
       lock: () => {
+        // Wipe password from memory when locking
+        const state = get()
+        if (state.password) {
+          memoryProtection.wipeSensitive('wallet_password')
+        }
         set({ isLocked: true, password: null })
       },
 
       unlock: (password) => {
+        // Store password in secure memory
+        memoryProtection.storeSensitive('wallet_password', password, 30 * 60 * 1000) // 30 minutes
         set({ isLocked: false, password })
       },
 
@@ -90,7 +98,7 @@ export const useWalletStore = create<WalletState>()(
         set({ wallets })
       },
       
-      createWalletGroup: async (name, type, password) => {
+      createWalletGroup: async (name, password) => {
         // Generate new seed phrase
         const mnemonic = await EVMWalletService.createSeedPhrase()
         const encryptedSeed = encryptData(mnemonic, password)
@@ -98,10 +106,11 @@ export const useWalletStore = create<WalletState>()(
         const group: WalletGroup = {
           id: `group-${Date.now()}`,
           name,
-          type,
           encryptedSeed,
           createdAt: new Date(),
-          walletCount: 0
+          walletCount: 0,
+          evmWalletCount: 0,
+          svmWalletCount: 0
         }
         
         await db.walletGroups.add({
@@ -133,7 +142,7 @@ export const useWalletStore = create<WalletState>()(
         }))
       },
       
-      addWalletToGroup: async (groupId, name) => {
+      addWalletToGroup: async (groupId, name, walletType) => {
         const group = get().walletGroups.find(g => g.id === groupId)
         if (!group) throw new Error('Group not found')
         
@@ -148,14 +157,22 @@ export const useWalletStore = create<WalletState>()(
         // Decrypt seed
         const mnemonic = decryptData(group.encryptedSeed, password)
         
-        // Derive wallet at next index - use group's chain type
-        const derivationIndex = group.walletCount
-        let walletData
-        
-        if (group.type === 'EVM') {
-          walletData = await EVMWalletService.deriveWalletFromSeed(mnemonic, derivationIndex)
+        // Calculate derivation index based on type
+        let derivationIndex: number
+        if (walletType === 'EVM') {
+          derivationIndex = group.evmWalletCount
         } else {
+          derivationIndex = group.svmWalletCount
+        }
+        
+        // Derive wallet
+        let walletData
+        if (walletType === 'EVM') {
+          walletData = await EVMWalletService.deriveWalletFromSeed(mnemonic, derivationIndex)
+        } else if (walletType === 'SVM') {
           walletData = await SVMWalletService.deriveWalletFromSeed(mnemonic, derivationIndex)
+        } else {
+          throw new Error('Invalid wallet type')
         }
         
         const wallet: Wallet = {
@@ -163,13 +180,20 @@ export const useWalletStore = create<WalletState>()(
           groupId,
           name,
           address: walletData.address,
-          type: group.type, // Use group's chain type
+          type: walletType,
           derivationIndex,
           createdAt: new Date()
         }
         
         // Update group wallet count
-        await db.walletGroups.update(groupId, { walletCount: group.walletCount + 1 })
+        const updateData: any = { 
+          walletCount: group.walletCount + 1,
+          ...(walletType === 'EVM' 
+            ? { evmWalletCount: group.evmWalletCount + 1 }
+            : { svmWalletCount: group.svmWalletCount + 1 }
+          )
+        }
+        await db.walletGroups.update(groupId, updateData)
         
         // Add wallet
         await db.wallets.add({
@@ -180,7 +204,7 @@ export const useWalletStore = create<WalletState>()(
         set((state) => ({
           wallets: [...state.wallets, wallet],
           walletGroups: state.walletGroups.map(g => 
-            g.id === groupId ? { ...g, walletCount: g.walletCount + 1 } : g
+            g.id === groupId ? { ...g, ...updateData } : g
           )
         }))
         
@@ -189,9 +213,28 @@ export const useWalletStore = create<WalletState>()(
       
       loadWalletGroups: async () => {
         const storedGroups = await db.walletGroups.toArray()
-        const groups = storedGroups.map((g) => ({
-          ...g,
-          createdAt: new Date(g.createdAt),
+        const wallets = await db.wallets.toArray()
+        
+        const groups = await Promise.all(storedGroups.map(async (g) => {
+          // Count wallets for this group if counts are missing
+          const groupWallets = wallets.filter(w => w.groupId === g.id)
+          const evmCount = g.evmWalletCount ?? groupWallets.filter(w => w.type === 'EVM').length
+          const svmCount = g.svmWalletCount ?? groupWallets.filter(w => w.type === 'SVM').length
+          
+          // Update database if counts were missing
+          if (g.evmWalletCount === undefined || g.svmWalletCount === undefined) {
+            await db.walletGroups.update(g.id, {
+              evmWalletCount: evmCount,
+              svmWalletCount: svmCount
+            })
+          }
+          
+          return {
+            ...g,
+            createdAt: new Date(g.createdAt),
+            evmWalletCount: evmCount,
+            svmWalletCount: svmCount
+          }
         }))
         set({ walletGroups: groups })
       },
@@ -227,16 +270,17 @@ export const useWalletStore = create<WalletState>()(
         }
       },
       
-      importWalletGroup: async (name, type, seedPhrase, password, walletCount = 1, walletNames) => {
+      importWalletGroup: async (name, seedPhrase, password, walletNames, evmCount = 0, svmCount = 0) => {
         const encryptedSeed = encryptData(seedPhrase, password)
         
         const group: WalletGroup = {
           id: `group-${Date.now()}`,
           name,
-          type,
           encryptedSeed,
           createdAt: new Date(),
-          walletCount: 0
+          walletCount: 0,
+          evmWalletCount: 0,
+          svmWalletCount: 0
         }
         
         await db.walletGroups.add({
@@ -248,10 +292,25 @@ export const useWalletStore = create<WalletState>()(
           walletGroups: [...state.walletGroups, group]
         }))
         
-        // Generate the specified number of wallets
-        for (let i = 0; i < walletCount; i++) {
-          const walletName = walletNames?.[i] || `${name} - Wallet #${i + 1}`
-          await get().addWalletToGroup(group.id, walletName)
+        // Generate EVM and SVM wallets
+        let walletIndex = 0
+        
+        // Generate EVM wallets
+        if (evmCount > 0) {
+          for (let i = 0; i < evmCount; i++) {
+            const walletName = walletNames?.[walletIndex] || `${name} - EVM Wallet #${i + 1}`
+            await get().addWalletToGroup(group.id, walletName, 'EVM')
+            walletIndex++
+          }
+        }
+        
+        // Generate SVM wallets
+        if (svmCount > 0) {
+          for (let i = 0; i < svmCount; i++) {
+            const walletName = walletNames?.[walletIndex] || `${name} - SVM Wallet #${i + 1}`
+            await get().addWalletToGroup(group.id, walletName, 'SVM')
+            walletIndex++
+          }
         }
         
         return group

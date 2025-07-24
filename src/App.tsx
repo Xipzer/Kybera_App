@@ -8,6 +8,7 @@ import { useUIStore } from './store/uiStore'
 import { ResponsiveLayout } from './components/layout/ResponsiveLayout'
 import { ChatInterface } from './components/chat/ChatInterface'
 import { UnlockScreen } from './components/auth/UnlockScreen'
+import { initializeMemoryProtection } from './services/security/memoryProtection'
 
 const queryClient = new QueryClient()
 
@@ -16,6 +17,11 @@ function App() {
   const { loadConversations } = useChatStore()
   const { loadSettings } = useSettingsStore()
   const { theme } = useUIStore()
+
+  useEffect(() => {
+    // Initialize security and memory protection
+    initializeMemoryProtection()
+  }, [])
 
   useEffect(() => {
     // Apply theme class to document root
