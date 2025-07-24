@@ -26,6 +26,7 @@ interface TokenOption {
   decimals: number
   usdValue: number
   isNative: boolean
+  logoURI?: string
 }
 
 export function SendDialog({ open, onOpenChange, wallet: initialWallet, network }: SendDialogProps) {
@@ -96,7 +97,8 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
             balance: token.balance,
             decimals: token.decimals,
             usdValue: 0, // TODO: Calculate from price data
-            isNative: false
+            isNative: false,
+            logoURI: token.logoURI
           }))
         ]
         
@@ -293,26 +295,36 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                 </Select.Root>
                 
                 {/* Amount Input with Token Selector */}
-                <div className="mt-3">
-                  <div className={`relative ${theme.styles.input} p-0 flex items-stretch overflow-hidden`}>
-                    {/* Token Selector */}
-                    <Popover.Root open={tokenSelectorOpen} onOpenChange={setTokenSelectorOpen}>
-                      <Popover.Trigger asChild>
-                        <button
-                          className="flex items-center gap-2 px-3 py-2 border-r border-border-subtle hover:bg-surface-hover transition-colors focus:outline-none"
-                          disabled={isLoadingBalances || availableTokens.length === 0}
-                        >
-                          <div className="w-6 h-6 bg-surface-elevated rounded-full flex items-center justify-center">
-                            <span className="text-xs font-medium">
-                              {selectedToken?.symbol.slice(0, 2).toUpperCase() || '?'}
-                            </span>
-                          </div>
-                          <span className="text-sm font-medium text-text-primary">
-                            {isLoadingBalances ? 'Loading...' : (selectedToken?.symbol || 'Select')}
+                <div className="mt-3 flex gap-2">
+                  {/* Token Selector */}
+                  <Popover.Root open={tokenSelectorOpen} onOpenChange={setTokenSelectorOpen}>
+                    <Popover.Trigger asChild>
+                      <button
+                        className={`w-[140px] flex items-center gap-2 px-3 py-3 ${theme.styles.input} hover:border-border-default transition-colors`}
+                        disabled={isLoadingBalances || availableTokens.length === 0}
+                      >
+                        <div className="w-6 h-6 bg-surface-elevated rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
+                          {selectedToken?.logoURI ? (
+                            <img 
+                              src={selectedToken.logoURI} 
+                              alt={selectedToken.symbol}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none'
+                                e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                              }}
+                            />
+                          ) : null}
+                          <span className={`text-xs font-medium ${selectedToken?.logoURI ? 'hidden' : ''}`}>
+                            {selectedToken?.symbol.slice(0, 2).toUpperCase() || '?'}
                           </span>
-                          <ChevronDown className="w-4 h-4 text-text-secondary" />
-                        </button>
-                      </Popover.Trigger>
+                        </div>
+                        <span className="text-sm font-medium text-text-primary truncate flex-1">
+                          {isLoadingBalances ? 'Loading...' : (selectedToken?.symbol || 'Select')}
+                        </span>
+                        <ChevronDown className="w-4 h-4 text-text-secondary flex-shrink-0" />
+                      </button>
+                    </Popover.Trigger>
                       
                       <Popover.Portal>
                         <Popover.Content
@@ -373,8 +385,19 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                                       }`}
                                     >
                                       <div className="flex items-center gap-3">
-                                        <div className={`w-8 h-8 ${theme.styles.surface || 'bg-surface-elevated'} rounded-full flex items-center justify-center`}>
-                                          <span className="text-sm font-medium">
+                                        <div className={`w-8 h-8 ${theme.styles.surface || 'bg-surface-elevated'} rounded-full flex items-center justify-center overflow-hidden`}>
+                                          {token.logoURI ? (
+                                            <img 
+                                              src={token.logoURI} 
+                                              alt={token.symbol}
+                                              className="w-full h-full object-cover"
+                                              onError={(e) => {
+                                                e.currentTarget.style.display = 'none'
+                                                e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                                              }}
+                                            />
+                                          ) : null}
+                                          <span className={`text-sm font-medium ${token.logoURI ? 'hidden' : ''}`}>
                                             {token.symbol.slice(0, 2).toUpperCase()}
                                           </span>
                                         </div>
@@ -400,7 +423,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                     </Popover.Root>
                     
                     {/* Amount Input */}
-                    <div className="flex-1 relative">
+                    <div className={`flex-1 relative ${theme.styles.input}`}>
                       <input
                         type="number"
                         value={amount}
@@ -408,10 +431,10 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                         placeholder="0.0"
                         step="0.000001"
                         min="0"
-                        className="w-full h-full px-3 py-3 bg-transparent border-0 focus:outline-none text-text-primary placeholder-text-tertiary"
+                        className="w-full h-full pb-5 bg-transparent border-0 focus:outline-none text-right text-text-primary placeholder-text-tertiary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                       {amount && usdAmount > 0 && (
-                        <div className="absolute right-3 bottom-1 text-xs text-text-tertiary">
+                        <div className="absolute right-3 bottom-2 text-xs text-text-tertiary text-right">
                           ≈ {formatUSD(usdAmount)}
                         </div>
                       )}
@@ -433,7 +456,6 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                       </button>
                     </div>
                   )}
-                </div>
               </div>
 
               {/* To Section */}
