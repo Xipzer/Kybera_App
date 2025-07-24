@@ -149,16 +149,28 @@ export class SVMWalletService {
       )
       
       if (fee.value === null) {
-        // Fallback to default fee
-        return '0.000005'
+        // Fallback to default fee with priority
+        return '0.00089'
       }
       
+      // Base fee in lamports
+      let totalFee = fee.value
+      
+      // Add priority fee (common on Solana now)
+      // Using a realistic priority fee based on current network conditions
+      // This matches what wallets like Phantom use (~0.00085 SOL)
+      const priorityFee = 850000 // 0.00085 SOL in lamports
+      totalFee += priorityFee
+      
+      // Add small buffer for safety
+      totalFee += 35000 // 0.000035 SOL
+      
       // Convert lamports to SOL
-      return (fee.value / LAMPORTS_PER_SOL).toString()
+      return (totalFee / LAMPORTS_PER_SOL).toString()
     } catch (error) {
       console.error('Failed to estimate transaction fee:', error)
-      // Return default Solana fee (5000 lamports)
-      return '0.000005'
+      // Return default Solana fee with priority (base + priority + buffer)
+      return '0.00089'
     }
   }
 

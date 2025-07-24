@@ -459,20 +459,24 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                       <button
                         type="button"
                         onClick={async () => {
-                          if (selectedToken.isNative && recipient) {
-                            // Calculate max amount accounting for gas fees
+                          if (selectedToken.isNative) {
+                            // For native tokens, always calculate max with fee buffer
                             try {
+                              // Use a default recipient if none provided for fee estimation
+                              const toAddress = recipient || fromWallet.address
+                              
                               const fee = await blockchainService.estimateTransactionFee(
                                 fromWallet,
                                 network,
-                                recipient,
+                                toAddress,
                                 selectedToken.balance
                               )
+                              
                               const maxAmount = parseFloat(selectedToken.balance) - parseFloat(fee)
                               setAmount(maxAmount > 0 ? maxAmount.toFixed(6) : '0')
                             } catch (err) {
-                              // Fallback to simple calculation with buffer
-                              const buffer = fromWallet.type === 'EVM' ? 0.001 : 0.000005
+                              // Fallback to safe buffer
+                              const buffer = fromWallet.type === 'EVM' ? 0.002 : 0.00089 // Higher buffer for safety
                               const maxAmount = parseFloat(selectedToken.balance) - buffer
                               setAmount(maxAmount > 0 ? maxAmount.toFixed(6) : '0')
                             }
@@ -481,7 +485,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                             setAmount(selectedToken.balance)
                           }
                         }}
-                        disabled={!selectedToken || (selectedToken.isNative && !recipient)}
+                        disabled={!selectedToken}
                         className="text-xs text-accent hover:text-accent-hover transition-colors px-2 py-0.5 rounded hover:bg-surface-hover disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Max
