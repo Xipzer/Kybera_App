@@ -315,7 +315,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                               }}
                             />
                           ) : null}
-                          <span className={`text-sm font-medium ${selectedToken?.logoURI ? 'hidden' : 'block w-full h-full flex items-center justify-center'}`}>
+                          <span className={`text-sm font-medium ${selectedToken?.logoURI ? 'hidden' : ''}`}>
                             {selectedToken?.symbol.slice(0, 2).toUpperCase() || '?'}
                           </span>
                         </div>
@@ -544,7 +544,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                                 }}
                               />
                             ) : null}
-                            <span className={`text-sm font-medium ${selectedToken.logoURI ? 'hidden' : 'block w-full h-full flex items-center justify-center'}`}>
+                            <span className={`text-sm font-medium ${selectedToken.logoURI ? 'hidden' : ''}`}>
                               {selectedToken.symbol.slice(0, 2).toUpperCase()}
                             </span>
                           </div>
