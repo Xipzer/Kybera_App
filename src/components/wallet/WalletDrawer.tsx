@@ -42,6 +42,7 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
+  animateLayoutChanges,
 } from '@dnd-kit/sortable'
 import {
   useSortable,
@@ -61,6 +62,20 @@ interface WalletDrawerProps {
   collapsed?: boolean
 }
 
+// Custom animation to prevent bounce
+const customAnimateLayoutChanges = ({
+  isSorting,
+  wasDragging,
+}: {
+  isSorting: boolean
+  wasDragging?: boolean
+}) => {
+  if (isSorting || wasDragging) {
+    return false
+  }
+  return true
+}
+
 // Sortable Group Component
 function SortableWalletGroup(props: WalletGroupItemProps & { id: string }) {
   const {
@@ -70,11 +85,14 @@ function SortableWalletGroup(props: WalletGroupItemProps & { id: string }) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: props.id })
+  } = useSortable({ 
+    id: props.id,
+    animateLayoutChanges: customAnimateLayoutChanges,
+  })
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: isDragging ? 'none' : transition,
     opacity: isDragging ? 0.5 : 1,
   }
 
@@ -94,11 +112,14 @@ function SortableWallet(props: WalletItemProps & { id: string }) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: props.id })
+  } = useSortable({ 
+    id: props.id,
+    animateLayoutChanges: customAnimateLayoutChanges,
+  })
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: isDragging ? 'none' : transition,
     opacity: isDragging ? 0.5 : 1,
   }
 
