@@ -1,7 +1,7 @@
 import { ChevronDown } from 'lucide-react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { useWalletStore } from '../../store/walletStore'
-import { ALL_NETWORKS, getNetworksByType } from '../../utils/networks'
+import { ALL_NETWORKS } from '../../utils/networks'
 import { useTheme } from '../../hooks/useTheme'
 
 export function NetworkSelector() {
@@ -9,10 +9,14 @@ export function NetworkSelector() {
   const activeWallet = wallets.find((w) => w.id === activeWalletId)
   const { theme } = useTheme()
   
-  // Filter networks based on active wallet type
-  const availableNetworks = activeWallet
-    ? getNetworksByType(activeWallet.type)
+  // Categorize networks based on active wallet type
+  const supportedNetworks = activeWallet
+    ? ALL_NETWORKS.filter(n => n.type === activeWallet.type)
     : ALL_NETWORKS
+    
+  const unsupportedNetworks = activeWallet
+    ? ALL_NETWORKS.filter(n => n.type !== activeWallet.type)
+    : []
 
   return (
     <DropdownMenu.Root>
@@ -34,20 +38,62 @@ export function NetworkSelector() {
           sideOffset={5}
           align="start"
         >
-          {availableNetworks.map((network) => (
-            <DropdownMenu.Item
-              key={network.id}
-              onClick={() => setActiveNetwork(network)}
-              className={`${theme.styles.dropdown.item} ${
-                network.id === activeNetwork.id
-                  ? 'bg-accent/10 text-accent'
-                  : theme.styles.dropdown.itemHover
-              }`}
-            >
-              <div className="w-2 h-2 bg-green-500 rounded-full" />
-              {network.name}
-            </DropdownMenu.Item>
-          ))}
+          {/* Supported Networks */}
+          {supportedNetworks.length > 0 && (
+            <>
+              <div className={`px-3 py-1.5 text-xs font-medium ${theme.styles.textTertiary}`}>
+                Supported
+              </div>
+              {supportedNetworks.map((network) => (
+                <DropdownMenu.Item
+                  key={network.id}
+                  onClick={() => setActiveNetwork(network)}
+                  className={`${theme.styles.dropdown.item} ${
+                    network.id === activeNetwork.id
+                      ? 'bg-accent/10 text-accent'
+                      : theme.styles.dropdown.itemHover
+                  }`}
+                >
+                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                  {network.name}
+                </DropdownMenu.Item>
+              ))}
+            </>
+          )}
+          
+          {/* Unsupported Networks */}
+          {unsupportedNetworks.length > 0 && (
+            <>
+              {supportedNetworks.length > 0 && (
+                <DropdownMenu.Separator className={theme.styles.dropdown.separator} />
+              )}
+              <div className={`px-3 py-1.5 text-xs font-medium ${theme.styles.textTertiary}`}>
+                Unsupported
+              </div>
+              {unsupportedNetworks.map((network) => (
+                <DropdownMenu.Item
+                  key={network.id}
+                  disabled
+                  className={`${theme.styles.dropdown.item} opacity-50 cursor-not-allowed`}
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  <div className="w-2 h-2 bg-gray-400 rounded-full" />
+                  <span className="text-text-tertiary">
+                    {network.name}
+                  </span>
+                </DropdownMenu.Item>
+              ))}
+            </>
+          )}
+          
+          {/* Show all networks if no wallet is selected */}
+          {!activeWallet && (
+            <>
+              <div className={`px-3 py-1.5 text-xs ${theme.styles.textTertiary}`}>
+                Select a wallet to see supported networks
+              </div>
+            </>
+          )}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

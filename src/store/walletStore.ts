@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { Wallet, WalletGroup, Network, Transaction, ChainType } from '../types'
-import { EVM_NETWORKS } from '../utils/networks'
+import { EVM_NETWORKS, SVM_NETWORKS } from '../utils/networks'
 import { db } from '../services/storage/database'
 import { EVMWalletService } from '../services/blockchain/evmWallet'
 import { SVMWalletService } from '../services/blockchain/svmWallet'
@@ -13,6 +13,8 @@ interface WalletState {
   walletGroups: WalletGroup[]
   activeWalletId: string | null
   activeNetwork: Network
+  activeEVMNetwork: Network
+  activeSVMNetwork: Network
   isLocked: boolean
   password: string | null
   transactions: Transaction[]
@@ -47,6 +49,8 @@ export const useWalletStore = create<WalletState>()(
       walletGroups: [],
       activeWalletId: null,
       activeNetwork: EVM_NETWORKS[0],
+      activeEVMNetwork: EVM_NETWORKS[0],
+      activeSVMNetwork: SVM_NETWORKS[0],
       isLocked: true,
       password: null,
       transactions: [],
@@ -70,11 +74,29 @@ export const useWalletStore = create<WalletState>()(
       },
 
       setActiveWallet: (id) => {
-        set({ activeWalletId: id })
+        const state = get()
+        const wallet = state.wallets.find(w => w.id === id)
+        if (wallet) {
+          // Set the active network based on wallet type
+          const activeNetwork = wallet.type === 'EVM' 
+            ? state.activeEVMNetwork 
+            : state.activeSVMNetwork
+          set({ activeWalletId: id, activeNetwork })
+        } else {
+          set({ activeWalletId: id })
+        }
       },
 
       setActiveNetwork: (network) => {
-        set({ activeNetwork: network })
+        const state = get()
+        // Update the specific network type state as well
+        if (network.type === 'EVM') {
+          set({ activeNetwork: network, activeEVMNetwork: network })
+        } else if (network.type === 'SVM') {
+          set({ activeNetwork: network, activeSVMNetwork: network })
+        } else {
+          set({ activeNetwork: network })
+        }
       },
 
       lock: () => {
@@ -392,6 +414,8 @@ export const useWalletStore = create<WalletState>()(
       partialize: (state) => ({
         activeWalletId: state.activeWalletId,
         activeNetwork: state.activeNetwork,
+        activeEVMNetwork: state.activeEVMNetwork,
+        activeSVMNetwork: state.activeSVMNetwork,
       }),
     },
   ),
