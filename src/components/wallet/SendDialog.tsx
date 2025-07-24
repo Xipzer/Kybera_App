@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Tabs from '@radix-ui/react-tabs'
 import * as Select from '@radix-ui/react-select'
-import { X, Send, AlertCircle, ExternalLink, ChevronDown, Wallet as WalletIcon, Users } from 'lucide-react'
+import * as Popover from '@radix-ui/react-popover'
+import { X, Send, AlertCircle, ExternalLink, ChevronDown, Wallet as WalletIcon, Users, Search } from 'lucide-react'
 import { Wallet, TokenBalance } from '../../types'
 import { Network } from '../../utils/networks'
 import { blockchainService, BlockchainBalance } from '../../services/blockchain/blockchainService'
@@ -45,6 +46,8 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
   const [error, setError] = useState('')
   const [txHash, setTxHash] = useState<string | null>(null)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [tokenSelectorOpen, setTokenSelectorOpen] = useState(false)
+  const [tokenSearchQuery, setTokenSearchQuery] = useState('')
   
   // Data state
   const [balanceData, setBalanceData] = useState<BlockchainBalance | null>(null)
@@ -293,66 +296,108 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                 <div className="mt-3">
                   <div className={`relative ${theme.styles.input} p-0 flex items-stretch overflow-hidden`}>
                     {/* Token Selector */}
-                    <Select.Root 
-                      value={selectedToken ? (selectedToken.isNative ? 'native' : selectedToken.address) : ''}
-                      onValueChange={(value) => {
-                        const token = availableTokens.find(t => 
-                          t.isNative ? value === 'native' : t.address === value
-                        )
-                        if (token) setSelectedToken(token)
-                      }}
-                      disabled={isLoadingBalances || availableTokens.length === 0}
-                    >
-                      <Select.Trigger className="flex items-center gap-2 px-3 py-2 border-r border-border-subtle hover:bg-surface-hover transition-colors focus:outline-none">
-                        <span className="text-sm font-medium text-text-primary">
-                          {isLoadingBalances ? 'Loading...' : (selectedToken?.symbol || 'Select')}
-                        </span>
-                        <ChevronDown className="w-4 h-4 text-text-secondary" />
-                      </Select.Trigger>
+                    <Popover.Root open={tokenSelectorOpen} onOpenChange={setTokenSelectorOpen}>
+                      <Popover.Trigger asChild>
+                        <button
+                          className="flex items-center gap-2 px-3 py-2 border-r border-border-subtle hover:bg-surface-hover transition-colors focus:outline-none"
+                          disabled={isLoadingBalances || availableTokens.length === 0}
+                        >
+                          <div className="w-6 h-6 bg-surface-elevated rounded-full flex items-center justify-center">
+                            <span className="text-xs font-medium">
+                              {selectedToken?.symbol.slice(0, 2).toUpperCase() || '?'}
+                            </span>
+                          </div>
+                          <span className="text-sm font-medium text-text-primary">
+                            {isLoadingBalances ? 'Loading...' : (selectedToken?.symbol || 'Select')}
+                          </span>
+                          <ChevronDown className="w-4 h-4 text-text-secondary" />
+                        </button>
+                      </Popover.Trigger>
                       
-                      <Select.Portal>
-                        <Select.Content className={`${theme.styles.dropdown?.content || 'bg-surface-elevated border border-border-subtle rounded-lg shadow-lg'} min-w-[280px] max-h-[300px] overflow-y-auto`} style={{ zIndex: 9999 }} position="popper" sideOffset={5}>
-                          <Select.Viewport>
+                      <Popover.Portal>
+                        <Popover.Content
+                          className={`w-[var(--radix-popover-trigger-width)] min-w-[300px] ${theme.styles.dropdown?.content || 'bg-surface-base border border-border-subtle rounded-lg shadow-lg'} overflow-hidden`}
+                          style={{ zIndex: 9999 }}
+                          sideOffset={5}
+                          align="start"
+                        >
+                          <div className="p-3 border-b border-border-subtle">
+                            <div className="relative">
+                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
+                              <input
+                                type="text"
+                                placeholder="Search tokens..."
+                                value={tokenSearchQuery}
+                                onChange={(e) => setTokenSearchQuery(e.target.value)}
+                                className={`w-full pl-10 pr-3 py-2 text-sm ${theme.styles.input}`}
+                                autoFocus
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="max-h-[300px] overflow-y-auto py-1">
                             {availableTokens.length === 0 ? (
-                              <div className="p-3 text-center text-sm text-text-tertiary">
+                              <div className="p-4 text-center text-sm text-text-tertiary">
                                 No tokens available
                               </div>
                             ) : (
-                              availableTokens.map((token) => {
-                                const isSelected = selectedToken && (
-                                  (token.isNative && selectedToken.isNative) ||
-                                  (!token.isNative && !selectedToken.isNative && token.address === selectedToken.address)
+                              (() => {
+                                const filteredTokens = availableTokens.filter(token => 
+                                  token.symbol.toLowerCase().includes(tokenSearchQuery.toLowerCase()) ||
+                                  token.name.toLowerCase().includes(tokenSearchQuery.toLowerCase())
                                 )
-                                return (
-                                  <Select.Item
-                                    key={token.isNative ? 'native' : token.address}
-                                    value={token.isNative ? 'native' : token.address!}
-                                    className={`${theme.styles.dropdown?.item || 'p-3 hover:bg-surface-hover outline-none'} cursor-pointer ${
-                                      isSelected ? 'bg-accent/10' : ''
-                                    }`}
-                                  >
-                                  <Select.ItemText>
-                                    <div className="flex items-center justify-between">
-                                      <div>
-                                        <p className="text-sm font-medium">{token.symbol}</p>
-                                        <p className="text-xs text-text-tertiary">{token.name}</p>
+                                
+                                if (filteredTokens.length === 0) {
+                                  return (
+                                    <div className="p-4 text-center text-sm text-text-tertiary">
+                                      No tokens found matching "{tokenSearchQuery}"
+                                    </div>
+                                  )
+                                }
+                                
+                                return filteredTokens.map((token) => {
+                                  const isSelected = selectedToken && (
+                                    (token.isNative && selectedToken.isNative) ||
+                                    (!token.isNative && !selectedToken.isNative && token.address === selectedToken.address)
+                                  )
+                                  return (
+                                    <button
+                                      key={token.isNative ? 'native' : token.address}
+                                      onClick={() => {
+                                        setSelectedToken(token)
+                                        setTokenSelectorOpen(false)
+                                        setTokenSearchQuery('')
+                                      }}
+                                      className={`w-full flex items-center justify-between ${theme.styles.dropdown?.item || 'p-3 hover:bg-surface-hover'} transition-colors ${
+                                        isSelected ? 'bg-accent/10' : ''
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <div className={`w-8 h-8 ${theme.styles.surface || 'bg-surface-elevated'} rounded-full flex items-center justify-center`}>
+                                          <span className="text-sm font-medium">
+                                            {token.symbol.slice(0, 2).toUpperCase()}
+                                          </span>
+                                        </div>
+                                        <div className="text-left">
+                                          <p className="text-sm font-medium text-text-primary">{token.symbol}</p>
+                                          <p className="text-xs text-text-tertiary">{token.name}</p>
+                                        </div>
                                       </div>
                                       <div className="text-right">
-                                        <p className="text-sm">{formatBalance(token.balance)}</p>
+                                        <p className="text-sm font-medium text-text-primary">{formatBalance(token.balance)}</p>
                                         {token.usdValue > 0 && (
                                           <p className="text-xs text-text-tertiary">{formatUSD(token.usdValue)}</p>
                                         )}
                                       </div>
-                                    </div>
-                                  </Select.ItemText>
-                                </Select.Item>
-                                )
-                              })
+                                    </button>
+                                  )
+                                })
+                              })()
                             )}
-                          </Select.Viewport>
-                        </Select.Content>
-                      </Select.Portal>
-                    </Select.Root>
+                          </div>
+                        </Popover.Content>
+                      </Popover.Portal>
+                    </Popover.Root>
                     
                     {/* Amount Input */}
                     <div className="flex-1 relative">
