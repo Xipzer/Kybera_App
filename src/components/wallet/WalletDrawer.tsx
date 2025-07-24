@@ -539,11 +539,12 @@ function WalletGroupItem({
                   const svmCount = group.svmWalletCount || 0
                   
                   if (evmCount > 0 && svmCount > 0) {
-                    return `EVM & SVM • ${evmCount} EVM, ${svmCount} SVM`
+                    const totalCount = evmCount + svmCount
+                    return `Mixed • ${totalCount} Wallet${totalCount !== 1 ? 's' : ''} • ${evmCount} EVM / ${svmCount} SVM`
                   } else if (evmCount > 0) {
-                    return `EVM • ${evmCount} wallet${evmCount !== 1 ? 's' : ''}`
+                    return `EVM • ${evmCount} Wallet${evmCount !== 1 ? 's' : ''}`
                   } else if (svmCount > 0) {
-                    return `SVM • ${svmCount} wallet${svmCount !== 1 ? 's' : ''}`
+                    return `SVM • ${svmCount} Wallet${svmCount !== 1 ? 's' : ''}`
                   } else {
                     return `No wallets`
                   }
