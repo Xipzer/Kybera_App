@@ -356,9 +356,18 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                   
                   {/* Balance Display */}
                   {selectedToken && (
-                    <p className="text-xs text-text-tertiary mt-1 text-right">
-                      Balance: {formatBalance(selectedToken.balance)} {selectedToken.symbol}
-                    </p>
+                    <div className="flex items-center justify-between mt-1">
+                      <p className="text-xs text-text-tertiary">
+                        Balance: {formatBalance(selectedToken.balance)} {selectedToken.symbol}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setAmount(selectedToken.balance)}
+                        className="text-xs text-accent hover:text-accent-hover transition-colors px-2 py-0.5 rounded hover:bg-surface-hover"
+                      >
+                        Max
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
