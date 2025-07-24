@@ -677,7 +677,7 @@ function WalletItem({
               className={`p-0.5 rounded transition-colors ${theme.styles.buttonIcon} opacity-0 group-hover:opacity-100`}
               title="Copy address"
             >
-              <Copy className="w-3 h-3" />
+              <Copy className={`w-3 h-3 ${theme.styles.iconSecondary}`} />
             </button>
             {network && (
               <a
@@ -688,7 +688,7 @@ function WalletItem({
                 className={`p-0.5 rounded transition-colors ${theme.styles.buttonIcon} opacity-0 group-hover:opacity-100`}
                 title="View on explorer"
               >
-                <ExternalLink className="w-3 h-3" />
+                <ExternalLink className={`w-3 h-3 ${theme.styles.iconSecondary}`} />
               </a>
             )}
           </div>
@@ -1043,7 +1043,7 @@ function GroupWalletItem({
               className={`p-0.5 rounded transition-colors ${theme.styles.buttonIcon} opacity-0 group-hover:opacity-100`}
               title="Copy address"
             >
-              <Copy className="w-3 h-3" />
+              <Copy className={`w-3 h-3 ${theme.styles.iconSecondary}`} />
             </button>
             {network && (
               <a
@@ -1054,7 +1054,7 @@ function GroupWalletItem({
                 className={`p-0.5 rounded transition-colors ${theme.styles.buttonIcon} opacity-0 group-hover:opacity-100`}
                 title="View on explorer"
               >
-                <ExternalLink className="w-3 h-3" />
+                <ExternalLink className={`w-3 h-3 ${theme.styles.iconSecondary}`} />
               </a>
             )}
           </div>
@@ -1082,7 +1082,7 @@ function GroupWalletItem({
                   }}
                   className={`${theme.styles.dropdown.item} ${theme.styles.dropdown.itemHover}`}
                 >
-                  <Copy className="w-3 h-3" />
+                  <Copy className={`w-3 h-3 ${theme.styles.iconSecondary}`} />
                   Copy Address
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
