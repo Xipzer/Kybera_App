@@ -256,6 +256,25 @@ class BlockchainService {
       ? EVMWalletService.isValidAddress(address)
       : SVMWalletService.isValidAddress(address)
   }
+
+  async estimateTransactionFee(
+    wallet: Wallet,
+    network: Network,
+    to: string,
+    amount: string
+  ): Promise<string> {
+    try {
+      if (wallet.type === 'EVM') {
+        return await EVMWalletService.estimateGasFee(wallet.address, to, amount, network.rpcUrl)
+      } else {
+        return await SVMWalletService.estimateTransactionFee(wallet.address, to, amount, network.rpcUrl)
+      }
+    } catch (error) {
+      console.error('Failed to estimate transaction fee:', error)
+      // Return a safe default fee estimate
+      return wallet.type === 'EVM' ? '0.001' : '0.000005'
+    }
+  }
   
   private async getERC20TokenBalances(walletAddress: string, network: Network): Promise<TokenBalance[]> {
     try {

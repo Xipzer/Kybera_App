@@ -444,11 +444,9 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                         min="0"
                         className="w-full h-full pb-5 bg-transparent border-0 focus:outline-none text-right text-text-primary placeholder-text-tertiary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
-                      {amount && (
-                        <div className="absolute right-3 bottom-2 text-xs text-text-tertiary text-right">
-                          ≈ {formatUSD(usdAmount)}
-                        </div>
-                      )}
+                      <div className="absolute right-3 bottom-2 text-xs text-text-tertiary text-right">
+                        ≈ {amount ? formatUSD(usdAmount) : '$0.00'}
+                      </div>
                     </div>
                   </div>
                   
@@ -460,8 +458,31 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                       </p>
                       <button
                         type="button"
-                        onClick={() => setAmount(selectedToken.balance)}
-                        className="text-xs text-accent hover:text-accent-hover transition-colors px-2 py-0.5 rounded hover:bg-surface-hover"
+                        onClick={async () => {
+                          if (selectedToken.isNative && recipient) {
+                            // Calculate max amount accounting for gas fees
+                            try {
+                              const fee = await blockchainService.estimateTransactionFee(
+                                fromWallet,
+                                network,
+                                recipient,
+                                selectedToken.balance
+                              )
+                              const maxAmount = parseFloat(selectedToken.balance) - parseFloat(fee)
+                              setAmount(maxAmount > 0 ? maxAmount.toFixed(6) : '0')
+                            } catch (err) {
+                              // Fallback to simple calculation with buffer
+                              const buffer = fromWallet.type === 'EVM' ? 0.001 : 0.000005
+                              const maxAmount = parseFloat(selectedToken.balance) - buffer
+                              setAmount(maxAmount > 0 ? maxAmount.toFixed(6) : '0')
+                            }
+                          } else {
+                            // For tokens, use full balance
+                            setAmount(selectedToken.balance)
+                          }
+                        }}
+                        disabled={!selectedToken || (selectedToken.isNative && !recipient)}
+                        className="text-xs text-accent hover:text-accent-hover transition-colors px-2 py-0.5 rounded hover:bg-surface-hover disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Max
                       </button>

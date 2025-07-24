@@ -116,6 +116,52 @@ export class SVMWalletService {
     }
   }
 
+  static async estimateTransactionFee(
+    from: string,
+    to: string,
+    amount: string,
+    rpcUrl: string
+  ): Promise<string> {
+    try {
+      const connection = new Connection(rpcUrl, 'confirmed')
+      
+      // Get recent blockhash for fee calculation
+      const { blockhash } = await connection.getLatestBlockhash()
+      
+      // Create a dummy transaction to estimate fees
+      const transaction = new Transaction()
+      transaction.recentBlockhash = blockhash
+      transaction.feePayer = new PublicKey(from)
+      
+      // Add transfer instruction
+      transaction.add(
+        SystemProgram.transfer({
+          fromPubkey: new PublicKey(from),
+          toPubkey: new PublicKey(to),
+          lamports: parseFloat(amount || '0') * LAMPORTS_PER_SOL
+        })
+      )
+      
+      // Get fee for this transaction
+      const fee = await connection.getFeeForMessage(
+        transaction.compileMessage(),
+        'confirmed'
+      )
+      
+      if (fee.value === null) {
+        // Fallback to default fee
+        return '0.000005'
+      }
+      
+      // Convert lamports to SOL
+      return (fee.value / LAMPORTS_PER_SOL).toString()
+    } catch (error) {
+      console.error('Failed to estimate transaction fee:', error)
+      // Return default Solana fee (5000 lamports)
+      return '0.000005'
+    }
+  }
+
   static isValidPrivateKey(privateKey: string): boolean {
     try {
       const secretKey = Uint8Array.from(Buffer.from(privateKey, 'hex'))

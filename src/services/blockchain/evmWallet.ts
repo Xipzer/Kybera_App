@@ -82,6 +82,37 @@ export class EVMWalletService {
     return ethers.isAddress(address)
   }
 
+  static async estimateGasFee(
+    from: string,
+    to: string,
+    amount: string,
+    rpcUrl: string
+  ): Promise<string> {
+    try {
+      const provider = new ethers.JsonRpcProvider(rpcUrl)
+      
+      // Estimate gas for a simple transfer
+      const gasLimit = await provider.estimateGas({
+        from,
+        to,
+        value: ethers.parseEther(amount || '0')
+      })
+      
+      // Get current gas price
+      const gasPrice = await provider.getFeeData()
+      
+      // Calculate fee (gasLimit * gasPrice)
+      const fee = gasLimit * (gasPrice.gasPrice || 0n)
+      
+      // Convert to ETH
+      return ethers.formatEther(fee)
+    } catch (error) {
+      console.error('Failed to estimate gas fee:', error)
+      // Return a reasonable default
+      return '0.001'
+    }
+  }
+
   static isValidPrivateKey(privateKey: string): boolean {
     try {
       new ethers.Wallet(privateKey)
