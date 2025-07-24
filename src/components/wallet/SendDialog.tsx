@@ -30,7 +30,7 @@ interface TokenOption {
 }
 
 export function SendDialog({ open, onOpenChange, wallet: initialWallet, network }: SendDialogProps) {
-  const { password, wallets, walletGroups } = useWalletStore()
+  const { password, wallets, walletGroups, setActiveWalletId } = useWalletStore()
   const { theme } = useTheme()
   
   // Form state
@@ -49,6 +49,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
   const [showSuccess, setShowSuccess] = useState(false)
   const [tokenSelectorOpen, setTokenSelectorOpen] = useState(false)
   const [tokenSearchQuery, setTokenSearchQuery] = useState('')
+  const [walletSearchQuery, setWalletSearchQuery] = useState('')
   
   // Data state
   const [balanceData, setBalanceData] = useState<BlockchainBalance | null>(null)
@@ -212,12 +213,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
   }
   
   const handleWalletSelect = (address: string) => {
-    const wallet = wallets.find(w => w.address === address)
-    if (wallet) {
-      setFromWallet(wallet)
-      setRecipient(address)
-      setActiveTab('wallets')
-    }
+    setRecipient(address)
   }
 
   return (
@@ -250,10 +246,17 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                 </label>
                 
                 {/* Wallet Selector */}
-                <Select.Root value={fromWallet.address} onValueChange={(addr) => {
-                  const wallet = wallets.find(w => w.address === addr)
-                  if (wallet) setFromWallet(wallet)
-                }}>
+                <Select.Root 
+                  value={fromWallet.address} 
+                  onValueChange={(addr) => {
+                    const wallet = wallets.find(w => w.address === addr)
+                    if (wallet) {
+                      setFromWallet(wallet)
+                      setActiveWalletId(wallet.id)
+                    }
+                  }}
+                  open={undefined}
+                >
                   <Select.Trigger className={`w-full flex items-center justify-between p-3 ${theme.styles.input} hover:border-border-default transition-colors`}>
                     <div className="flex items-center gap-3">
                       <WalletIcon className="w-4 h-4 text-text-secondary" />
@@ -266,27 +269,37 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                   </Select.Trigger>
                   
                   <Select.Portal>
-                    <Select.Content className={`${theme.styles.dropdown?.content || 'bg-surface-elevated border border-border-subtle rounded-lg shadow-lg'} max-h-[300px] overflow-y-auto`} style={{ zIndex: 9999 }}>
+                    <Select.Content 
+                      className={`${theme.styles.dropdown?.content || 'bg-surface-base border border-border-subtle rounded-lg shadow-lg'} max-h-[300px] overflow-y-auto`} 
+                      style={{ zIndex: 9999 }} 
+                      position="popper" 
+                      sideOffset={5}
+                    >
                       <Select.Viewport>
                         {groupedWallets.map(({ group, wallets }) => (
                           <div key={group.id}>
                             <div className="px-3 py-2 text-xs font-medium text-text-tertiary">
                               {group.name}
                             </div>
-                            {wallets.map((wallet) => (
-                              <Select.Item
-                                key={wallet.id}
-                                value={wallet.address}
-                                className={`${theme.styles.dropdown?.item || 'p-2 hover:bg-surface-hover outline-none'} cursor-pointer`}
-                              >
+                            {wallets.map((wallet) => {
+                              const isSelected = wallet.address === fromWallet.address
+                              return (
+                                <Select.Item
+                                  key={wallet.id}
+                                  value={wallet.address}
+                                  className={`${theme.styles.dropdown?.item || 'p-2 hover:bg-surface-hover outline-none'} cursor-pointer ${
+                                    isSelected ? 'bg-accent/10' : ''
+                                  }`}
+                                >
                                 <Select.ItemText>
                                   <div>
                                     <p className="text-sm font-medium">{wallet.name}</p>
                                     <p className="text-xs text-text-tertiary">{formatAddress(wallet.address)}</p>
                                   </div>
                                 </Select.ItemText>
-                              </Select.Item>
-                            ))}
+                                </Select.Item>
+                              )
+                            })}
                           </div>
                         ))}
                       </Select.Viewport>
@@ -490,30 +503,78 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                     </Tabs.List>
                     
                     <Tabs.Content value="wallets" className="mt-3">
-                      <div className="max-h-[200px] overflow-y-auto space-y-2">
-                        {groupedWallets.map(({ group, wallets }) => (
-                          <div key={group.id}>
-                            <div className="flex items-center gap-2 px-2 py-1 text-xs font-medium text-text-tertiary">
-                              <Users className="w-3 h-3" />
-                              {group.name}
-                            </div>
-                            {wallets.map((wallet) => (
-                              <button
-                                key={wallet.id}
-                                onClick={() => handleWalletSelect(wallet.address)}
-                                disabled={wallet.address === fromWallet.address}
-                                className={`w-full p-2 text-left rounded-lg transition-colors ${
-                                  wallet.address === fromWallet.address
-                                    ? 'opacity-50 cursor-not-allowed bg-surface-hover'
-                                    : 'hover:bg-surface-hover cursor-pointer'
-                                }`}
-                              >
-                                <p className="text-sm font-medium text-text-primary">{wallet.name}</p>
-                                <p className="text-xs text-text-tertiary">{formatAddress(wallet.address)}</p>
-                              </button>
-                            ))}
+                      <div className={`${theme.styles.dropdown?.content || 'bg-surface-base border border-border-subtle rounded-lg'} overflow-hidden`}>
+                        {/* Search Bar */}
+                        <div className="p-3 border-b border-border-subtle">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
+                            <input
+                              type="text"
+                              placeholder="Search wallets..."
+                              value={walletSearchQuery}
+                              onChange={(e) => setWalletSearchQuery(e.target.value)}
+                              className={`w-full pl-10 pr-3 py-2 text-sm ${theme.styles.input}`}
+                            />
                           </div>
-                        ))}
+                        </div>
+                        
+                        {/* Wallet List */}
+                        <div className="max-h-[300px] overflow-y-auto py-1">
+                          {(() => {
+                            const filteredGroups = groupedWallets.map(({ group, wallets }) => ({
+                              group,
+                              wallets: wallets.filter(wallet => 
+                                wallet.name.toLowerCase().includes(walletSearchQuery.toLowerCase()) ||
+                                wallet.address.toLowerCase().includes(walletSearchQuery.toLowerCase())
+                              )
+                            })).filter(g => g.wallets.length > 0)
+                            
+                            if (filteredGroups.length === 0) {
+                              return (
+                                <div className="p-4 text-center text-sm text-text-tertiary">
+                                  No wallets found matching "{walletSearchQuery}"
+                                </div>
+                              )
+                            }
+                            
+                            return filteredGroups.map(({ group, wallets }) => (
+                              <div key={group.id}>
+                                <div className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-text-tertiary">
+                                  <Users className="w-3 h-3" />
+                                  {group.name}
+                                </div>
+                                {wallets.map((wallet) => {
+                                  const isSelected = wallet.address === recipient
+                                  const isFromWallet = wallet.address === fromWallet.address
+                                  
+                                  return (
+                                    <button
+                                      key={wallet.id}
+                                      onClick={() => handleWalletSelect(wallet.address)}
+                                      disabled={isFromWallet}
+                                      className={`w-full flex items-center justify-between ${theme.styles.dropdown?.item || 'p-3 hover:bg-surface-hover'} transition-colors ${
+                                        isSelected ? 'bg-accent/10' : ''
+                                      } ${isFromWallet ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-surface-elevated rounded-full flex items-center justify-center">
+                                          <WalletIcon className="w-4 h-4 text-text-secondary" />
+                                        </div>
+                                        <div className="text-left">
+                                          <p className="text-sm font-medium text-text-primary">{wallet.name}</p>
+                                          <p className="text-xs text-text-tertiary">{formatAddress(wallet.address)}</p>
+                                        </div>
+                                      </div>
+                                      {isSelected && (
+                                        <div className="w-2 h-2 bg-accent rounded-full" />
+                                      )}
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            ))
+                          })()}
+                        </div>
                       </div>
                     </Tabs.Content>
                     
