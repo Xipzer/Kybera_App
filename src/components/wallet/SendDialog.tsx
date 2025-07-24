@@ -1,11 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { X, Send, AlertCircle, ExternalLink } from 'lucide-react'
-import { Wallet } from '../../types'
+import * as Tabs from '@radix-ui/react-tabs'
+import * as Select from '@radix-ui/react-select'
+import { X, Send, AlertCircle, ExternalLink, ChevronDown, Wallet as WalletIcon, Users } from 'lucide-react'
+import { Wallet, TokenBalance } from '../../types'
 import { Network } from '../../utils/networks'
-import { blockchainService } from '../../services/blockchain/blockchainService'
+import { blockchainService, BlockchainBalance } from '../../services/blockchain/blockchainService'
 import { useWalletStore } from '../../store/walletStore'
 import { useTheme } from '../../hooks/useTheme'
+import { formatAddress, formatBalance, formatUSD } from '../../utils/formatters'
 
 interface SendDialogProps {
   open: boolean
@@ -14,28 +17,118 @@ interface SendDialogProps {
   network: Network
 }
 
-export function SendDialog({ open, onOpenChange, wallet, network }: SendDialogProps) {
-  const { password } = useWalletStore()
+interface TokenOption {
+  address?: string
+  symbol: string
+  name: string
+  balance: string
+  decimals: number
+  usdValue: number
+  isNative: boolean
+}
+
+export function SendDialog({ open, onOpenChange, wallet: initialWallet, network }: SendDialogProps) {
+  const { password, wallets, walletGroups } = useWalletStore()
   const { theme } = useTheme()
+  
+  // Form state
+  const [fromWallet, setFromWallet] = useState<Wallet>(initialWallet)
   const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState('')
+  const [selectedToken, setSelectedToken] = useState<TokenOption | null>(null)
   const [memo, setMemo] = useState('')
+  
+  // UI state
+  const [activeTab, setActiveTab] = useState('wallets')
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingBalances, setIsLoadingBalances] = useState(false)
   const [error, setError] = useState('')
   const [txHash, setTxHash] = useState<string | null>(null)
   const [showSuccess, setShowSuccess] = useState(false)
+  
+  // Data state
+  const [balanceData, setBalanceData] = useState<BlockchainBalance | null>(null)
+  const [availableTokens, setAvailableTokens] = useState<TokenOption[]>([])
+  const [usdAmount, setUsdAmount] = useState(0)
 
-  // Get native currency info with fallback
+  // Get native currency info
   const nativeCurrency = network.nativeCurrency || {
     name: network.symbol || 'ETH',
     symbol: network.symbol || 'ETH',
     decimals: 18
   }
+  
+  // Group wallets by their groups
+  const groupedWallets = walletGroups.map(group => ({
+    group,
+    wallets: wallets.filter(w => w.groupId === group.id && w.type === network.type)
+  })).filter(g => g.wallets.length > 0)
+
+  // Fetch token balances when wallet changes
+  useEffect(() => {
+    const fetchBalances = async () => {
+      if (!fromWallet) return
+      
+      setIsLoadingBalances(true)
+      try {
+        const data = await blockchainService.getBalance(fromWallet, network)
+        setBalanceData(data)
+        
+        // Prepare token options
+        const tokens: TokenOption[] = [
+          {
+            symbol: nativeCurrency.symbol,
+            name: nativeCurrency.name,
+            balance: data.native,
+            decimals: nativeCurrency.decimals,
+            usdValue: data.nativeUSD,
+            isNative: true
+          },
+          ...data.tokens.map(token => ({
+            address: token.address,
+            symbol: token.symbol,
+            name: token.name,
+            balance: token.balance,
+            decimals: token.decimals,
+            usdValue: 0, // TODO: Calculate from price data
+            isNative: false
+          }))
+        ]
+        
+        setAvailableTokens(tokens)
+        
+        // Select native token by default
+        if (!selectedToken && tokens.length > 0) {
+          setSelectedToken(tokens[0])
+        }
+      } catch (err) {
+        console.error('Failed to fetch balances:', err)
+      } finally {
+        setIsLoadingBalances(false)
+      }
+    }
+    
+    fetchBalances()
+  }, [fromWallet, network])
+  
+  // Calculate USD value when amount changes
+  useEffect(() => {
+    if (selectedToken && amount) {
+      const amountNum = parseFloat(amount)
+      if (!isNaN(amountNum)) {
+        setUsdAmount(amountNum * (selectedToken.usdValue / parseFloat(selectedToken.balance)))
+      } else {
+        setUsdAmount(0)
+      }
+    } else {
+      setUsdAmount(0)
+    }
+  }, [amount, selectedToken])
 
   const handleSend = async () => {
     setError('')
     
-    if (!recipient || !amount) {
+    if (!recipient || !amount || !selectedToken) {
       setError('Please fill in all required fields')
       return
     }
@@ -46,7 +139,7 @@ export function SendDialog({ open, onOpenChange, wallet, network }: SendDialogPr
     }
     
     // Validate recipient address
-    if (!blockchainService.validateAddress(recipient, wallet.type)) {
+    if (!blockchainService.validateAddress(recipient, fromWallet.type)) {
       setError('Invalid recipient address')
       return
     }
@@ -57,17 +150,38 @@ export function SendDialog({ open, onOpenChange, wallet, network }: SendDialogPr
       setError('Invalid amount')
       return
     }
+    
+    if (amountNum > parseFloat(selectedToken.balance)) {
+      setError('Insufficient balance')
+      return
+    }
 
     setIsLoading(true)
     
     try {
-      const hash = await blockchainService.sendTransaction(
-        wallet,
-        network,
-        recipient,
-        amount,
-        password
-      )
+      let hash: string
+      
+      if (selectedToken.isNative) {
+        // Send native token
+        hash = await blockchainService.sendTransaction(
+          fromWallet,
+          network,
+          recipient,
+          amount,
+          password
+        )
+      } else {
+        // Send token
+        hash = await blockchainService.sendToken(
+          fromWallet,
+          network,
+          selectedToken.address!,
+          recipient,
+          amount,
+          selectedToken.decimals,
+          password
+        )
+      }
       
       setTxHash(hash)
       setShowSuccess(true)
@@ -88,39 +202,174 @@ export function SendDialog({ open, onOpenChange, wallet, network }: SendDialogPr
       setIsLoading(false)
     }
   }
+  
+  const handleWalletSelect = (address: string) => {
+    const wallet = wallets.find(w => w.address === address)
+    if (wallet) {
+      setFromWallet(wallet)
+      setRecipient(address)
+      setActiveTab('wallets')
+    }
+  }
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="dialog-overlay" />
-        <Dialog.Content className="dialog-content bg-surface-base rounded-lg shadow-2xl border border-border-subtle w-[500px] max-h-[85vh] overflow-y-auto">
+        <Dialog.Content className={`dialog-content ${theme.styles.dialogContainer} w-[600px] max-h-[85vh] overflow-y-auto`}>
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <Dialog.Title className="text-xl font-semibold text-text-primary">
-                Send {nativeCurrency.symbol}
+              <Dialog.Title className={theme.styles.heading}>
+                Send
               </Dialog.Title>
               <Dialog.Close asChild>
-                <button className="p-1 rounded hover:bg-surface-hover transition-colors">
-                  <X className="w-5 h-5 text-text-secondary" />
+                <button className={theme.styles.buttonIcon}>
+                  <X className={`w-5 h-5 ${theme.styles.iconSecondary}`} />
                 </button>
               </Dialog.Close>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
+              {/* From Section */}
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">
+                <label className={`${theme.styles.label} mb-3 block`}>
                   From
                 </label>
-                <div className="p-3 bg-surface-elevated rounded-lg">
-                  <p className="text-sm font-medium text-text-primary">{wallet.name}</p>
-                  <p className="text-xs text-text-tertiary">{wallet.address}</p>
+                
+                {/* Wallet Selector */}
+                <Select.Root value={fromWallet.address} onValueChange={(addr) => {
+                  const wallet = wallets.find(w => w.address === addr)
+                  if (wallet) setFromWallet(wallet)
+                }}>
+                  <Select.Trigger className={`w-full flex items-center justify-between p-3 ${theme.styles.input} hover:border-border-default transition-colors`}>
+                    <div className="flex items-center gap-3">
+                      <WalletIcon className="w-4 h-4 text-text-secondary" />
+                      <div className="text-left">
+                        <p className="text-sm font-medium text-text-primary">{fromWallet.name}</p>
+                        <p className="text-xs text-text-tertiary">{formatAddress(fromWallet.address)}</p>
+                      </div>
+                    </div>
+                    <ChevronDown className="w-4 h-4 text-text-secondary" />
+                  </Select.Trigger>
+                  
+                  <Select.Portal>
+                    <Select.Content className={`${theme.styles.dropdown.content} max-h-[300px] overflow-y-auto`}>
+                      <Select.Viewport>
+                        {groupedWallets.map(({ group, wallets }) => (
+                          <div key={group.id}>
+                            <div className="px-3 py-2 text-xs font-medium text-text-tertiary">
+                              {group.name}
+                            </div>
+                            {wallets.map((wallet) => (
+                              <Select.Item
+                                key={wallet.id}
+                                value={wallet.address}
+                                className={`${theme.styles.dropdown.item} cursor-pointer`}
+                              >
+                                <Select.ItemText>
+                                  <div>
+                                    <p className="text-sm font-medium">{wallet.name}</p>
+                                    <p className="text-xs text-text-tertiary">{formatAddress(wallet.address)}</p>
+                                  </div>
+                                </Select.ItemText>
+                              </Select.Item>
+                            ))}
+                          </div>
+                        ))}
+                      </Select.Viewport>
+                    </Select.Content>
+                  </Select.Portal>
+                </Select.Root>
+                
+                {/* Amount Input with Token Selector */}
+                <div className="mt-3">
+                  <div className={`relative ${theme.styles.input} p-0 flex items-stretch overflow-hidden`}>
+                    {/* Token Selector */}
+                    <Select.Root 
+                      value={selectedToken?.symbol} 
+                      onValueChange={(symbol) => {
+                        const token = availableTokens.find(t => t.symbol === symbol)
+                        if (token) setSelectedToken(token)
+                      }}
+                      disabled={isLoadingBalances || availableTokens.length === 0}
+                    >
+                      <Select.Trigger className="flex items-center gap-2 px-3 border-r border-border-subtle hover:bg-surface-hover transition-colors">
+                        <div className="w-6 h-6 bg-surface-elevated rounded-full flex items-center justify-center">
+                          <span className="text-xs font-medium">
+                            {selectedToken?.symbol.slice(0, 2).toUpperCase() || '?'}
+                          </span>
+                        </div>
+                        <span className="text-sm font-medium text-text-primary">
+                          {selectedToken?.symbol || 'Select'}
+                        </span>
+                        <ChevronDown className="w-4 h-4 text-text-secondary" />
+                      </Select.Trigger>
+                      
+                      <Select.Portal>
+                        <Select.Content className={`${theme.styles.dropdown.content} min-w-[200px]`}>
+                          <Select.Viewport>
+                            {availableTokens.map((token) => (
+                              <Select.Item
+                                key={token.symbol + (token.isNative ? '-native' : token.address || '')}
+                                value={token.symbol}
+                                className={`${theme.styles.dropdown.item} cursor-pointer`}
+                              >
+                                <Select.ItemText>
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <p className="text-sm font-medium">{token.symbol}</p>
+                                      <p className="text-xs text-text-tertiary">{token.name}</p>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="text-sm">{formatBalance(token.balance)}</p>
+                                      {token.usdValue > 0 && (
+                                        <p className="text-xs text-text-tertiary">{formatUSD(token.usdValue)}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </Select.ItemText>
+                              </Select.Item>
+                            ))}
+                          </Select.Viewport>
+                        </Select.Content>
+                      </Select.Portal>
+                    </Select.Root>
+                    
+                    {/* Amount Input */}
+                    <div className="flex-1 relative">
+                      <input
+                        type="number"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        placeholder="0.0"
+                        step="0.000001"
+                        min="0"
+                        className="w-full h-full px-3 py-3 bg-transparent border-0 focus:outline-none text-text-primary placeholder-text-tertiary"
+                      />
+                      {amount && usdAmount > 0 && (
+                        <div className="absolute right-3 bottom-1 text-xs text-text-tertiary">
+                          ≈ {formatUSD(usdAmount)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Balance Display */}
+                  {selectedToken && (
+                    <p className="text-xs text-text-tertiary mt-1 text-right">
+                      Balance: {formatBalance(selectedToken.balance)} {selectedToken.symbol}
+                    </p>
+                  )}
                 </div>
               </div>
 
+              {/* To Section */}
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">
-                  Recipient Address
+                <label className={`${theme.styles.label} mb-3 block`}>
+                  To
                 </label>
+                
+                {/* Recipient Input */}
                 <input
                   type="text"
                   value={recipient}
@@ -128,31 +377,93 @@ export function SendDialog({ open, onOpenChange, wallet, network }: SendDialogPr
                   placeholder={`Enter ${network.type} address`}
                   className={theme.styles.input}
                 />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">
-                  Amount
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.0"
-                    step="0.000001"
-                    min="0"
-                    className={`${theme.styles.input} pr-16`}
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary">
-                    {nativeCurrency.symbol}
-                  </span>
+                
+                {/* Tabs for Wallets/Contacts */}
+                <div className="mt-3">
+                  <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
+                    <Tabs.List className="flex border-b border-border-subtle">
+                      <Tabs.Trigger
+                        value="wallets"
+                        className="flex-1 py-2 text-sm font-medium text-text-secondary border-b-2 border-transparent transition-colors hover:text-text-primary data-[state=active]:text-accent data-[state=active]:border-accent"
+                      >
+                        Your Wallets
+                      </Tabs.Trigger>
+                      <Tabs.Trigger
+                        value="contacts"
+                        className="flex-1 py-2 text-sm font-medium text-text-secondary border-b-2 border-transparent transition-colors hover:text-text-primary data-[state=active]:text-accent data-[state=active]:border-accent"
+                      >
+                        Contacts
+                      </Tabs.Trigger>
+                    </Tabs.List>
+                    
+                    <Tabs.Content value="wallets" className="mt-3">
+                      <div className="max-h-[200px] overflow-y-auto space-y-2">
+                        {groupedWallets.map(({ group, wallets }) => (
+                          <div key={group.id}>
+                            <div className="flex items-center gap-2 px-2 py-1 text-xs font-medium text-text-tertiary">
+                              <Users className="w-3 h-3" />
+                              {group.name}
+                            </div>
+                            {wallets.map((wallet) => (
+                              <button
+                                key={wallet.id}
+                                onClick={() => handleWalletSelect(wallet.address)}
+                                disabled={wallet.address === fromWallet.address}
+                                className={`w-full p-2 text-left rounded-lg transition-colors ${
+                                  wallet.address === fromWallet.address
+                                    ? 'opacity-50 cursor-not-allowed bg-surface-hover'
+                                    : 'hover:bg-surface-hover cursor-pointer'
+                                }`}
+                              >
+                                <p className="text-sm font-medium text-text-primary">{wallet.name}</p>
+                                <p className="text-xs text-text-tertiary">{formatAddress(wallet.address)}</p>
+                              </button>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    </Tabs.Content>
+                    
+                    <Tabs.Content value="contacts" className="mt-3">
+                      <div className="text-center py-8 text-text-tertiary">
+                        <p className="text-sm">No contacts yet</p>
+                        <p className="text-xs mt-1">Contact management coming soon</p>
+                      </div>
+                    </Tabs.Content>
+                  </Tabs.Root>
                 </div>
+                
+                {/* Receive Amount Display */}
+                {amount && selectedToken && (
+                  <div className="mt-3">
+                    <div className={`${theme.styles.input} p-3`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 bg-surface-elevated rounded-full flex items-center justify-center">
+                            <span className="text-xs font-medium">
+                              {selectedToken.symbol.slice(0, 2).toUpperCase()}
+                            </span>
+                          </div>
+                          <span className="text-sm font-medium text-text-primary">
+                            {selectedToken.symbol}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-medium text-text-primary">{amount}</p>
+                          {usdAmount > 0 && (
+                            <p className="text-xs text-text-tertiary">≈ {formatUSD(usdAmount)}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
+              {/* Memo for Solana */}
               {network.type === 'SVM' && (
                 <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-2">
+                  <label className={theme.styles.label}>
                     Memo (Optional)
                   </label>
                   <input
@@ -165,10 +476,11 @@ export function SendDialog({ open, onOpenChange, wallet, network }: SendDialogPr
                 </div>
               )}
 
+              {/* Error/Success Messages */}
               {error && (
-                <div className="flex items-center gap-2 p-3 bg-accent/10 border border-accent/30 rounded-lg">
-                  <AlertCircle className="w-4 h-4 text-accent flex-shrink-0" />
-                  <p className="text-sm text-accent-400">{error}</p>
+                <div className={theme.styles.error.container}>
+                  <AlertCircle className={theme.styles.error.icon} />
+                  <p className={theme.styles.error.text}>{error}</p>
                 </div>
               )}
               
@@ -176,25 +488,29 @@ export function SendDialog({ open, onOpenChange, wallet, network }: SendDialogPr
                 <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
                   <div className="flex-1">
                     <p className="text-sm text-green-400 font-medium">Transaction sent successfully!</p>
-                    <p className="text-xs text-green-400/80 mt-1">Hash: {txHash.slice(0, 10)}...{txHash.slice(-8)}</p>
+                    <p className="text-xs text-green-400/80 mt-1">
+                      Hash: {txHash.slice(0, 10)}...{txHash.slice(-8)}
+                    </p>
                   </div>
                   <a
                     href={`${network.explorerUrl || network.explorer}/tx/${txHash}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-1 rounded hover:bg-green-500/20 transition-colors"
-                    title="View on explorer"
                   >
                     <ExternalLink className="w-4 h-4 text-green-400" />
                   </a>
                 </div>
               )}
 
+              {/* Send Button */}
               <div className="pt-2">
                 <button
                   onClick={handleSend}
-                  disabled={isLoading || !recipient || !amount}
-                  className={`w-full flex items-center justify-center gap-2 ${theme.styles.buttonSettings || theme.styles.buttonPrimary} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  disabled={isLoading || !recipient || !amount || !selectedToken || isLoadingBalances}
+                  className={`w-full flex items-center justify-center gap-2 ${
+                    theme.styles.buttonSettings || theme.styles.buttonPrimary
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
                   style={theme.dynamicStyles.buttonSettings || theme.dynamicStyles.buttonPrimary}
                 >
                   {isLoading ? (
