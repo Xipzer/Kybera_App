@@ -1,6 +1,6 @@
 import { Wallet } from '../../types'
 import { Network } from '../../utils/networks'
-import { formatAddress, formatDate, formatBalance } from '../../utils/formatters'
+import { formatAddress, formatDate, formatCryptoBalance } from '../../utils/formatters'
 import { ArrowUpRight, ArrowDownLeft, ExternalLink, RefreshCw } from 'lucide-react'
 import { useTransactionHistory } from '../../hooks/useTransactionHistory'
 
@@ -91,7 +91,7 @@ export function TransactionHistory({ wallet, network }: TransactionHistoryProps)
                   <p className={`font-medium ${
                     isSent ? 'text-accent' : 'text-green-500'
                   }`}>
-                    {isSent ? '-' : '+'}{formatBalance(tx.value)} {nativeCurrency.symbol}
+                    {isSent ? '-' : '+'}{formatCryptoBalance(tx.value)} {nativeCurrency.symbol}
                   </p>
                   <a
                     href={`${network.explorerUrl || network.explorer}/tx/${tx.hash}`}

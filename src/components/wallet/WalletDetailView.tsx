@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import * as Tabs from '@radix-ui/react-tabs'
-import { formatAddress } from '../../utils/formatters'
+import { formatAddress, formatCryptoBalance } from '../../utils/formatters'
 import { SendDialog } from './SendDialog'
 import { ReceiveDialog } from './ReceiveDialog'
 import { TokenList } from './TokenList'
@@ -158,7 +158,7 @@ export function WalletDetailView() {
                 <span className={`text-3xl font-bold ${
                   theme === 'xipz' ? 'text-primary-100' : 'text-text-primary'
                 }`}>
-                  {parseFloat(balance.native).toFixed(4)} {nativeCurrency.symbol}
+                  {formatCryptoBalance(balance.native)} {nativeCurrency.symbol}
                 </span>
                 <span className={`text-lg ${
                   theme === 'xipz' ? 'text-primary-300' : 'text-text-secondary'

@@ -9,7 +9,7 @@ import { Network } from '../../utils/networks'
 import { blockchainService, BlockchainBalance } from '../../services/blockchain/blockchainService'
 import { useWalletStore } from '../../store/walletStore'
 import { useTheme } from '../../hooks/useTheme'
-import { formatAddress, formatBalance, formatUSD } from '../../utils/formatters'
+import { formatAddress, formatCryptoBalance, formatUSD } from '../../utils/formatters'
 
 interface SendDialogProps {
   open: boolean
@@ -421,7 +421,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                                         </div>
                                       </div>
                                       <div className="text-right">
-                                        <p className="text-sm font-medium text-text-primary">{formatBalance(token.balance)}</p>
+                                        <p className="text-sm font-medium text-text-primary">{formatCryptoBalance(token.balance)}</p>
                                         <p className="text-xs text-text-tertiary">{formatUSD(token.usdValue)}</p>
                                       </div>
                                     </button>
@@ -455,7 +455,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                   {selectedToken && (
                     <div className="flex items-center justify-between mt-1">
                       <p className="text-xs text-text-tertiary">
-                        Balance: {formatBalance(selectedToken.balance)} {selectedToken.symbol}
+                        Balance: {formatCryptoBalance(selectedToken.balance)} {selectedToken.symbol}
                       </p>
                       <button
                         type="button"

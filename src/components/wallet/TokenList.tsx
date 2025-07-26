@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Wallet } from '../../types'
 import { Network } from '../../utils/networks'
-import { formatBalance, formatUSD } from '../../utils/formatters'
+import { formatCryptoBalance, formatUSD } from '../../utils/formatters'
 import { TrendingUp, TrendingDown, RefreshCw } from 'lucide-react'
 import { blockchainService, BlockchainBalance } from '../../services/blockchain/blockchainService'
 
@@ -178,7 +178,7 @@ export function TokenList({ wallet, network }: TokenListProps) {
               </div>
 
               <div className="text-right">
-                <p className="font-medium text-text-primary">{formatBalance(token.balance)}</p>
+                <p className="font-medium text-text-primary">{formatCryptoBalance(token.balance)}</p>
                 <div className="flex items-center justify-end gap-1">
                   <span className="text-sm text-text-secondary">{formatUSD(token.usdValue)}</span>
                   {token.usdValue > 0 && (
