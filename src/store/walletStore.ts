@@ -120,6 +120,21 @@ export const useWalletStore = create<WalletState>()(
           ...w,
           createdAt: new Date(w.createdAt),
         }))
+        
+        // Check if active wallet's type matches active network
+        const state = get()
+        if (state.activeWalletId) {
+          const activeWallet = wallets.find(w => w.id === state.activeWalletId)
+          if (activeWallet && activeWallet.type !== state.activeNetwork.type) {
+            // Fix network mismatch
+            const correctNetwork = activeWallet.type === 'EVM' 
+              ? state.activeEVMNetwork 
+              : state.activeSVMNetwork
+            set({ wallets, activeNetwork: correctNetwork })
+            return
+          }
+        }
+        
         set({ wallets })
       },
       
@@ -417,6 +432,27 @@ export const useWalletStore = create<WalletState>()(
         activeEVMNetwork: state.activeEVMNetwork,
         activeSVMNetwork: state.activeSVMNetwork,
       }),
+      migrate: (persistedState: any) => {
+        // Ensure activeEVMNetwork and activeSVMNetwork exist
+        if (!persistedState.activeEVMNetwork) {
+          persistedState.activeEVMNetwork = EVM_NETWORKS[0]
+        }
+        if (!persistedState.activeSVMNetwork) {
+          persistedState.activeSVMNetwork = SVM_NETWORKS[0]
+        }
+        
+        // Fix activeNetwork if it's mismatched with the wallet type
+        if (persistedState.activeWalletId) {
+          // We can't check wallet type here since wallets aren't loaded yet
+          // So we'll ensure activeNetwork is valid
+          if (persistedState.activeNetwork && persistedState.activeNetwork.type === 'SVM') {
+            // If it's a Solana network but we can't verify the wallet type,
+            // we'll let setActiveWallet handle it properly
+          }
+        }
+        
+        return persistedState
+      },
     },
   ),
 )

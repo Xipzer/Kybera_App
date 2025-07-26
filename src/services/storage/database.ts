@@ -7,8 +7,6 @@ export interface StoredWallet extends Omit<Wallet, 'createdAt'> {
 
 export interface StoredWalletGroup extends Omit<WalletGroup, 'createdAt'> {
   createdAt: number
-  evmWalletCount?: number
-  svmWalletCount?: number
 }
 
 export interface StoredConversation extends Omit<Conversation, 'createdAt' | 'updatedAt'> {
@@ -38,6 +36,37 @@ export interface StoredSetting {
   value: any
 }
 
+export interface StoredTokenBalance {
+  id: string // walletAddress_networkId_tokenAddress
+  walletAddress: string
+  networkId: string
+  tokenAddress: string
+  symbol: string
+  name: string
+  decimals: number
+  balance: string
+  logoURI?: string
+  lastUpdated: number
+}
+
+export interface StoredPriceData {
+  id: string // symbol or coingeckoId
+  symbol: string
+  usdPrice: number
+  usd24hChange: number
+  lastUpdated: number
+}
+
+export interface StoredWalletBalance {
+  id: string // walletAddress_networkId
+  walletAddress: string
+  networkId: string
+  nativeBalance: string
+  nativeUSD: number
+  totalUSD: number
+  lastUpdated: number
+}
+
 export class SmartWalletDB extends Dexie {
   wallets!: Table<StoredWallet>
   walletGroups!: Table<StoredWalletGroup>
@@ -46,6 +75,9 @@ export class SmartWalletDB extends Dexie {
   settings!: Table<StoredSetting>
   auth!: Table<StoredAuth>
   transactions!: Table<StoredTransaction>
+  tokenBalances!: Table<StoredTokenBalance>
+  priceData!: Table<StoredPriceData>
+  walletBalances!: Table<StoredWalletBalance>
 
   constructor() {
     super('SmartWalletDB')
@@ -69,10 +101,11 @@ export class SmartWalletDB extends Dexie {
       const defaultGroup: StoredWalletGroup = {
         id: 'default-imported',
         name: 'Imported Wallets',
-        type: 'EVM', // Default type, but mixed types allowed for imported wallets
         encryptedSeed: '', // Empty for imported wallets
         createdAt: Date.now(),
-        walletCount: 0
+        walletCount: 0,
+        evmWalletCount: 0,
+        svmWalletCount: 0
       }
       
       await trans.table('walletGroups').add(defaultGroup)
@@ -199,6 +232,20 @@ export class SmartWalletDB extends Dexie {
           await trans.table('wallets').update(groupWallets[i].id, { order: i })
         }
       }
+    })
+    
+    // Version 9 adds caching tables for balances and prices
+    this.version(9).stores({
+      wallets: '++id, groupId, address, type, order',
+      walletGroups: '++id, createdAt, order',
+      conversations: '++id, createdAt, pinned',
+      messages: '++id, conversationId, timestamp',
+      settings: 'key',
+      auth: 'id',
+      transactions: '++id, hash, from, to, network, timestamp',
+      tokenBalances: 'id, walletAddress, networkId, lastUpdated',
+      priceData: 'id, symbol, lastUpdated',
+      walletBalances: 'id, walletAddress, networkId, lastUpdated'
     })
   }
 }

@@ -19,10 +19,28 @@ export interface PriceData {
 }
 
 class BlockchainService {
-  private priceCache: Map<string, { data: PriceData; timestamp: number }> = new Map()
   private PRICE_CACHE_DURATION = 60000 // 1 minute
+  private BALANCE_CACHE_DURATION = 30000 // 30 seconds for rate limiting
 
   async getBalance(wallet: Wallet, network: Network): Promise<BlockchainBalance> {
+    // First, try to get cached balance
+    const cachedBalance = await this.getCachedBalance(wallet, network)
+    if (cachedBalance) {
+      // Return cached balance immediately
+      // But also trigger a background refresh if it's stale
+      const isStale = Date.now() - cachedBalance.lastUpdated > this.BALANCE_CACHE_DURATION
+      if (isStale) {
+        this.refreshBalanceInBackground(wallet, network)
+      }
+      return {
+        native: cachedBalance.nativeBalance,
+        nativeUSD: cachedBalance.nativeUSD,
+        tokens: await this.getCachedTokenBalances(wallet, network),
+        totalUSD: cachedBalance.totalUSD
+      }
+    }
+
+    // No cache, fetch fresh data
     try {
       // Get native balance
       const nativeBalance = wallet.type === 'EVM'
@@ -96,11 +114,40 @@ class BlockchainService {
         }
       }
       
+      const totalUSD = nativeUSD + tokensUSD
+      
+      // Cache the balance data
+      await db.walletBalances.put({
+        id: `${wallet.address}_${network.id}`,
+        walletAddress: wallet.address,
+        networkId: network.id,
+        nativeBalance,
+        nativeUSD,
+        totalUSD,
+        lastUpdated: Date.now()
+      })
+      
+      // Cache token balances
+      for (const token of tokens) {
+        await db.tokenBalances.put({
+          id: `${wallet.address}_${network.id}_${token.address || 'native'}`,
+          walletAddress: wallet.address,
+          networkId: network.id,
+          tokenAddress: token.address || 'native',
+          symbol: token.symbol,
+          name: token.name,
+          decimals: token.decimals,
+          balance: token.balance,
+          logoURI: token.logoURI,
+          lastUpdated: Date.now()
+        })
+      }
+      
       return {
         native: nativeBalance,
         nativeUSD,
         tokens,
-        totalUSD: nativeUSD + tokensUSD
+        totalUSD
       }
     } catch (error) {
       console.error('Failed to get balance:', error)
@@ -214,34 +261,6 @@ class BlockchainService {
       }))
   }
 
-  async getPrices(symbols: string[]): Promise<PriceData> {
-    const cacheKey = symbols.join(',')
-    const cached = this.priceCache.get(cacheKey)
-    
-    if (cached && Date.now() - cached.timestamp < this.PRICE_CACHE_DURATION) {
-      return cached.data
-    }
-    
-    try {
-      // Using CoinGecko API (free tier)
-      const ids = symbols.join(',')
-      const response = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`
-      )
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch prices')
-      }
-      
-      const data = await response.json()
-      this.priceCache.set(cacheKey, { data, timestamp: Date.now() })
-      
-      return data
-    } catch (error) {
-      console.error('Failed to fetch prices:', error)
-      return {}
-    }
-  }
 
   private async getWalletPrivateKey(wallet: Wallet, password: string): Promise<string> {
     if (wallet.encryptedPrivateKey) {
@@ -340,7 +359,8 @@ class BlockchainService {
             })
           }
         } catch (error) {
-          console.error(`Failed to fetch balance for ${token.symbol}:`, error)
+          // Don't log as error - some tokens might not exist on certain networks
+          console.debug(`Could not fetch balance for ${token.symbol} on ${network.name}`)
         }
       }
       
@@ -525,6 +545,207 @@ class BlockchainService {
     } catch (error) {
       console.error('Failed to fetch SPL token balances:', error)
       return []
+    }
+  }
+  
+  // Caching methods
+  private async getCachedBalance(wallet: Wallet, network: Network): Promise<any> {
+    try {
+      const id = `${wallet.address}_${network.id}`
+      const cached = await db.walletBalances.get(id)
+      return cached
+    } catch (error) {
+      console.error('Failed to get cached balance:', error)
+      return null
+    }
+  }
+  
+  private async getCachedTokenBalances(wallet: Wallet, network: Network): Promise<TokenBalance[]> {
+    try {
+      const tokenBalances = await db.tokenBalances
+        .where('walletAddress')
+        .equals(wallet.address)
+        .and(item => item.networkId === network.id)
+        .toArray()
+      
+      return tokenBalances.map(tb => ({
+        address: tb.tokenAddress,
+        symbol: tb.symbol,
+        name: tb.name,
+        decimals: tb.decimals,
+        balance: tb.balance,
+        logoURI: tb.logoURI
+      }))
+    } catch (error) {
+      console.error('Failed to get cached token balances:', error)
+      return []
+    }
+  }
+  
+  private async refreshBalanceInBackground(wallet: Wallet, network: Network): Promise<void> {
+    // Run in background without blocking
+    setTimeout(async () => {
+      try {
+        // Fetch fresh data directly without going through getBalance to avoid recursion
+        const nativeBalance = wallet.type === 'EVM'
+          ? await EVMWalletService.getBalance(wallet.address, network.rpcUrl)
+          : await SVMWalletService.getBalance(wallet.address, network.rpcUrl)
+
+        // Get price data
+        const priceId = network.symbol.toLowerCase() === 'sol' ? 'solana' : network.symbol.toLowerCase()
+        const prices = await this.getPrices([priceId])
+        const nativePrice = prices[priceId]?.usd || 0
+        const nativeUSD = parseFloat(nativeBalance) * nativePrice
+
+        // Fetch token balances
+        const tokens: TokenBalance[] = []
+        
+        if (wallet.type === 'SVM') {
+          try {
+            const tokenBalances = await this.getSPLTokenBalances(wallet.address, network.rpcUrl)
+            tokens.push(...tokenBalances)
+          } catch (error) {
+            console.error('Failed to fetch SPL token balances:', error)
+          }
+        } else if (wallet.type === 'EVM') {
+          try {
+            const tokenBalances = await this.getERC20TokenBalances(wallet.address, network)
+            tokens.push(...tokenBalances)
+          } catch (error) {
+            console.error('Failed to fetch ERC-20 token balances:', error)
+          }
+        }
+        
+        // Calculate token USD values
+        let tokensUSD = 0
+        if (tokens.length > 0) {
+          const tokenPriceIds: Record<string, string> = {
+            'USDC': 'usd-coin',
+            'USDT': 'tether',
+            'DAI': 'dai',
+            'WBTC': 'wrapped-bitcoin',
+            'BUSD': 'binance-usd',
+            'wSOL': 'solana',
+            'mSOL': 'marinade-staked-sol',
+            'BONK': 'bonk',
+            'JUP': 'jupiter-exchange-solana',
+            'PYTH': 'pyth-network',
+            'UXD': 'uxd-stablecoin',
+          }
+          
+          const priceIdsToFetch = tokens
+            .map(token => tokenPriceIds[token.symbol])
+            .filter(id => id !== undefined)
+          
+          if (priceIdsToFetch.length > 0) {
+            const tokenPrices = await this.getPrices(priceIdsToFetch)
+            
+            tokens.forEach(token => {
+              const priceId = tokenPriceIds[token.symbol]
+              if (priceId && tokenPrices[priceId]) {
+                const tokenUSD = parseFloat(token.balance) * tokenPrices[priceId].usd
+                tokensUSD += tokenUSD
+              }
+            })
+          }
+        }
+        
+        const totalUSD = nativeUSD + tokensUSD
+        
+        // Cache the updated balance
+        await db.walletBalances.put({
+          id: `${wallet.address}_${network.id}`,
+          walletAddress: wallet.address,
+          networkId: network.id,
+          nativeBalance,
+          nativeUSD,
+          totalUSD,
+          lastUpdated: Date.now()
+        })
+        
+        // Cache token balances
+        for (const token of tokens) {
+          await db.tokenBalances.put({
+            id: `${wallet.address}_${network.id}_${token.address || 'native'}`,
+            walletAddress: wallet.address,
+            networkId: network.id,
+            tokenAddress: token.address || 'native',
+            symbol: token.symbol,
+            name: token.name,
+            decimals: token.decimals,
+            balance: token.balance,
+            logoURI: token.logoURI,
+            lastUpdated: Date.now()
+          })
+        }
+      } catch (error) {
+        console.error('Failed to refresh balance in background:', error)
+      }
+    }, 0)
+  }
+  
+  async getPrices(symbols: string[]): Promise<PriceData> {
+    try {
+      // Check cache first
+      const cachedPrices: PriceData = {}
+      const symbolsToFetch: string[] = []
+      
+      for (const symbol of symbols) {
+        const cached = await db.priceData.get(symbol)
+        if (cached && Date.now() - cached.lastUpdated < this.PRICE_CACHE_DURATION) {
+          cachedPrices[symbol] = {
+            usd: cached.usdPrice,
+            usd_24h_change: cached.usd24hChange
+          }
+        } else {
+          symbolsToFetch.push(symbol)
+        }
+      }
+      
+      // If all prices are cached, return them
+      if (symbolsToFetch.length === 0) {
+        return cachedPrices
+      }
+      
+      // Fetch missing prices
+      const response = await fetch(
+        `https://api.coingecko.com/api/v3/simple/price?ids=${symbolsToFetch.join(',')}&vs_currencies=usd&include_24hr_change=true`
+      )
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch prices')
+      }
+      
+      const data = await response.json()
+      
+      // Cache the fetched prices
+      for (const [id, priceInfo] of Object.entries(data)) {
+        await db.priceData.put({
+          id,
+          symbol: id,
+          usdPrice: (priceInfo as any).usd || 0,
+          usd24hChange: (priceInfo as any).usd_24h_change || 0,
+          lastUpdated: Date.now()
+        })
+      }
+      
+      return { ...cachedPrices, ...data }
+    } catch (error) {
+      console.error('Failed to fetch prices:', error)
+      
+      // Return cached prices even if they're stale
+      const stalePrices: PriceData = {}
+      for (const symbol of symbols) {
+        const cached = await db.priceData.get(symbol)
+        if (cached) {
+          stalePrices[symbol] = {
+            usd: cached.usdPrice,
+            usd_24h_change: cached.usd24hChange
+          }
+        }
+      }
+      
+      return stalePrices
     }
   }
 }

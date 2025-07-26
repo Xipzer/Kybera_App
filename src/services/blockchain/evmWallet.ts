@@ -184,21 +184,39 @@ export class EVMWalletService {
   ): Promise<{ balance: string; decimals: number }> {
     const provider = new ethers.JsonRpcProvider(rpcUrl)
     
-    const erc20Abi = [
-      'function balanceOf(address account) view returns (uint256)',
-      'function decimals() view returns (uint8)',
-    ]
-    
-    const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, provider)
-    
-    const [balance, decimals] = await Promise.all([
-      tokenContract.balanceOf(walletAddress),
-      tokenContract.decimals(),
-    ])
-    
-    return {
-      balance: ethers.formatUnits(balance, decimals),
-      decimals,
+    try {
+      const erc20Abi = [
+        'function balanceOf(address account) view returns (uint256)',
+        'function decimals() view returns (uint8)',
+      ]
+      
+      const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, provider)
+      
+      // Check if the contract exists by getting the code
+      const code = await provider.getCode(tokenAddress)
+      if (code === '0x') {
+        throw new Error('Contract does not exist at this address')
+      }
+      
+      const [balance, decimals] = await Promise.all([
+        tokenContract.balanceOf(walletAddress),
+        tokenContract.decimals(),
+      ])
+      
+      return {
+        balance: ethers.formatUnits(balance, decimals),
+        decimals,
+      }
+    } catch (error) {
+      // If contract doesn't exist or call fails, return zero balance
+      console.warn(`Failed to fetch ERC20 balance for ${tokenAddress}:`, error)
+      return {
+        balance: '0',
+        decimals: 18,
+      }
+    } finally {
+      // Clean up provider
+      provider.destroy()
     }
   }
 }
