@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import * as Tabs from '@radix-ui/react-tabs'
-import { formatAddress, formatCryptoBalance } from '../../utils/formatters'
+import { formatAddress, formatCryptoBalance, formatTimeAgo } from '../../utils/formatters'
 import { SendDialog } from './SendDialog'
 import { ReceiveDialog } from './ReceiveDialog'
 import { TokenList } from './TokenList'
@@ -25,39 +25,13 @@ export function WalletDetailView() {
   const [showSendDialog, setShowSendDialog] = useState(false)
   const [showReceiveDialog, setShowReceiveDialog] = useState(false)
   const { theme: themeConfig, themeName } = useTheme()
-  const [theme, setTheme] = useState(() => {
-    if (document.documentElement.classList.contains('xipz')) return 'xipz'
-    if (document.documentElement.classList.contains('dark')) return 'dark'
-    return 'light'
-  })
-
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      if (document.documentElement.classList.contains('xipz')) {
-        setTheme('xipz')
-      } else if (document.documentElement.classList.contains('dark')) {
-        setTheme('dark')
-      } else {
-        setTheme('light')
-      }
-    })
-    
-    observer.observe(document.documentElement, { 
-      attributes: true, 
-      attributeFilter: ['class'] 
-    })
-    
-    return () => observer.disconnect()
-  }, [])
 
   const activeWallet = wallets.find((w) => w.id === activeWalletId)
   const { balance, loading, error, refetch } = useWalletBalance(activeWallet, activeNetwork)
 
   if (!activeWallet) {
     return (
-      <div className={`p-6 text-center ${
-        theme === 'xipz' ? 'text-primary-300' : 'text-text-secondary'
-      }`}>
+      <div className={`p-6 text-center ${themeConfig.styles.textSecondary}`}>
         <p>Select a wallet to view details</p>
       </div>
     )
@@ -74,126 +48,78 @@ export function WalletDetailView() {
     decimals: 18
   }
   
-  // Calculate 24h change (will be 0 if price data is not available)
-  const change24h = 0 // TODO: Get from price data
+  // Get change from balance data (refresh-to-refresh)
+  const changePercent = balance.totalUSDChange || 0
 
   return (
-    <div className={`h-full flex flex-col transition-all duration-300 ${
-      theme === 'xipz'
-        ? 'bg-gradient-to-br from-primary-950 via-primary-900 to-primary-950'
-        : 'bg-surface-base'
-    }`}>
+    <div className={`h-full flex flex-col transition-all duration-300 ${themeConfig.styles.mainContainer}`}>
       {/* Wallet Header */}
-      <div className={`p-6 transition-all duration-300 ${
-        theme === 'xipz'
-          ? 'border-b border-primary-800/50 bg-primary-900/30'
-          : 'border-b border-border-subtle'
-      }`}>
+      <div className={`p-6 transition-all duration-300 ${themeConfig.styles.panelHeader}`}>
         <div className="mb-4">
-          <h2 className={`text-2xl font-bold mb-1 ${
-            theme === 'xipz' ? 'text-primary-100' : 'text-text-primary'
-          }`}>{activeWallet.name}</h2>
+          <h2 className={`text-2xl font-bold mb-1 ${themeConfig.styles.textPrimary}`}>{activeWallet.name}</h2>
           <div className="flex items-center gap-2">
-            <p className={`text-sm ${
-              theme === 'xipz' ? 'text-primary-300' : 'text-text-secondary'
-            }`}>{formatAddress(activeWallet.address)}</p>
+            <p className={`text-sm ${themeConfig.styles.textSecondary}`}>{formatAddress(activeWallet.address)}</p>
             <button
               onClick={copyAddress}
-              className={`p-1 rounded transition-all duration-300 ${
-                theme === 'xipz' ? 'hover:bg-primary-800/50' : 'hover:bg-surface-hover'
-              }`}
+              className={`p-1 rounded transition-all duration-300 ${themeConfig.styles.buttonIcon}`}
               title="Copy address"
             >
-              <Copy className={`w-4 h-4 ${
-                theme === 'xipz' ? 'text-primary-400' : 'text-text-secondary'
-              }`} />
+              <Copy className={`w-4 h-4 ${themeConfig.styles.iconSecondary}`} />
             </button>
             <a
               href={`${activeNetwork.explorerUrl || activeNetwork.explorer}/address/${activeWallet.address}`}
               target="_blank"
               rel="noopener noreferrer"
-              className={`p-1 rounded transition-all duration-300 ${
-                theme === 'xipz' ? 'hover:bg-primary-800/50' : 'hover:bg-surface-hover'
-              }`}
+              className={`p-1 rounded transition-all duration-300 ${themeConfig.styles.buttonIcon}`}
               title="View on explorer"
             >
-              <ExternalLink className={`w-4 h-4 ${
-                theme === 'xipz' ? 'text-primary-400' : 'text-text-secondary'
-              }`} />
+              <ExternalLink className={`w-4 h-4 ${themeConfig.styles.iconSecondary}`} />
             </a>
           </div>
         </div>
 
-        {/* Balance Display */}
-        <div className="mb-6">
-          <div className="flex items-baseline gap-2 mb-1">
-            {loading ? (
-              <div className="flex items-center gap-2">
-                <div className={`w-32 h-8 animate-pulse rounded ${
-                  theme === 'xipz' ? 'bg-primary-800/50' : 'bg-surface-elevated'
-                }`} />
-                <RefreshCw className={`w-4 h-4 animate-spin ${
-                  theme === 'xipz' ? 'text-primary-400' : 'text-text-secondary'
-                }`} />
-              </div>
-            ) : error ? (
-              <div className="flex items-center gap-2">
-                <span className={`${
-                  theme === 'xipz' ? 'text-accent-400' : 'text-accent'
-                }`}>Error loading balance</span>
-                <button
-                  onClick={refetch}
-                  className={`p-1 rounded transition-all duration-300 ${
-                theme === 'xipz' ? 'hover:bg-primary-800/50' : 'hover:bg-surface-hover'
-              }`}
-                  title="Retry"
-                >
-                  <RefreshCw className={`w-4 h-4 ${
-                    theme === 'xipz' ? 'text-primary-400' : 'text-text-secondary'
-                  }`} />
-                </button>
-              </div>
-            ) : (
-              <>
-                <span className={`text-3xl font-bold ${
-                  theme === 'xipz' ? 'text-primary-100' : 'text-text-primary'
-                }`}>
-                  {formatCryptoBalance(balance.native)} {nativeCurrency.symbol}
-                </span>
-                <span className={`text-lg ${
-                  theme === 'xipz' ? 'text-primary-300' : 'text-text-secondary'
-                }`}>
-                  ${balance.nativeUSD.toFixed(2)}
-                </span>
-                <button
-                  onClick={refetch}
-                  className={`p-1 rounded transition-all duration-300 ml-2 ${
-                    theme === 'xipz' ? 'hover:bg-primary-800/50' : 'hover:bg-surface-hover'
-                  }`}
-                  title="Refresh balance"
-                >
-                  <RefreshCw className={`w-3 h-3 ${
-                    theme === 'xipz' ? 'text-primary-400' : 'text-text-secondary'
-                  }`} />
-                </button>
-              </>
-            )}
+        {/* Total Portfolio Value */}
+        <div className="mb-6 p-4 rounded-lg bg-surface-elevated">
+          <div className="flex items-center justify-between mb-1">
+            <p className={`text-sm ${themeConfig.styles.textSecondary}`}>Total Portfolio Value</p>
+            <button
+              onClick={refetch}
+              disabled={loading}
+              className={`p-1 rounded transition-all duration-300 disabled:opacity-50 ${themeConfig.styles.buttonIcon}`}
+              title="Refresh all balances"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''} ${themeConfig.styles.iconSecondary}`} />
+            </button>
           </div>
-          {!loading && !error && change24h !== 0 && (
-            <div className="flex items-center gap-1">
-              {change24h >= 0 ? (
-                <TrendingUp className="w-4 h-4 text-green-500" />
-              ) : (
-                <TrendingDown className="w-4 h-4 text-accent" />
-              )}
-              <span
-                className={`text-sm ${
-                  change24h >= 0 ? 'text-green-500' : 'text-accent'
-                }`}
-              >
-                {change24h >= 0 ? '+' : ''}{change24h}% (24h)
-              </span>
-            </div>
+          {loading ? (
+            <div className="h-8 w-32 animate-pulse rounded bg-surface-base" />
+          ) : error ? (
+            <p className="text-lg font-bold text-accent">Error loading</p>
+          ) : (
+            <>
+              <p className={`text-2xl font-bold ${themeConfig.styles.textPrimary}`}>${balance.totalUSD.toFixed(2)}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-1">
+                  {changePercent >= 0 ? (
+                    <TrendingUp className="w-4 h-4 text-green-500" />
+                  ) : (
+                    <TrendingDown className="w-4 h-4 text-accent" />
+                  )}
+                  <span
+                    className={`text-sm ${
+                      changePercent >= 0 ? 'text-green-500' : 'text-accent'
+                    }`}
+                  >
+                    {changePercent >= 0 ? '+' : ''}{changePercent.toFixed(2)}%
+                  </span>
+                </div>
+                {balance.lastUpdated && (
+                  <span className={`text-xs ${themeConfig.styles.textTertiary}`}>
+                    ({formatTimeAgo(balance.lastUpdated)})
+                  </span>
+                )}
+              </div>
+            </>
           )}
         </div>
 
@@ -211,14 +137,6 @@ export function WalletDetailView() {
             onClick={() => setShowReceiveDialog(true)}
             className={`flex-1 flex items-center justify-center gap-2 ${themeConfig.styles.buttonSecondary}`}
             style={themeConfig.dynamicStyles.buttonSecondary}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = themeName === 'xipz' 
-                ? 'rgba(239, 68, 68, 0.1)' 
-                : 'rgba(255, 0, 153, 0.1)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-            }}
           >
             <Download className="w-4 h-4" />
             Receive

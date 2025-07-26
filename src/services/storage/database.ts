@@ -57,6 +57,13 @@ export interface StoredPriceData {
   lastUpdated: number
 }
 
+export interface StoredPriceHistory {
+  id: string // symbol_timestamp
+  symbol: string
+  usdPrice: number
+  timestamp: number
+}
+
 export interface StoredWalletBalance {
   id: string // walletAddress_networkId
   walletAddress: string
@@ -65,6 +72,7 @@ export interface StoredWalletBalance {
   nativeUSD: number
   totalUSD: number
   lastUpdated: number
+  previousTotalUSD?: number // Store previous value for delta calculation
 }
 
 export class SmartWalletDB extends Dexie {
@@ -77,6 +85,7 @@ export class SmartWalletDB extends Dexie {
   transactions!: Table<StoredTransaction>
   tokenBalances!: Table<StoredTokenBalance>
   priceData!: Table<StoredPriceData>
+  priceHistory!: Table<StoredPriceHistory>
   walletBalances!: Table<StoredWalletBalance>
 
   constructor() {
@@ -245,6 +254,21 @@ export class SmartWalletDB extends Dexie {
       transactions: '++id, hash, from, to, network, timestamp',
       tokenBalances: 'id, walletAddress, networkId, lastUpdated',
       priceData: 'id, symbol, lastUpdated',
+      walletBalances: 'id, walletAddress, networkId, lastUpdated'
+    })
+    
+    // Version 10 adds price history table for 24h change tracking
+    this.version(10).stores({
+      wallets: '++id, groupId, address, type, order',
+      walletGroups: '++id, createdAt, order',
+      conversations: '++id, createdAt, pinned',
+      messages: '++id, conversationId, timestamp',
+      settings: 'key',
+      auth: 'id',
+      transactions: '++id, hash, from, to, network, timestamp',
+      tokenBalances: 'id, walletAddress, networkId, lastUpdated',
+      priceData: 'id, symbol, lastUpdated',
+      priceHistory: 'id, symbol, timestamp',
       walletBalances: 'id, walletAddress, networkId, lastUpdated'
     })
   }

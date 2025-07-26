@@ -130,20 +130,6 @@ export function TokenList({ wallet, network }: TokenListProps) {
 
   return (
     <div className="p-4">
-      <div className="mb-4 p-4 bg-surface-elevated rounded-lg">
-        <div className="flex items-center justify-between mb-1">
-          <p className="text-sm text-text-secondary">Total Portfolio Value</p>
-          <button
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="p-1 rounded hover:bg-surface-hover transition-colors disabled:opacity-50"
-          >
-            <RefreshCw className={`w-4 h-4 text-text-secondary ${isRefreshing ? 'animate-spin' : ''}`} />
-          </button>
-        </div>
-        <p className="text-2xl font-bold text-text-primary">{formatUSD(balanceData.totalUSD)}</p>
-      </div>
-
       <div className="space-y-2">
         {allTokens.map((token) => (
           <div

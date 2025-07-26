@@ -9,6 +9,8 @@ export interface BlockchainBalance {
   nativeUSD: number
   tokens: TokenBalance[]
   totalUSD: number
+  totalUSDChange?: number // Percentage change since last refresh
+  lastUpdated?: number // Timestamp of last successful update
 }
 
 export interface PriceData {
@@ -32,11 +34,19 @@ class BlockchainService {
       if (isStale) {
         this.refreshBalanceInBackground(wallet, network)
       }
+      // Get cached token list
+      const tokens = await this.getCachedTokenBalances(wallet, network)
+      
+      // Calculate change since last refresh
+      const totalUSDChange = this.calculateRefreshChange(cachedBalance.totalUSD, cachedBalance.previousTotalUSD)
+      
       return {
         native: cachedBalance.nativeBalance,
         nativeUSD: cachedBalance.nativeUSD,
-        tokens: await this.getCachedTokenBalances(wallet, network),
-        totalUSD: cachedBalance.totalUSD
+        tokens,
+        totalUSD: cachedBalance.totalUSD,
+        totalUSDChange,
+        lastUpdated: cachedBalance.lastUpdated
       }
     }
 
@@ -116,14 +126,20 @@ class BlockchainService {
       
       const totalUSD = nativeUSD + tokensUSD
       
+      // Get previous balance for change calculation
+      const balanceId = `${wallet.address}_${network.id}`
+      const previousBalance = await db.walletBalances.get(balanceId)
+      const totalUSDChange = this.calculateRefreshChange(totalUSD, previousBalance?.totalUSD)
+      
       // Cache the balance data
       await db.walletBalances.put({
-        id: `${wallet.address}_${network.id}`,
+        id: balanceId,
         walletAddress: wallet.address,
         networkId: network.id,
         nativeBalance,
         nativeUSD,
         totalUSD,
+        previousTotalUSD: previousBalance?.totalUSD,
         lastUpdated: Date.now()
       })
       
@@ -147,10 +163,30 @@ class BlockchainService {
         native: nativeBalance,
         nativeUSD,
         tokens,
-        totalUSD
+        totalUSD,
+        totalUSDChange,
+        lastUpdated: Date.now()
       }
     } catch (error) {
       console.error('Failed to get balance:', error)
+      
+      // Try to return cached data on error
+      const cachedBalance = await this.getCachedBalance(wallet, network)
+      if (cachedBalance) {
+        const tokens = await this.getCachedTokenBalances(wallet, network)
+        const totalUSDChange = this.calculateRefreshChange(cachedBalance.totalUSD, cachedBalance.previousTotalUSD)
+        
+        return {
+          native: cachedBalance.nativeBalance,
+          nativeUSD: cachedBalance.nativeUSD,
+          tokens,
+          totalUSD: cachedBalance.totalUSD,
+          totalUSDChange,
+          lastUpdated: cachedBalance.lastUpdated
+        }
+      }
+      
+      // Only return zeros if no cached data available
       return {
         native: '0',
         nativeUSD: 0,
@@ -652,16 +688,23 @@ class BlockchainService {
         
         const totalUSD = nativeUSD + tokensUSD
         
-        // Cache the updated balance
-        await db.walletBalances.put({
-          id: `${wallet.address}_${network.id}`,
-          walletAddress: wallet.address,
-          networkId: network.id,
-          nativeBalance,
-          nativeUSD,
-          totalUSD,
-          lastUpdated: Date.now()
-        })
+        // Get previous balance
+        const balanceId = `${wallet.address}_${network.id}`
+        const previousBalance = await db.walletBalances.get(balanceId)
+        
+        // Only update if this is a successful refresh with valid data
+        if (totalUSD > 0 || nativeBalance !== '0') {
+          await db.walletBalances.put({
+            id: balanceId,
+            walletAddress: wallet.address,
+            networkId: network.id,
+            nativeBalance,
+            nativeUSD,
+            totalUSD,
+            previousTotalUSD: previousBalance?.totalUSD,
+            lastUpdated: Date.now()
+          })
+        }
         
         // Cache token balances
         for (const token of tokens) {
@@ -682,6 +725,11 @@ class BlockchainService {
         console.error('Failed to refresh balance in background:', error)
       }
     }, 0)
+  }
+  
+  private calculateRefreshChange(currentUSD: number, previousUSD?: number): number {
+    if (!previousUSD || previousUSD === 0) return 0
+    return ((currentUSD - previousUSD) / previousUSD) * 100
   }
   
   async getPrices(symbols: string[]): Promise<PriceData> {
@@ -718,15 +766,44 @@ class BlockchainService {
       
       const data = await response.json()
       
-      // Cache the fetched prices
+      // Cache the fetched prices and store history
+      const now = Date.now()
       for (const [id, priceInfo] of Object.entries(data)) {
+        const price = (priceInfo as any).usd || 0
+        
+        // Update current price
         await db.priceData.put({
           id,
           symbol: id,
-          usdPrice: (priceInfo as any).usd || 0,
+          usdPrice: price,
           usd24hChange: (priceInfo as any).usd_24h_change || 0,
-          lastUpdated: Date.now()
+          lastUpdated: now
         })
+        
+        // Store price history (sample every hour to avoid too much data)
+        const lastHistory = await db.priceHistory
+          .where('symbol')
+          .equals(id)
+          .reverse()
+          .sortBy('timestamp')
+          .then(results => results[0])
+        
+        if (!lastHistory || now - lastHistory.timestamp > 3600000) { // 1 hour
+          await db.priceHistory.put({
+            id: `${id}_${now}`,
+            symbol: id,
+            usdPrice: price,
+            timestamp: now
+          })
+          
+          // Clean up old price history (keep only last 7 days)
+          const cutoffTime = now - (7 * 24 * 60 * 60 * 1000)
+          await db.priceHistory
+            .where('symbol')
+            .equals(id)
+            .and(item => item.timestamp < cutoffTime)
+            .delete()
+        }
       }
       
       return { ...cachedPrices, ...data }
