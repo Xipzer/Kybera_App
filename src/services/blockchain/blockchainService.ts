@@ -756,9 +756,14 @@ class BlockchainService {
       }
       
       // Fetch missing prices
-      const response = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${symbolsToFetch.join(',')}&vs_currencies=usd&include_24hr_change=true`
-      )
+      // Use proxy in development to avoid CORS issues
+      const isDev = import.meta.env.DEV
+      const apiPath = `/api/v3/simple/price?ids=${symbolsToFetch.join(',')}&vs_currencies=usd&include_24hr_change=true`
+      const apiUrl = isDev 
+        ? `/api/coingecko${apiPath}`
+        : `https://api.coingecko.com${apiPath}`
+      
+      const response = await fetch(apiUrl)
       
       if (!response.ok) {
         throw new Error('Failed to fetch prices')

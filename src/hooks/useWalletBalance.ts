@@ -9,7 +9,7 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
     tokens: [],
     totalUSD: 0
   })
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true) // Start with loading true
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -30,6 +30,7 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Failed to fetch balance')
+          // Don't reset balance to default - keep the cached value
         }
       } finally {
         if (!cancelled) {
@@ -53,9 +54,13 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
     if (wallet) {
       setLoading(true)
       setError(null)
-      blockchainService.getBalance(wallet, network).then(setBalance).catch(err => {
-        setError(err instanceof Error ? err.message : 'Failed to fetch balance')
-      }).finally(() => setLoading(false))
+      blockchainService.getBalance(wallet, network)
+        .then(setBalance)
+        .catch(err => {
+          setError(err instanceof Error ? err.message : 'Failed to fetch balance')
+          // Don't reset balance - keep showing cached value
+        })
+        .finally(() => setLoading(false))
     }
   }}
 }
