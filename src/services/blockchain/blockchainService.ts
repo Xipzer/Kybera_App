@@ -146,59 +146,97 @@ class BlockchainService {
       
       if (tokens.length > 0) {
         try {
-          // Map token symbols to CoinGecko IDs
-          const tokenPriceIds: Record<string, string> = {
-            'USDC': 'usd-coin',
-            'USDT': 'tether',
-            'DAI': 'dai',
-            'WBTC': 'wrapped-bitcoin',
-            'BUSD': 'binance-usd',
-            'wSOL': 'solana',
-            'mSOL': 'marinade-staked-sol',
-            'BONK': 'bonk',
-            'JUP': 'jupiter-exchange-solana',
-            'PYTH': 'pyth-network',
-            'UXD': 'uxd-stablecoin',
-          }
-          
-          const priceIdsToFetch = tokens
-            .map(token => tokenPriceIds[token.symbol])
-            .filter(id => id !== undefined)
-          
-          if (priceIdsToFetch.length > 0) {
-            const tokenPrices = await this.getPrices(priceIdsToFetch)
+          if (wallet.type === 'EVM') {
+            // For EVM chains, use contract addresses
+            const platformIds: Record<string, string> = {
+              '1': 'ethereum',
+              '56': 'binance-smart-chain',
+              '137': 'polygon-pos',
+              '8453': 'base',
+              '42161': 'arbitrum-one',
+              '10': 'optimistic-ethereum'
+            }
             
-            // Calculate USD value for each token
-            tokens.forEach(token => {
-              const priceId = tokenPriceIds[token.symbol]
-              if (priceId && tokenPrices[priceId]) {
-                const tokenUSD = parseFloat(token.balance) * tokenPrices[priceId].usd
-                tokenUSDValues[token.address || token.symbol] = tokenUSD
-                tokensUSD += tokenUSD
-              }
-            })
+            const platformId = platformIds[network.chainId] || 'ethereum'
+            const contractAddresses = tokens.map(t => t.address).filter(addr => addr)
+            
+            if (contractAddresses.length > 0) {
+              const tokenPrices = await this.getTokenPricesByContract(platformId, contractAddresses)
+              
+              tokens.forEach(token => {
+                if (token.address && tokenPrices[token.address]) {
+                  const tokenUSD = parseFloat(token.balance) * tokenPrices[token.address].usd
+                  tokenUSDValues[token.address] = tokenUSD
+                  tokensUSD += tokenUSD
+                }
+              })
+            }
+          } else if (wallet.type === 'SVM') {
+            // For Solana, still use symbol mapping for now
+            // TODO: Use Jupiter API or similar for Solana token prices
+            const tokenPriceIds: Record<string, string> = {
+              'USDC': 'usd-coin',
+              'USDT': 'tether',
+              'wSOL': 'solana',
+              'mSOL': 'marinade-staked-sol',
+              'BONK': 'bonk',
+              'JUP': 'jupiter-exchange-solana',
+              'PYTH': 'pyth-network',
+              'UXD': 'uxd-stablecoin',
+            }
+            
+            const priceIdsToFetch = tokens
+              .map(token => tokenPriceIds[token.symbol])
+              .filter(id => id !== undefined)
+            
+            if (priceIdsToFetch.length > 0) {
+              const tokenPrices = await this.getPrices(priceIdsToFetch)
+              
+              tokens.forEach(token => {
+                const priceId = tokenPriceIds[token.symbol]
+                if (priceId && tokenPrices[priceId]) {
+                  const tokenUSD = parseFloat(token.balance) * tokenPrices[priceId].usd
+                  tokenUSDValues[token.address || token.symbol] = tokenUSD
+                  tokensUSD += tokenUSD
+                }
+              })
+            }
           }
         } catch (error) {
           console.error('Failed to fetch token prices:', error)
           // Try to use cached price data if fresh fetch fails
-          const tokenPriceIds: Record<string, string> = {
-            'USDC': 'usd-coin',
-            'USDT': 'tether',
-            'DAI': 'dai',
-            'WBTC': 'wrapped-bitcoin',
-            'BUSD': 'binance-usd',
-            'wSOL': 'solana',
-            'mSOL': 'marinade-staked-sol',
-            'BONK': 'bonk',
-            'JUP': 'jupiter-exchange-solana',
-            'PYTH': 'pyth-network',
-            'UXD': 'uxd-stablecoin',
-          }
-          
           for (const token of tokens) {
-            const priceId = tokenPriceIds[token.symbol]
-            if (priceId) {
-              const cachedPrice = await db.priceData.get(priceId)
+            let cacheKey: string
+            
+            if (wallet.type === 'EVM' && token.address) {
+              // For EVM, use platform_address as cache key
+              const platformIds: Record<string, string> = {
+                '1': 'ethereum',
+                '56': 'binance-smart-chain',
+                '137': 'polygon-pos',
+                '8453': 'base',
+                '42161': 'arbitrum-one',
+                '10': 'optimistic-ethereum'
+              }
+              const platformId = platformIds[network.chainId] || 'ethereum'
+              cacheKey = `${platformId}_${token.address.toLowerCase()}`
+            } else {
+              // For Solana, use symbol mapping
+              const tokenPriceIds: Record<string, string> = {
+                'USDC': 'usd-coin',
+                'USDT': 'tether',
+                'wSOL': 'solana',
+                'mSOL': 'marinade-staked-sol',
+                'BONK': 'bonk',
+                'JUP': 'jupiter-exchange-solana',
+                'PYTH': 'pyth-network',
+                'UXD': 'uxd-stablecoin',
+              }
+              cacheKey = tokenPriceIds[token.symbol] || ''
+            }
+            
+            if (cacheKey) {
+              const cachedPrice = await db.priceData.get(cacheKey)
               if (cachedPrice) {
                 const tokenUSD = parseFloat(token.balance) * cachedPrice.usdPrice
                 tokenUSDValues[token.address || token.symbol] = tokenUSD
@@ -497,59 +535,18 @@ class BlockchainService {
   
   private async getERC20TokenBalances(walletAddress: string, network: Network): Promise<TokenBalance[]> {
     try {
-      // Common ERC-20 tokens by network
-      const commonTokens: Record<string, Array<{address: string, symbol: string, name: string, decimals: number}>> = {
-        '1': [ // Ethereum Mainnet
-          { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', symbol: 'USDC', name: 'USD Coin', decimals: 6 },
-          { address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', symbol: 'USDT', name: 'Tether USD', decimals: 6 },
-          { address: '0x6B175474E89094C44Da98b954EedeAC495271d0F', symbol: 'DAI', name: 'Dai Stablecoin', decimals: 18 },
-          { address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599', symbol: 'WBTC', name: 'Wrapped BTC', decimals: 8 },
-        ],
-        '8453': [ // Base
-          { address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', symbol: 'USDC', name: 'USD Coin', decimals: 6 },
-          // Note: DAI is not natively on Base, would need to be bridged
-        ],
-        '56': [ // BSC
-          { address: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', symbol: 'USDC', name: 'USD Coin', decimals: 18 },
-          { address: '0x55d398326f99059fF775485246999027B3197955', symbol: 'USDT', name: 'Tether USD', decimals: 18 },
-          { address: '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56', symbol: 'BUSD', name: 'Binance USD', decimals: 18 },
-        ],
-        '137': [ // Polygon
-          { address: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', symbol: 'USDC', name: 'USD Coin', decimals: 6 },
-          { address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', symbol: 'USDT', name: 'Tether USD', decimals: 6 },
-          { address: '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063', symbol: 'DAI', name: 'Dai Stablecoin', decimals: 18 },
-        ],
-      }
+      // For now, return empty array - tokens will be discovered through other means
+      // such as transaction history, user-added tokens, or indexer services
+      // This prevents missing tokens that aren't in a hardcoded list
       
-      const networkTokens = commonTokens[network.chainId] || []
-      const tokens: TokenBalance[] = []
+      // TODO: Implement one of these approaches:
+      // 1. Use an indexer API (Alchemy, Moralis, Covalent, etc.)
+      // 2. Scan Transfer events from blocks
+      // 3. Allow users to manually add token contracts
+      // 4. Use a decentralized token registry
       
-      // Check balance for each common token
-      for (const token of networkTokens) {
-        try {
-          const result = await EVMWalletService.getERC20Balance(
-            token.address,
-            walletAddress,
-            network.rpcUrl
-          )
-          
-          if (parseFloat(result.balance) > 0) {
-            tokens.push({
-              address: token.address,
-              symbol: token.symbol,
-              name: token.name,
-              decimals: token.decimals,
-              balance: result.balance,
-              logoURI: undefined
-            })
-          }
-        } catch (error) {
-          // Don't log as error - some tokens might not exist on certain networks
-          console.debug(`Could not fetch balance for ${token.symbol} on ${network.name}`)
-        }
-      }
-      
-      return tokens
+      console.log(`Token discovery not yet implemented for ${network.name}. Manual token addition required.`)
+      return []
     } catch (error) {
       console.error('Failed to fetch ERC-20 token balances:', error)
       return []
@@ -826,48 +823,99 @@ class BlockchainService {
         const tokenUSDValues: Record<string, number> = {} // Track USD value per token
         
         if (tokens.length > 0) {
-          const tokenPriceIds: Record<string, string> = {
-            'USDC': 'usd-coin',
-            'USDT': 'tether',
-            'DAI': 'dai',
-            'WBTC': 'wrapped-bitcoin',
-            'BUSD': 'binance-usd',
-            'wSOL': 'solana',
-            'mSOL': 'marinade-staked-sol',
-            'BONK': 'bonk',
-            'JUP': 'jupiter-exchange-solana',
-            'PYTH': 'pyth-network',
-            'UXD': 'uxd-stablecoin',
-          }
-          
-          const priceIdsToFetch = tokens
-            .map(token => tokenPriceIds[token.symbol])
-            .filter(id => id !== undefined)
-          
-          if (priceIdsToFetch.length > 0) {
-            try {
-              const tokenPrices = await this.getPrices(priceIdsToFetch)
+          try {
+            if (wallet.type === 'EVM') {
+              // For EVM chains, use contract addresses
+              const platformIds: Record<string, string> = {
+                '1': 'ethereum',
+                '56': 'binance-smart-chain',
+                '137': 'polygon-pos',
+                '8453': 'base',
+                '42161': 'arbitrum-one',
+                '10': 'optimistic-ethereum'
+              }
               
-              tokens.forEach(token => {
-                const priceId = tokenPriceIds[token.symbol]
-                if (priceId && tokenPrices[priceId]) {
-                  const tokenUSD = parseFloat(token.balance) * tokenPrices[priceId].usd
-                  tokenUSDValues[token.address || token.symbol] = tokenUSD
-                  tokensUSD += tokenUSD
-                }
-              })
-            } catch (priceError) {
-              console.error('Failed to fetch fresh token prices in background:', priceError)
-              // Try to use cached price data if fresh fetch fails
-              for (const token of tokens) {
-                const priceId = tokenPriceIds[token.symbol]
-                if (priceId) {
-                  const cachedPrice = await db.priceData.get(priceId)
-                  if (cachedPrice) {
-                    const tokenUSD = parseFloat(token.balance) * cachedPrice.usdPrice
+              const platformId = platformIds[network.chainId] || 'ethereum'
+              const contractAddresses = tokens.map(t => t.address).filter(addr => addr)
+              
+              if (contractAddresses.length > 0) {
+                const tokenPrices = await this.getTokenPricesByContract(platformId, contractAddresses)
+                
+                tokens.forEach(token => {
+                  if (token.address && tokenPrices[token.address]) {
+                    const tokenUSD = parseFloat(token.balance) * tokenPrices[token.address].usd
+                    tokenUSDValues[token.address] = tokenUSD
+                    tokensUSD += tokenUSD
+                  }
+                })
+              }
+            } else if (wallet.type === 'SVM') {
+              // For Solana, still use symbol mapping
+              const tokenPriceIds: Record<string, string> = {
+                'USDC': 'usd-coin',
+                'USDT': 'tether',
+                'wSOL': 'solana',
+                'mSOL': 'marinade-staked-sol',
+                'BONK': 'bonk',
+                'JUP': 'jupiter-exchange-solana',
+                'PYTH': 'pyth-network',
+                'UXD': 'uxd-stablecoin',
+              }
+              
+              const priceIdsToFetch = tokens
+                .map(token => tokenPriceIds[token.symbol])
+                .filter(id => id !== undefined)
+              
+              if (priceIdsToFetch.length > 0) {
+                const tokenPrices = await this.getPrices(priceIdsToFetch)
+                
+                tokens.forEach(token => {
+                  const priceId = tokenPriceIds[token.symbol]
+                  if (priceId && tokenPrices[priceId]) {
+                    const tokenUSD = parseFloat(token.balance) * tokenPrices[priceId].usd
                     tokenUSDValues[token.address || token.symbol] = tokenUSD
                     tokensUSD += tokenUSD
                   }
+                })
+              }
+            }
+          } catch (priceError) {
+            console.error('Failed to fetch fresh token prices in background:', priceError)
+            // Use same fallback logic as main fetch
+            for (const token of tokens) {
+              let cacheKey: string
+              
+              if (wallet.type === 'EVM' && token.address) {
+                const platformIds: Record<string, string> = {
+                  '1': 'ethereum',
+                  '56': 'binance-smart-chain',
+                  '137': 'polygon-pos',
+                  '8453': 'base',
+                  '42161': 'arbitrum-one',
+                  '10': 'optimistic-ethereum'
+                }
+                const platformId = platformIds[network.chainId] || 'ethereum'
+                cacheKey = `${platformId}_${token.address.toLowerCase()}`
+              } else {
+                const tokenPriceIds: Record<string, string> = {
+                  'USDC': 'usd-coin',
+                  'USDT': 'tether',
+                  'wSOL': 'solana',
+                  'mSOL': 'marinade-staked-sol',
+                  'BONK': 'bonk',
+                  'JUP': 'jupiter-exchange-solana',
+                  'PYTH': 'pyth-network',
+                  'UXD': 'uxd-stablecoin',
+                }
+                cacheKey = tokenPriceIds[token.symbol] || ''
+              }
+              
+              if (cacheKey) {
+                const cachedPrice = await db.priceData.get(cacheKey)
+                if (cachedPrice) {
+                  const tokenUSD = parseFloat(token.balance) * cachedPrice.usdPrice
+                  tokenUSDValues[token.address || token.symbol] = tokenUSD
+                  tokensUSD += tokenUSD
                 }
               }
             }
@@ -1009,6 +1057,84 @@ class BlockchainService {
         const cached = await db.priceData.get(symbol)
         if (cached) {
           stalePrices[symbol] = {
+            usd: cached.usdPrice,
+            usd_24h_change: cached.usd24hChange
+          }
+        }
+      }
+      
+      return stalePrices
+    }
+  }
+  
+  async getTokenPricesByContract(
+    platformId: string,
+    contractAddresses: string[]
+  ): Promise<PriceData> {
+    try {
+      // Check cache first
+      const cachedPrices: PriceData = {}
+      const addressesToFetch: string[] = []
+      
+      for (const address of contractAddresses) {
+        const cacheKey = `${platformId}_${address.toLowerCase()}`
+        const cached = await db.priceData.get(cacheKey)
+        if (cached && Date.now() - cached.lastUpdated < this.PRICE_CACHE_DURATION) {
+          cachedPrices[address] = {
+            usd: cached.usdPrice,
+            usd_24h_change: cached.usd24hChange
+          }
+        } else {
+          addressesToFetch.push(address)
+        }
+      }
+      
+      // If all prices are cached, return them
+      if (addressesToFetch.length === 0) {
+        return cachedPrices
+      }
+      
+      // Fetch missing prices using token price endpoint
+      const isDev = import.meta.env.DEV
+      const apiPath = `/api/v3/simple/token_price/${platformId}?contract_addresses=${addressesToFetch.join(',')}&vs_currencies=usd&include_24hr_change=true`
+      const apiUrl = isDev 
+        ? `/api/coingecko${apiPath}`
+        : `https://api.coingecko.com${apiPath}`
+      
+      const response = await fetch(apiUrl)
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch token prices')
+      }
+      
+      const data = await response.json()
+      
+      // Cache the fetched prices
+      const now = Date.now()
+      for (const [address, priceInfo] of Object.entries(data)) {
+        const price = (priceInfo as any).usd || 0
+        const cacheKey = `${platformId}_${address.toLowerCase()}`
+        
+        await db.priceData.put({
+          id: cacheKey,
+          symbol: cacheKey,
+          usdPrice: price,
+          usd24hChange: (priceInfo as any).usd_24h_change || 0,
+          lastUpdated: now
+        })
+      }
+      
+      return { ...cachedPrices, ...data }
+    } catch (error) {
+      console.error('Failed to fetch token prices by contract:', error)
+      
+      // Return cached prices even if they're stale
+      const stalePrices: PriceData = {}
+      for (const address of contractAddresses) {
+        const cacheKey = `${platformId}_${address.toLowerCase()}`
+        const cached = await db.priceData.get(cacheKey)
+        if (cached) {
+          stalePrices[address] = {
             usd: cached.usdPrice,
             usd_24h_change: cached.usd24hChange
           }
