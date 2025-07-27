@@ -102,9 +102,22 @@ class BlockchainService {
 
       // Get price data - map SOL to solana for CoinGecko
       const priceId = network.symbol.toLowerCase() === 'sol' ? 'solana' : network.symbol.toLowerCase()
-      const prices = await this.getPrices([priceId])
-      const nativePrice = prices[priceId]?.usd || 0
-      const nativeUSD = parseFloat(nativeBalance) * nativePrice
+      let nativePrice = 0
+      let nativeUSD = 0
+      
+      try {
+        const prices = await this.getPrices([priceId])
+        nativePrice = prices[priceId]?.usd || 0
+        nativeUSD = parseFloat(nativeBalance) * nativePrice
+      } catch (priceError) {
+        console.error('Failed to fetch native token price:', priceError)
+        // Try to get cached price
+        const cachedPrice = await db.priceData.get(priceId)
+        if (cachedPrice) {
+          nativePrice = cachedPrice.usdPrice
+          nativeUSD = parseFloat(nativeBalance) * nativePrice
+        }
+      }
 
       // Fetch token balances
       const tokens: TokenBalance[] = []
@@ -488,7 +501,7 @@ class BlockchainService {
         ],
         '8453': [ // Base
           { address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', symbol: 'USDC', name: 'USD Coin', decimals: 6 },
-          { address: '0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb', symbol: 'DAI', name: 'Dai Stablecoin', decimals: 18 },
+          // Note: DAI is not natively on Base, would need to be bridged
         ],
         '56': [ // BSC
           { address: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', symbol: 'USDC', name: 'USD Coin', decimals: 18 },
@@ -765,9 +778,22 @@ class BlockchainService {
 
         // Get price data
         const priceId = network.symbol.toLowerCase() === 'sol' ? 'solana' : network.symbol.toLowerCase()
-        const prices = await this.getPrices([priceId])
-        const nativePrice = prices[priceId]?.usd || 0
-        const nativeUSD = parseFloat(nativeBalance) * nativePrice
+        let nativePrice = 0
+        let nativeUSD = 0
+        
+        try {
+          const prices = await this.getPrices([priceId])
+          nativePrice = prices[priceId]?.usd || 0
+          nativeUSD = parseFloat(nativeBalance) * nativePrice
+        } catch (priceError) {
+          console.error('Background refresh: Failed to fetch native token price:', priceError)
+          // Try to get cached price
+          const cachedPrice = await db.priceData.get(priceId)
+          if (cachedPrice) {
+            nativePrice = cachedPrice.usdPrice
+            nativeUSD = parseFloat(nativeBalance) * nativePrice
+          }
+        }
 
         // Fetch token balances
         const tokens: TokenBalance[] = []

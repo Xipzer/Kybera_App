@@ -91,10 +91,8 @@ export function WalletDetailView() {
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''} ${themeConfig.styles.iconSecondary}`} />
             </button>
           </div>
-          {loading ? (
+          {loading && balance.totalUSD === 0 ? (
             <div className="h-8 w-32 animate-pulse rounded bg-surface-base" />
-          ) : error ? (
-            <p className="text-lg font-bold text-accent">Error loading</p>
           ) : (
             <>
               <p className={`text-2xl font-bold ${themeConfig.styles.textPrimary}`}>${balance.totalUSD.toFixed(2)}</p>
@@ -116,6 +114,11 @@ export function WalletDetailView() {
                 {balance.lastUpdated && (
                   <span className={`text-xs ${themeConfig.styles.textTertiary}`}>
                     ({formatTimeAgo(balance.lastUpdated)})
+                  </span>
+                )}
+                {error && balance.totalUSD > 0 && (
+                  <span className={`text-xs ${themeConfig.styles.textTertiary}`}>
+                    (cached)
                   </span>
                 )}
               </div>
