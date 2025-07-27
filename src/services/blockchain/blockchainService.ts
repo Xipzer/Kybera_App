@@ -25,6 +25,18 @@ class BlockchainService {
   private BALANCE_CACHE_DURATION = 30000 // 30 seconds for rate limiting
 
   async getBalance(wallet: Wallet, network: Network): Promise<BlockchainBalance> {
+    // Validate network type matches wallet type
+    if (wallet.type !== network.type) {
+      console.error('Network type mismatch detected:', {
+        walletType: wallet.type,
+        walletAddress: wallet.address,
+        networkType: network.type,
+        networkName: network.name,
+        networkRPC: network.rpcUrl
+      })
+      throw new Error(`Network type mismatch: wallet is ${wallet.type} but network is ${network.type}`)
+    }
+    
     // First, try to get cached balance
     const cachedBalance = await this.getCachedBalance(wallet, network)
     if (cachedBalance) {
@@ -37,14 +49,40 @@ class BlockchainService {
       // Get cached token list
       const tokens = await this.getCachedTokenBalances(wallet, network)
       
-      // Calculate change since last refresh
-      const totalUSDChange = this.calculateRefreshChange(cachedBalance.totalUSD, cachedBalance.previousTotalUSD)
+      // Recalculate total USD from cached components
+      let cachedTokensUSD = 0
+      for (const token of tokens) {
+        const cachedTokenData = await db.tokenBalances.get(
+          `${wallet.address}_${network.id}_${token.address || 'native'}`
+        )
+        if (cachedTokenData?.usdValue) {
+          cachedTokensUSD += cachedTokenData.usdValue
+        }
+      }
+      
+      const recalculatedTotalUSD = cachedBalance.nativeUSD + cachedTokensUSD
+      
+      // If recalculation yields 0 but we had a stored total, use the stored total
+      const finalTotalUSD = recalculatedTotalUSD === 0 && cachedBalance.totalUSD > 0 
+        ? cachedBalance.totalUSD 
+        : recalculatedTotalUSD
+      
+      const totalUSDChange = this.calculateRefreshChange(finalTotalUSD, cachedBalance.previousTotalUSD)
+      
+      console.log('Returning cached balance:', {
+        nativeUSD: cachedBalance.nativeUSD,
+        cachedTokensUSD,
+        recalculatedTotalUSD,
+        storedTotalUSD: cachedBalance.totalUSD,
+        finalTotalUSD,
+        tokenCount: tokens.length
+      })
       
       return {
         native: cachedBalance.nativeBalance,
         nativeUSD: cachedBalance.nativeUSD,
         tokens,
-        totalUSD: cachedBalance.totalUSD,
+        totalUSD: finalTotalUSD,
         totalUSDChange,
         lastUpdated: cachedBalance.lastUpdated
       }
@@ -52,6 +90,11 @@ class BlockchainService {
 
     // No cache, fetch fresh data
     try {
+      // Double-check network type before calling service
+      if (wallet.type !== network.type) {
+        throw new Error(`Cannot fetch balance: wallet type ${wallet.type} doesn't match network type ${network.type}`)
+      }
+      
       // Get native balance
       const nativeBalance = wallet.type === 'EVM'
         ? await EVMWalletService.getBalance(wallet.address, network.rpcUrl)
@@ -86,6 +129,8 @@ class BlockchainService {
       
       // Fetch token prices if we have tokens
       let tokensUSD = 0
+      const tokenUSDValues: Record<string, number> = {} // Track USD value per token
+      
       if (tokens.length > 0) {
         try {
           // Map token symbols to CoinGecko IDs
@@ -115,12 +160,39 @@ class BlockchainService {
               const priceId = tokenPriceIds[token.symbol]
               if (priceId && tokenPrices[priceId]) {
                 const tokenUSD = parseFloat(token.balance) * tokenPrices[priceId].usd
+                tokenUSDValues[token.address || token.symbol] = tokenUSD
                 tokensUSD += tokenUSD
               }
             })
           }
         } catch (error) {
           console.error('Failed to fetch token prices:', error)
+          // Try to use cached price data if fresh fetch fails
+          const tokenPriceIds: Record<string, string> = {
+            'USDC': 'usd-coin',
+            'USDT': 'tether',
+            'DAI': 'dai',
+            'WBTC': 'wrapped-bitcoin',
+            'BUSD': 'binance-usd',
+            'wSOL': 'solana',
+            'mSOL': 'marinade-staked-sol',
+            'BONK': 'bonk',
+            'JUP': 'jupiter-exchange-solana',
+            'PYTH': 'pyth-network',
+            'UXD': 'uxd-stablecoin',
+          }
+          
+          for (const token of tokens) {
+            const priceId = tokenPriceIds[token.symbol]
+            if (priceId) {
+              const cachedPrice = await db.priceData.get(priceId)
+              if (cachedPrice) {
+                const tokenUSD = parseFloat(token.balance) * cachedPrice.usdPrice
+                tokenUSDValues[token.address || token.symbol] = tokenUSD
+                tokensUSD += tokenUSD
+              }
+            }
+          }
         }
       }
       
@@ -130,6 +202,16 @@ class BlockchainService {
       const balanceId = `${wallet.address}_${network.id}`
       const previousBalance = await db.walletBalances.get(balanceId)
       const totalUSDChange = this.calculateRefreshChange(totalUSD, previousBalance?.totalUSD)
+      
+      console.log('Storing balance to cache:', {
+        walletAddress: wallet.address,
+        networkId: network.id,
+        nativeBalance,
+        nativeUSD,
+        tokensUSD,
+        totalUSD,
+        tokenCount: tokens.length
+      })
       
       // Cache the balance data
       await db.walletBalances.put({
@@ -143,8 +225,9 @@ class BlockchainService {
         lastUpdated: Date.now()
       })
       
-      // Cache token balances
+      // Cache token balances with USD values
       for (const token of tokens) {
+        const tokenKey = token.address || token.symbol
         await db.tokenBalances.put({
           id: `${wallet.address}_${network.id}_${token.address || 'native'}`,
           walletAddress: wallet.address,
@@ -154,6 +237,7 @@ class BlockchainService {
           name: token.name,
           decimals: token.decimals,
           balance: token.balance,
+          usdValue: tokenUSDValues[tokenKey] || 0,
           logoURI: token.logoURI,
           lastUpdated: Date.now()
         })
@@ -174,13 +258,44 @@ class BlockchainService {
       const cachedBalance = await this.getCachedBalance(wallet, network)
       if (cachedBalance) {
         const tokens = await this.getCachedTokenBalances(wallet, network)
-        const totalUSDChange = this.calculateRefreshChange(cachedBalance.totalUSD, cachedBalance.previousTotalUSD)
+        
+        // Calculate total USD from cached values
+        let cachedTokensUSD = 0
+        for (const token of tokens) {
+          // Get cached USD value for this token
+          const cachedTokenData = await db.tokenBalances.get(
+            `${wallet.address}_${network.id}_${token.address || 'native'}`
+          )
+          if (cachedTokenData?.usdValue) {
+            cachedTokensUSD += cachedTokenData.usdValue
+          }
+        }
+        
+        // Recalculate total USD from cached components
+        const recalculatedTotalUSD = cachedBalance.nativeUSD + cachedTokensUSD
+        
+        // If recalculation yields 0 but we had a stored total, use the stored total
+        const finalTotalUSD = recalculatedTotalUSD === 0 && cachedBalance.totalUSD > 0 
+          ? cachedBalance.totalUSD 
+          : recalculatedTotalUSD
+        
+        const totalUSDChange = this.calculateRefreshChange(finalTotalUSD, cachedBalance.previousTotalUSD)
+        
+        console.log('Returning cached balance on error:', {
+          nativeUSD: cachedBalance.nativeUSD,
+          cachedTokensUSD,
+          recalculatedTotalUSD,
+          storedTotalUSD: cachedBalance.totalUSD,
+          finalTotalUSD,
+          tokenCount: tokens.length,
+          error: error.message || error
+        })
         
         return {
           native: cachedBalance.nativeBalance,
           nativeUSD: cachedBalance.nativeUSD,
           tokens,
-          totalUSD: cachedBalance.totalUSD,
+          totalUSD: finalTotalUSD,
           totalUSDChange,
           lastUpdated: cachedBalance.lastUpdated
         }
@@ -203,6 +318,11 @@ class BlockchainService {
     amount: string,
     password: string
   ): Promise<string> {
+    // Validate network type matches wallet type
+    if (wallet.type !== network.type) {
+      throw new Error(`Network type mismatch: wallet is ${wallet.type} but network is ${network.type}`)
+    }
+    
     // Store private key in secure memory temporarily
     const keyId = `send_tx_${Date.now()}`
     
@@ -246,6 +366,11 @@ class BlockchainService {
     decimals: number,
     password: string
   ): Promise<string> {
+    // Validate network type matches wallet type
+    if (wallet.type !== network.type) {
+      throw new Error(`Network type mismatch: wallet is ${wallet.type} but network is ${network.type}`)
+    }
+    
     // Store private key in secure memory temporarily
     const keyId = `send_token_${Date.now()}`
     
@@ -333,6 +458,11 @@ class BlockchainService {
     to: string,
     amount: string
   ): Promise<string> {
+    // Validate network type matches wallet type
+    if (wallet.type !== network.type) {
+      throw new Error(`Network type mismatch: wallet is ${wallet.type} but network is ${network.type}`)
+    }
+    
     try {
       if (wallet.type === 'EVM') {
         return await EVMWalletService.estimateGasFee(wallet.address, to, amount, network.rpcUrl)
@@ -622,6 +752,12 @@ class BlockchainService {
     // Run in background without blocking
     setTimeout(async () => {
       try {
+        // Validate network type matches wallet type
+        if (wallet.type !== network.type) {
+          console.error(`Network type mismatch: wallet is ${wallet.type} but network is ${network.type}`)
+          return
+        }
+        
         // Fetch fresh data directly without going through getBalance to avoid recursion
         const nativeBalance = wallet.type === 'EVM'
           ? await EVMWalletService.getBalance(wallet.address, network.rpcUrl)
@@ -654,6 +790,8 @@ class BlockchainService {
         
         // Calculate token USD values
         let tokensUSD = 0
+        const tokenUSDValues: Record<string, number> = {} // Track USD value per token
+        
         if (tokens.length > 0) {
           const tokenPriceIds: Record<string, string> = {
             'USDC': 'usd-coin',
@@ -674,15 +812,32 @@ class BlockchainService {
             .filter(id => id !== undefined)
           
           if (priceIdsToFetch.length > 0) {
-            const tokenPrices = await this.getPrices(priceIdsToFetch)
-            
-            tokens.forEach(token => {
-              const priceId = tokenPriceIds[token.symbol]
-              if (priceId && tokenPrices[priceId]) {
-                const tokenUSD = parseFloat(token.balance) * tokenPrices[priceId].usd
-                tokensUSD += tokenUSD
+            try {
+              const tokenPrices = await this.getPrices(priceIdsToFetch)
+              
+              tokens.forEach(token => {
+                const priceId = tokenPriceIds[token.symbol]
+                if (priceId && tokenPrices[priceId]) {
+                  const tokenUSD = parseFloat(token.balance) * tokenPrices[priceId].usd
+                  tokenUSDValues[token.address || token.symbol] = tokenUSD
+                  tokensUSD += tokenUSD
+                }
+              })
+            } catch (priceError) {
+              console.error('Failed to fetch fresh token prices in background:', priceError)
+              // Try to use cached price data if fresh fetch fails
+              for (const token of tokens) {
+                const priceId = tokenPriceIds[token.symbol]
+                if (priceId) {
+                  const cachedPrice = await db.priceData.get(priceId)
+                  if (cachedPrice) {
+                    const tokenUSD = parseFloat(token.balance) * cachedPrice.usdPrice
+                    tokenUSDValues[token.address || token.symbol] = tokenUSD
+                    tokensUSD += tokenUSD
+                  }
+                }
               }
-            })
+            }
           }
         }
         
@@ -692,22 +847,21 @@ class BlockchainService {
         const balanceId = `${wallet.address}_${network.id}`
         const previousBalance = await db.walletBalances.get(balanceId)
         
-        // Only update if this is a successful refresh with valid data
-        if (totalUSD > 0 || nativeBalance !== '0') {
-          await db.walletBalances.put({
-            id: balanceId,
-            walletAddress: wallet.address,
-            networkId: network.id,
-            nativeBalance,
-            nativeUSD,
-            totalUSD,
-            previousTotalUSD: previousBalance?.totalUSD,
-            lastUpdated: Date.now()
-          })
-        }
+        // Always update cache with latest successful data
+        await db.walletBalances.put({
+          id: balanceId,
+          walletAddress: wallet.address,
+          networkId: network.id,
+          nativeBalance,
+          nativeUSD,
+          totalUSD,
+          previousTotalUSD: previousBalance?.totalUSD,
+          lastUpdated: Date.now()
+        })
         
-        // Cache token balances
+        // Cache token balances with USD values
         for (const token of tokens) {
+          const tokenKey = token.address || token.symbol
           await db.tokenBalances.put({
             id: `${wallet.address}_${network.id}_${token.address || 'native'}`,
             walletAddress: wallet.address,
@@ -717,6 +871,7 @@ class BlockchainService {
             name: token.name,
             decimals: token.decimals,
             balance: token.balance,
+            usdValue: tokenUSDValues[tokenKey] || 0,
             logoURI: token.logoURI,
             lastUpdated: Date.now()
           })

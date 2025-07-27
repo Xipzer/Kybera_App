@@ -48,9 +48,22 @@ export class EVMWalletService {
   }
 
   static async getBalance(address: string, rpcUrl: string): Promise<string> {
-    const provider = new ethers.JsonRpcProvider(rpcUrl)
-    const balance = await provider.getBalance(address)
-    return ethers.formatEther(balance)
+    // Check if this is a Solana RPC URL
+    if (rpcUrl.includes('solana') || rpcUrl.includes('helius-rpc.com')) {
+      throw new Error('Cannot use EVM wallet service with Solana RPC endpoint')
+    }
+    
+    try {
+      const provider = new ethers.JsonRpcProvider(rpcUrl)
+      const balance = await provider.getBalance(address)
+      return ethers.formatEther(balance)
+    } catch (error: any) {
+      // Check if this is a network detection error that might indicate wrong RPC type
+      if (error.message?.includes('failed to detect network') && rpcUrl.includes('helius-rpc.com')) {
+        throw new Error('Attempted to use Solana RPC endpoint with EVM wallet. Please check network configuration.')
+      }
+      throw error
+    }
   }
 
   static async sendTransaction(
@@ -59,6 +72,11 @@ export class EVMWalletService {
     amount: string,
     rpcUrl: string,
   ): Promise<string> {
+    // Check if this is a Solana RPC URL
+    if (rpcUrl.includes('solana') || rpcUrl.includes('helius-rpc.com')) {
+      throw new Error('Cannot use EVM wallet service with Solana RPC endpoint')
+    }
+    
     // Store private key securely during transaction
     const keyId = `eth_tx_${Date.now()}`
     memoryProtection.storeSensitive(keyId, privateKey, 30000) // 30 second timeout
@@ -101,6 +119,11 @@ export class EVMWalletService {
     amount: string,
     rpcUrl: string
   ): Promise<string> {
+    // Check if this is a Solana RPC URL
+    if (rpcUrl.includes('solana') || rpcUrl.includes('helius-rpc.com')) {
+      throw new Error('Cannot use EVM wallet service with Solana RPC endpoint')
+    }
+    
     try {
       const provider = new ethers.JsonRpcProvider(rpcUrl)
       
@@ -143,6 +166,11 @@ export class EVMWalletService {
     decimals: number,
     rpcUrl: string,
   ): Promise<string> {
+    // Check if this is a Solana RPC URL
+    if (rpcUrl.includes('solana') || rpcUrl.includes('helius-rpc.com')) {
+      throw new Error('Cannot use EVM wallet service with Solana RPC endpoint')
+    }
+    
     // Store private key securely
     const keyId = `erc20_key_${Date.now()}`
     memoryProtection.storeSensitive(keyId, privateKey, 30000)
@@ -182,6 +210,11 @@ export class EVMWalletService {
     walletAddress: string,
     rpcUrl: string,
   ): Promise<{ balance: string; decimals: number }> {
+    // Check if this is a Solana RPC URL
+    if (rpcUrl.includes('solana') || rpcUrl.includes('helius-rpc.com')) {
+      throw new Error('Cannot use EVM wallet service with Solana RPC endpoint')
+    }
+    
     const provider = new ethers.JsonRpcProvider(rpcUrl)
     
     try {

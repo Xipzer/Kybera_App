@@ -81,6 +81,16 @@ export const useWalletStore = create<WalletState>()(
           const activeNetwork = wallet.type === 'EVM' 
             ? state.activeEVMNetwork 
             : state.activeSVMNetwork
+          
+          console.log('setActiveWallet: Switching to wallet', {
+            walletId: id,
+            walletType: wallet.type,
+            walletAddress: wallet.address,
+            newNetworkType: activeNetwork.type,
+            newNetworkName: activeNetwork.name,
+            newNetworkRPC: activeNetwork.rpcUrl
+          })
+          
           set({ activeWalletId: id, activeNetwork })
         } else {
           set({ activeWalletId: id })

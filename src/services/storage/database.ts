@@ -45,6 +45,7 @@ export interface StoredTokenBalance {
   name: string
   decimals: number
   balance: string
+  usdValue?: number // Store USD value at time of caching
   logoURI?: string
   lastUpdated: number
 }
@@ -270,6 +271,29 @@ export class SmartWalletDB extends Dexie {
       priceData: 'id, symbol, lastUpdated',
       priceHistory: 'id, symbol, timestamp',
       walletBalances: 'id, walletAddress, networkId, lastUpdated'
+    })
+    
+    // Version 11 adds usdValue to token balances
+    this.version(11).stores({
+      wallets: '++id, groupId, address, type, order',
+      walletGroups: '++id, createdAt, order',
+      conversations: '++id, createdAt, pinned',
+      messages: '++id, conversationId, timestamp',
+      settings: 'key',
+      auth: 'id',
+      transactions: '++id, hash, from, to, network, timestamp',
+      tokenBalances: 'id, walletAddress, networkId, lastUpdated',
+      priceData: 'id, symbol, lastUpdated',
+      priceHistory: 'id, symbol, timestamp',
+      walletBalances: 'id, walletAddress, networkId, lastUpdated'
+    }).upgrade(async trans => {
+      // Add usdValue field to existing token balances
+      const tokenBalances = await trans.table('tokenBalances').toArray()
+      for (const tokenBalance of tokenBalances) {
+        await trans.table('tokenBalances').update(tokenBalance.id, {
+          usdValue: 0 // Will be updated on next refresh
+        })
+      }
     })
   }
 }
