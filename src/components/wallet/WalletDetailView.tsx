@@ -24,10 +24,20 @@ export function WalletDetailView() {
   const { activeWalletId, wallets, activeNetwork } = useWalletStore()
   const [showSendDialog, setShowSendDialog] = useState(false)
   const [showReceiveDialog, setShowReceiveDialog] = useState(false)
+  const [, forceUpdate] = useState({})
   const { theme: themeConfig, themeName } = useTheme()
 
   const activeWallet = wallets.find((w) => w.id === activeWalletId)
   const { balance, loading, error, refetch } = useWalletBalance(activeWallet, activeNetwork)
+  
+  // Update the time ago display every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      forceUpdate({})
+    }, 1000)
+    
+    return () => clearInterval(interval)
+  }, [])
 
   if (!activeWallet) {
     return (
