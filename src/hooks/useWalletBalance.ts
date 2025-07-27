@@ -113,8 +113,8 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
 
     fetchBalance()
     
-    // Refresh balance every 30 seconds
-    const interval = setInterval(fetchBalance, 30000)
+    // Refresh balance every 5 seconds
+    const interval = setInterval(fetchBalance, 5000)
 
     return () => {
       cancelled = true

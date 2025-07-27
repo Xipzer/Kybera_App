@@ -1,48 +1,18 @@
-import { useState, useEffect } from 'react'
 import { Wallet } from '../../types'
 import { Network } from '../../utils/networks'
 import { formatCryptoBalance, formatUSD } from '../../utils/formatters'
-import { TrendingUp, TrendingDown, RefreshCw } from 'lucide-react'
-import { blockchainService, BlockchainBalance } from '../../services/blockchain/blockchainService'
+import { TrendingUp, TrendingDown } from 'lucide-react'
+import { BlockchainBalance } from '../../services/blockchain/blockchainService'
 
 interface TokenListProps {
   wallet: Wallet
   network: Network
+  balanceData: BlockchainBalance
+  isLoading: boolean
+  error: string | null
 }
 
-export function TokenList({ wallet, network }: TokenListProps) {
-  const [balanceData, setBalanceData] = useState<BlockchainBalance | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchBalances = async (showRefreshIndicator = false) => {
-    try {
-      if (showRefreshIndicator) {
-        setIsRefreshing(true)
-      } else {
-        setIsLoading(true)
-      }
-      setError(null)
-      
-      const data = await blockchainService.getBalance(wallet, network)
-      setBalanceData(data)
-    } catch (err) {
-      console.error('Failed to fetch balances:', err)
-      setError('Failed to load balance data')
-    } finally {
-      setIsLoading(false)
-      setIsRefreshing(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchBalances()
-  }, [wallet.address, network.id])
-
-  const handleRefresh = () => {
-    fetchBalances(true)
-  }
+export function TokenList({ wallet, network, balanceData, isLoading, error }: TokenListProps) {
 
   if (isLoading) {
     return (
@@ -59,24 +29,17 @@ export function TokenList({ wallet, network }: TokenListProps) {
     )
   }
 
-  if (error) {
+  if (error && balanceData.totalUSD === 0) {
     return (
       <div className="p-4">
         <div className="text-center py-8">
           <p className="text-accent mb-2">{error}</p>
-          <button
-            onClick={() => fetchBalances()}
-            className="text-sm text-text-secondary hover:text-text-primary transition-colors"
-          >
-            Try again
-          </button>
+          <p className="text-sm text-text-secondary">
+            Unable to load token data
+          </p>
         </div>
       </div>
     )
-  }
-
-  if (!balanceData) {
-    return null
   }
 
   // Get native currency info
@@ -86,20 +49,6 @@ export function TokenList({ wallet, network }: TokenListProps) {
     decimals: 18
   }
 
-  // Calculate token USD values
-  const tokenPriceIds: Record<string, string> = {
-    'USDC': 'usd-coin',
-    'USDT': 'tether',
-    'DAI': 'dai',
-    'WBTC': 'wrapped-bitcoin',
-    'BUSD': 'binance-usd',
-    'wSOL': 'solana',
-    'mSOL': 'marinade-staked-sol',
-    'BONK': 'bonk',
-    'JUP': 'jupiter-exchange-solana',
-    'PYTH': 'pyth-network',
-    'UXD': 'uxd-stablecoin',
-  }
 
   // Create token list including native currency
   const allTokens = [
@@ -111,21 +60,15 @@ export function TokenList({ wallet, network }: TokenListProps) {
       change24h: 0, // TODO: Get from price data
       isNative: true
     },
-    ...balanceData.tokens.map(token => {
-      // For stablecoins, assume $1 value
-      const isStablecoin = ['USDC', 'USDT', 'DAI', 'BUSD'].includes(token.symbol)
-      const estimatedValue = isStablecoin ? parseFloat(token.balance) : 0
-      
-      return {
-        symbol: token.symbol,
-        name: token.name,
-        balance: token.balance,
-        usdValue: estimatedValue,
-        change24h: 0,
-        isNative: false,
-        address: token.address
-      }
-    })
+    ...balanceData.tokens.map(token => ({
+      symbol: token.symbol,
+      name: token.name,
+      balance: token.balance,
+      usdValue: token.usdValue || 0,
+      change24h: 0,
+      isNative: false,
+      address: token.address
+    }))
   ]
 
   return (

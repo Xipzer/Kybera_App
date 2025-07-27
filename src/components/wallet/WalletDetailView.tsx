@@ -167,7 +167,7 @@ export function WalletDetailView() {
         </Tabs.List>
 
         <Tabs.Content value="tokens" className="flex-1 overflow-y-auto">
-          <TokenList wallet={activeWallet} network={activeNetwork} />
+          <TokenList wallet={activeWallet} network={activeNetwork} balanceData={balance} isLoading={loading} error={error} />
         </Tabs.Content>
 
         <Tabs.Content value="history" className="flex-1 overflow-y-auto">

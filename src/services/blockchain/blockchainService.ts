@@ -256,10 +256,16 @@ class BlockchainService {
         })
       }
       
+      // Add USD values to tokens before returning
+      const tokensWithUSD = tokens.map(token => ({
+        ...token,
+        usdValue: tokenUSDValues[token.address || token.symbol] || 0
+      }))
+      
       return {
         native: nativeBalance,
         nativeUSD,
-        tokens,
+        tokens: tokensWithUSD,
         totalUSD,
         totalUSDChange,
         lastUpdated: Date.now()
@@ -753,6 +759,7 @@ class BlockchainService {
         name: tb.name,
         decimals: tb.decimals,
         balance: tb.balance,
+        usdValue: tb.usdValue,
         logoURI: tb.logoURI
       }))
     } catch (error) {

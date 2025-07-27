@@ -53,6 +53,7 @@ export interface TokenBalance {
   name: string
   decimals: number
   balance: string
+  usdValue?: number
   logoURI?: string
 }
 
