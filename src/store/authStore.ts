@@ -8,21 +8,14 @@ interface AuthState {
   passwordHash: string | null
   passwordSalt: string | null
   isInitialized: boolean
-  failedAttempts: number
-  lastFailedAttempt: number | null
   encryptionSalt: string | null // Separate salt for encryption key derivation
   
   // Actions
   initializePassword: (password: string) => Promise<void>
   verifyPassword: (password: string) => Promise<boolean>
   changePassword: (currentPassword: string, newPassword: string) => Promise<boolean>
-  incrementFailedAttempts: () => void
-  resetFailedAttempts: () => void
-  isLockedOut: () => boolean
 }
 
-const MAX_FAILED_ATTEMPTS = 5
-const LOCKOUT_DURATION = 5 * 60 * 1000 // 5 minutes
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -30,8 +23,6 @@ export const useAuthStore = create<AuthState>()(
       passwordHash: null,
       passwordSalt: null,
       isInitialized: false,
-      failedAttempts: 0,
-      lastFailedAttempt: null,
       encryptionSalt: null,
       
       initializePassword: async (password: string) => {
@@ -51,31 +42,18 @@ export const useAuthStore = create<AuthState>()(
           passwordHash: hash,
           passwordSalt: salt,
           encryptionSalt,
-          isInitialized: true,
-          failedAttempts: 0,
-          lastFailedAttempt: null
+          isInitialized: true
         })
       },
       
       verifyPassword: async (password: string) => {
         const state = get()
         
-        // Check if locked out
-        if (state.isLockedOut()) {
-          return false
-        }
-        
         if (!state.passwordHash || !state.passwordSalt) {
           return false
         }
         
         const isValid = await verifyPassword(password, state.passwordHash, state.passwordSalt)
-        
-        if (isValid) {
-          state.resetFailedAttempts()
-        } else {
-          state.incrementFailedAttempts()
-        }
         
         return isValid
       },
@@ -114,33 +92,6 @@ export const useAuthStore = create<AuthState>()(
         }
       },
       
-      incrementFailedAttempts: () => {
-        set((state) => ({
-          failedAttempts: state.failedAttempts + 1,
-          lastFailedAttempt: Date.now()
-        }))
-      },
-      
-      resetFailedAttempts: () => {
-        set({
-          failedAttempts: 0,
-          lastFailedAttempt: null
-        })
-      },
-      
-      isLockedOut: () => {
-        const state = get()
-        if (state.failedAttempts < MAX_FAILED_ATTEMPTS) {
-          return false
-        }
-        
-        if (!state.lastFailedAttempt) {
-          return false
-        }
-        
-        const timeSinceLastAttempt = Date.now() - state.lastFailedAttempt
-        return timeSinceLastAttempt < LOCKOUT_DURATION
-      }
     }),
     {
       name: 'auth-storage',
@@ -148,9 +99,7 @@ export const useAuthStore = create<AuthState>()(
         passwordHash: state.passwordHash,
         passwordSalt: state.passwordSalt,
         encryptionSalt: state.encryptionSalt,
-        isInitialized: state.isInitialized,
-        failedAttempts: state.failedAttempts,
-        lastFailedAttempt: state.lastFailedAttempt
+        isInitialized: state.isInitialized
       })
     }
   )
