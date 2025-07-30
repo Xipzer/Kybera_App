@@ -2,7 +2,7 @@ import { Wallet } from '../../types'
 import { Network } from '../../utils/networks'
 import { formatCryptoBalance, formatUSD } from '../../utils/formatters'
 import { TrendingUp, TrendingDown } from 'lucide-react'
-import { BlockchainBalance } from '../../services/blockchain/blockchainService'
+import { BlockchainBalance } from '../../services/blockchain/simpleBlockchainService'
 
 interface TokenListProps {
   wallet: Wallet
@@ -58,7 +58,8 @@ export function TokenList({ wallet, network, balanceData, isLoading, error }: To
       balance: balanceData.native,
       usdValue: balanceData.nativeUSD,
       change24h: 0, // TODO: Get from price data
-      isNative: true
+      isNative: true,
+      address: ''
     },
     ...balanceData.tokens.map(token => ({
       symbol: token.symbol,
@@ -67,7 +68,7 @@ export function TokenList({ wallet, network, balanceData, isLoading, error }: To
       usdValue: token.usdValue || 0,
       change24h: 0,
       isNative: false,
-      address: token.address
+      address: token.address || ''
     }))
   ]
 

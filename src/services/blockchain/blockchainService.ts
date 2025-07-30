@@ -3,6 +3,10 @@ import { SVMWalletService } from './svmWallet'
 import { Wallet, Network, Transaction, TokenBalance } from '../../types'
 import { db } from '../storage/database'
 import { memoryProtection } from '../security/memoryProtection'
+import { TokenDiscoveryService } from '../tokenDiscovery/tokenDiscoveryService'
+import { getTokenDiscoveryConfig } from '../../config/tokenDiscoveryConfig'
+import { tokenPriceResolver } from '../tokenDiscovery/priceResolver'
+import { ethers, JsonRpcProvider, Contract, formatUnits, isAddress, ZeroAddress } from 'ethers'
 
 export interface BlockchainBalance {
   native: string
@@ -23,6 +27,12 @@ export interface PriceData {
 class BlockchainService {
   private PRICE_CACHE_DURATION = 60000 // 1 minute
   private BALANCE_CACHE_DURATION = 30000 // 30 seconds for rate limiting
+  private tokenDiscoveryService: TokenDiscoveryService
+  private refreshingBalances: Map<string, boolean> = new Map() // Track active refreshes
+  
+  constructor() {
+    this.tokenDiscoveryService = new TokenDiscoveryService(getTokenDiscoveryConfig())
+  }
 
   async getBalance(wallet: Wallet, network: Network): Promise<BlockchainBalance> {
     // Validate network type matches wallet type
@@ -44,7 +54,11 @@ class BlockchainService {
       // But also trigger a background refresh if it's stale
       const isStale = Date.now() - cachedBalance.lastUpdated > this.BALANCE_CACHE_DURATION
       if (isStale) {
-        this.refreshBalanceInBackground(wallet, network)
+        // Only trigger refresh if not already refreshing
+        const refreshKey = `${wallet.address}_${network.id}`
+        if (!this.refreshingBalances.get(refreshKey)) {
+          this.refreshBalanceInBackground(wallet, network)
+        }
       }
       // Get cached token list
       const tokens = await this.getCachedTokenBalances(wallet, network)
@@ -69,14 +83,10 @@ class BlockchainService {
       
       const totalUSDChange = this.calculateRefreshChange(finalTotalUSD, cachedBalance.previousTotalUSD)
       
-      console.log('Returning cached balance:', {
-        nativeUSD: cachedBalance.nativeUSD,
-        cachedTokensUSD,
-        recalculatedTotalUSD,
-        storedTotalUSD: cachedBalance.totalUSD,
-        finalTotalUSD,
-        tokenCount: tokens.length
-      })
+      // Reduced logging - only log in development mode
+      if (import.meta.env.DEV) {
+        console.log('Returning cached balance')
+      }
       
       return {
         native: cachedBalance.nativeBalance,
@@ -146,102 +156,27 @@ class BlockchainService {
       
       if (tokens.length > 0) {
         try {
-          if (wallet.type === 'EVM') {
-            // For EVM chains, use contract addresses
-            const platformIds: Record<string, string> = {
-              '1': 'ethereum',
-              '56': 'binance-smart-chain',
-              '137': 'polygon-pos',
-              '8453': 'base',
-              '42161': 'arbitrum-one',
-              '10': 'optimistic-ethereum'
+          // Use the new price resolver for all token types
+          const chainId = wallet.type === 'EVM' ? network.chainId : network.chainId
+          const tokenPrices = await tokenPriceResolver.getTokenPrices(tokens, chainId)
+          
+          tokens.forEach(token => {
+            if (tokenPrices[token.address]) {
+              const tokenUSD = parseFloat(token.balance) * tokenPrices[token.address].usd
+              tokenUSDValues[token.address] = tokenUSD
+              tokensUSD += tokenUSD
             }
-            
-            const platformId = platformIds[network.chainId] || 'ethereum'
-            const contractAddresses = tokens.map(t => t.address).filter(addr => addr)
-            
-            if (contractAddresses.length > 0) {
-              const tokenPrices = await this.getTokenPricesByContract(platformId, contractAddresses)
-              
-              tokens.forEach(token => {
-                if (token.address && tokenPrices[token.address]) {
-                  const tokenUSD = parseFloat(token.balance) * tokenPrices[token.address].usd
-                  tokenUSDValues[token.address] = tokenUSD
-                  tokensUSD += tokenUSD
-                }
-              })
-            }
-          } else if (wallet.type === 'SVM') {
-            // For Solana, still use symbol mapping for now
-            // TODO: Use Jupiter API or similar for Solana token prices
-            const tokenPriceIds: Record<string, string> = {
-              'USDC': 'usd-coin',
-              'USDT': 'tether',
-              'wSOL': 'solana',
-              'mSOL': 'marinade-staked-sol',
-              'BONK': 'bonk',
-              'JUP': 'jupiter-exchange-solana',
-              'PYTH': 'pyth-network',
-              'UXD': 'uxd-stablecoin',
-            }
-            
-            const priceIdsToFetch = tokens
-              .map(token => tokenPriceIds[token.symbol])
-              .filter(id => id !== undefined)
-            
-            if (priceIdsToFetch.length > 0) {
-              const tokenPrices = await this.getPrices(priceIdsToFetch)
-              
-              tokens.forEach(token => {
-                const priceId = tokenPriceIds[token.symbol]
-                if (priceId && tokenPrices[priceId]) {
-                  const tokenUSD = parseFloat(token.balance) * tokenPrices[priceId].usd
-                  tokenUSDValues[token.address || token.symbol] = tokenUSD
-                  tokensUSD += tokenUSD
-                }
-              })
-            }
-          }
+          })
         } catch (error) {
           console.error('Failed to fetch token prices:', error)
           // Try to use cached price data if fresh fetch fails
           for (const token of tokens) {
-            let cacheKey: string
-            
-            if (wallet.type === 'EVM' && token.address) {
-              // For EVM, use platform_address as cache key
-              const platformIds: Record<string, string> = {
-                '1': 'ethereum',
-                '56': 'binance-smart-chain',
-                '137': 'polygon-pos',
-                '8453': 'base',
-                '42161': 'arbitrum-one',
-                '10': 'optimistic-ethereum'
-              }
-              const platformId = platformIds[network.chainId] || 'ethereum'
-              cacheKey = `${platformId}_${token.address.toLowerCase()}`
-            } else {
-              // For Solana, use symbol mapping
-              const tokenPriceIds: Record<string, string> = {
-                'USDC': 'usd-coin',
-                'USDT': 'tether',
-                'wSOL': 'solana',
-                'mSOL': 'marinade-staked-sol',
-                'BONK': 'bonk',
-                'JUP': 'jupiter-exchange-solana',
-                'PYTH': 'pyth-network',
-                'UXD': 'uxd-stablecoin',
-              }
-              cacheKey = tokenPriceIds[token.symbol] || ''
-            }
-            
-            if (cacheKey) {
-              const cachedPrice = await db.priceData.get(cacheKey)
-              if (cachedPrice) {
-                const tokenUSD = parseFloat(token.balance) * cachedPrice.usdPrice
-                tokenUSDValues[token.address || token.symbol] = tokenUSD
-                tokensUSD += tokenUSD
-              }
+            const cachedTokenBalance = await db.tokenBalances.get(
+              `${wallet.address}_${network.id}_${token.address || 'native'}`
+            )
+            if (cachedTokenBalance?.usdValue) {
+              tokenUSDValues[token.address] = cachedTokenBalance.usdValue
+              tokensUSD += cachedTokenBalance.usdValue
             }
           }
         }
@@ -254,15 +189,10 @@ class BlockchainService {
       const previousBalance = await db.walletBalances.get(balanceId)
       const totalUSDChange = this.calculateRefreshChange(totalUSD, previousBalance?.totalUSD)
       
-      console.log('Storing balance to cache:', {
-        walletAddress: wallet.address,
-        networkId: network.id,
-        nativeBalance,
-        nativeUSD,
-        tokensUSD,
-        totalUSD,
-        tokenCount: tokens.length
-      })
+      // Reduced logging - only log in development mode
+      if (import.meta.env.DEV) {
+        console.log('Storing balance to cache')
+      }
       
       // Cache the balance data
       await db.walletBalances.put({
@@ -308,7 +238,7 @@ class BlockchainService {
         totalUSDChange,
         lastUpdated: Date.now()
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to get balance:', error)
       
       // Try to return cached data on error
@@ -338,15 +268,10 @@ class BlockchainService {
         
         const totalUSDChange = this.calculateRefreshChange(finalTotalUSD, cachedBalance.previousTotalUSD)
         
-        console.log('Returning cached balance on error:', {
-          nativeUSD: cachedBalance.nativeUSD,
-          cachedTokensUSD,
-          recalculatedTotalUSD,
-          storedTotalUSD: cachedBalance.totalUSD,
-          finalTotalUSD,
-          tokenCount: tokens.length,
-          error: error.message || error
-        })
+        // Reduced logging - only log in development mode
+        if (import.meta.env.DEV) {
+          console.log('Returning cached balance on error')
+        }
         
         return {
           native: cachedBalance.nativeBalance,
@@ -535,18 +460,92 @@ class BlockchainService {
   
   private async getERC20TokenBalances(walletAddress: string, network: Network): Promise<TokenBalance[]> {
     try {
-      // For now, return empty array - tokens will be discovered through other means
-      // such as transaction history, user-added tokens, or indexer services
-      // This prevents missing tokens that aren't in a hardcoded list
+      // Discover tokens for this wallet and network
+      const discoveredTokens = await this.tokenDiscoveryService.discoverTokens(
+        walletAddress,
+        network.chainId
+      )
       
-      // TODO: Implement one of these approaches:
-      // 1. Use an indexer API (Alchemy, Moralis, Covalent, etc.)
-      // 2. Scan Transfer events from blocks
-      // 3. Allow users to manually add token contracts
-      // 4. Use a decentralized token registry
+      if (discoveredTokens.length === 0) {
+        // Only log once, not repeatedly
+        if (import.meta.env.DEV) {
+          console.log(`No tokens discovered for ${network.name}. Users can add tokens manually via the UI.`)
+        }
+        // Return empty array - users can add tokens manually
+        return []
+      }
       
-      console.log(`Token discovery not yet implemented for ${network.name}. Manual token addition required.`)
-      return []
+      // Create provider for balance checking
+      const provider = new JsonRpcProvider(network.rpcUrl)
+      const tokens: TokenBalance[] = []
+      
+      // ERC20 ABI for balanceOf
+      const erc20Abi = [
+        'function balanceOf(address owner) view returns (uint256)',
+        'function decimals() view returns (uint8)',
+        'function symbol() view returns (string)',
+        'function name() view returns (string)'
+      ]
+      
+      // Check balance for each discovered token (limit to prevent RPC overload)
+      const maxTokensToCheck = 100 // Limit number of tokens to check
+      const tokensToCheck = discoveredTokens.slice(0, maxTokensToCheck)
+      
+      for (const tokenInfo of tokensToCheck) {
+        try {
+          // Skip invalid addresses using ethers validation
+          if (!tokenInfo.address || !isAddress(tokenInfo.address)) {
+            continue
+          }
+          
+          // Skip zero address
+          if (tokenInfo.address === ZeroAddress) {
+            continue
+          }
+          
+          // First check if contract exists by getting code at address
+          const code = await provider.getCode(tokenInfo.address)
+          if (code === '0x' || code === '0x0') {
+            // No contract at this address
+            continue
+          }
+          
+          const contract = new Contract(tokenInfo.address, erc20Abi, provider)
+          
+          // Get balance
+          const balance = await contract.balanceOf(walletAddress)
+          
+          // Only include tokens with non-zero balance
+          // In ethers v6, BigNumber methods are different
+          if (balance > 0n) {
+            // Get token details if not already available
+            const decimals = tokenInfo.decimals || await contract.decimals()
+            const symbol = tokenInfo.symbol || await contract.symbol()
+            const name = tokenInfo.name || await contract.name()
+            
+            const formattedBalance = formatUnits(balance, decimals)
+            
+            tokens.push({
+              address: tokenInfo.address,
+              symbol,
+              name,
+              decimals,
+              balance: formattedBalance,
+              logoURI: tokenInfo.logoURI
+            })
+          }
+        } catch (error: any) {
+          // Only log if it's not a common contract error
+          if (!error.message?.includes('missing revert data') && 
+              !error.message?.includes('CALL_EXCEPTION') &&
+              !error.message?.includes('is not defined') &&
+              import.meta.env.DEV) {
+            console.error(`Failed to fetch balance for token ${tokenInfo.address}:`, error.message || error)
+          }
+        }
+      }
+      
+      return tokens
     } catch (error) {
       console.error('Failed to fetch ERC-20 token balances:', error)
       return []
@@ -556,7 +555,6 @@ class BlockchainService {
   private async getSPLTokenBalances(walletAddress: string, rpcUrl: string): Promise<TokenBalance[]> {
     try {
       const { Connection, PublicKey } = await import('@solana/web3.js')
-      const { getMint } = await import('@solana/spl-token')
       const connection = new Connection(rpcUrl, 'confirmed')
       const walletPublicKey = new PublicKey(walletAddress)
       
@@ -567,10 +565,30 @@ class BlockchainService {
       
       const tokens: TokenBalance[] = []
       
-      // First, let's get all tokens and their basic info
+      // Get chainId from RPC URL
+      let chainId = 'mainnet-beta'
+      if (rpcUrl.includes('devnet')) chainId = 'devnet'
+      else if (rpcUrl.includes('testnet')) chainId = 'testnet'
+      
+      // First, discover tokens for this wallet
+      const discoveredTokens = await this.tokenDiscoveryService.discoverTokens(
+        walletAddress,
+        chainId
+      )
+      
+      // Create a map of discovered tokens for quick lookup
       const tokenInfoMap = new Map<string, {symbol: string, name: string, logoURI?: string}>()
       
-      // Fetch token registry once
+      // Add discovered tokens to the map
+      for (const token of discoveredTokens) {
+        tokenInfoMap.set(token.address, {
+          symbol: token.symbol,
+          name: token.name,
+          logoURI: token.logoURI
+        })
+      }
+      
+      // Also fetch token registry as fallback
       try {
         const response = await fetch('https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/src/tokens/solana.tokenlist.json', {
           signal: AbortSignal.timeout(5000)
@@ -578,11 +596,13 @@ class BlockchainService {
         if (response.ok) {
           const tokenList = await response.json()
           tokenList.tokens.forEach((token: any) => {
-            tokenInfoMap.set(token.address, {
-              symbol: token.symbol,
-              name: token.name,
-              logoURI: token.logoURI
-            })
+            if (!tokenInfoMap.has(token.address)) {
+              tokenInfoMap.set(token.address, {
+                symbol: token.symbol,
+                name: token.name,
+                logoURI: token.logoURI
+              })
+            }
           })
         }
       } catch (error) {
@@ -766,12 +786,18 @@ class BlockchainService {
   }
   
   private async refreshBalanceInBackground(wallet: Wallet, network: Network): Promise<void> {
+    const refreshKey = `${wallet.address}_${network.id}`
+    
+    // Mark as refreshing
+    this.refreshingBalances.set(refreshKey, true)
+    
     // Run in background without blocking
     setTimeout(async () => {
       try {
         // Validate network type matches wallet type
         if (wallet.type !== network.type) {
           console.error(`Network type mismatch: wallet is ${wallet.type} but network is ${network.type}`)
+          this.refreshingBalances.delete(refreshKey)
           return
         }
         
@@ -824,99 +850,27 @@ class BlockchainService {
         
         if (tokens.length > 0) {
           try {
-            if (wallet.type === 'EVM') {
-              // For EVM chains, use contract addresses
-              const platformIds: Record<string, string> = {
-                '1': 'ethereum',
-                '56': 'binance-smart-chain',
-                '137': 'polygon-pos',
-                '8453': 'base',
-                '42161': 'arbitrum-one',
-                '10': 'optimistic-ethereum'
+            // Use the new price resolver for all token types
+            const chainId = wallet.type === 'EVM' ? network.chainId : network.chainId
+            const tokenPrices = await tokenPriceResolver.getTokenPrices(tokens, chainId)
+            
+            tokens.forEach(token => {
+              if (tokenPrices[token.address]) {
+                const tokenUSD = parseFloat(token.balance) * tokenPrices[token.address].usd
+                tokenUSDValues[token.address] = tokenUSD
+                tokensUSD += tokenUSD
               }
-              
-              const platformId = platformIds[network.chainId] || 'ethereum'
-              const contractAddresses = tokens.map(t => t.address).filter(addr => addr)
-              
-              if (contractAddresses.length > 0) {
-                const tokenPrices = await this.getTokenPricesByContract(platformId, contractAddresses)
-                
-                tokens.forEach(token => {
-                  if (token.address && tokenPrices[token.address]) {
-                    const tokenUSD = parseFloat(token.balance) * tokenPrices[token.address].usd
-                    tokenUSDValues[token.address] = tokenUSD
-                    tokensUSD += tokenUSD
-                  }
-                })
-              }
-            } else if (wallet.type === 'SVM') {
-              // For Solana, still use symbol mapping
-              const tokenPriceIds: Record<string, string> = {
-                'USDC': 'usd-coin',
-                'USDT': 'tether',
-                'wSOL': 'solana',
-                'mSOL': 'marinade-staked-sol',
-                'BONK': 'bonk',
-                'JUP': 'jupiter-exchange-solana',
-                'PYTH': 'pyth-network',
-                'UXD': 'uxd-stablecoin',
-              }
-              
-              const priceIdsToFetch = tokens
-                .map(token => tokenPriceIds[token.symbol])
-                .filter(id => id !== undefined)
-              
-              if (priceIdsToFetch.length > 0) {
-                const tokenPrices = await this.getPrices(priceIdsToFetch)
-                
-                tokens.forEach(token => {
-                  const priceId = tokenPriceIds[token.symbol]
-                  if (priceId && tokenPrices[priceId]) {
-                    const tokenUSD = parseFloat(token.balance) * tokenPrices[priceId].usd
-                    tokenUSDValues[token.address || token.symbol] = tokenUSD
-                    tokensUSD += tokenUSD
-                  }
-                })
-              }
-            }
+            })
           } catch (priceError) {
             console.error('Failed to fetch fresh token prices in background:', priceError)
-            // Use same fallback logic as main fetch
+            // Use cached balance data as fallback
             for (const token of tokens) {
-              let cacheKey: string
-              
-              if (wallet.type === 'EVM' && token.address) {
-                const platformIds: Record<string, string> = {
-                  '1': 'ethereum',
-                  '56': 'binance-smart-chain',
-                  '137': 'polygon-pos',
-                  '8453': 'base',
-                  '42161': 'arbitrum-one',
-                  '10': 'optimistic-ethereum'
-                }
-                const platformId = platformIds[network.chainId] || 'ethereum'
-                cacheKey = `${platformId}_${token.address.toLowerCase()}`
-              } else {
-                const tokenPriceIds: Record<string, string> = {
-                  'USDC': 'usd-coin',
-                  'USDT': 'tether',
-                  'wSOL': 'solana',
-                  'mSOL': 'marinade-staked-sol',
-                  'BONK': 'bonk',
-                  'JUP': 'jupiter-exchange-solana',
-                  'PYTH': 'pyth-network',
-                  'UXD': 'uxd-stablecoin',
-                }
-                cacheKey = tokenPriceIds[token.symbol] || ''
-              }
-              
-              if (cacheKey) {
-                const cachedPrice = await db.priceData.get(cacheKey)
-                if (cachedPrice) {
-                  const tokenUSD = parseFloat(token.balance) * cachedPrice.usdPrice
-                  tokenUSDValues[token.address || token.symbol] = tokenUSD
-                  tokensUSD += tokenUSD
-                }
+              const cachedTokenBalance = await db.tokenBalances.get(
+                `${wallet.address}_${network.id}_${token.address || 'native'}`
+              )
+              if (cachedTokenBalance?.usdValue) {
+                tokenUSDValues[token.address] = cachedTokenBalance.usdValue
+                tokensUSD += cachedTokenBalance.usdValue
               }
             }
           }
@@ -959,6 +913,9 @@ class BlockchainService {
         }
       } catch (error) {
         console.error('Failed to refresh balance in background:', error)
+      } finally {
+        // Always clear the refreshing flag
+        this.refreshingBalances.delete(refreshKey)
       }
     }, 0)
   }

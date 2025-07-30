@@ -24,7 +24,7 @@ export const EVM_NETWORKS: Network[] = [
     id: 'base',
     name: 'Base',
     chainId: 8453,
-    rpcUrl: 'https://mainnet.base.org',
+    rpcUrl: 'https://base-mainnet.g.alchemy.com/v2/cBCJuIqmLxI3eeYj0vQaa',
     symbol: 'ETH',
     explorer: 'https://basescan.org',
     explorerUrl: 'https://basescan.org',

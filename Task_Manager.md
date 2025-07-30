@@ -1,4 +1,4 @@
-# Task_Manager.md - SmartWallet AI Development Roadmap
+# Task_Manager.md - OpenWallet Development Roadmap
 
 ## Major Tasks & Checklist
 

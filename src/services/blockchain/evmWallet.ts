@@ -148,6 +148,53 @@ export class EVMWalletService {
       return '0.001'
     }
   }
+  
+  // Alias for compatibility
+  static async estimateTransactionFee(
+    from: string,
+    rpcUrl: string,
+    to: string,
+    amount?: string
+  ): Promise<string> {
+    return this.estimateGasFee(from, to, amount || '0', rpcUrl)
+  }
+  
+  static async sendToken(
+    privateKey: string,
+    rpcUrl: string,
+    tokenAddress: string,
+    to: string,
+    amount: string,
+    decimals: number
+  ): Promise<string> {
+    // Store private key securely during transaction
+    const keyId = `eth_token_tx_${Date.now()}`
+    memoryProtection.storeSensitive(keyId, privateKey, 30000) // 30 second timeout
+    
+    try {
+      const provider = new ethers.JsonRpcProvider(rpcUrl)
+      const securePrivateKey = memoryProtection.getSensitive(keyId)
+      if (!securePrivateKey) throw new Error('Failed to retrieve secure key')
+      
+      const wallet = new ethers.Wallet(securePrivateKey, provider)
+      
+      // ERC20 ABI for transfer
+      const erc20Abi = ['function transfer(address to, uint256 amount) returns (bool)']
+      const contract = new ethers.Contract(tokenAddress, erc20Abi, wallet)
+      
+      // Convert amount to token units
+      const tokenAmount = ethers.parseUnits(amount, decimals)
+      
+      // Send transaction
+      const tx = await contract.transfer(to, tokenAmount)
+      await tx.wait()
+      
+      return tx.hash
+    } finally {
+      // Always wipe the key
+      memoryProtection.wipeSensitive(keyId)
+    }
+  }
 
   static isValidPrivateKey(privateKey: string): boolean {
     try {

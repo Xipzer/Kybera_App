@@ -139,7 +139,7 @@ export function UnlockScreen() {
                 <Wallet className="w-8 h-8 text-white" />
               </div>
             )}
-            <h1 className="text-2xl font-bold text-text-primary">SmartWallet AI</h1>
+            <h1 className="text-2xl font-bold text-text-primary">OpenWallet</h1>
             <p className="text-text-secondary mt-2">
               {!isInitialized
                 ? 'Create a password to secure your wallet'

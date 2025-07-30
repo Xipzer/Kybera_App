@@ -1,4 +1,4 @@
-# Update_Manager.md - SmartWallet AI Development Updates
+# Update_Manager.md - OpenWallet Development Updates
 
 ## Update Log
 

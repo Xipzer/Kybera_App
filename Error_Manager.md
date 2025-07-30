@@ -1,4 +1,4 @@
-# Error_Manager.md - SmartWallet AI Error Tracking
+# Error_Manager.md - OpenWallet Error Tracking
 
 ## Error Log
 

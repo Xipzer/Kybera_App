@@ -76,6 +76,32 @@ export interface StoredWalletBalance {
   previousTotalUSD?: number // Store previous value for delta calculation
 }
 
+export interface StoredDiscoveredToken {
+  id: string // walletAddress_chainId_tokenAddress
+  walletAddress: string
+  chainId: string
+  tokenAddress: string
+  symbol: string
+  name: string
+  decimals: number
+  logoURI?: string
+  tags?: string[]
+  addedManually: boolean
+  discoveredAt: number
+  lastSeen: number
+}
+
+export interface StoredTokenMetadata {
+  id: string // chainId_tokenAddress
+  chainId: number
+  address: string
+  name: string
+  symbol: string
+  decimals: number
+  logoURI?: string
+  lastUpdated: number
+}
+
 export class SmartWalletDB extends Dexie {
   wallets!: Table<StoredWallet>
   walletGroups!: Table<StoredWalletGroup>
@@ -88,6 +114,8 @@ export class SmartWalletDB extends Dexie {
   priceData!: Table<StoredPriceData>
   priceHistory!: Table<StoredPriceHistory>
   walletBalances!: Table<StoredWalletBalance>
+  discoveredTokens!: Table<StoredDiscoveredToken>
+  tokenMetadata!: Table<StoredTokenMetadata>
 
   constructor() {
     super('SmartWalletDB')
@@ -294,6 +322,39 @@ export class SmartWalletDB extends Dexie {
           usdValue: 0 // Will be updated on next refresh
         })
       }
+    })
+    
+    // Version 12 adds discovered tokens table
+    this.version(12).stores({
+      wallets: '++id, groupId, address, type, order',
+      walletGroups: '++id, createdAt, order',
+      conversations: '++id, createdAt, pinned',
+      messages: '++id, conversationId, timestamp',
+      settings: 'key',
+      auth: 'id',
+      transactions: '++id, hash, from, to, network, timestamp',
+      tokenBalances: 'id, walletAddress, networkId, lastUpdated',
+      priceData: 'id, symbol, lastUpdated',
+      priceHistory: 'id, symbol, timestamp',
+      walletBalances: 'id, walletAddress, networkId, lastUpdated',
+      discoveredTokens: 'id, walletAddress, chainId, tokenAddress, discoveredAt, lastSeen'
+    })
+    
+    // Version 13 adds token metadata table
+    this.version(13).stores({
+      wallets: '++id, groupId, address, type, order',
+      walletGroups: '++id, createdAt, order',
+      conversations: '++id, createdAt, pinned',
+      messages: '++id, conversationId, timestamp',
+      settings: 'key',
+      auth: 'id',
+      transactions: '++id, hash, from, to, network, timestamp',
+      tokenBalances: 'id, walletAddress, networkId, lastUpdated',
+      priceData: 'id, symbol, lastUpdated',
+      priceHistory: 'id, symbol, timestamp',
+      walletBalances: 'id, walletAddress, networkId, lastUpdated',
+      discoveredTokens: 'id, walletAddress, chainId, tokenAddress, discoveredAt, lastSeen',
+      tokenMetadata: 'id, chainId, address, lastUpdated'
     })
   }
 }

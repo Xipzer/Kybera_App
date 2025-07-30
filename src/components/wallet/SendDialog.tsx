@@ -6,7 +6,10 @@ import * as Popover from '@radix-ui/react-popover'
 import { X, Send, AlertCircle, ExternalLink, ChevronDown, Wallet as WalletIcon, Users, Search } from 'lucide-react'
 import { Wallet } from '../../types'
 import { Network } from '../../utils/networks'
-import { blockchainService, BlockchainBalance } from '../../services/blockchain/blockchainService'
+import { SimpleBlockchainService, BlockchainBalance } from '../../services/blockchain/simpleBlockchainService'
+
+// Create a singleton instance
+const simpleBlockchainService = new SimpleBlockchainService()
 import { useWalletStore } from '../../store/walletStore'
 import { useTheme } from '../../hooks/useTheme'
 import { formatAddress, formatCryptoBalance, formatUSD } from '../../utils/formatters'
@@ -74,11 +77,22 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
     const fetchBalances = async () => {
       if (!fromWallet) return
       
+      // Validate that wallet type matches network type
+      if (fromWallet.type !== network.type) {
+        console.warn('Wallet type mismatch in SendDialog - skipping balance fetch', {
+          walletType: fromWallet.type,
+          networkType: network.type
+        })
+        setAvailableTokens([])
+        setSelectedToken(null)
+        return
+      }
+      
       setIsLoadingBalances(true)
       // Don't reset to null to avoid controlled/uncontrolled warning
       
       try {
-        const data = await blockchainService.getBalance(fromWallet, network)
+        const data = await simpleBlockchainService.getBalance(fromWallet, network)
         setBalanceData(data)
         
         // Prepare token options
@@ -148,7 +162,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
     }
     
     // Validate recipient address
-    if (!blockchainService.validateAddress(recipient, fromWallet.type)) {
+    if (!simpleBlockchainService.validateAddress(recipient, fromWallet.type)) {
       setError('Invalid recipient address')
       return
     }
@@ -172,7 +186,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
       
       if (selectedToken.isNative) {
         // Send native token
-        hash = await blockchainService.sendTransaction(
+        hash = await simpleBlockchainService.sendTransaction(
           fromWallet,
           network,
           recipient,
@@ -181,7 +195,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
         )
       } else {
         // Send token
-        hash = await blockchainService.sendToken(
+        hash = await simpleBlockchainService.sendToken(
           fromWallet,
           network,
           selectedToken.address!,
@@ -466,7 +480,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                               // Use a default recipient if none provided for fee estimation
                               const toAddress = recipient || fromWallet.address
                               
-                              const fee = await blockchainService.estimateTransactionFee(
+                              const fee = await simpleBlockchainService.estimateTransactionFee(
                                 fromWallet,
                                 network,
                                 toAddress,

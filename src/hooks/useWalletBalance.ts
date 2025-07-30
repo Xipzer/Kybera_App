@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Wallet, Network } from '../types'
-import { blockchainService, BlockchainBalance } from '../services/blockchain/blockchainService'
+import { SimpleBlockchainService, BlockchainBalance } from '../services/blockchain/simpleBlockchainService'
 import { db } from '../services/storage/database'
+
+// Create a singleton instance
+const simpleBlockchainService = new SimpleBlockchainService()
 
 export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
   const [balance, setBalance] = useState<BlockchainBalance>({
@@ -66,6 +69,7 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
   useEffect(() => {
     if (!wallet) {
       setHasInitialized(false)
+      simpleBlockchainService.stopAllPolling()
       return
     }
 
@@ -82,43 +86,20 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
       return
     }
 
-    let cancelled = false
-
-    const fetchBalance = async () => {
-      try {
-        // Only show loading on first fetch, not on refreshes
-        if (!hasInitialized) {
-          setLoading(true)
-        }
-        setError(null)
-        
-        const result = await blockchainService.getBalance(wallet, network)
-        
-        if (!cancelled) {
-          setBalance(result)
-          setHasInitialized(true)
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to fetch balance')
-          // Don't reset balance to default - keep the cached value
-          setHasInitialized(true) // Mark as initialized even on error
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
-      }
+    // Start polling with the simple blockchain service
+    setError(null)
+    if (!hasInitialized) {
+      setLoading(true)
     }
 
-    fetchBalance()
-    
-    // Refresh balance every 5 seconds
-    const interval = setInterval(fetchBalance, 5000)
+    simpleBlockchainService.startPolling(wallet, network, (newBalance) => {
+      setBalance(newBalance)
+      setHasInitialized(true)
+      setLoading(false)
+    })
 
     return () => {
-      cancelled = true
-      clearInterval(interval)
+      simpleBlockchainService.stopPolling(wallet, network)
     }
   }, [wallet, network])
 
@@ -126,7 +107,7 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
     if (wallet) {
       setError(null)
       try {
-        const result = await blockchainService.getBalance(wallet, network)
+        const result = await simpleBlockchainService.getBalance(wallet, network)
         setBalance(result)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch balance')

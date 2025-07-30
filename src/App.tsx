@@ -9,6 +9,7 @@ import { ResponsiveLayout } from './components/layout/ResponsiveLayout'
 import { ChatInterface } from './components/chat/ChatInterface'
 import { UnlockScreen } from './components/auth/UnlockScreen'
 import { initializeMemoryProtection } from './services/security/memoryProtection'
+import { cleanupDiscoveredTokens } from './utils/cleanupTokens'
 
 const queryClient = new QueryClient()
 
@@ -21,6 +22,15 @@ function App() {
   useEffect(() => {
     // Initialize security and memory protection
     initializeMemoryProtection()
+    
+    // One-time cleanup of accumulated tokens to fix RPC overload
+    cleanupDiscoveredTokens()
+      .then(result => {
+        console.log('Token cleanup completed:', result)
+      })
+      .catch(error => {
+        console.error('Token cleanup failed:', error)
+      })
   }, [])
 
   useEffect(() => {
