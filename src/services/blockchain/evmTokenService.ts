@@ -65,23 +65,33 @@ export class EVMTokenService {
             return tokenInfo
           }
           return null
-        } catch (error) {
-          console.error(`Failed to fetch token ${tokenAddress}:`, error)
-          // Try to use cached data if available
-          const cached = await this.getCachedTokenInfo(tokenAddress)
-          if (cached) {
-            // Still need to get current balance
-            try {
-              const balance = await this.getTokenBalance(tokenAddress, walletAddress)
-              return {
-                ...cached,
-                address: tokenAddress,
-                balance
-              }
-            } catch (balanceError) {
-              console.error(`Failed to fetch balance for cached token ${tokenAddress}`)
+        } catch (error: any) {
+          // For manually added tokens, always show them even if fetch fails
+          const discoveredToken = await db.discoveredTokens
+            .where('[walletAddress+chainId+tokenAddress]')
+            .equals([walletAddress, this.chainId.toString(), tokenAddress.toLowerCase()])
+            .first()
+          
+          if (discoveredToken && discoveredToken.addedManually) {
+            // Don't spam console with expected errors
+            if (error.code !== 'CALL_EXCEPTION') {
+              console.error(`Failed to fetch token ${tokenAddress}:`, error)
+            }
+            
+            // Try to use cached metadata first
+            const cached = await this.getCachedTokenInfo(tokenAddress)
+            
+            return {
+              address: tokenAddress.toLowerCase(),
+              name: cached?.name || discoveredToken.name || 'Unknown Token',
+              symbol: cached?.symbol || discoveredToken.symbol || 'UNKNOWN',
+              decimals: cached?.decimals || discoveredToken.decimals || 18,
+              balance: '0',
+              logoURI: cached?.logoURI || discoveredToken.logoURI
             }
           }
+          
+          console.error(`Failed to fetch token ${tokenAddress}:`, error)
           return null
         }
       })
@@ -109,16 +119,18 @@ export class EVMTokenService {
       return null
     }
     
+    // Check if we have cached metadata first
+    const cached = await this.getCachedTokenInfo(tokenAddress)
+    let name = cached?.name || 'Unknown Token'
+    let symbol = cached?.symbol || 'UNKNOWN'
+    let decimals = cached?.decimals || 18
+    let logoURI = cached?.logoURI
+    
     const contract = new Contract(tokenAddress, ERC20_ABI, this.provider)
     
     try {
-      // Try to get metadata - some contracts may not implement all methods
-      let name = 'Unknown Token'
-      let symbol = 'UNKNOWN'
-      let decimals = 18
-      
-      try {
-        // Try to fetch metadata individually with fallbacks
+      // Only fetch metadata if not cached
+      if (!cached) {
         try {
           name = await contract.name()
         } catch {
@@ -136,19 +148,39 @@ export class EVMTokenService {
         } catch {
           // Fallback to 18
         }
-      } catch (metadataError) {
-        console.warn(`Failed to fetch metadata for token ${tokenAddress}, using defaults`)
       }
       
-      // Get balance after metadata
-      const balance = await contract.balanceOf(walletAddress)
+      // Get balance with retry for intermittent failures
+      let balance: bigint = BigInt(0)
+      
+      // Try up to 3 times for intermittent RPC failures
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          balance = await contract.balanceOf(walletAddress)
+          break // Success, exit loop
+        } catch (balanceError: any) {
+          // If it's a CALL_EXCEPTION, don't retry - this is a contract issue
+          if (balanceError.code === 'CALL_EXCEPTION') {
+            throw balanceError
+          }
+          
+          // For other errors (network, timeout, etc), retry
+          if (attempt < 3) {
+            await new Promise(resolve => setTimeout(resolve, 100 * attempt)) // Brief delay
+          } else {
+            console.error(`Failed to fetch balance for ${tokenAddress} after 3 attempts:`, balanceError)
+            throw balanceError
+          }
+        }
+      }
       
       const tokenInfo: TokenInfo = {
         address: tokenAddress.toLowerCase(),
         name,
         symbol,
         decimals,
-        balance: ethers.formatUnits(balance, decimals)
+        balance: ethers.formatUnits(balance, decimals),
+        logoURI
       }
       
       // Cache the token metadata (not balance)
@@ -170,6 +202,7 @@ export class EVMTokenService {
     const decimals = cached?.decimals || 18
     
     const balance = await contract.balanceOf(walletAddress)
+    
     return ethers.formatUnits(balance, decimals)
   }
   
