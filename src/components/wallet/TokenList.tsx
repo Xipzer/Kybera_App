@@ -170,9 +170,12 @@ export function TokenList({ wallet, network, balanceData, isLoading, error }: To
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
             <button className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors bg-surface-elevated ${theme.styles.listItemHover} min-w-[160px]`}>
-              <span className={`text-sm font-medium ${theme.styles.textPrimary}`}>
-                {filterMode === 'current' ? 'Current Network' : 'All Networks'}
-              </span>
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${filterMode === 'all' ? 'bg-blue-500' : 'bg-green-500'}`} />
+                <span className={`text-sm font-medium ${theme.styles.textPrimary}`}>
+                  {filterMode === 'current' ? 'Current Network' : 'All Networks'}
+                </span>
+              </div>
               <ChevronDown className={`w-4 h-4 ${theme.styles.iconSecondary}`} />
             </button>
           </DropdownMenu.Trigger>
@@ -191,6 +194,7 @@ export function TokenList({ wallet, network, balanceData, isLoading, error }: To
                     : theme.styles.dropdown.itemHover
                 }`}
               >
+                <div className="w-2 h-2 bg-green-500 rounded-full" />
                 Current Network
               </DropdownMenu.Item>
               <DropdownMenu.Item
@@ -201,6 +205,7 @@ export function TokenList({ wallet, network, balanceData, isLoading, error }: To
                     : theme.styles.dropdown.itemHover
                 }`}
               >
+                <div className="w-2 h-2 bg-blue-500 rounded-full" />
                 All {wallet.type === 'EVM' ? 'EVM' : 'SVM'} Networks
               </DropdownMenu.Item>
             </DropdownMenu.Content>
@@ -210,11 +215,16 @@ export function TokenList({ wallet, network, balanceData, isLoading, error }: To
         {/* Add token button */}
         <button
           onClick={() => setShowAddTokenDialog(true)}
-          className={`flex items-center justify-center gap-2 ${theme.styles.buttonSecondary}`}
-          style={theme.dynamicStyles.buttonSecondary}
+          className={`flex items-center justify-center ${theme.styles.buttonPrimary} rounded-lg`}
+          style={{
+            ...theme.dynamicStyles.buttonPrimary,
+            width: '36px',
+            height: '36px',
+            padding: 0
+          }}
+          title="Add Token"
         >
           <Plus className="w-4 h-4" />
-          <span>Add Token</span>
         </button>
       </div>
 

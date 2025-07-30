@@ -66,4 +66,9 @@ export interface Transaction {
   status: 'pending' | 'confirmed' | 'failed'
   timestamp: Date
   network: string
+  tokenAddress?: string // For token transfers
+  tokenSymbol?: string // For display
+  tokenDecimals?: number // For proper formatting
+  gasUsed?: string // Transaction fee
+  blockNumber?: number // For confirmation tracking
 }

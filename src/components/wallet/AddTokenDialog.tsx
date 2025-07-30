@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
-import { X, Plus } from 'lucide-react'
+import * as Dialog from '@radix-ui/react-dialog'
+import { X, Plus, AlertCircle } from 'lucide-react'
 import { Network } from '../../types'
 import { db } from '../../services/storage/database'
 import { JsonRpcProvider, Contract, isAddress } from 'ethers'
+import { useTheme } from '../../hooks/useTheme'
 
 interface AddTokenDialogProps {
   isOpen: boolean
@@ -13,6 +15,7 @@ interface AddTokenDialogProps {
 }
 
 export function AddTokenDialog({ isOpen, onClose, walletAddress, network, onTokenAdded }: AddTokenDialogProps) {
+  const { theme } = useTheme()
   const [tokenAddress, setTokenAddress] = useState('')
   const [tokenSymbol, setTokenSymbol] = useState('')
   const [tokenName, setTokenName] = useState('')
@@ -120,129 +123,156 @@ export function AddTokenDialog({ isOpen, onClose, walletAddress, network, onToke
     }
   }
 
-  if (!isOpen) return null
+  const handleClose = () => {
+    setTokenAddress('')
+    setTokenSymbol('')
+    setTokenName('')
+    setTokenDecimals('18')
+    setLogoURI('')
+    setError('')
+    onClose()
+  }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-gray-900 rounded-lg p-6 max-w-md w-full">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Add Custom Token</h2>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-gray-800 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Token Address
-              </label>
-              <input
-                type="text"
-                value={tokenAddress}
-                onChange={(e) => handleAddressChange(e.target.value)}
-                placeholder={network.type === 'EVM' ? '0x...' : 'Token mint address'}
-                className="w-full px-3 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
+    <Dialog.Root open={isOpen} onOpenChange={onClose}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="dialog-overlay" />
+        <Dialog.Content className={`dialog-content w-[500px] max-h-[85vh] overflow-y-auto ${theme.styles.dialogContainer}`}>
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <Dialog.Title className={theme.styles.heading}>
+                Add Custom Token
+              </Dialog.Title>
+              <Dialog.Close asChild>
+                <button
+                  onClick={handleClose}
+                  className={theme.styles.buttonIcon}
+                >
+                  <X className={`w-5 h-5 ${theme.styles.iconSecondary}`} />
+                </button>
+              </Dialog.Close>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Token Symbol
-              </label>
-              <input
-                type="text"
-                value={tokenSymbol}
-                onChange={(e) => setTokenSymbol(e.target.value)}
-                placeholder="e.g., USDC"
-                className="w-full px-3 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-                disabled={autoDetecting}
-              />
-            </div>
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-4">
+                <div>
+                  <label className={theme.styles.label}>
+                    Token Address
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={tokenAddress}
+                      onChange={(e) => handleAddressChange(e.target.value)}
+                      placeholder={network.type === 'EVM' ? '0x...' : 'Token mint address'}
+                      className={theme.styles.input}
+                      required
+                    />
+                    {autoDetecting && (
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                        <div className="w-4 h-4 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Token Name
-              </label>
-              <input
-                type="text"
-                value={tokenName}
-                onChange={(e) => setTokenName(e.target.value)}
-                placeholder="e.g., USD Coin"
-                className="w-full px-3 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-                disabled={autoDetecting}
-              />
-            </div>
+                <div>
+                  <label className={theme.styles.label}>
+                    Token Symbol
+                  </label>
+                  <input
+                    type="text"
+                    value={tokenSymbol}
+                    onChange={(e) => setTokenSymbol(e.target.value)}
+                    placeholder="e.g., USDC"
+                    className={theme.styles.input}
+                    required
+                    disabled={autoDetecting}
+                  />
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Decimals
-              </label>
-              <input
-                type="number"
-                value={tokenDecimals}
-                onChange={(e) => setTokenDecimals(e.target.value)}
-                placeholder="18"
-                min="0"
-                max="18"
-                className="w-full px-3 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-                disabled={autoDetecting}
-              />
-            </div>
+                <div>
+                  <label className={theme.styles.label}>
+                    Token Name
+                  </label>
+                  <input
+                    type="text"
+                    value={tokenName}
+                    onChange={(e) => setTokenName(e.target.value)}
+                    placeholder="e.g., USD Coin"
+                    className={theme.styles.input}
+                    required
+                    disabled={autoDetecting}
+                  />
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Logo URL (optional)
-              </label>
-              <input
-                type="url"
-                value={logoURI}
-                onChange={(e) => setLogoURI(e.target.value)}
-                placeholder="https://..."
-                className="w-full px-3 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
+                <div>
+                  <label className={theme.styles.label}>
+                    Decimals
+                  </label>
+                  <input
+                    type="number"
+                    value={tokenDecimals}
+                    onChange={(e) => setTokenDecimals(e.target.value)}
+                    placeholder="18"
+                    min="0"
+                    max="18"
+                    className={theme.styles.input}
+                    required
+                    disabled={autoDetecting}
+                  />
+                </div>
 
-          {error && (
-            <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
-              {error}
-            </div>
-          )}
+                <div>
+                  <label className={theme.styles.label}>
+                    Logo URL (optional)
+                  </label>
+                  <input
+                    type="url"
+                    value={logoURI}
+                    onChange={(e) => setLogoURI(e.target.value)}
+                    placeholder="https://..."
+                    className={theme.styles.input}
+                  />
+                </div>
+              </div>
 
-          <div className="mt-6 flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading || autoDetecting}
-              className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 rounded-lg transition-colors flex items-center justify-center gap-2"
-            >
-              {isLoading ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <>
-                  <Plus className="w-4 h-4" />
-                  Add Token
-                </>
+              {error && (
+                <div className={theme.styles.error.container}>
+                  <AlertCircle className={theme.styles.error.icon} />
+                  <p className={theme.styles.error.text}>{error}</p>
+                </div>
               )}
-            </button>
+
+              <div className="mt-6 flex gap-3">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className={`flex-1 flex items-center justify-center gap-2 ${theme.styles.buttonSecondary}`}
+                  style={theme.dynamicStyles.buttonSecondary}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading || autoDetecting}
+                  className={`flex-1 flex items-center justify-center gap-2 ${theme.styles.buttonPrimary} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  style={theme.dynamicStyles.buttonPrimary}
+                >
+                  {isLoading ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" />
+                      Add Token
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
-        </form>
-      </div>
-    </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   )
 }

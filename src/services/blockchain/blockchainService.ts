@@ -1,8 +1,9 @@
 import { EVMWalletService } from './evmWallet'
 import { SVMWalletService } from './svmWallet'
 import { EVMService } from './evmService'
-import { Wallet, Network, TokenBalance } from '../../types'
+import { Wallet, Network, TokenBalance, Transaction } from '../../types'
 import { db } from '../storage/database'
+import { transactionMonitor } from '../transactions/transactionMonitor'
 
 export interface BlockchainBalance {
   native: string
@@ -413,13 +414,26 @@ export class BlockchainService {
       throw new Error('Wallet does not have a private key')
     }
 
+    let hash: string
+
     if (wallet.type === 'EVM') {
       const privateKey = EVMWalletService.decryptPrivateKey(wallet.encryptedPrivateKey, password)
-      return EVMWalletService.sendTransaction(privateKey, to, amount, network.rpcUrl)
+      hash = await EVMWalletService.sendTransaction(privateKey, to, amount, network.rpcUrl)
     } else {
       const privateKey = SVMWalletService.decryptPrivateKey(wallet.encryptedPrivateKey, password)
-      return SVMWalletService.sendTransaction(privateKey, to, amount, network.rpcUrl)
+      hash = await SVMWalletService.sendTransaction(privateKey, to, amount, network.rpcUrl)
     }
+
+    // Record the transaction
+    await transactionMonitor.recordTransaction(
+      hash,
+      wallet.address,
+      to,
+      amount,
+      network
+    )
+
+    return hash
   }
 
   /**
@@ -433,14 +447,17 @@ export class BlockchainService {
     amount: string,
     decimals: number,
     password: string,
+    tokenSymbol?: string,
   ): Promise<string> {
     if (!wallet.encryptedPrivateKey) {
       throw new Error('Wallet does not have a private key')
     }
 
+    let hash: string
+
     if (wallet.type === 'EVM') {
       const privateKey = EVMWalletService.decryptPrivateKey(wallet.encryptedPrivateKey, password)
-      return EVMWalletService.sendToken(
+      hash = await EVMWalletService.sendToken(
         privateKey,
         network.rpcUrl,
         tokenAddress,
@@ -452,6 +469,22 @@ export class BlockchainService {
       // TODO: Implement Solana token sending
       throw new Error('Solana token sending not yet implemented')
     }
+
+    // Record the transaction
+    await transactionMonitor.recordTransaction(
+      hash,
+      wallet.address,
+      to,
+      amount,
+      network,
+      {
+        address: tokenAddress,
+        symbol: tokenSymbol || 'Unknown',
+        decimals
+      }
+    )
+
+    return hash
   }
 
   /**
@@ -472,11 +505,9 @@ export class BlockchainService {
   }
 
   /**
-   * Get transaction history (placeholder for now)
+   * Get transaction history from stored platform transactions
    */
-  async getTransactionHistory(wallet: Wallet, network: Network): Promise<any[]> {
-    // TODO: Implement transaction history fetching
-    // For now, return empty array to maintain compatibility
-    return []
+  async getTransactionHistory(wallet: Wallet, network: Network): Promise<Transaction[]> {
+    return transactionMonitor.getTransactionHistory(wallet.address, network)
   }
 }

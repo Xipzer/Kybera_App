@@ -202,7 +202,8 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
           recipient,
           amount,
           selectedToken.decimals,
-          password
+          password,
+          selectedToken.symbol
         )
       }
       
