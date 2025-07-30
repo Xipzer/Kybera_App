@@ -214,11 +214,17 @@ export class BlockchainService {
     }
 
     // Combine balances with prices
-    const tokensWithPrices = tokenBalances.map((token) => ({
-      ...token,
-      usdPrice: prices[token.address.toLowerCase()]?.usd || 0,
-      usd24hChange: prices[token.address.toLowerCase()]?.usd_24h_change || 0,
-    }))
+    const tokensWithPrices = tokenBalances.map((token) => {
+      const price = prices[token.address.toLowerCase()]
+      if (!price && parseFloat(token.balance) > 0) {
+        console.debug(`No price found for token ${token.symbol} (${token.address})`)
+      }
+      return {
+        ...token,
+        usdPrice: price?.usd || 0,
+        usd24hChange: price?.usd_24h_change || 0,
+      }
+    })
 
     // Fetch images for tokens that don't have them (in background)
     if (tokensWithPrices.length > 0) {

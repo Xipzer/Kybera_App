@@ -63,8 +63,13 @@ export class CoinGeckoService {
     const addresses = sortedAddresses.join(',')
     const url = `${this.API_BASE}/simple/token_price/${platformId}?contract_addresses=${addresses}&vs_currencies=usd&include_24hr_change=true`
     
+    console.debug(`CoinGecko URL: ${url}`)
+    
     try {
       const data = await rateLimiter.execute(requestId, async () => {
+        console.debug(`Fetching prices for ${tokenAddresses.length} tokens on ${platformId}`)
+        console.debug(`Token addresses: ${addresses}`)
+        
         const response = await fetch(url)
         
         if (!response.ok) {
@@ -80,7 +85,9 @@ export class CoinGeckoService {
           }
         }
         
-        return response.json()
+        const json = await response.json()
+        console.debug('CoinGecko response:', json)
+        return json
       })
       
       // Transform the response
@@ -91,6 +98,17 @@ export class CoinGeckoService {
           usd_24h_change: (priceData as any).usd_24h_change || 0
         }
       }
+      
+      // Log which tokens didn't get prices
+      const tokensWithoutPrices = tokenAddresses.filter(
+        addr => !prices[addr.toLowerCase()]
+      )
+      
+      if (tokensWithoutPrices.length > 0) {
+        console.debug(`No prices found for ${tokensWithoutPrices.length} tokens (not on CoinGecko):`, tokensWithoutPrices)
+      }
+      
+      console.debug(`Parsed prices for ${Object.keys(prices).length} out of ${tokenAddresses.length} tokens`)
       
       return prices
     } catch (error) {
