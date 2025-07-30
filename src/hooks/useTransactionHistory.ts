@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Wallet, Network, Transaction } from '../types'
-import { SimpleBlockchainService } from '../services/blockchain/simpleBlockchainService'
+import { BlockchainService } from '../services/blockchain/blockchainService'
 
 // Create a singleton instance
-const simpleBlockchainService = new SimpleBlockchainService()
+const blockchainService = new BlockchainService()
 
 export function useTransactionHistory(wallet: Wallet | undefined, network: Network) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -20,7 +20,7 @@ export function useTransactionHistory(wallet: Wallet | undefined, network: Netwo
         setLoading(true)
         setError(null)
         
-        const txs = await simpleBlockchainService.getTransactionHistory(wallet, network)
+        const txs = await blockchainService.getTransactionHistory(wallet, network)
         
         if (!cancelled) {
           // Sort by timestamp, newest first

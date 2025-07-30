@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Wallet, Network } from '../types'
-import { SimpleBlockchainService, BlockchainBalance } from '../services/blockchain/simpleBlockchainService'
+import { BlockchainService, BlockchainBalance } from '../services/blockchain/blockchainService'
 import { db } from '../services/storage/database'
 
 // Create a singleton instance
-const simpleBlockchainService = new SimpleBlockchainService()
+const blockchainService = new BlockchainService()
 
 export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
   const [balance, setBalance] = useState<BlockchainBalance>({
@@ -69,7 +69,7 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
   useEffect(() => {
     if (!wallet) {
       setHasInitialized(false)
-      simpleBlockchainService.stopAllPolling()
+      blockchainService.stopAllPolling()
       return
     }
 
@@ -92,14 +92,14 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
       setLoading(true)
     }
 
-    simpleBlockchainService.startPolling(wallet, network, (newBalance) => {
+    blockchainService.startPolling(wallet, network, (newBalance) => {
       setBalance(newBalance)
       setHasInitialized(true)
       setLoading(false)
     })
 
     return () => {
-      simpleBlockchainService.stopPolling(wallet, network)
+      blockchainService.stopPolling(wallet, network)
     }
   }, [wallet, network])
 
@@ -107,7 +107,7 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
     if (wallet) {
       setError(null)
       try {
-        const result = await simpleBlockchainService.getBalance(wallet, network)
+        const result = await blockchainService.getBalance(wallet, network)
         setBalance(result)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch balance')

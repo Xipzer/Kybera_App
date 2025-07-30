@@ -1,17 +1,16 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Wallet } from '../../types'
 import { Network } from '../../utils/networks'
 import { formatCryptoBalance, formatUSD } from '../../utils/formatters'
 import { TrendingUp, TrendingDown, Plus, ChevronDown } from 'lucide-react'
-import { BlockchainBalance } from '../../services/blockchain/simpleBlockchainService'
+import { BlockchainBalance } from '../../services/blockchain/blockchainService'
 import { AddTokenDialog } from './AddTokenDialog'
-import { blockchainService } from '../../services/blockchain/blockchainService'
-import { SimpleBlockchainService } from '../../services/blockchain/simpleBlockchainService'
+import { BlockchainService } from '../../services/blockchain/blockchainService'
 import { ALL_NETWORKS } from '../../utils/networks'
 import { useTheme } from '../../hooks/useTheme'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 
-const simpleBlockchainService = new SimpleBlockchainService()
+const blockchainService = new BlockchainService()
 
 interface TokenListProps {
   wallet: Wallet
@@ -56,7 +55,7 @@ export function TokenList({ wallet, network, balanceData, isLoading, error }: To
       
       for (const net of networks) {
         try {
-          const balance = await simpleBlockchainService.getBalance(wallet, net)
+          const balance = await blockchainService.getBalance(wallet, net)
           
           // Add native token
           if (parseFloat(balance.native) > 0) {

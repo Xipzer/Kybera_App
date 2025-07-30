@@ -35,7 +35,8 @@ interface PriceData {
   }
 }
 
-export class EVMTokenService {
+export class EVMService
+{
   private provider: JsonRpcProvider
   private chainId: number
   private tokenCache: Map<string, TokenCache> = new Map()

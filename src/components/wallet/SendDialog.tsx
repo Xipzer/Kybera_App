@@ -6,10 +6,10 @@ import * as Popover from '@radix-ui/react-popover'
 import { X, Send, AlertCircle, ExternalLink, ChevronDown, Wallet as WalletIcon, Users, Search } from 'lucide-react'
 import { Wallet } from '../../types'
 import { Network } from '../../utils/networks'
-import { SimpleBlockchainService, BlockchainBalance } from '../../services/blockchain/simpleBlockchainService'
+import { BlockchainService, BlockchainBalance } from '../../services/blockchain/blockchainService'
 
 // Create a singleton instance
-const simpleBlockchainService = new SimpleBlockchainService()
+const blockchainService = new BlockchainService()
 import { useWalletStore } from '../../store/walletStore'
 import { useTheme } from '../../hooks/useTheme'
 import { formatAddress, formatCryptoBalance, formatUSD } from '../../utils/formatters'
@@ -92,7 +92,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
       // Don't reset to null to avoid controlled/uncontrolled warning
       
       try {
-        const data = await simpleBlockchainService.getBalance(fromWallet, network)
+        const data = await blockchainService.getBalance(fromWallet, network)
         setBalanceData(data)
         
         // Prepare token options
@@ -162,7 +162,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
     }
     
     // Validate recipient address
-    if (!simpleBlockchainService.validateAddress(recipient, fromWallet.type)) {
+    if (!blockchainService.validateAddress(recipient, fromWallet.type)) {
       setError('Invalid recipient address')
       return
     }
@@ -186,7 +186,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
       
       if (selectedToken.isNative) {
         // Send native token
-        hash = await simpleBlockchainService.sendTransaction(
+        hash = await blockchainService.sendTransaction(
           fromWallet,
           network,
           recipient,
@@ -195,7 +195,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
         )
       } else {
         // Send token
-        hash = await simpleBlockchainService.sendToken(
+        hash = await blockchainService.sendToken(
           fromWallet,
           network,
           selectedToken.address!,
@@ -480,7 +480,7 @@ export function SendDialog({ open, onOpenChange, wallet: initialWallet, network 
                               // Use a default recipient if none provided for fee estimation
                               const toAddress = recipient || fromWallet.address
                               
-                              const fee = await simpleBlockchainService.estimateTransactionFee(
+                              const fee = await blockchainService.estimateTransactionFee(
                                 fromWallet,
                                 network,
                                 toAddress,
