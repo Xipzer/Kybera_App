@@ -15,16 +15,26 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
   })
   const [loading, setLoading] = useState(true) // Start with loading true
   const [error, setError] = useState<string | null>(null)
-  const [hasInitialized, setHasInitialized] = useState(false)
   
-  // Try to load cached data immediately
+  // Load cached data immediately when wallet or network changes
   useEffect(() => {
-    if (!wallet || wallet.type !== network.type) return
+    if (!wallet || wallet.type !== network.type) {
+      setBalance({
+        native: '0',
+        nativeUSD: 0,
+        tokens: [],
+        totalUSD: 0
+      })
+      return
+    }
+    
+    // Reset loading state but keep any existing balance to avoid flicker
+    setLoading(true)
     
     const loadCachedData = async () => {
       try {
         const cachedBalance = await db.walletBalances.get(`${wallet.address}_${network.id}`)
-        if (cachedBalance && !hasInitialized) {
+        if (cachedBalance) {
           // Get cached token balances
           const cachedTokens = await db.tokenBalances
             .where('walletAddress')
@@ -51,12 +61,16 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
               name: t.name,
               decimals: t.decimals,
               balance: t.balance,
-              logoURI: t.logoURI
+              logoURI: t.logoURI,
+              usdValue: t.usdValue
             })),
             totalUSD,
             totalUSDChange: 0,
             lastUpdated: cachedBalance.lastUpdated
           })
+          
+          // If we have cached data, we can set loading to false
+          setLoading(false)
         }
       } catch (err) {
         console.error('Failed to load cached balance:', err)
@@ -64,11 +78,10 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
     }
     
     loadCachedData()
-  }, [wallet?.address, network.id, wallet?.type, network.type, hasInitialized])
+  }, [wallet?.address, network.id])
 
   useEffect(() => {
     if (!wallet) {
-      setHasInitialized(false)
       blockchainService.stopAllPolling()
       return
     }
@@ -88,13 +101,9 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
 
     // Start polling with the simple blockchain service
     setError(null)
-    if (!hasInitialized) {
-      setLoading(true)
-    }
 
     blockchainService.startPolling(wallet, network, (newBalance) => {
       setBalance(newBalance)
-      setHasInitialized(true)
       setLoading(false)
     })
 

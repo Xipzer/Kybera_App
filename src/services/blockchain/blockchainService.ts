@@ -123,8 +123,11 @@ export class BlockchainService {
     const previousTotal = await this.getPreviousTotal(wallet.address, network.id)
     const totalUSDChange = previousTotal ? ((totalUSD - previousTotal) / previousTotal) * 100 : 0
 
-    // Cache the new total
-    await this.cacheTotal(wallet.address, network.id, totalUSD)
+    // Cache the new total and native balance
+    await this.cacheTotal(wallet.address, network.id, totalUSD, nativeBalance, nativeUSD)
+    
+    // Cache token balances
+    await this.cacheTokenBalances(wallet.address, network.id, tokens)
 
     return {
       native: nativeBalance,
@@ -373,6 +376,8 @@ export class BlockchainService {
     walletAddress: string,
     networkId: string,
     totalUSD: number,
+    nativeBalance: string,
+    nativeUSD: number,
   ): Promise<void> {
     const id = `${walletAddress}_${networkId}`
     const existing = await db.walletBalances.get(id)
@@ -381,12 +386,47 @@ export class BlockchainService {
       id,
       walletAddress,
       networkId,
-      nativeBalance: '0', // We don't use this field in the new design
-      nativeUSD: 0, // We don't use this field in the new design
+      nativeBalance,
+      nativeUSD,
       totalUSD,
       previousTotalUSD: existing?.totalUSD,
       lastUpdated: Date.now(),
     })
+  }
+
+  /**
+   * Cache token balances
+   */
+  private async cacheTokenBalances(
+    walletAddress: string,
+    networkId: string,
+    tokens: TokenWithPrice[]
+  ): Promise<void> {
+    // First, remove old token balances for this wallet/network
+    await db.tokenBalances
+      .where('walletAddress')
+      .equals(walletAddress)
+      .and(item => item.networkId === networkId)
+      .delete()
+    
+    // Then add the new token balances
+    const tokenBalancesToCache = tokens.map(token => ({
+      id: `${walletAddress}_${networkId}_${token.address}`,
+      walletAddress,
+      networkId,
+      tokenAddress: token.address,
+      symbol: token.symbol,
+      name: token.name,
+      decimals: token.decimals,
+      balance: token.balance,
+      usdValue: parseFloat(token.balance) * (token.usdPrice || 0),
+      logoURI: token.logoURI,
+      lastUpdated: Date.now()
+    }))
+    
+    if (tokenBalancesToCache.length > 0) {
+      await db.tokenBalances.bulkPut(tokenBalancesToCache)
+    }
   }
 
   /**

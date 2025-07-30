@@ -244,19 +244,11 @@ export function AddTokenDialog({ isOpen, onClose, walletAddress, network, onToke
                 </div>
               )}
 
-              <div className="mt-6 flex gap-3">
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  className={`flex-1 flex items-center justify-center gap-2 ${theme.styles.buttonSecondary}`}
-                  style={theme.dynamicStyles.buttonSecondary}
-                >
-                  Cancel
-                </button>
+              <div className="mt-6">
                 <button
                   type="submit"
                   disabled={isLoading || autoDetecting}
-                  className={`flex-1 flex items-center justify-center gap-2 ${theme.styles.buttonPrimary} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className={`w-full flex items-center justify-center gap-2 ${theme.styles.buttonPrimary} disabled:opacity-50 disabled:cursor-not-allowed`}
                   style={theme.dynamicStyles.buttonPrimary}
                 >
                   {isLoading ? (

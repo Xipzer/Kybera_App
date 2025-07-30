@@ -169,7 +169,7 @@ export function TokenList({ wallet, network, balanceData, isLoading, error }: To
         {/* Filter dropdown */}
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
-            <button className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors bg-surface-elevated ${theme.styles.listItemHover} min-w-[160px]`}>
+            <button className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors bg-surface-elevated ${theme.styles.listItemHover} min-w-[200px]`}>
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${filterMode === 'all' ? 'bg-blue-500' : 'bg-green-500'}`} />
                 <span className={`text-sm font-medium ${theme.styles.textPrimary}`}>
