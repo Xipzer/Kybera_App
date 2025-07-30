@@ -6,10 +6,7 @@ import * as Popover from '@radix-ui/react-popover'
 import { X, Send, AlertCircle, ExternalLink, ChevronDown, Wallet as WalletIcon, Users, Search } from 'lucide-react'
 import { Wallet } from '../../types'
 import { Network } from '../../utils/networks'
-import { BlockchainService, BlockchainBalance } from '../../services/blockchain/blockchainService'
-
-// Create a singleton instance
-const blockchainService = new BlockchainService()
+import { blockchainService, BlockchainBalance } from '../../services/blockchain/blockchainService'
 import { useWalletStore } from '../../store/walletStore'
 import { useTheme } from '../../hooks/useTheme'
 import { formatAddress, formatCryptoBalance, formatUSD } from '../../utils/formatters'

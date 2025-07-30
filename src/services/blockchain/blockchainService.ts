@@ -4,6 +4,8 @@ import { EVMService } from './evmService'
 import { Wallet, Network, TokenBalance, Transaction } from '../../types'
 import { db } from '../storage/database'
 import { transactionMonitor } from '../transactions/transactionMonitor'
+import { tokenImageService } from '../tokens/tokenImageService'
+import { coinGeckoService } from '../api/coinGeckoService'
 
 export interface BlockchainBalance {
   native: string
@@ -20,11 +22,20 @@ interface TokenWithPrice extends TokenBalance {
 }
 
 export class BlockchainService {
+  private static instance: BlockchainService
   private pollingIntervals: Map<string, NodeJS.Timeout> = new Map()
   private tokenServices: Map<string, EVMService> = new Map() // Cache token services
   private lastPriceFetch: number = 0
   private PRICE_FETCH_INTERVAL = 300000 // 5 minutes between price fetches (to avoid rate limits)
-  private POLLING_INTERVAL = 10000 // 10 seconds for balance updates
+  private POLLING_INTERVAL = 5000 // 5 seconds for balance updates
+  private activePriceFetches: Map<string, Promise<any>> = new Map() // Track active price fetches
+
+  static getInstance(): BlockchainService {
+    if (!BlockchainService.instance) {
+      BlockchainService.instance = new BlockchainService()
+    }
+    return BlockchainService.instance
+  }
 
   /**
    * Start polling for a specific wallet and network
@@ -170,26 +181,68 @@ export class BlockchainService {
 
     // Get prices if needed
     let prices: Record<string, { usd: number; usd_24h_change?: number }> = {}
-    if (tokenBalances.length > 0 && this.shouldFetchPrices()) {
-      prices = await tokenService.fetchTokenPrices(tokenBalances.map((t) => t.address))
-      this.lastPriceFetch = Date.now()
-
-      // Cache prices
-      await this.cachePrices(prices, chainId)
-    } else if (tokenBalances.length > 0) {
-      // Use cached prices
-      prices = await this.getCachedPrices(
-        tokenBalances.map((t) => t.address),
-        chainId,
-      )
+    if (tokenBalances.length > 0) {
+      const priceKey = `token-prices-${chainId}`
+      
+      // Check if we're already fetching prices for this chain
+      const activeFetch = this.activePriceFetches.get(priceKey)
+      if (activeFetch) {
+        console.debug('Using existing price fetch for chain', chainId)
+        prices = await activeFetch
+      } else if (this.shouldFetchPrices()) {
+        // Start new price fetch
+        const priceFetchPromise = tokenService.fetchTokenPrices(tokenBalances.map((t) => t.address))
+          .then(async (fetchedPrices) => {
+            this.lastPriceFetch = Date.now()
+            // Cache prices
+            await this.cachePrices(fetchedPrices, chainId)
+            return fetchedPrices
+          })
+          .finally(() => {
+            this.activePriceFetches.delete(priceKey)
+          })
+        
+        this.activePriceFetches.set(priceKey, priceFetchPromise)
+        prices = await priceFetchPromise
+      } else {
+        // Use cached prices
+        prices = await this.getCachedPrices(
+          tokenBalances.map((t) => t.address),
+          chainId,
+        )
+      }
     }
 
     // Combine balances with prices
-    return tokenBalances.map((token) => ({
+    const tokensWithPrices = tokenBalances.map((token) => ({
       ...token,
       usdPrice: prices[token.address.toLowerCase()]?.usd || 0,
       usd24hChange: prices[token.address.toLowerCase()]?.usd_24h_change || 0,
     }))
+
+    // Fetch images for tokens that don't have them (in background)
+    if (tokensWithPrices.length > 0) {
+      // Don't await this - let it run in background
+      tokenImageService.fetchAndCacheTokenImages(
+        tokensWithPrices.map(t => ({
+          address: t.address,
+          chainId,
+          symbol: t.symbol,
+          name: t.name
+        }))
+      ).catch(err => console.error('Failed to fetch token images:', err))
+    }
+
+    // Try to get cached images for immediate display
+    for (const token of tokensWithPrices) {
+      const metadataId = `${chainId}_${token.address.toLowerCase()}`
+      const cached = await db.tokenMetadata.get(metadataId)
+      if (cached?.logoURI) {
+        token.logoURI = cached.logoURI
+      }
+    }
+
+    return tokensWithPrices
   }
 
   /**
@@ -248,10 +301,6 @@ export class BlockchainService {
     // No common tokens - users must manually add all tokens they want to track
 
     const finalAddresses = Array.from(addresses).slice(0, MAX_TOKENS_TO_CHECK)
-    console.log(
-      `Checking ${finalAddresses.length} tokens for ${walletAddress} on chain ${chainId}:`,
-      finalAddresses,
-    )
     return finalAddresses
   }
 
@@ -282,14 +331,9 @@ export class BlockchainService {
     // Check if we should fetch new price
     if (this.shouldFetchPrices()) {
       try {
-        const response = await fetch(
-          `https://api.coingecko.com/api/v3/simple/price?ids=${tokenId}&vs_currencies=usd`,
-        )
+        const price = await coinGeckoService.getNativeTokenPrice(tokenId)
 
-        if (response.ok) {
-          const data = await response.json()
-          const price = data[tokenId]?.usd || 0
-
+        if (price > 0) {
           // Cache the price
           await db.priceData.put({
             id: tokenId,
@@ -303,14 +347,9 @@ export class BlockchainService {
           this.lastPriceFetch = Date.now()
 
           return amount * price
-        } else if (response.status === 429) {
-          // Rate limited - increase the interval
-          console.warn('CoinGecko rate limit hit, using cached price')
-          // Don't update lastPriceFetch so we'll wait longer before next attempt
         }
       } catch (error) {
-        // CORS or network error - use cached price
-        console.warn('Price fetch failed, using cached price:', error.message || error)
+        console.warn('Price fetch failed, using cached price:', error)
       }
     }
 
@@ -551,3 +590,6 @@ export class BlockchainService {
     return transactionMonitor.getTransactionHistory(wallet.address, network)
   }
 }
+
+// Export singleton instance
+export const blockchainService = BlockchainService.getInstance()

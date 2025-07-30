@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Wallet, Network } from '../types'
-import { BlockchainService, BlockchainBalance } from '../services/blockchain/blockchainService'
+import { blockchainService, BlockchainBalance } from '../services/blockchain/blockchainService'
 import { db } from '../services/storage/database'
-
-// Create a singleton instance
-const blockchainService = new BlockchainService()
 
 export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
   const [balance, setBalance] = useState<BlockchainBalance>({

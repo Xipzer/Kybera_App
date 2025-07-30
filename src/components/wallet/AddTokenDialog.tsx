@@ -5,6 +5,7 @@ import { Network } from '../../types'
 import { db } from '../../services/storage/database'
 import { JsonRpcProvider, Contract, isAddress } from 'ethers'
 import { useTheme } from '../../hooks/useTheme'
+import { tokenImageService } from '../../services/tokens/tokenImageService'
 
 interface AddTokenDialogProps {
   isOpen: boolean
@@ -104,6 +105,16 @@ export function AddTokenDialog({ isOpen, onClose, walletAddress, network, onToke
         discoveredAt: Date.now(),
         lastSeen: Date.now()
       })
+
+      // Fetch image from CoinGecko if no logo URL was provided
+      if (!logoURI && network.type === 'EVM') {
+        tokenImageService.getTokenImage({
+          address: tokenAddress,
+          chainId: network.chainId as number,
+          symbol: tokenSymbol,
+          name: tokenName
+        }).catch(err => console.error('Failed to fetch token image:', err))
+      }
 
       // Notify parent
       onTokenAdded()

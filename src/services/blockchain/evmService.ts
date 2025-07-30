@@ -1,5 +1,6 @@
 import { ethers, Contract, JsonRpcProvider } from 'ethers'
 import { db } from '../storage/database'
+import { coinGeckoService } from '../api/coinGeckoService'
 
 // Minimal ERC20 ABI for token queries
 const ERC20_ABI = [
@@ -69,8 +70,8 @@ export class EVMService
         } catch (error: any) {
           // For manually added tokens, always show them even if fetch fails
           const discoveredToken = await db.discoveredTokens
-            .where('[walletAddress+chainId+tokenAddress]')
-            .equals([walletAddress, this.chainId.toString(), tokenAddress.toLowerCase()])
+            .where('id')
+            .equals(`${walletAddress}_${this.chainId}_${tokenAddress.toLowerCase()}`)
             .first()
           
           if (discoveredToken && discoveredToken.addedManually) {
@@ -276,56 +277,17 @@ export class EVMService
    * Fetch USD prices for tokens from CoinGecko
    */
   async fetchTokenPrices(tokenAddresses: string[]): Promise<PriceData> {
-    if (tokenAddresses.length === 0) return {}
+    const prices = await coinGeckoService.getTokenPrices(this.chainId, tokenAddresses)
     
-    const platformId = this.getPlatformId()
-    if (!platformId) return {}
-    
-    try {
-      // CoinGecko expects lowercase addresses
-      const addresses = tokenAddresses.map(a => a.toLowerCase()).join(',')
-      const url = `https://api.coingecko.com/api/v3/simple/token_price/${platformId}?contract_addresses=${addresses}&vs_currencies=usd&include_24hr_change=true`
-      
-      const response = await fetch(url)
-      if (!response.ok) {
-        if (response.status === 429) {
-          console.warn('CoinGecko rate limit hit for token prices')
-        } else {
-          console.warn(`CoinGecko API error: ${response.status}`)
-        }
-        return {}
+    // Convert to expected format
+    const priceData: PriceData = {}
+    for (const [address, price] of Object.entries(prices)) {
+      priceData[address] = {
+        usd: price.usd,
+        usd_24h_change: price.usd_24h_change
       }
-      
-      const data = await response.json()
-      const prices: PriceData = {}
-      
-      for (const [address, priceData] of Object.entries(data)) {
-        prices[address] = {
-          usd: (priceData as any).usd || 0,
-          usd_24h_change: (priceData as any).usd_24h_change || 0
-        }
-      }
-      
-      return prices
-    } catch (error) {
-      console.warn('Failed to fetch token prices:', error.message || error)
-      return {}
-    }
-  }
-  
-  /**
-   * Get CoinGecko platform ID for the current chain
-   */
-  private getPlatformId(): string | null {
-    const platformIds: Record<number, string> = {
-      1: 'ethereum',
-      56: 'binance-smart-chain',
-      137: 'polygon-pos',
-      8453: 'base',
-      42161: 'arbitrum-one',
-      10: 'optimistic-ethereum'
     }
     
-    return platformIds[this.chainId] || null
+    return priceData
   }
 }
