@@ -40,11 +40,13 @@ export class EVMService
 {
   private provider: JsonRpcProvider
   private chainId: number
+  private networkId?: string
   private tokenCache: Map<string, TokenCache> = new Map()
   
-  constructor(rpcUrl: string, chainId: number) {
+  constructor(rpcUrl: string, chainId: number, networkId?: string) {
     this.provider = new JsonRpcProvider(rpcUrl)
     this.chainId = chainId
+    this.networkId = networkId
   }
   
   /**
@@ -83,12 +85,26 @@ export class EVMService
             // Try to use cached metadata first
             const cached = await this.getCachedTokenInfo(tokenAddress)
             
+            // Get the last cached balance for this token
+            const cachedBalance = this.networkId 
+              ? await db.tokenBalances
+                  .where('id')
+                  .equals(`${walletAddress}_${this.networkId}_${tokenAddress.toLowerCase()}`)
+                  .first()
+              : null
+            
+            const balance = cachedBalance?.balance || '0'
+            
+            if (cachedBalance?.balance) {
+              console.debug(`Using cached balance for ${cached?.symbol || discoveredToken.symbol}: ${balance}`)
+            }
+            
             return {
               address: tokenAddress.toLowerCase(),
               name: cached?.name || discoveredToken.name || 'Unknown Token',
               symbol: cached?.symbol || discoveredToken.symbol || 'UNKNOWN',
               decimals: cached?.decimals || discoveredToken.decimals || 18,
-              balance: '0',
+              balance,
               logoURI: cached?.logoURI || discoveredToken.logoURI
             }
           }
@@ -154,11 +170,13 @@ export class EVMService
       
       // Get balance with retry for intermittent failures
       let balance: bigint = BigInt(0)
+      let balanceFetchSucceeded = false
       
       // Try up to 3 times for intermittent RPC failures
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {
           balance = await contract.balanceOf(walletAddress)
+          balanceFetchSucceeded = true
           break // Success, exit loop
         } catch (balanceError: any) {
           // If it's a CALL_EXCEPTION, don't retry - this is a contract issue
@@ -171,9 +189,31 @@ export class EVMService
             await new Promise(resolve => setTimeout(resolve, 100 * attempt)) // Brief delay
           } else {
             console.error(`Failed to fetch balance for ${tokenAddress} after 3 attempts:`, balanceError)
-            throw balanceError
+            // Don't throw here - we'll check for cached balance below
           }
         }
+      }
+      
+      // If balance fetch failed, try to use cached balance
+      let balanceString: string
+      if (!balanceFetchSucceeded) {
+        // Get cached balance
+        const cachedBalance = this.networkId 
+          ? await db.tokenBalances
+              .where('id')
+              .equals(`${walletAddress}_${this.networkId}_${tokenAddress.toLowerCase()}`)
+              .first()
+          : null
+          
+        if (cachedBalance?.balance) {
+          balanceString = cachedBalance.balance
+          console.debug(`Using cached balance for ${symbol} due to fetch error: ${balanceString}`)
+        } else {
+          // No cached balance available, have to throw
+          throw new Error('Failed to fetch balance and no cached balance available')
+        }
+      } else {
+        balanceString = ethers.formatUnits(balance, decimals)
       }
       
       const tokenInfo: TokenInfo = {
@@ -181,7 +221,7 @@ export class EVMService
         name,
         symbol,
         decimals,
-        balance: ethers.formatUnits(balance, decimals),
+        balance: balanceString,
         logoURI
       }
       
