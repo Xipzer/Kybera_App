@@ -103,6 +103,32 @@ export interface StoredTokenMetadata {
   lastUpdated: number
 }
 
+export interface StoredCustomNetwork {
+  id: string // Unique network ID
+  name: string
+  chainId: number | string
+  rpcUrl: string
+  alchemyRpcUrl?: string
+  symbol: string
+  explorer: string
+  explorerUrl: string
+  type: 'EVM' | 'SVM'
+  nativeCurrency: {
+    name: string
+    symbol: string
+    decimals: number
+  }
+  isCustom: boolean // Always true for custom networks
+  addedAt: number
+  updatedAt?: number
+}
+
+export interface StoredNetworkVisibility {
+  networkId: string // ID of the network (default or custom)
+  isHidden: boolean
+  updatedAt: number
+}
+
 export class SmartWalletDB extends Dexie {
   wallets!: Table<StoredWallet>
   walletGroups!: Table<StoredWalletGroup>
@@ -117,6 +143,8 @@ export class SmartWalletDB extends Dexie {
   walletBalances!: Table<StoredWalletBalance>
   discoveredTokens!: Table<StoredDiscoveredToken>
   tokenMetadata!: Table<StoredTokenMetadata>
+  customNetworks!: Table<StoredCustomNetwork>
+  networkVisibility!: Table<StoredNetworkVisibility>
 
   constructor() {
     super('SmartWalletDB')
@@ -373,6 +401,25 @@ export class SmartWalletDB extends Dexie {
       walletBalances: 'id, walletAddress, networkId, lastUpdated',
       discoveredTokens: 'id, walletAddress, chainId, tokenAddress, discoveredAt, lastSeen',
       tokenMetadata: 'id, chainId, address, lastUpdated'
+    })
+    
+    // Version 15 adds custom networks and network visibility
+    this.version(15).stores({
+      wallets: '++id, groupId, address, type, order',
+      walletGroups: '++id, createdAt, order',
+      conversations: '++id, createdAt, pinned',
+      messages: '++id, conversationId, timestamp',
+      settings: 'key',
+      auth: 'id',
+      transactions: '++id, hash, from, to, network, timestamp, tokenAddress, tokenSymbol',
+      tokenBalances: 'id, walletAddress, networkId, lastUpdated',
+      priceData: 'id, symbol, lastUpdated',
+      priceHistory: 'id, symbol, timestamp',
+      walletBalances: 'id, walletAddress, networkId, lastUpdated',
+      discoveredTokens: 'id, walletAddress, chainId, tokenAddress, discoveredAt, lastSeen',
+      tokenMetadata: 'id, chainId, address, lastUpdated',
+      customNetworks: 'id, chainId, type, addedAt',
+      networkVisibility: 'networkId, updatedAt'
     })
   }
 }

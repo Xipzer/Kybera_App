@@ -15,7 +15,7 @@ export const EVM_NETWORKS: Network[] = [
     explorerUrl: 'https://etherscan.io',
     type: 'EVM',
     nativeCurrency: {
-      name: 'Ether',
+      name: 'Ethereum',
       symbol: 'ETH',
       decimals: 18,
     },
@@ -31,7 +31,7 @@ export const EVM_NETWORKS: Network[] = [
     explorerUrl: 'https://basescan.org',
     type: 'EVM',
     nativeCurrency: {
-      name: 'Ether',
+      name: 'Ethereum',
       symbol: 'ETH',
       decimals: 18,
     },
@@ -79,7 +79,7 @@ export const EVM_NETWORKS: Network[] = [
     explorerUrl: 'https://arbiscan.io',
     type: 'EVM',
     nativeCurrency: {
-      name: 'Ether',
+      name: 'Ethereum',
       symbol: 'ETH',
       decimals: 18,
     },
@@ -94,7 +94,7 @@ export const EVM_NETWORKS: Network[] = [
     explorerUrl: 'https://optimistic.etherscan.io',
     type: 'EVM',
     nativeCurrency: {
-      name: 'Ether',
+      name: 'Ethereum',
       symbol: 'ETH',
       decimals: 18,
     },
@@ -138,10 +138,23 @@ export const SVM_NETWORKS: Network[] = [
 
 export const ALL_NETWORKS = [...EVM_NETWORKS, ...SVM_NETWORKS]
 
-export const getNetworkById = (id: string): Network | undefined => {
+// Legacy functions - these now use networkService internally
+// Import networkService to use these functions
+import { networkService } from '../services/network/networkService'
+
+export const getNetworkById = async (id: string): Promise<Network | undefined> => {
+  return networkService.getNetworkById(id)
+}
+
+export const getNetworksByType = async (type: 'EVM' | 'SVM'): Promise<Network[]> => {
+  return networkService.getNetworksByType(type)
+}
+
+// For backward compatibility - synchronous versions using default networks only
+export const getDefaultNetworkById = (id: string): Network | undefined => {
   return ALL_NETWORKS.find((network) => network.id === id)
 }
 
-export const getNetworksByType = (type: 'EVM' | 'SVM'): Network[] => {
+export const getDefaultNetworksByType = (type: 'EVM' | 'SVM'): Network[] => {
   return ALL_NETWORKS.filter((network) => network.type === type)
 }

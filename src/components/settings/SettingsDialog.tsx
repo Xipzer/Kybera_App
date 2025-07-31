@@ -13,7 +13,11 @@ import {
   Palette, 
   AlertCircle,
   Check,
-  ChevronDown
+  ChevronDown,
+  Plus,
+  Edit2,
+  Trash2,
+  Globe
 } from 'lucide-react'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useUIStore } from '../../store/uiStore'
@@ -21,6 +25,9 @@ import { useAuthStore } from '../../store/authStore'
 import { useWalletStore } from '../../store/walletStore'
 import { ImageUpload } from '../common/ImageUpload'
 import { useTheme } from '../../hooks/useTheme'
+import { networkService, NetworkWithVisibility } from '../../services/network/networkService'
+import { NetworkManagementDialog } from './NetworkManagementDialog'
+import { Network } from '../../types'
 
 interface SettingsDialogProps {
   open: boolean
@@ -28,7 +35,7 @@ interface SettingsDialogProps {
 }
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
-  const { openRouterApiKey, autoLockTimeout, setOpenRouterApiKey, setAutoLockTimeout } = useSettingsStore()
+  const { openRouterApiKey, coinGeckoApiKey, autoLockTimeout, setOpenRouterApiKey, setCoinGeckoApiKey, setAutoLockTimeout } = useSettingsStore()
   const { theme: themeConfig } = useTheme()
   const { 
     theme, 
@@ -53,6 +60,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   
   const [apiKey, setApiKey] = useState(openRouterApiKey || '')
   const [showApiKey, setShowApiKey] = useState(false)
+  const [cgApiKey, setCgApiKey] = useState(coinGeckoApiKey || '')
+  const [showCgApiKey, setShowCgApiKey] = useState(false)
   const [lockTimeout, setLockTimeout] = useState(autoLockTimeout.toString())
   const [autoLockEnabled, setAutoLockEnabled] = useState(autoLockTimeout > 0)
   
@@ -66,20 +75,48 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [passwordSuccess, setPasswordSuccess] = useState(false)
   const [isChangingPassword, setIsChangingPassword] = useState(false)
   
+  // Network management state
+  const [networks, setNetworks] = useState<NetworkWithVisibility[]>([])
+  const [networkDialogOpen, setNetworkDialogOpen] = useState(false)
+  const [editingNetwork, setEditingNetwork] = useState<NetworkWithVisibility | undefined>()
+  const [networkError, setNetworkError] = useState('')
+  
   const [activeTab, setActiveTab] = useState('ai')
 
-  // Reset API key to original value when dialog closes
+  // Reset API keys to original values when dialog closes
   useEffect(() => {
     if (!open) {
       setApiKey(openRouterApiKey || '')
+      setCgApiKey(coinGeckoApiKey || '')
     }
-  }, [open, openRouterApiKey])
+  }, [open, openRouterApiKey, coinGeckoApiKey])
+  
+  // Load networks when dialog opens
+  useEffect(() => {
+    if (open) {
+      loadNetworks()
+    }
+  }, [open])
+  
+  const loadNetworks = async () => {
+    try {
+      const allNetworks = await networkService.getAllNetworks()
+      setNetworks(allNetworks)
+    } catch (error) {
+      console.error('Failed to load networks:', error)
+    }
+  }
 
   const handleSaveApiKey = async () => {
     await setOpenRouterApiKey(apiKey.trim() || null)
   }
 
+  const handleSaveCgApiKey = async () => {
+    await setCoinGeckoApiKey(cgApiKey.trim() || null)
+  }
+
   const isApiKeyChanged = apiKey.trim() !== (openRouterApiKey || '')
+  const isCgApiKeyChanged = cgApiKey.trim() !== (coinGeckoApiKey || '')
 
   const handleAutoLockTimeoutChange = async (value: string) => {
     setLockTimeout(value)
@@ -149,18 +186,63 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     }
   }
 
+  const handleAddNetwork = async (network: Omit<Network, 'id'>) => {
+    try {
+      await networkService.addCustomNetwork(network)
+      await loadNetworks()
+      setNetworkDialogOpen(false)
+      setNetworkError('')
+    } catch (error: any) {
+      throw error
+    }
+  }
+
+  const handleUpdateNetwork = async (id: string, updates: Partial<Network>) => {
+    try {
+      await networkService.updateCustomNetwork(id, updates)
+      await loadNetworks()
+      setNetworkDialogOpen(false)
+      setEditingNetwork(undefined)
+      setNetworkError('')
+    } catch (error: any) {
+      throw error
+    }
+  }
+
+  const handleRemoveNetwork = async (id: string) => {
+    if (confirm('Are you sure you want to remove this network?')) {
+      try {
+        await networkService.removeCustomNetwork(id)
+        await loadNetworks()
+        setNetworkError('')
+      } catch (error: any) {
+        setNetworkError(error.message || 'Failed to remove network')
+      }
+    }
+  }
+
+  const handleToggleNetworkVisibility = async (networkId: string) => {
+    try {
+      await networkService.toggleNetworkVisibility(networkId)
+      await loadNetworks()
+    } catch (error) {
+      console.error('Failed to toggle network visibility:', error)
+    }
+  }
+
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="dialog-overlay" />
-        <Dialog.Content className="dialog-content bg-surface-base rounded-lg shadow-2xl border border-border-subtle w-[800px] h-[600px] flex overflow-hidden">
-          <div className="absolute top-4 right-4 z-10">
-            <Dialog.Close asChild>
-              <button className="p-2 rounded-lg hover:bg-surface-hover transition-colors">
-                <X className="w-5 h-5 text-text-secondary" />
-              </button>
-            </Dialog.Close>
-          </div>
+    <>
+      <Dialog.Root open={open} onOpenChange={onOpenChange}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="dialog-overlay" />
+          <Dialog.Content className="dialog-content bg-surface-base rounded-lg shadow-2xl border border-border-subtle w-[800px] h-[600px] flex overflow-hidden">
+            <div className="absolute top-4 right-4 z-10">
+              <Dialog.Close asChild>
+                <button className="p-2 rounded-lg hover:bg-surface-hover transition-colors">
+                  <X className="w-5 h-5 text-text-secondary" />
+                </button>
+              </Dialog.Close>
+            </div>
 
           <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="flex-1 flex min-h-0">
             <div className="w-48 bg-surface-elevated border-r border-border-subtle flex-shrink-0">
@@ -173,7 +255,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent data-[state=active]:bg-accent/10 transition-colors w-full text-left"
                 >
                   <Brain className="w-4 h-4" />
-                  AI Configuration
+                  Configuration
                 </Tabs.Trigger>
                 <Tabs.Trigger
                   value="security"
@@ -246,6 +328,167 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                       </button>
                     </div>
                   </div>
+                </div>
+
+                <div className="border-t border-border-subtle pt-6">
+                  <h3 className="text-lg font-medium text-text-primary mb-4">
+                    Market Data Settings
+                  </h3>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">
+                      CoinGecko API Key
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showCgApiKey ? 'text' : 'password'}
+                        value={cgApiKey}
+                        onChange={(e) => setCgApiKey(e.target.value)}
+                        placeholder="CG-..."
+                        className={`${themeConfig.styles.input} pr-10`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCgApiKey(!showCgApiKey)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-surface-hover transition-colors"
+                      >
+                        {showCgApiKey ? (
+                          <EyeOff className="w-4 h-4 text-text-secondary" />
+                        ) : (
+                          <Eye className="w-4 h-4 text-text-secondary" />
+                        )}
+                      </button>
+                    </div>
+                    <p className="mt-1 text-xs text-text-tertiary">
+                      Get your API key from{' '}
+                      <a
+                        href="https://www.coingecko.com/en/api/pricing"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-accent hover:text-accent-400 hover:underline transition-colors"
+                      >
+                        coingecko.com/api
+                      </a>
+                      {' '}(Optional - improves rate limits)
+                    </p>
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        onClick={handleSaveCgApiKey}
+                        disabled={!isCgApiKeyChanged}
+                        className={`${themeConfig.styles.buttonSettings || themeConfig.styles.buttonPrimary} disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none`}
+                        style={themeConfig.dynamicStyles.buttonSettings || themeConfig.dynamicStyles.buttonPrimary}
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-border-subtle pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-medium text-text-primary">
+                      Network Management
+                    </h3>
+                    <button
+                      onClick={() => {
+                        setEditingNetwork(undefined)
+                        setNetworkDialogOpen(true)
+                      }}
+                      className={`${themeConfig.styles.buttonPrimary} text-sm`}
+                      style={themeConfig.dynamicStyles.buttonPrimary}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add Network
+                    </button>
+                  </div>
+
+                  {networkError && (
+                    <div className="mb-4 flex items-center gap-2 p-3 bg-accent/10 border border-accent/30 rounded-lg">
+                      <AlertCircle className="w-4 h-4 text-accent flex-shrink-0" />
+                      <p className="text-sm text-accent-400">{networkError}</p>
+                    </div>
+                  )}
+                  
+                  <div className="space-y-2">
+                    {networks.map((network) => (
+                      <div
+                        key={network.id}
+                        className={`flex items-center justify-between p-3 rounded-lg border ${
+                          network.isHidden 
+                            ? 'bg-surface-hover/50 border-border-subtle opacity-60' 
+                            : 'bg-surface-elevated border-border-default'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg ${
+                            network.type === 'EVM' ? 'bg-blue-500/10' : 'bg-purple-500/10'
+                          }`}>
+                            <Globe className={`w-4 h-4 ${
+                              network.type === 'EVM' ? 'text-blue-400' : 'text-purple-400'
+                            }`} />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-text-primary">
+                                {network.name}
+                              </span>
+                              {network.isCustom && (
+                                <span className="text-xs px-2 py-0.5 bg-accent/10 text-accent rounded">
+                                  Custom
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 text-xs text-text-tertiary">
+                              <span>{network.type}</span>
+                              <span>•</span>
+                              <span>Chain ID: {network.chainId}</span>
+                              <span>•</span>
+                              <span>{network.symbol}</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleToggleNetworkVisibility(network.id)}
+                            className="p-1.5 rounded hover:bg-surface-hover transition-colors"
+                            title={network.isHidden ? 'Show network' : 'Hide network'}
+                          >
+                            {network.isHidden ? (
+                              <EyeOff className="w-4 h-4 text-text-secondary" />
+                            ) : (
+                              <Eye className="w-4 h-4 text-text-secondary" />
+                            )}
+                          </button>
+                          
+                          {network.isCustom && (
+                            <>
+                              <button
+                                onClick={() => {
+                                  setEditingNetwork(network)
+                                  setNetworkDialogOpen(true)
+                                }}
+                                className="p-1.5 rounded hover:bg-surface-hover transition-colors"
+                              >
+                                <Edit2 className="w-4 h-4 text-text-secondary" />
+                              </button>
+                              <button
+                                onClick={() => handleRemoveNetwork(network.id)}
+                                className="p-1.5 rounded hover:bg-surface-hover transition-colors hover:text-accent"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <p className="mt-4 text-xs text-text-tertiary">
+                    Add custom networks or hide default networks that you don't use. 
+                    Hidden networks won't appear in the network selector.
+                  </p>
                 </div>
               </Tabs.Content>
 
@@ -755,6 +998,15 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           </Tabs.Root>
         </Dialog.Content>
       </Dialog.Portal>
-    </Dialog.Root>
+      </Dialog.Root>
+      
+      <NetworkManagementDialog
+        open={networkDialogOpen}
+        onOpenChange={setNetworkDialogOpen}
+        network={editingNetwork}
+        onSave={handleAddNetwork}
+        onUpdate={handleUpdateNetwork}
+      />
+    </>
   )
 }

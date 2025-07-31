@@ -1,4 +1,5 @@
 import { rateLimiter } from './rateLimiter'
+import { useSettingsStore } from '../../store/settingsStore'
 
 interface TokenPrice {
   usd: number
@@ -89,7 +90,13 @@ export class CoinGeckoService {
         console.debug(`Fetching prices for ${tokenAddresses.length} tokens on ${platformId}`)
         console.debug(`Token addresses: ${addresses}`)
         
-        const response = await fetch(url)
+        const apiKey = useSettingsStore.getState().coinGeckoApiKey
+        const headers: any = {}
+        if (apiKey) {
+          headers['x-cg-demo-api-key'] = apiKey
+        }
+        
+        const response = await fetch(url, { headers })
         
         if (!response.ok) {
           if (response.status === 429) {
@@ -151,7 +158,13 @@ export class CoinGeckoService {
     
     try {
       const data = await rateLimiter.execute(requestId, async () => {
-        const response = await fetch(url)
+        const apiKey = useSettingsStore.getState().coinGeckoApiKey
+        const headers: any = {}
+        if (apiKey) {
+          headers['x-cg-demo-api-key'] = apiKey
+        }
+        
+        const response = await fetch(url, { headers })
         
         if (!response.ok) {
           if (response.status === 429) {
@@ -185,7 +198,13 @@ export class CoinGeckoService {
     
     try {
       const data = await rateLimiter.execute(requestId, async () => {
-        const response = await fetch(url)
+        const apiKey = useSettingsStore.getState().coinGeckoApiKey
+        const headers: any = {}
+        if (apiKey) {
+          headers['x-cg-demo-api-key'] = apiKey
+        }
+        
+        const response = await fetch(url, { headers })
         
         if (!response.ok) {
           if (response.status === 404) {
@@ -216,7 +235,13 @@ export class CoinGeckoService {
     
     try {
       const data = await rateLimiter.execute(requestId, async () => {
-        const response = await fetch(url)
+        const apiKey = useSettingsStore.getState().coinGeckoApiKey
+        const headers: any = {}
+        if (apiKey) {
+          headers['x-cg-demo-api-key'] = apiKey
+        }
+        
+        const response = await fetch(url, { headers })
         
         if (!response.ok) {
           if (response.status === 429) {
