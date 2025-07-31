@@ -194,10 +194,21 @@ export class BlockchainService {
         // Start new price fetch
         const priceFetchPromise = tokenService.fetchTokenPrices(tokenBalances.map((t) => t.address))
           .then(async (fetchedPrices) => {
-            this.lastPriceFetch = Date.now()
-            // Cache prices
-            await this.cachePrices(fetchedPrices, chainId)
-            return fetchedPrices
+            // Only update last fetch time and cache if we got valid prices
+            if (fetchedPrices && Object.keys(fetchedPrices).length > 0) {
+              this.lastPriceFetch = Date.now()
+              // Cache prices
+              await this.cachePrices(fetchedPrices, chainId)
+              return fetchedPrices
+            }
+            // If no prices returned, use cached values
+            console.warn('No prices returned from API, using cached values')
+            return await this.getCachedPrices(tokenBalances.map((t) => t.address), chainId)
+          })
+          .catch(async (error) => {
+            console.error('Price fetch failed:', error)
+            // On error, use cached prices
+            return await this.getCachedPrices(tokenBalances.map((t) => t.address), chainId)
           })
           .finally(() => {
             this.activePriceFetches.delete(priceKey)
@@ -215,17 +226,29 @@ export class BlockchainService {
     }
 
     // Combine balances with prices
-    const tokensWithPrices = tokenBalances.map((token) => {
-      const price = prices[token.address.toLowerCase()]
-      if (!price && parseFloat(token.balance) > 0) {
-        console.debug(`No price found for token ${token.symbol} (${token.address})`)
+    const tokensWithPrices = await Promise.all(tokenBalances.map(async (token) => {
+      let price = prices[token.address.toLowerCase()]
+      
+      // If no price found, try to get from cache
+      if (!price) {
+        const cachedPrice = await db.priceData.get(`${chainId}_${token.address.toLowerCase()}`)
+        if (cachedPrice) {
+          price = {
+            usd: cachedPrice.usdPrice,
+            usd_24h_change: cachedPrice.usd24hChange
+          }
+          console.debug(`Using cached price for ${token.symbol}: $${cachedPrice.usdPrice}`)
+        } else if (parseFloat(token.balance) > 0) {
+          console.debug(`No price found for token ${token.symbol} (${token.address})`)
+        }
       }
+      
       return {
         ...token,
         usdPrice: price?.usd || 0,
         usd24hChange: price?.usd_24h_change || 0,
       }
-    })
+    }))
 
     // Fetch images for tokens that don't have them (in background)
     if (tokensWithPrices.length > 0) {
@@ -273,32 +296,73 @@ export class BlockchainService {
     
     // Get prices if needed
     let prices: Record<string, { usd: number; usd_24h_change?: number }> = {}
-    if (tokenBalances.length > 0 && this.shouldFetchPrices()) {
-      prices = await (tokenService as SVMService).fetchTokenPrices(tokenBalances.map((t) => t.address))
-      this.lastPriceFetch = Date.now()
+    if (tokenBalances.length > 0) {
+      const priceKey = `token-prices-solana`
       
-      // Cache prices (use special Solana chainId)
-      await this.cachePrices(prices, 999999)
-    } else if (tokenBalances.length > 0) {
-      // Use cached prices
-      prices = await this.getCachedPrices(
-        tokenBalances.map((t) => t.address),
-        999999,
-      )
+      // Check if we're already fetching prices for Solana
+      const activeFetch = this.activePriceFetches.get(priceKey)
+      if (activeFetch) {
+        console.debug('Using existing price fetch for Solana')
+        prices = await activeFetch
+      } else if (this.shouldFetchPrices()) {
+        // Start new price fetch
+        const priceFetchPromise = (tokenService as SVMService).fetchTokenPrices(tokenBalances.map((t) => t.address))
+          .then(async (fetchedPrices) => {
+            // Only update last fetch time and cache if we got valid prices
+            if (fetchedPrices && Object.keys(fetchedPrices).length > 0) {
+              this.lastPriceFetch = Date.now()
+              // Cache prices (use special Solana chainId)
+              await this.cachePrices(fetchedPrices, 999999)
+              return fetchedPrices
+            }
+            // If no prices returned, use cached values
+            console.warn('No Solana prices returned from API, using cached values')
+            return await this.getCachedPrices(tokenBalances.map((t) => t.address), 999999)
+          })
+          .catch(async (error) => {
+            console.error('Solana price fetch failed:', error)
+            // On error, use cached prices
+            return await this.getCachedPrices(tokenBalances.map((t) => t.address), 999999)
+          })
+          .finally(() => {
+            this.activePriceFetches.delete(priceKey)
+          })
+        
+        this.activePriceFetches.set(priceKey, priceFetchPromise)
+        prices = await priceFetchPromise
+      } else {
+        // Use cached prices
+        prices = await this.getCachedPrices(
+          tokenBalances.map((t) => t.address),
+          999999,
+        )
+      }
     }
     
     // Combine balances with prices
-    const tokensWithPrices = tokenBalances.map((token) => {
-      const price = prices[token.address]
-      if (!price && parseFloat(token.balance) > 0) {
-        console.debug(`No price found for Solana token ${token.symbol} (${token.address})`)
+    const tokensWithPrices = await Promise.all(tokenBalances.map(async (token) => {
+      let price = prices[token.address]
+      
+      // If no price found, try to get from cache
+      if (!price) {
+        const cachedPrice = await db.priceData.get(`999999_${token.address.toLowerCase()}`)
+        if (cachedPrice) {
+          price = {
+            usd: cachedPrice.usdPrice,
+            usd_24h_change: cachedPrice.usd24hChange
+          }
+          console.debug(`Using cached price for Solana ${token.symbol}: $${cachedPrice.usdPrice}`)
+        } else if (parseFloat(token.balance) > 0) {
+          console.debug(`No price found for Solana token ${token.symbol} (${token.address})`)
+        }
       }
+      
       return {
         ...token,
         usdPrice: price?.usd || 0,
         usd24hChange: price?.usd_24h_change || 0,
       }
-    })
+    }))
     
     // Fetch images for tokens that don't have them (in background)
     if (tokensWithPrices.length > 0) {

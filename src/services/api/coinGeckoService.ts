@@ -57,13 +57,32 @@ export class CoinGeckoService {
     // Sort addresses for consistent request ID
     const sortedAddresses = [...tokenAddresses]
       .map(a => a.toLowerCase())
+      .filter(a => a && a !== 'native' && a !== '0x0000000000000000000000000000000000000000') // Filter out invalid addresses
       .sort()
+    
+    // If no valid addresses, return empty
+    if (sortedAddresses.length === 0) {
+      console.debug('No valid addresses to fetch prices for')
+      return {}
+    }
+    
+    // CoinGecko has a limit on URL length, batch if necessary
+    const MAX_ADDRESSES_PER_REQUEST = 30 // Conservative limit to avoid URL length issues
+    
+    if (sortedAddresses.length > MAX_ADDRESSES_PER_REQUEST) {
+      console.debug(`Too many addresses (${sortedAddresses.length}), will batch requests`)
+      // For now, just take the first batch
+      // TODO: Implement proper batching
+      sortedAddresses.splice(MAX_ADDRESSES_PER_REQUEST)
+    }
     
     const requestId = `token-prices:${platformId}:${sortedAddresses.join(',')}`
     const addresses = sortedAddresses.join(',')
+    // Don't encode the addresses - CoinGecko expects them as comma-separated plain text
     const url = `${this.API_BASE}/simple/token_price/${platformId}?contract_addresses=${addresses}&vs_currencies=usd&include_24hr_change=true`
     
     console.debug(`CoinGecko URL: ${url}`)
+    console.debug(`Platform: ${platformId}, Address count: ${sortedAddresses.length}`)
     
     try {
       const data = await rateLimiter.execute(requestId, async () => {
@@ -75,13 +94,18 @@ export class CoinGeckoService {
         if (!response.ok) {
           if (response.status === 429) {
             throw new Error('Rate limit exceeded')
-          } else if (response.status === 400 && platformId === 'base') {
-            // Base network tokens might not be on CoinGecko yet
-            console.debug('Some Base tokens may not be available on CoinGecko')
-            return {}
+          } else if (response.status === 400) {
+            // Log the error details for debugging
+            const errorText = await response.text()
+            console.error(`CoinGecko API 400 error:`, errorText)
+            console.error(`Request URL: ${url}`)
+            console.error(`Platform: ${platformId}, Addresses: ${addresses}`)
+            // Don't return empty object - throw error to use cached values
+            throw new Error(`CoinGecko API error 400: ${errorText}`)
           } else {
             console.warn(`CoinGecko API error: ${response.status}`)
-            return {}
+            // Don't return empty object - throw error to use cached values
+            throw new Error(`CoinGecko API error: ${response.status}`)
           }
         }
         
@@ -113,7 +137,8 @@ export class CoinGeckoService {
       return prices
     } catch (error) {
       console.warn('Failed to fetch token prices:', error)
-      return {}
+      // Re-throw the error so blockchainService can use cached values
+      throw error
     }
   }
   
