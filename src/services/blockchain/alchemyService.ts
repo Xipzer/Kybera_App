@@ -87,18 +87,17 @@ export class AlchemyService {
   /**
    * Get token balances using Alchemy SDK
    * This is much more efficient than checking each token individually
-   * Note: This currently only works for EVM chains. Solana support would need different implementation.
    */
-  async getTokenBalances(walletAddress: string): Promise<TokenBalancesResponse> {
+  async getTokenBalances(walletAddress: string): Promise<TokenBalancesResponse | any> {
     try {
       console.debug(`Fetching token balances via Alchemy for ${walletAddress} on ${this.network.name}`)
       
-      // For Solana, we would need to use different Alchemy methods
+      // For Solana, use different Alchemy methods
       if (this.network.type === 'SVM') {
-        throw new Error('Solana token fetching via Alchemy not yet implemented')
+        return await this.getSolanaTokenBalances(walletAddress)
       }
       
-      // Get token balances from Alchemy (EVM only)
+      // Get token balances from Alchemy (EVM)
       const balances = await this.alchemy.core.getTokenBalances(walletAddress)
       
       console.debug(`Alchemy returned ${balances.tokenBalances.length} tokens`)
@@ -112,6 +111,31 @@ export class AlchemyService {
       }
       
       console.error('Alchemy getTokenBalances error:', error)
+      throw error
+    }
+  }
+  
+  /**
+   * Get Solana token balances using Alchemy
+   */
+  private async getSolanaTokenBalances(walletAddress: string): Promise<any> {
+    try {
+      // For Solana, Alchemy uses different methods
+      // We need to get token accounts
+      const tokenAccounts = await this.alchemy.core.getTokensForOwner(walletAddress)
+      
+      console.debug(`Alchemy returned ${tokenAccounts.tokens.length} Solana tokens`)
+      
+      // Convert to a format similar to EVM response
+      return {
+        tokenBalances: tokenAccounts.tokens.map((token: any) => ({
+          contractAddress: token.mint,
+          tokenBalance: token.amount,
+          // Solana tokens need different handling for decimals
+        }))
+      }
+    } catch (error) {
+      console.error('Alchemy Solana token fetch error:', error)
       throw error
     }
   }

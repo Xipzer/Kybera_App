@@ -1,6 +1,7 @@
 import { EVMWalletService } from './evmWallet'
 import { SVMWalletService } from './svmWallet'
 import { EVMService } from './evmService'
+import { SVMService } from './svmService'
 import { Wallet, Network, TokenBalance, Transaction } from '../../types'
 import { db } from '../storage/database'
 import { transactionMonitor } from '../transactions/transactionMonitor'
@@ -24,7 +25,7 @@ interface TokenWithPrice extends TokenBalance {
 export class BlockchainService {
   private static instance: BlockchainService
   private pollingIntervals: Map<string, NodeJS.Timeout> = new Map()
-  private tokenServices: Map<string, EVMService> = new Map() // Cache token services
+  private tokenServices: Map<string, EVMService | SVMService> = new Map() // Cache token services for both EVM and SVM
   private lastPriceFetch: number = 0
   private PRICE_FETCH_INTERVAL = 300000 // 5 minutes between price fetches (to avoid rate limits)
   private POLLING_INTERVAL = 5000 // 5 seconds for balance updates
@@ -258,9 +259,70 @@ export class BlockchainService {
     walletAddress: string,
     network: Network,
   ): Promise<TokenWithPrice[]> {
-    // TODO: Implement Solana token fetching
-    // For now, return empty array
-    return []
+    // Get or create cached token service instance
+    const serviceKey = `${network.rpcUrl}_${network.chainId}`
+    let tokenService = this.tokenServices.get(serviceKey)
+    
+    if (!tokenService || !(tokenService instanceof SVMService)) {
+      tokenService = new SVMService(network.rpcUrl, network)
+      this.tokenServices.set(serviceKey, tokenService)
+    }
+    
+    // Get token balances
+    const tokenBalances = await (tokenService as SVMService).getTokenBalances(walletAddress)
+    
+    // Get prices if needed
+    let prices: Record<string, { usd: number; usd_24h_change?: number }> = {}
+    if (tokenBalances.length > 0 && this.shouldFetchPrices()) {
+      prices = await (tokenService as SVMService).fetchTokenPrices(tokenBalances.map((t) => t.address))
+      this.lastPriceFetch = Date.now()
+      
+      // Cache prices (use special Solana chainId)
+      await this.cachePrices(prices, 999999)
+    } else if (tokenBalances.length > 0) {
+      // Use cached prices
+      prices = await this.getCachedPrices(
+        tokenBalances.map((t) => t.address),
+        999999,
+      )
+    }
+    
+    // Combine balances with prices
+    const tokensWithPrices = tokenBalances.map((token) => {
+      const price = prices[token.address]
+      if (!price && parseFloat(token.balance) > 0) {
+        console.debug(`No price found for Solana token ${token.symbol} (${token.address})`)
+      }
+      return {
+        ...token,
+        usdPrice: price?.usd || 0,
+        usd24hChange: price?.usd_24h_change || 0,
+      }
+    })
+    
+    // Fetch images for tokens that don't have them (in background)
+    if (tokensWithPrices.length > 0) {
+      // Don't await this - let it run in background
+      tokenImageService.fetchAndCacheTokenImages(
+        tokensWithPrices.map(t => ({
+          address: t.address,
+          chainId: 999999, // Special chainId for Solana
+          symbol: t.symbol,
+          name: t.name
+        }))
+      ).catch(err => console.error('Failed to fetch Solana token images:', err))
+    }
+    
+    // Try to get cached images for immediate display
+    for (const token of tokensWithPrices) {
+      const metadataId = `999999_${token.address.toLowerCase()}`
+      const cached = await db.tokenMetadata.get(metadataId)
+      if (cached?.logoURI) {
+        token.logoURI = cached.logoURI
+      }
+    }
+    
+    return tokensWithPrices
   }
 
   /**

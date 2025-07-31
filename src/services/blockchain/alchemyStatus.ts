@@ -16,7 +16,7 @@ export function logAlchemyStatus() {
   console.log('\n📊 Solana Networks:')
   SVM_NETWORKS.forEach(network => {
     if (network.alchemyRpcUrl) {
-      console.log(`⚠️  ${network.name} - Alchemy RPC configured but token fetching not yet implemented`)
+      console.log(`✅ ${network.name} - Alchemy configured with automatic fallback`)
     } else {
       console.log(`❌ ${network.name} - No Alchemy RPC`)
     }
