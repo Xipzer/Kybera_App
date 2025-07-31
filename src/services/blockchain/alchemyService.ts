@@ -17,7 +17,7 @@ export class AlchemyService {
     
     // Extract API key from Alchemy URL
     const apiKey = this.extractApiKey(network.alchemyRpcUrl!)
-    const alchemyNetwork = this.getAlchemyNetwork(network.chainId as number)
+    const alchemyNetwork = this.getAlchemyNetwork(network.chainId)
     
     if (!apiKey || !alchemyNetwork) {
       throw new Error(`Invalid Alchemy configuration for network ${network.name}`)
@@ -61,13 +61,24 @@ export class AlchemyService {
   /**
    * Map chainId to Alchemy network enum
    */
-  private getAlchemyNetwork(chainId: number): AlchemyNetwork | null {
+  private getAlchemyNetwork(chainId: number | string): AlchemyNetwork | null {
+    // Handle string chainIds for Solana
+    if (typeof chainId === 'string') {
+      const solanaNetworkMap: Record<string, AlchemyNetwork> = {
+        'mainnet-beta': AlchemyNetwork.SOL_MAINNET,
+        'devnet': AlchemyNetwork.SOL_DEVNET,
+      }
+      return solanaNetworkMap[chainId] || null
+    }
+    
+    // Handle numeric chainIds for EVM chains
     const networkMap: Record<number, AlchemyNetwork> = {
       1: AlchemyNetwork.ETH_MAINNET,
       137: AlchemyNetwork.MATIC_MAINNET,
       10: AlchemyNetwork.OPT_MAINNET,
       42161: AlchemyNetwork.ARB_MAINNET,
       8453: AlchemyNetwork.BASE_MAINNET,
+      56: AlchemyNetwork.BNB_MAINNET, // BNB Smart Chain
     }
     
     return networkMap[chainId] || null
@@ -76,12 +87,18 @@ export class AlchemyService {
   /**
    * Get token balances using Alchemy SDK
    * This is much more efficient than checking each token individually
+   * Note: This currently only works for EVM chains. Solana support would need different implementation.
    */
   async getTokenBalances(walletAddress: string): Promise<TokenBalancesResponse> {
     try {
       console.debug(`Fetching token balances via Alchemy for ${walletAddress} on ${this.network.name}`)
       
-      // Get token balances from Alchemy
+      // For Solana, we would need to use different Alchemy methods
+      if (this.network.type === 'SVM') {
+        throw new Error('Solana token fetching via Alchemy not yet implemented')
+      }
+      
+      // Get token balances from Alchemy (EVM only)
       const balances = await this.alchemy.core.getTokenBalances(walletAddress)
       
       console.debug(`Alchemy returned ${balances.tokenBalances.length} tokens`)

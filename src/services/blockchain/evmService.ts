@@ -56,6 +56,13 @@ export class EVMService
     // Try to initialize Alchemy service if network has Alchemy RPC
     if (network?.alchemyRpcUrl) {
       this.alchemyService = AlchemyService.getInstance(network) || undefined
+      if (this.alchemyService) {
+        console.log(`✅ Alchemy SDK initialized for ${network.name} (Chain ID: ${network.chainId})`)
+      } else {
+        console.warn(`⚠️ Failed to initialize Alchemy SDK for ${network.name} despite having alchemyRpcUrl`)
+      }
+    } else if (network) {
+      console.debug(`ℹ️ No Alchemy RPC configured for ${network.name}`)
     }
   }
   

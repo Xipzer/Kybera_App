@@ -57,7 +57,7 @@ export const EVM_NETWORKS: Network[] = [
     name: 'Polygon',
     chainId: 137,
     rpcUrl: 'https://polygon-rpc.com',
-    alchemyRpcUrl: 'https://polygonzkevm-mainnet.g.alchemy.com/v2/cBCJuIqmLxI3eeYj0vQaa',
+    alchemyRpcUrl: 'https://polygon-mainnet.g.alchemy.com/v2/cBCJuIqmLxI3eeYj0vQaa',
     symbol: 'MATIC',
     explorer: 'https://polygonscan.com',
     explorerUrl: 'https://polygonscan.com',

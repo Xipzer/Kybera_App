@@ -10,6 +10,7 @@ import { ChatInterface } from './components/chat/ChatInterface'
 import { UnlockScreen } from './components/auth/UnlockScreen'
 import { initializeMemoryProtection } from './services/security/memoryProtection'
 import { cleanupDiscoveredTokens } from './utils/cleanupTokens'
+import './services/blockchain/alchemyStatus' // Log Alchemy configuration status
 
 const queryClient = new QueryClient()
 
