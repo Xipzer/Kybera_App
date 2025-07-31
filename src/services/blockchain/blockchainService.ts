@@ -172,7 +172,7 @@ export class BlockchainService {
     const serviceKey = `${network.rpcUrl}_${chainId}`
     let tokenService = this.tokenServices.get(serviceKey)
     if (!tokenService) {
-      tokenService = new EVMService(network.rpcUrl, chainId, network.id)
+      tokenService = new EVMService(network.rpcUrl, chainId, network.id, network)
       this.tokenServices.set(serviceKey, tokenService)
     }
 

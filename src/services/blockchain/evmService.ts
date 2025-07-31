@@ -1,6 +1,8 @@
 import { ethers, Contract, JsonRpcProvider } from 'ethers'
 import { db } from '../storage/database'
 import { coinGeckoService } from '../api/coinGeckoService'
+import { AlchemyService } from './alchemyService'
+import { Network } from '../../types'
 
 // Minimal ERC20 ABI for token queries
 const ERC20_ABI = [
@@ -41,12 +43,20 @@ export class EVMService
   private provider: JsonRpcProvider
   private chainId: number
   private networkId?: string
+  private network?: Network
+  private alchemyService?: AlchemyService
   private tokenCache: Map<string, TokenCache> = new Map()
   
-  constructor(rpcUrl: string, chainId: number, networkId?: string) {
+  constructor(rpcUrl: string, chainId: number, networkId?: string, network?: Network) {
     this.provider = new JsonRpcProvider(rpcUrl)
     this.chainId = chainId
     this.networkId = networkId
+    this.network = network
+    
+    // Try to initialize Alchemy service if network has Alchemy RPC
+    if (network?.alchemyRpcUrl) {
+      this.alchemyService = AlchemyService.getInstance(network) || undefined
+    }
   }
   
   /**
@@ -55,6 +65,101 @@ export class EVMService
    * @param tokenAddresses Array of token contract addresses to check
    */
   async getTokenBalances(walletAddress: string, tokenAddresses: string[]): Promise<TokenInfo[]> {
+    // Try Alchemy first if available
+    if (this.alchemyService) {
+      try {
+        const canUse = await this.alchemyService.canUseAlchemy()
+        if (canUse) {
+          console.debug('Attempting to use Alchemy for token discovery')
+          return await this.getTokenBalancesViaAlchemy(walletAddress, tokenAddresses)
+        }
+      } catch (error: any) {
+        if (error.message === 'RATE_LIMIT') {
+          this.alchemyService.markRateLimited()
+          console.warn('Alchemy rate limited, falling back to standard RPC')
+        } else {
+          console.error('Alchemy error, falling back to standard RPC:', error)
+        }
+      }
+    }
+    
+    // Fallback to standard RPC method
+    console.debug('Using standard RPC for token balances')
+    return await this.getTokenBalancesViaRPC(walletAddress, tokenAddresses)
+  }
+  
+  /**
+   * Get token balances using Alchemy SDK - much more efficient
+   */
+  private async getTokenBalancesViaAlchemy(walletAddress: string, tokenAddresses: string[]): Promise<TokenInfo[]> {
+    if (!this.alchemyService) {
+      throw new Error('Alchemy service not initialized')
+    }
+    
+    // Get all token balances from Alchemy
+    const alchemyBalances = await this.alchemyService.getTokenBalances(walletAddress)
+    
+    // Convert Alchemy response to our format
+    const tokens: TokenInfo[] = []
+    const addressSet = new Set(tokenAddresses.map(a => a.toLowerCase()))
+    
+    // Get metadata for tokens with balances
+    const tokensWithBalance = alchemyBalances.tokenBalances.filter(tb => {
+      const balance = BigInt(tb.tokenBalance || '0')
+      return balance > 0n || addressSet.has(tb.contractAddress.toLowerCase())
+    })
+    
+    if (tokensWithBalance.length > 0) {
+      const metadata = await this.alchemyService.getTokenMetadata(
+        tokensWithBalance.map(tb => tb.contractAddress)
+      )
+      
+      for (let i = 0; i < tokensWithBalance.length; i++) {
+        const tokenBalance = tokensWithBalance[i]
+        const meta = metadata[i]
+        
+        if (meta) {
+          const balance = tokenBalance.tokenBalance 
+            ? ethers.formatUnits(tokenBalance.tokenBalance, meta.decimals || 18)
+            : '0'
+            
+          tokens.push({
+            address: tokenBalance.contractAddress.toLowerCase(),
+            name: meta.name || 'Unknown Token',
+            symbol: meta.symbol || 'UNKNOWN',
+            decimals: meta.decimals || 18,
+            balance,
+            logoURI: meta.logo
+          })
+        }
+      }
+    }
+    
+    // Also include manually added tokens that might have 0 balance
+    for (const address of tokenAddresses) {
+      if (!tokens.find(t => t.address === address.toLowerCase())) {
+        const cached = await this.getCachedTokenInfo(address)
+        if (cached) {
+          tokens.push({
+            address: address.toLowerCase(),
+            name: cached.name,
+            symbol: cached.symbol,
+            decimals: cached.decimals,
+            balance: '0',
+            logoURI: cached.logoURI
+          })
+        }
+      }
+    }
+    
+    console.debug(`Alchemy returned ${tokens.length} tokens`)
+    return tokens
+  }
+  
+  /**
+   * Get token balances using standard RPC calls (fallback method)
+   */
+  private async getTokenBalancesViaRPC(walletAddress: string, tokenAddresses: string[]): Promise<TokenInfo[]> {
     const tokens: TokenInfo[] = []
     const BATCH_SIZE = 10 // Process in batches to avoid RPC rate limits
     

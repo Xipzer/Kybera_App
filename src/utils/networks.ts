@@ -1,4 +1,3 @@
-
 import { Network } from '../types'
 import { clusterApiUrl } from '@solana/web3.js'
 
@@ -10,6 +9,7 @@ export const EVM_NETWORKS: Network[] = [
     name: 'Ethereum',
     chainId: 1,
     rpcUrl: 'https://eth.llamarpc.com',
+    alchemyRpcUrl: 'https://eth-mainnet.g.alchemy.com/v2/cBCJuIqmLxI3eeYj0vQaa',
     symbol: 'ETH',
     explorer: 'https://etherscan.io',
     explorerUrl: 'https://etherscan.io',
@@ -24,7 +24,8 @@ export const EVM_NETWORKS: Network[] = [
     id: 'base',
     name: 'Base',
     chainId: 8453,
-    rpcUrl: 'https://base-mainnet.g.alchemy.com/v2/cBCJuIqmLxI3eeYj0vQaa',
+    rpcUrl: 'https://base.llamarpc.com',
+    alchemyRpcUrl: 'https://base-mainnet.g.alchemy.com/v2/cBCJuIqmLxI3eeYj0vQaa',
     symbol: 'ETH',
     explorer: 'https://basescan.org',
     explorerUrl: 'https://basescan.org',
@@ -40,6 +41,7 @@ export const EVM_NETWORKS: Network[] = [
     name: 'BNB Smart Chain',
     chainId: 56,
     rpcUrl: 'https://bsc-dataseed.binance.org',
+    alchemyRpcUrl: 'https://bnb-mainnet.g.alchemy.com/v2/cBCJuIqmLxI3eeYj0vQaa',
     symbol: 'BNB',
     explorer: 'https://bscscan.com',
     explorerUrl: 'https://bscscan.com',
@@ -55,6 +57,7 @@ export const EVM_NETWORKS: Network[] = [
     name: 'Polygon',
     chainId: 137,
     rpcUrl: 'https://polygon-rpc.com',
+    alchemyRpcUrl: 'https://polygonzkevm-mainnet.g.alchemy.com/v2/cBCJuIqmLxI3eeYj0vQaa',
     symbol: 'MATIC',
     explorer: 'https://polygonscan.com',
     explorerUrl: 'https://polygonscan.com',
@@ -70,6 +73,7 @@ export const EVM_NETWORKS: Network[] = [
     name: 'Arbitrum',
     chainId: 42161,
     rpcUrl: 'https://arb1.arbitrum.io/rpc',
+    alchemyRpcUrl: 'https://arb-mainnet.g.alchemy.com/v2/cBCJuIqmLxI3eeYj0vQaa',
     symbol: 'ETH',
     explorer: 'https://arbiscan.io',
     explorerUrl: 'https://arbiscan.io',
@@ -103,6 +107,7 @@ export const SVM_NETWORKS: Network[] = [
     name: 'Solana Mainnet',
     chainId: 'mainnet-beta',
     rpcUrl: "https://mainnet.helius-rpc.com/?api-key=b3927776-59ce-4234-a5a1-344b20b3d9bd",
+    alchemyRpcUrl: 'https://solana-mainnet.g.alchemy.com/v2/cBCJuIqmLxI3eeYj0vQaa',
     symbol: 'SOL',
     explorer: 'https://explorer.solana.com',
     explorerUrl: 'https://explorer.solana.com',
@@ -118,6 +123,7 @@ export const SVM_NETWORKS: Network[] = [
     name: 'Solana Devnet',
     chainId: 'devnet',
     rpcUrl: clusterApiUrl('devnet'),
+    alchemyRpcUrl: 'https://solana-devnet.g.alchemy.com/v2/cBCJuIqmLxI3eeYj0vQaa',
     symbol: 'SOL',
     explorer: 'https://explorer.solana.com?cluster=devnet',
     explorerUrl: 'https://explorer.solana.com?cluster=devnet',
