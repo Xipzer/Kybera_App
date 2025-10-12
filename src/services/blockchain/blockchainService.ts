@@ -3,6 +3,7 @@ import { SVMWalletService } from './svmWallet'
 import { Network, TokenBalance, Transaction, Wallet } from '../../types'
 import { db } from '../storage/database'
 import { memoryProtection } from '../security/memoryProtection'
+import { priceService } from './priceService'
 
 export interface BlockchainBalance {
   native: string
@@ -13,15 +14,9 @@ export interface BlockchainBalance {
   lastUpdated?: number // Timestamp of last successful update
 }
 
-export interface PriceData {
-  [symbol: string]: {
-    usd: number
-    usd_24h_change: number
-  }
-}
+// PriceData is now imported from priceService
 
 class BlockchainService {
-  private PRICE_CACHE_DURATION = 60000 // 1 minute
   private BALANCE_CACHE_DURATION = 30000 // 30 seconds for rate limiting
 
   async getBalance(wallet: Wallet, network: Network): Promise<BlockchainBalance> {
@@ -161,7 +156,7 @@ class BlockchainService {
       let nativeUSD = 0
 
       try {
-        const prices = await this.getPrices([priceId])
+        const prices = await priceService.getPrices([priceId])
         nativePrice = prices[priceId]?.usd || 0
         nativeUSD = parseFloat(nativeBalance) * nativePrice
       } catch (priceError) {
@@ -216,7 +211,10 @@ class BlockchainService {
             const contractAddresses = tokens.map((t) => t.address).filter((addr) => addr)
 
             if (contractAddresses.length > 0) {
-              const tokenPrices = await this.getTokenPricesByContract(platformId, contractAddresses)
+              const tokenPrices = await priceService.getTokenPricesByContract(
+                platformId,
+                contractAddresses,
+              )
 
               tokens.forEach((token) => {
                 if (token.address && tokenPrices[token.address]) {
@@ -245,7 +243,7 @@ class BlockchainService {
               .filter((id) => id !== undefined)
 
             if (priceIdsToFetch.length > 0) {
-              const tokenPrices = await this.getPrices(priceIdsToFetch)
+              const tokenPrices = await priceService.getPrices(priceIdsToFetch)
 
               tokens.forEach((token) => {
                 const priceId = tokenPriceIds[token.symbol]
@@ -404,7 +402,7 @@ class BlockchainService {
           storedTotalUSD: cachedBalance.totalUSD,
           finalTotalUSD,
           tokenCount: tokens.length,
-          error: error.message || error,
+          error: error instanceof Error ? error.message : String(error),
         })
 
         return {
@@ -903,7 +901,7 @@ class BlockchainService {
         let nativeUSD = 0
 
         try {
-          const prices = await this.getPrices([priceId])
+          const prices = await priceService.getPrices([priceId])
           nativePrice = prices[priceId]?.usd || 0
           nativeUSD = parseFloat(nativeBalance) * nativePrice
         } catch (priceError) {
@@ -956,7 +954,7 @@ class BlockchainService {
               const contractAddresses = tokens.map((t) => t.address).filter((addr) => addr)
 
               if (contractAddresses.length > 0) {
-                const tokenPrices = await this.getTokenPricesByContract(
+                const tokenPrices = await priceService.getTokenPricesByContract(
                   platformId,
                   contractAddresses,
                 )
@@ -987,7 +985,7 @@ class BlockchainService {
                 .filter((id) => id !== undefined)
 
               if (priceIdsToFetch.length > 0) {
-                const tokenPrices = await this.getPrices(priceIdsToFetch)
+                const tokenPrices = await priceService.getPrices(priceIdsToFetch)
 
                 tokens.forEach((token) => {
                   const priceId = tokenPriceIds[token.symbol]
@@ -1088,179 +1086,8 @@ class BlockchainService {
     return ((currentUSD - previousUSD) / previousUSD) * 100
   }
 
-  async getPrices(symbols: string[]): Promise<PriceData> {
-    try {
-      // Check cache first
-      const cachedPrices: PriceData = {}
-      const symbolsToFetch: string[] = []
-
-      for (const symbol of symbols) {
-        const cached = await db.priceData.get(symbol)
-        if (cached && Date.now() - cached.lastUpdated < this.PRICE_CACHE_DURATION) {
-          cachedPrices[symbol] = {
-            usd: cached.usdPrice,
-            usd_24h_change: cached.usd24hChange,
-          }
-        } else {
-          symbolsToFetch.push(symbol)
-        }
-      }
-
-      // If all prices are cached, return them
-      if (symbolsToFetch.length === 0) {
-        return cachedPrices
-      }
-
-      // Fetch missing prices
-      // Use proxy in development to avoid CORS issues
-      const isDev = import.meta.env.DEV
-      const apiPath = `/api/v3/simple/price?ids=${symbolsToFetch.join(',')}&vs_currencies=usd&include_24hr_change=true`
-      const apiUrl = isDev ? `/api/coingecko${apiPath}` : `https://api.coingecko.com${apiPath}`
-
-      const response = await fetch(apiUrl)
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch prices')
-      }
-
-      const data = await response.json()
-
-      // Cache the fetched prices and store history
-      const now = Date.now()
-      for (const [id, priceInfo] of Object.entries(data)) {
-        const price = (priceInfo as any).usd || 0
-
-        // Update current price
-        await db.priceData.put({
-          id,
-          symbol: id,
-          usdPrice: price,
-          usd24hChange: (priceInfo as any).usd_24h_change || 0,
-          lastUpdated: now,
-        })
-
-        // Store price history (sample every hour to avoid too much data)
-        const lastHistory = await db.priceHistory
-          .where('symbol')
-          .equals(id)
-          .reverse()
-          .sortBy('timestamp')
-          .then((results) => results[0])
-
-        if (!lastHistory || now - lastHistory.timestamp > 3600000) {
-          // 1 hour
-          await db.priceHistory.put({
-            id: `${id}_${now}`,
-            symbol: id,
-            usdPrice: price,
-            timestamp: now,
-          })
-
-          // Clean up old price history (keep only last 7 days)
-          const cutoffTime = now - 7 * 24 * 60 * 60 * 1000
-          await db.priceHistory
-            .where('symbol')
-            .equals(id)
-            .and((item) => item.timestamp < cutoffTime)
-            .delete()
-        }
-      }
-
-      return { ...cachedPrices, ...data }
-    } catch (error) {
-      console.error('Failed to fetch prices:', error)
-
-      // Return cached prices even if they're stale
-      const stalePrices: PriceData = {}
-      for (const symbol of symbols) {
-        const cached = await db.priceData.get(symbol)
-        if (cached) {
-          stalePrices[symbol] = {
-            usd: cached.usdPrice,
-            usd_24h_change: cached.usd24hChange,
-          }
-        }
-      }
-
-      return stalePrices
-    }
-  }
-
-  async getTokenPricesByContract(
-    platformId: string,
-    contractAddresses: string[],
-  ): Promise<PriceData> {
-    try {
-      // Check cache first
-      const cachedPrices: PriceData = {}
-      const addressesToFetch: string[] = []
-
-      for (const address of contractAddresses) {
-        const cacheKey = `${platformId}_${address.toLowerCase()}`
-        const cached = await db.priceData.get(cacheKey)
-        if (cached && Date.now() - cached.lastUpdated < this.PRICE_CACHE_DURATION) {
-          cachedPrices[address] = {
-            usd: cached.usdPrice,
-            usd_24h_change: cached.usd24hChange,
-          }
-        } else {
-          addressesToFetch.push(address)
-        }
-      }
-
-      // If all prices are cached, return them
-      if (addressesToFetch.length === 0) {
-        return cachedPrices
-      }
-
-      // Fetch missing prices using token price endpoint
-      const isDev = import.meta.env.DEV
-      const apiPath = `/api/v3/simple/token_price/${platformId}?contract_addresses=${addressesToFetch.join(',')}&vs_currencies=usd&include_24hr_change=true`
-      const apiUrl = isDev ? `/api/coingecko${apiPath}` : `https://api.coingecko.com${apiPath}`
-
-      const response = await fetch(apiUrl)
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch token prices')
-      }
-
-      const data = await response.json()
-
-      // Cache the fetched prices
-      const now = Date.now()
-      for (const [address, priceInfo] of Object.entries(data)) {
-        const price = (priceInfo as any).usd || 0
-        const cacheKey = `${platformId}_${address.toLowerCase()}`
-
-        await db.priceData.put({
-          id: cacheKey,
-          symbol: cacheKey,
-          usdPrice: price,
-          usd24hChange: (priceInfo as any).usd_24h_change || 0,
-          lastUpdated: now,
-        })
-      }
-
-      return { ...cachedPrices, ...data }
-    } catch (error) {
-      console.error('Failed to fetch token prices by contract:', error)
-
-      // Return cached prices even if they're stale
-      const stalePrices: PriceData = {}
-      for (const address of contractAddresses) {
-        const cacheKey = `${platformId}_${address.toLowerCase()}`
-        const cached = await db.priceData.get(cacheKey)
-        if (cached) {
-          stalePrices[address] = {
-            usd: cached.usdPrice,
-            usd_24h_change: cached.usd24hChange,
-          }
-        }
-      }
-
-      return stalePrices
-    }
-  }
+  // Price fetching methods are now handled by priceService
+  // Legacy methods removed - use priceService.getPrices() and priceService.getTokenPricesByContract()
 }
 
 export const blockchainService = new BlockchainService()

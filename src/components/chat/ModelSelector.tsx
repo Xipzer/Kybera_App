@@ -6,9 +6,10 @@ const AVAILABLE_MODELS = [
   { id: 'openai/gpt-4-turbo-preview', name: 'GPT-4 Turbo', provider: 'OpenAI' },
   { id: 'openai/gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'OpenAI' },
   { id: 'anthropic/claude-3-opus', name: 'Claude 3 Opus', provider: 'Anthropic' },
-  { id: 'anthropic/claude-3-sonnet', name: 'Claude 3 Sonnet', provider: 'Anthropic' },
+  { id: 'anthropic/claude-3-sonnet', name: '  Claude 3 Sonnet', provider: 'Anthropic' },
   { id: 'google/gemini-pro', name: 'Gemini Pro', provider: 'Google' },
   { id: 'meta-llama/llama-2-70b-chat', name: 'Llama 2 70B', provider: 'Meta' },
+  { id: 'deepseek/deepseek-chat-v3.1:free', name: 'DeepSeek V3.1', provider: 'Deepseek' },
 ]
 
 export function ModelSelector() {

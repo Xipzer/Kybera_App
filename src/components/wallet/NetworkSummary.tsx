@@ -1,4 +1,4 @@
-import { Globe, Layers } from 'lucide-react'
+import { Globe } from 'lucide-react'
 import { MultiNetworkBalance } from '../../hooks/useMultiNetworkBalance'
 import { formatCryptoBalance, formatUSD } from '../../utils/formatters'
 import { useTheme } from '../../hooks/useTheme'
@@ -65,24 +65,6 @@ export function NetworkSummary({
 
   return (
     <div className="p-4">
-      {/* Total Summary Card */}
-      <div className="mb-6 p-4 bg-surface-elevated rounded-lg border border-border-subtle">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Layers className={`w-5 h-5 ${theme.styles.iconSecondary}`} />
-            <h3 className={`text-lg font-semibold ${theme.styles.textPrimary}`}>
-              Total Across {sortedNetworks.length} Network{sortedNetworks.length !== 1 ? 's' : ''}
-            </h3>
-          </div>
-          <div className="text-right">
-            <p className={`text-2xl font-bold ${theme.styles.textPrimary}`}>
-              {formatUSD(totalAcrossNetworks)}
-            </p>
-            <p className={`text-xs ${theme.styles.textTertiary}`}>Portfolio Value</p>
-          </div>
-        </div>
-      </div>
-
       {/* Network Breakdown */}
       <div className="space-y-3">
         <h4 className={`text-sm font-medium mb-3 ${theme.styles.textSecondary}`}>
