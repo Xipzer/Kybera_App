@@ -1,20 +1,21 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { Wallet, WalletGroup, Network, Transaction, ChainType } from '../types'
+import { ChainType, Network, Transaction, Wallet, WalletGroup } from '../types'
 import { EVM_NETWORKS, SVM_NETWORKS } from '../utils/networks'
 import { db } from '../services/storage/database'
 import { EVMWalletService } from '../services/blockchain/evmWallet'
 import { SVMWalletService } from '../services/blockchain/svmWallet'
-import { encryptData, decryptData } from '../utils/crypto'
+import { decryptData, encryptData } from '../utils/crypto'
 import { memoryProtection } from '../services/security/memoryProtection'
 
 interface WalletState {
   wallets: Wallet[]
   walletGroups: WalletGroup[]
   activeWalletId: string | null
-  activeNetwork: Network
+  activeNetwork: Network // For execution/transactions
   activeEVMNetwork: Network
   activeSVMNetwork: Network
+  viewNetworks: string[] // Network IDs for viewing data across multiple chains
   isLocked: boolean
   password: string | null
   transactions: Transaction[]
@@ -23,20 +24,33 @@ interface WalletState {
   addWallet: (wallet: Wallet) => Promise<void>
   removeWallet: (id: string) => Promise<void>
   setActiveWallet: (id: string) => void
-  setActiveNetwork: (network: Network) => void
+  setActiveNetwork: (network: Network) => Promise<void>
+  setViewNetworks: (networkIds: string[]) => void
   lock: () => void
   unlock: (password: string) => void
   loadWallets: () => Promise<void>
   updateWallet: (id: string, updates: Partial<Wallet>) => Promise<void>
-  
+
   // Group Actions
-  createWalletGroup: (name: string, password: string, initialWalletCount?: number, walletNames?: string[]) => Promise<WalletGroup>
+  createWalletGroup: (
+    name: string,
+    password: string,
+    initialWalletCount?: number,
+    walletNames?: string[],
+  ) => Promise<WalletGroup>
   removeWalletGroup: (id: string) => Promise<void>
   addWalletToGroup: (groupId: string, name: string, walletType: ChainType) => Promise<Wallet>
   loadWalletGroups: () => Promise<void>
   exportGroupSeed: (groupId: string, password: string) => Promise<string>
   getWalletPrivateKey: (walletId: string, password: string) => Promise<string>
-  importWalletGroup: (name: string, seedPhrase: string, password: string, walletNames?: string[], evmCount?: number, svmCount?: number) => Promise<WalletGroup>
+  importWalletGroup: (
+    name: string,
+    seedPhrase: string,
+    password: string,
+    walletNames?: string[],
+    evmCount?: number,
+    svmCount?: number,
+  ) => Promise<WalletGroup>
   updateWalletGroup: (id: string, updates: Partial<WalletGroup>) => Promise<void>
   reorderWalletGroups: (groupIds: string[]) => Promise<void>
   reorderWallets: (walletIds: string[]) => Promise<void>
@@ -51,6 +65,7 @@ export const useWalletStore = create<WalletState>()(
       activeNetwork: EVM_NETWORKS[0],
       activeEVMNetwork: EVM_NETWORKS[0],
       activeSVMNetwork: SVM_NETWORKS[0],
+      viewNetworks: [], // Will be initialized based on wallet type
       isLocked: true,
       password: null,
       transactions: [],
@@ -75,30 +90,79 @@ export const useWalletStore = create<WalletState>()(
 
       setActiveWallet: (id) => {
         const state = get()
-        const wallet = state.wallets.find(w => w.id === id)
+        const wallet = state.wallets.find((w) => w.id === id)
         if (wallet) {
-          // Set the active network based on wallet type
-          const activeNetwork = wallet.type === 'EVM' 
-            ? state.activeEVMNetwork 
-            : state.activeSVMNetwork
-          
+          // Try to restore the wallet's last used network
+          let activeNetwork: Network
+
+          if (wallet.lastNetworkId) {
+            // Find the network by ID in the appropriate network list
+            const networkList = wallet.type === 'EVM' ? EVM_NETWORKS : SVM_NETWORKS
+            const lastNetwork = networkList.find((n) => n.id === wallet.lastNetworkId)
+
+            if (lastNetwork) {
+              activeNetwork = lastNetwork
+              // Update the type-specific active network
+              if (wallet.type === 'EVM') {
+                set({ activeEVMNetwork: lastNetwork })
+              } else {
+                set({ activeSVMNetwork: lastNetwork })
+              }
+            } else {
+              // Fall back to the current active network for that type
+              activeNetwork =
+                wallet.type === 'EVM' ? state.activeEVMNetwork : state.activeSVMNetwork
+            }
+          } else {
+            // No last network saved, use default based on wallet type
+            if (wallet.type === 'EVM') {
+              activeNetwork = EVM_NETWORKS[0] // Ethereum mainnet
+              set({ activeEVMNetwork: activeNetwork })
+            } else {
+              activeNetwork = SVM_NETWORKS[0] // Solana mainnet
+              set({ activeSVMNetwork: activeNetwork })
+            }
+          }
+
           console.log('setActiveWallet: Switching to wallet', {
             walletId: id,
             walletType: wallet.type,
             walletAddress: wallet.address,
+            lastNetworkId: wallet.lastNetworkId,
             newNetworkType: activeNetwork.type,
             newNetworkName: activeNetwork.name,
-            newNetworkRPC: activeNetwork.rpcUrl
+            newNetworkRPC: activeNetwork.rpcUrl,
           })
-          
-          set({ activeWalletId: id, activeNetwork })
+
+          // Initialize viewNetworks to all networks of the wallet's type
+          const viewableNetworks = wallet.type === 'EVM' ? EVM_NETWORKS : SVM_NETWORKS
+          const viewNetworkIds = viewableNetworks.map((n) => n.id)
+
+          set({ activeWalletId: id, activeNetwork, viewNetworks: viewNetworkIds })
         } else {
           set({ activeWalletId: id })
         }
       },
 
-      setActiveNetwork: (network) => {
+      setActiveNetwork: async (network) => {
         const state = get()
+
+        // Save the network ID as the last used network for the active wallet
+        if (state.activeWalletId) {
+          const wallet = state.wallets.find((w) => w.id === state.activeWalletId)
+          if (wallet) {
+            // Update wallet with last network ID
+            await db.wallets.update(state.activeWalletId, { lastNetworkId: network.id })
+
+            // Update state
+            set((state) => ({
+              wallets: state.wallets.map((w) =>
+                w.id === state.activeWalletId ? { ...w, lastNetworkId: network.id } : w,
+              ),
+            }))
+          }
+        }
+
         // Update the specific network type state as well
         if (network.type === 'EVM') {
           set({ activeNetwork: network, activeEVMNetwork: network })
@@ -107,6 +171,10 @@ export const useWalletStore = create<WalletState>()(
         } else {
           set({ activeNetwork: network })
         }
+      },
+
+      setViewNetworks: (networkIds) => {
+        set({ viewNetworks: networkIds })
       },
 
       lock: () => {
@@ -130,29 +198,28 @@ export const useWalletStore = create<WalletState>()(
           ...w,
           createdAt: new Date(w.createdAt),
         }))
-        
+
         // Check if active wallet's type matches active network
         const state = get()
         if (state.activeWalletId) {
-          const activeWallet = wallets.find(w => w.id === state.activeWalletId)
+          const activeWallet = wallets.find((w) => w.id === state.activeWalletId)
           if (activeWallet && activeWallet.type !== state.activeNetwork.type) {
             // Fix network mismatch
-            const correctNetwork = activeWallet.type === 'EVM' 
-              ? state.activeEVMNetwork 
-              : state.activeSVMNetwork
+            const correctNetwork =
+              activeWallet.type === 'EVM' ? state.activeEVMNetwork : state.activeSVMNetwork
             set({ wallets, activeNetwork: correctNetwork })
             return
           }
         }
-        
+
         set({ wallets })
       },
-      
+
       createWalletGroup: async (name, password) => {
         // Generate new seed phrase
         const mnemonic = await EVMWalletService.createSeedPhrase()
         const encryptedSeed = encryptData(mnemonic, password)
-        
+
         const group: WalletGroup = {
           id: `group-${Date.now()}`,
           name,
@@ -160,53 +227,55 @@ export const useWalletStore = create<WalletState>()(
           createdAt: new Date(),
           walletCount: 0,
           evmWalletCount: 0,
-          svmWalletCount: 0
+          svmWalletCount: 0,
         }
-        
+
         await db.walletGroups.add({
           ...group,
-          createdAt: group.createdAt.getTime()
+          createdAt: group.createdAt.getTime(),
         })
-        
+
         set((state) => ({
-          walletGroups: [...state.walletGroups, group]
+          walletGroups: [...state.walletGroups, group],
         }))
-        
+
         return group
       },
-      
+
       removeWalletGroup: async (id) => {
         // Remove all wallets in the group
-        const walletsToRemove = get().wallets.filter(w => w.groupId === id)
+        const walletsToRemove = get().wallets.filter((w) => w.groupId === id)
         for (const wallet of walletsToRemove) {
           await db.wallets.delete(wallet.id)
         }
-        
+
         // Remove the group
         await db.walletGroups.delete(id)
-        
+
         set((state) => ({
-          walletGroups: state.walletGroups.filter(g => g.id !== id),
-          wallets: state.wallets.filter(w => w.groupId !== id),
-          activeWalletId: walletsToRemove.some(w => w.id === state.activeWalletId) ? null : state.activeWalletId
+          walletGroups: state.walletGroups.filter((g) => g.id !== id),
+          wallets: state.wallets.filter((w) => w.groupId !== id),
+          activeWalletId: walletsToRemove.some((w) => w.id === state.activeWalletId)
+            ? null
+            : state.activeWalletId,
         }))
       },
-      
+
       addWalletToGroup: async (groupId, name, walletType) => {
-        const group = get().walletGroups.find(g => g.id === groupId)
+        const group = get().walletGroups.find((g) => g.id === groupId)
         if (!group) throw new Error('Group not found')
-        
+
         // Special case: allow mixed types for imported wallets group
         if (group.id === 'default-imported') {
           throw new Error('Cannot add wallets to imported group. Use import instead.')
         }
-        
+
         const password = get().password
         if (!password) throw new Error('Password required')
-        
+
         // Decrypt seed
         const mnemonic = decryptData(group.encryptedSeed, password)
-        
+
         // Calculate derivation index based on type
         let derivationIndex: number
         if (walletType === 'EVM') {
@@ -214,7 +283,7 @@ export const useWalletStore = create<WalletState>()(
         } else {
           derivationIndex = group.svmWalletCount
         }
-        
+
         // Derive wallet
         let walletData
         if (walletType === 'EVM') {
@@ -224,7 +293,7 @@ export const useWalletStore = create<WalletState>()(
         } else {
           throw new Error('Invalid wallet type')
         }
-        
+
         const wallet: Wallet = {
           id: `wallet-${Date.now()}`,
           groupId,
@@ -232,97 +301,112 @@ export const useWalletStore = create<WalletState>()(
           address: walletData.address,
           type: walletType,
           derivationIndex,
-          createdAt: new Date()
+          createdAt: new Date(),
+          lastNetworkId: walletType === 'EVM' ? 'ethereum' : 'solana-mainnet', // Set default network
         }
-        
+
         // Update group wallet count
-        const updateData: any = { 
+        const updateData: any = {
           walletCount: group.walletCount + 1,
-          ...(walletType === 'EVM' 
+          ...(walletType === 'EVM'
             ? { evmWalletCount: group.evmWalletCount + 1 }
-            : { svmWalletCount: group.svmWalletCount + 1 }
-          )
+            : { svmWalletCount: group.svmWalletCount + 1 }),
         }
         await db.walletGroups.update(groupId, updateData)
-        
+
         // Add wallet
         await db.wallets.add({
           ...wallet,
-          createdAt: wallet.createdAt.getTime()
+          createdAt: wallet.createdAt.getTime(),
         })
-        
+
         set((state) => ({
           wallets: [...state.wallets, wallet],
-          walletGroups: state.walletGroups.map(g => 
-            g.id === groupId ? { ...g, ...updateData } : g
-          )
+          walletGroups: state.walletGroups.map((g) =>
+            g.id === groupId ? { ...g, ...updateData } : g,
+          ),
         }))
-        
+
         return wallet
       },
-      
+
       loadWalletGroups: async () => {
         const storedGroups = await db.walletGroups.toArray()
         const wallets = await db.wallets.toArray()
-        
-        const groups = await Promise.all(storedGroups.map(async (g) => {
-          // Count wallets for this group if counts are missing
-          const groupWallets = wallets.filter(w => w.groupId === g.id)
-          const evmCount = g.evmWalletCount ?? groupWallets.filter(w => w.type === 'EVM').length
-          const svmCount = g.svmWalletCount ?? groupWallets.filter(w => w.type === 'SVM').length
-          
-          // Update database if counts were missing
-          if (g.evmWalletCount === undefined || g.svmWalletCount === undefined) {
-            await db.walletGroups.update(g.id, {
+
+        const groups = await Promise.all(
+          storedGroups.map(async (g) => {
+            // Count wallets for this group if counts are missing
+            const groupWallets = wallets.filter((w) => w.groupId === g.id)
+            const evmCount = g.evmWalletCount ?? groupWallets.filter((w) => w.type === 'EVM').length
+            const svmCount = g.svmWalletCount ?? groupWallets.filter((w) => w.type === 'SVM').length
+
+            // Update database if counts were missing
+            if (g.evmWalletCount === undefined || g.svmWalletCount === undefined) {
+              await db.walletGroups.update(g.id, {
+                evmWalletCount: evmCount,
+                svmWalletCount: svmCount,
+              })
+            }
+
+            return {
+              ...g,
+              createdAt: new Date(g.createdAt),
               evmWalletCount: evmCount,
-              svmWalletCount: svmCount
-            })
-          }
-          
-          return {
-            ...g,
-            createdAt: new Date(g.createdAt),
-            evmWalletCount: evmCount,
-            svmWalletCount: svmCount
-          }
-        }))
+              svmWalletCount: svmCount,
+            }
+          }),
+        )
         set({ walletGroups: groups })
       },
-      
+
       exportGroupSeed: async (groupId, password) => {
-        const group = get().walletGroups.find(g => g.id === groupId)
+        const group = get().walletGroups.find((g) => g.id === groupId)
         if (!group) throw new Error('Group not found')
-        
+
         return decryptData(group.encryptedSeed, password)
       },
-      
+
       getWalletPrivateKey: async (walletId, password) => {
-        const wallet = get().wallets.find(w => w.id === walletId)
+        const wallet = get().wallets.find((w) => w.id === walletId)
         if (!wallet) throw new Error('Wallet not found')
-        
+
         // If it's an imported wallet with its own private key
         if (wallet.isImported && wallet.encryptedPrivateKey) {
           return decryptData(wallet.encryptedPrivateKey, password)
         }
-        
+
         // Otherwise, derive from group seed
-        const group = get().walletGroups.find(g => g.id === wallet.groupId)
+        const group = get().walletGroups.find((g) => g.id === wallet.groupId)
         if (!group) throw new Error('Wallet group not found')
-        
+
         const mnemonic = decryptData(group.encryptedSeed, password)
-        
+
         if (wallet.type === 'EVM') {
-          const derived = await EVMWalletService.deriveWalletFromSeed(mnemonic, wallet.derivationIndex)
+          const derived = await EVMWalletService.deriveWalletFromSeed(
+            mnemonic,
+            wallet.derivationIndex,
+          )
           return derived.privateKey
         } else {
-          const derived = await SVMWalletService.deriveWalletFromSeed(mnemonic, wallet.derivationIndex)
+          const derived = await SVMWalletService.deriveWalletFromSeed(
+            mnemonic,
+            wallet.derivationIndex,
+          )
           return derived.privateKey
         }
       },
-      
-      importWalletGroup: async (name, seedPhrase, password, walletNames, evmCount = 0, svmCount = 0) => {
+
+      importWalletGroup: async (
+        name,
+        seedPhrase,
+        password,
+        walletNames,
+        evmCount = 0,
+        svmCount = 0,
+      ) => {
         const encryptedSeed = encryptData(seedPhrase, password)
-        
+
         const group: WalletGroup = {
           id: `group-${Date.now()}`,
           name,
@@ -330,21 +414,21 @@ export const useWalletStore = create<WalletState>()(
           createdAt: new Date(),
           walletCount: 0,
           evmWalletCount: 0,
-          svmWalletCount: 0
+          svmWalletCount: 0,
         }
-        
+
         await db.walletGroups.add({
           ...group,
-          createdAt: group.createdAt.getTime()
+          createdAt: group.createdAt.getTime(),
         })
-        
+
         set((state) => ({
-          walletGroups: [...state.walletGroups, group]
+          walletGroups: [...state.walletGroups, group],
         }))
-        
+
         // Generate EVM and SVM wallets
         let walletIndex = 0
-        
+
         // Generate EVM wallets
         if (evmCount > 0) {
           for (let i = 0; i < evmCount; i++) {
@@ -353,7 +437,7 @@ export const useWalletStore = create<WalletState>()(
             walletIndex++
           }
         }
-        
+
         // Generate SVM wallets
         if (svmCount > 0) {
           for (let i = 0; i < svmCount; i++) {
@@ -362,7 +446,7 @@ export const useWalletStore = create<WalletState>()(
             walletIndex++
           }
         }
-        
+
         return group
       },
 
@@ -381,7 +465,7 @@ export const useWalletStore = create<WalletState>()(
           wallets: state.wallets.map((w) => (w.id === id ? { ...w, ...updates } : w)),
         }))
       },
-      
+
       updateWalletGroup: async (id, updates) => {
         const updateData: any = {}
         if (updates.createdAt) {
@@ -397,40 +481,40 @@ export const useWalletStore = create<WalletState>()(
           walletGroups: state.walletGroups.map((g) => (g.id === id ? { ...g, ...updates } : g)),
         }))
       },
-      
+
       reorderWalletGroups: async (groupIds) => {
         // Update order for each group
         const updates = groupIds.map((id, index) => ({ id, order: index }))
-        
+
         // Update database
         for (const update of updates) {
           await db.walletGroups.update(update.id, { order: update.order })
         }
-        
+
         // Update state
         set((state) => ({
-          walletGroups: state.walletGroups.map(group => {
+          walletGroups: state.walletGroups.map((group) => {
             const newOrder = groupIds.indexOf(group.id)
             return newOrder !== -1 ? { ...group, order: newOrder } : group
-          })
+          }),
         }))
       },
-      
+
       reorderWallets: async (walletIds) => {
         // Update order for each wallet
         const updates = walletIds.map((id, index) => ({ id, order: index }))
-        
+
         // Update database
         for (const update of updates) {
           await db.wallets.update(update.id, { order: update.order })
         }
-        
+
         // Update state
         set((state) => ({
-          wallets: state.wallets.map(wallet => {
+          wallets: state.wallets.map((wallet) => {
             const newOrder = walletIds.indexOf(wallet.id)
             return newOrder !== -1 ? { ...wallet, order: newOrder } : wallet
-          })
+          }),
         }))
       },
     }),
@@ -441,6 +525,7 @@ export const useWalletStore = create<WalletState>()(
         activeNetwork: state.activeNetwork,
         activeEVMNetwork: state.activeEVMNetwork,
         activeSVMNetwork: state.activeSVMNetwork,
+        viewNetworks: state.viewNetworks,
       }),
       migrate: (persistedState: any) => {
         // Ensure activeEVMNetwork and activeSVMNetwork exist
@@ -450,7 +535,7 @@ export const useWalletStore = create<WalletState>()(
         if (!persistedState.activeSVMNetwork) {
           persistedState.activeSVMNetwork = SVM_NETWORKS[0]
         }
-        
+
         // Fix activeNetwork if it's mismatched with the wallet type
         if (persistedState.activeWalletId) {
           // We can't check wallet type here since wallets aren't loaded yet
@@ -460,7 +545,7 @@ export const useWalletStore = create<WalletState>()(
             // we'll let setActiveWallet handle it properly
           }
         }
-        
+
         return persistedState
       },
     },

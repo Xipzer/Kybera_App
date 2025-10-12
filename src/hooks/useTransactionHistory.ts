@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Wallet, Network, Transaction } from '../types'
+import { useEffect, useState } from 'react'
+import { Network, Transaction, Wallet } from '../types'
 import { blockchainService } from '../services/blockchain/blockchainService'
 
 export function useTransactionHistory(wallet: Wallet | undefined, network: Network) {
@@ -16,9 +16,9 @@ export function useTransactionHistory(wallet: Wallet | undefined, network: Netwo
       try {
         setLoading(true)
         setError(null)
-        
+
         const txs = await blockchainService.getTransactionHistory(wallet, network)
-        
+
         if (!cancelled) {
           // Sort by timestamp, newest first
           setTransactions(txs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()))
@@ -35,9 +35,9 @@ export function useTransactionHistory(wallet: Wallet | undefined, network: Netwo
     }
 
     fetchTransactions()
-    
-    // Refresh transactions every 30 seconds
-    const interval = setInterval(fetchTransactions, 30000)
+
+    // Refresh transactions every 3 minutes
+    const interval = setInterval(fetchTransactions, 180000)
 
     return () => {
       cancelled = true

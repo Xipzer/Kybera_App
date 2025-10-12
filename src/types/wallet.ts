@@ -40,6 +40,7 @@ export interface Wallet {
   encryptedPrivateKey?: string
   isImported?: boolean
   order?: number
+  lastNetworkId?: string // Last connected network for this wallet
 }
 
 export interface WalletBalance {

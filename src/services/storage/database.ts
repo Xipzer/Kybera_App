@@ -1,5 +1,5 @@
 import Dexie, { Table } from 'dexie'
-import { Wallet, WalletGroup, Conversation, Message, Transaction } from '../../types'
+import { Conversation, Message, Transaction, Wallet, WalletGroup } from '../../types'
 
 export interface StoredWallet extends Omit<Wallet, 'createdAt'> {
   createdAt: number
@@ -91,42 +91,47 @@ export class SmartWalletDB extends Dexie {
 
   constructor() {
     super('SmartWalletDB')
-    
+
     this.version(1).stores({
       wallets: '++id, address, type',
       conversations: '++id, createdAt',
       messages: '++id, conversationId, timestamp',
       settings: 'key',
     })
-    
+
     // Version 2 adds wallet groups
-    this.version(2).stores({
-      wallets: '++id, groupId, address, type',
-      walletGroups: '++id, type, createdAt',
-      conversations: '++id, createdAt',
-      messages: '++id, conversationId, timestamp',
-      settings: 'key',
-    }).upgrade(async trans => {
-      // Migrate existing wallets to a default group
-      const defaultGroup: StoredWalletGroup = {
-        id: 'default-imported',
-        name: 'Imported Wallets',
-        encryptedSeed: '', // Empty for imported wallets
-        createdAt: Date.now(),
-        walletCount: 0,
-        evmWalletCount: 0,
-        svmWalletCount: 0
-      }
-      
-      await trans.table('walletGroups').add(defaultGroup)
-      
-      // Update existing wallets to reference the default group
-      await trans.table('wallets').toCollection().modify(wallet => {
-        wallet.groupId = 'default-imported'
-        wallet.derivationIndex = -1 // -1 indicates imported wallet
+    this.version(2)
+      .stores({
+        wallets: '++id, groupId, address, type',
+        walletGroups: '++id, type, createdAt',
+        conversations: '++id, createdAt',
+        messages: '++id, conversationId, timestamp',
+        settings: 'key',
       })
-    })
-    
+      .upgrade(async (trans) => {
+        // Migrate existing wallets to a default group
+        const defaultGroup: StoredWalletGroup = {
+          id: 'default-imported',
+          name: 'Imported Wallets',
+          encryptedSeed: '', // Empty for imported wallets
+          createdAt: Date.now(),
+          walletCount: 0,
+          evmWalletCount: 0,
+          svmWalletCount: 0,
+        }
+
+        await trans.table('walletGroups').add(defaultGroup)
+
+        // Update existing wallets to reference the default group
+        await trans
+          .table('wallets')
+          .toCollection()
+          .modify((wallet) => {
+            wallet.groupId = 'default-imported'
+            wallet.derivationIndex = -1 // -1 indicates imported wallet
+          })
+      })
+
     // Version 3 adds auth table
     this.version(3).stores({
       wallets: '++id, groupId, address, type',
@@ -134,9 +139,9 @@ export class SmartWalletDB extends Dexie {
       conversations: '++id, createdAt',
       messages: '++id, conversationId, timestamp',
       settings: 'key',
-      auth: 'id'
+      auth: 'id',
     })
-    
+
     // Version 4 adds transactions table
     this.version(4).stores({
       wallets: '++id, groupId, address, type',
@@ -145,9 +150,9 @@ export class SmartWalletDB extends Dexie {
       messages: '++id, conversationId, timestamp',
       settings: 'key',
       auth: 'id',
-      transactions: '++id, hash, from, to, network, timestamp'
+      transactions: '++id, hash, from, to, network, timestamp',
     })
-    
+
     // Version 5 adds pinned field to conversations
     this.version(5).stores({
       wallets: '++id, groupId, address, type',
@@ -156,94 +161,100 @@ export class SmartWalletDB extends Dexie {
       messages: '++id, conversationId, timestamp',
       settings: 'key',
       auth: 'id',
-      transactions: '++id, hash, from, to, network, timestamp'
+      transactions: '++id, hash, from, to, network, timestamp',
     })
-    
+
     // Version 6 adds support for MULTI wallet groups
-    this.version(6).stores({
-      wallets: '++id, groupId, address, type',
-      walletGroups: '++id, type, createdAt',
-      conversations: '++id, createdAt, pinned',
-      messages: '++id, conversationId, timestamp',
-      settings: 'key',
-      auth: 'id',
-      transactions: '++id, hash, from, to, network, timestamp'
-    }).upgrade(async trans => {
-      // No data migration needed, just schema update for optional fields
-    })
-    
-    // Version 7 removes type restriction from wallet groups
-    this.version(7).stores({
-      wallets: '++id, groupId, address, type',
-      walletGroups: '++id, createdAt',
-      conversations: '++id, createdAt, pinned',
-      messages: '++id, conversationId, timestamp',
-      settings: 'key',
-      auth: 'id',
-      transactions: '++id, hash, from, to, network, timestamp'
-    }).upgrade(async trans => {
-      // Migrate existing groups to have evmWalletCount and svmWalletCount
-      const groups = await trans.table('walletGroups').toArray()
-      const wallets = await trans.table('wallets').toArray()
-      
-      for (const group of groups) {
-        const groupWallets = wallets.filter(w => w.groupId === group.id)
-        const evmCount = groupWallets.filter(w => w.type === 'EVM').length
-        const svmCount = groupWallets.filter(w => w.type === 'SVM').length
-        
-        await trans.table('walletGroups').update(group.id, {
-          evmWalletCount: evmCount,
-          svmWalletCount: svmCount
-        })
-        
-        // Remove the type field if it exists
-        if (group.type) {
-          const { type, ...groupWithoutType } = group
-          await trans.table('walletGroups').put({
-            ...groupWithoutType,
-            id: group.id,
-            evmWalletCount: evmCount,
-            svmWalletCount: svmCount
-          })
-        }
-      }
-    })
-    
-    // Version 8 adds order field for drag and drop support
-    this.version(8).stores({
-      wallets: '++id, groupId, address, type, order',
-      walletGroups: '++id, createdAt, order',
-      conversations: '++id, createdAt, pinned',
-      messages: '++id, conversationId, timestamp',
-      settings: 'key',
-      auth: 'id',
-      transactions: '++id, hash, from, to, network, timestamp'
-    }).upgrade(async trans => {
-      // Add order to existing wallets and groups
-      const groups = await trans.table('walletGroups').toArray()
-      const wallets = await trans.table('wallets').toArray()
-      
-      // Set order for groups based on creation date
-      const sortedGroups = groups.sort((a, b) => a.createdAt - b.createdAt)
-      for (let i = 0; i < sortedGroups.length; i++) {
-        await trans.table('walletGroups').update(sortedGroups[i].id, { order: i })
-      }
-      
-      // Set order for wallets within each group
-      const walletsByGroup: { [key: string]: any[] } = {}
-      wallets.forEach(w => {
-        if (!walletsByGroup[w.groupId]) walletsByGroup[w.groupId] = []
-        walletsByGroup[w.groupId].push(w)
+    this.version(6)
+      .stores({
+        wallets: '++id, groupId, address, type',
+        walletGroups: '++id, type, createdAt',
+        conversations: '++id, createdAt, pinned',
+        messages: '++id, conversationId, timestamp',
+        settings: 'key',
+        auth: 'id',
+        transactions: '++id, hash, from, to, network, timestamp',
       })
-      
-      for (const groupId in walletsByGroup) {
-        const groupWallets = walletsByGroup[groupId].sort((a, b) => a.createdAt - b.createdAt)
-        for (let i = 0; i < groupWallets.length; i++) {
-          await trans.table('wallets').update(groupWallets[i].id, { order: i })
+      .upgrade(async (trans) => {
+        // No data migration needed, just schema update for optional fields
+      })
+
+    // Version 7 removes type restriction from wallet groups
+    this.version(7)
+      .stores({
+        wallets: '++id, groupId, address, type',
+        walletGroups: '++id, createdAt',
+        conversations: '++id, createdAt, pinned',
+        messages: '++id, conversationId, timestamp',
+        settings: 'key',
+        auth: 'id',
+        transactions: '++id, hash, from, to, network, timestamp',
+      })
+      .upgrade(async (trans) => {
+        // Migrate existing groups to have evmWalletCount and svmWalletCount
+        const groups = await trans.table('walletGroups').toArray()
+        const wallets = await trans.table('wallets').toArray()
+
+        for (const group of groups) {
+          const groupWallets = wallets.filter((w) => w.groupId === group.id)
+          const evmCount = groupWallets.filter((w) => w.type === 'EVM').length
+          const svmCount = groupWallets.filter((w) => w.type === 'SVM').length
+
+          await trans.table('walletGroups').update(group.id, {
+            evmWalletCount: evmCount,
+            svmWalletCount: svmCount,
+          })
+
+          // Remove the type field if it exists
+          if (group.type) {
+            const { type, ...groupWithoutType } = group
+            await trans.table('walletGroups').put({
+              ...groupWithoutType,
+              id: group.id,
+              evmWalletCount: evmCount,
+              svmWalletCount: svmCount,
+            })
+          }
         }
-      }
-    })
-    
+      })
+
+    // Version 8 adds order field for drag and drop support
+    this.version(8)
+      .stores({
+        wallets: '++id, groupId, address, type, order',
+        walletGroups: '++id, createdAt, order',
+        conversations: '++id, createdAt, pinned',
+        messages: '++id, conversationId, timestamp',
+        settings: 'key',
+        auth: 'id',
+        transactions: '++id, hash, from, to, network, timestamp',
+      })
+      .upgrade(async (trans) => {
+        // Add order to existing wallets and groups
+        const groups = await trans.table('walletGroups').toArray()
+        const wallets = await trans.table('wallets').toArray()
+
+        // Set order for groups based on creation date
+        const sortedGroups = groups.sort((a, b) => a.createdAt - b.createdAt)
+        for (let i = 0; i < sortedGroups.length; i++) {
+          await trans.table('walletGroups').update(sortedGroups[i].id, { order: i })
+        }
+
+        // Set order for wallets within each group
+        const walletsByGroup: { [key: string]: any[] } = {}
+        wallets.forEach((w) => {
+          if (!walletsByGroup[w.groupId]) walletsByGroup[w.groupId] = []
+          walletsByGroup[w.groupId].push(w)
+        })
+
+        for (const groupId in walletsByGroup) {
+          const groupWallets = walletsByGroup[groupId].sort((a, b) => a.createdAt - b.createdAt)
+          for (let i = 0; i < groupWallets.length; i++) {
+            await trans.table('wallets').update(groupWallets[i].id, { order: i })
+          }
+        }
+      })
+
     // Version 9 adds caching tables for balances and prices
     this.version(9).stores({
       wallets: '++id, groupId, address, type, order',
@@ -255,9 +266,9 @@ export class SmartWalletDB extends Dexie {
       transactions: '++id, hash, from, to, network, timestamp',
       tokenBalances: 'id, walletAddress, networkId, lastUpdated',
       priceData: 'id, symbol, lastUpdated',
-      walletBalances: 'id, walletAddress, networkId, lastUpdated'
+      walletBalances: 'id, walletAddress, networkId, lastUpdated',
     })
-    
+
     // Version 10 adds price history table for 24h change tracking
     this.version(10).stores({
       wallets: '++id, groupId, address, type, order',
@@ -270,31 +281,60 @@ export class SmartWalletDB extends Dexie {
       tokenBalances: 'id, walletAddress, networkId, lastUpdated',
       priceData: 'id, symbol, lastUpdated',
       priceHistory: 'id, symbol, timestamp',
-      walletBalances: 'id, walletAddress, networkId, lastUpdated'
+      walletBalances: 'id, walletAddress, networkId, lastUpdated',
     })
-    
+
     // Version 11 adds usdValue to token balances
-    this.version(11).stores({
-      wallets: '++id, groupId, address, type, order',
-      walletGroups: '++id, createdAt, order',
-      conversations: '++id, createdAt, pinned',
-      messages: '++id, conversationId, timestamp',
-      settings: 'key',
-      auth: 'id',
-      transactions: '++id, hash, from, to, network, timestamp',
-      tokenBalances: 'id, walletAddress, networkId, lastUpdated',
-      priceData: 'id, symbol, lastUpdated',
-      priceHistory: 'id, symbol, timestamp',
-      walletBalances: 'id, walletAddress, networkId, lastUpdated'
-    }).upgrade(async trans => {
-      // Add usdValue field to existing token balances
-      const tokenBalances = await trans.table('tokenBalances').toArray()
-      for (const tokenBalance of tokenBalances) {
-        await trans.table('tokenBalances').update(tokenBalance.id, {
-          usdValue: 0 // Will be updated on next refresh
-        })
-      }
-    })
+    this.version(11)
+      .stores({
+        wallets: '++id, groupId, address, type, order',
+        walletGroups: '++id, createdAt, order',
+        conversations: '++id, createdAt, pinned',
+        messages: '++id, conversationId, timestamp',
+        settings: 'key',
+        auth: 'id',
+        transactions: '++id, hash, from, to, network, timestamp',
+        tokenBalances: 'id, walletAddress, networkId, lastUpdated',
+        priceData: 'id, symbol, lastUpdated',
+        priceHistory: 'id, symbol, timestamp',
+        walletBalances: 'id, walletAddress, networkId, lastUpdated',
+      })
+      .upgrade(async (trans) => {
+        // Add usdValue field to existing token balances
+        const tokenBalances = await trans.table('tokenBalances').toArray()
+        for (const tokenBalance of tokenBalances) {
+          await trans.table('tokenBalances').update(tokenBalance.id, {
+            usdValue: 0, // Will be updated on next refresh
+          })
+        }
+      })
+
+    // Version 12 adds lastNetworkId to wallets for network persistence
+    this.version(12)
+      .stores({
+        wallets: '++id, groupId, address, type, order, lastNetworkId',
+        walletGroups: '++id, createdAt, order',
+        conversations: '++id, createdAt, pinned',
+        messages: '++id, conversationId, timestamp',
+        settings: 'key',
+        auth: 'id',
+        transactions: '++id, hash, from, to, network, timestamp',
+        tokenBalances: 'id, walletAddress, networkId, lastUpdated',
+        priceData: 'id, symbol, lastUpdated',
+        priceHistory: 'id, symbol, timestamp',
+        walletBalances: 'id, walletAddress, networkId, lastUpdated',
+      })
+      .upgrade(async (trans) => {
+        // Add lastNetworkId field to existing wallets
+        const wallets = await trans.table('wallets').toArray()
+        for (const wallet of wallets) {
+          // Set default network based on wallet type
+          const defaultNetworkId = wallet.type === 'EVM' ? 'ethereum' : 'solana-mainnet'
+          await trans.table('wallets').update(wallet.id, {
+            lastNetworkId: defaultNetworkId,
+          })
+        }
+      })
   }
 }
 

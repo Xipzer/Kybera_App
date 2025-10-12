@@ -1,22 +1,23 @@
-import { useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
-  Plus,
   ChevronDown,
   Copy,
-  Trash2,
   Download,
-  Upload,
-  Wallet as WalletIcon,
   Edit2,
-  Users,
-  MoreVertical,
   ExternalLink,
+  MoreVertical,
+  Plus,
+  Trash2,
+  Upload,
+  Users,
+  Wallet as WalletIcon,
 } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import * as Tabs from '@radix-ui/react-tabs'
 import { BetterScrollArea } from '../common/BetterScrollArea'
-import { NetworkSelector } from './NetworkSelector'
+import { MultiNetworkSelector } from './MultiNetworkSelector'
+import { ExecutionNetworkSelector } from './ExecutionNetworkSelector'
 // import { CreateWalletDialog } from './CreateWalletDialog' - Deprecated in favor of groups
 import { ImportWalletDialog } from './ImportWalletDialog'
 import { EmptyState } from '../common/EmptyState'
@@ -29,28 +30,29 @@ import { WalletDetailView } from './WalletDetailView'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { useTheme } from '../../hooks/useTheme'
 import {
-  DndContext,
   closestCenter,
+  DndContext,
+  DragEndEvent,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent,
 } from '@dnd-kit/core'
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  animateLayoutChanges,
-} from '@dnd-kit/sortable'
-import {
   useSortable,
+  verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
 // Custom modifier to restrict to vertical axis
-const restrictToVerticalAxis = ({ transform }: { transform: { x: number; y: number; scaleX: number; scaleY: number } }) => {
+const restrictToVerticalAxis = ({
+  transform,
+}: {
+  transform: { x: number; y: number; scaleX: number; scaleY: number }
+}) => {
   return {
     ...transform,
     x: 0, // Restrict horizontal movement
@@ -78,14 +80,7 @@ const customAnimateLayoutChanges = ({
 
 // Sortable Group Component
 function SortableWalletGroup(props: WalletGroupItemProps & { id: string }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ 
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: props.id,
     animateLayoutChanges: customAnimateLayoutChanges,
   })
@@ -105,14 +100,7 @@ function SortableWalletGroup(props: WalletGroupItemProps & { id: string }) {
 
 // Sortable Wallet Component
 function SortableWallet(props: WalletItemProps & { id: string }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ 
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: props.id,
     animateLayoutChanges: customAnimateLayoutChanges,
   })
@@ -131,9 +119,17 @@ function SortableWallet(props: WalletItemProps & { id: string }) {
 }
 
 export function WalletDrawer({ collapsed }: WalletDrawerProps) {
-  const { wallets, walletGroups, activeWalletId, setActiveWallet, removeWallet, activeNetwork, reorderWalletGroups, reorderWallets } =
-    useWalletStore()
-  
+  const {
+    wallets,
+    walletGroups,
+    activeWalletId,
+    setActiveWallet,
+    removeWallet,
+    activeNetwork,
+    reorderWalletGroups,
+    reorderWallets,
+  } = useWalletStore()
+
   // DnD sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -143,9 +139,9 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   )
-  
+
   const [showImportDialog, setShowImportDialog] = useState(false)
   const [renameWallet, setRenameWallet] = useState<(typeof wallets)[0] | null>(null)
   const [showCreateGroupDialog, setShowCreateGroupDialog] = useState(false)
@@ -157,55 +153,55 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
 
   // Memoize filtered data to avoid recalculation on every render
   const actualGroups = useMemo(
-    () => walletGroups.filter(g => g.id !== 'default-imported').sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
-    [walletGroups]
+    () =>
+      walletGroups
+        .filter((g) => g.id !== 'default-imported')
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+    [walletGroups],
   )
-  
+
   // Sort wallets by order for drag and drop
-  const sortedWallets = useMemo(
-    () => {
-      const sorted = [...wallets].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-      return {
-        all: sorted,
-        EVM: sorted.filter((w) => w.type === 'EVM'),
-        SVM: sorted.filter((w) => w.type === 'SVM'),
-      }
-    },
-    [wallets]
-  )
-  
+  const sortedWallets = useMemo(() => {
+    const sorted = [...wallets].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    return {
+      all: sorted,
+      EVM: sorted.filter((w) => w.type === 'EVM'),
+      SVM: sorted.filter((w) => w.type === 'SVM'),
+    }
+  }, [wallets])
+
   // Keep walletsByType for backward compatibility
   const walletsByType = sortedWallets
-  
+
   const handleGroupDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
-    
+
     if (over && active.id !== over.id) {
       const oldIndex = actualGroups.findIndex((g) => g.id === active.id)
       const newIndex = actualGroups.findIndex((g) => g.id === over.id)
-      
+
       if (oldIndex !== -1 && newIndex !== -1) {
         const newOrder = arrayMove(actualGroups, oldIndex, newIndex)
-        await reorderWalletGroups(newOrder.map(g => g.id))
+        await reorderWalletGroups(newOrder.map((g) => g.id))
       }
     }
   }
-  
+
   const handleWalletDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
-    
+
     if (over && active.id !== over.id) {
-      const activeWallet = wallets.find(w => w.id === active.id)
-      const overWallet = wallets.find(w => w.id === over.id)
-      
+      const activeWallet = wallets.find((w) => w.id === active.id)
+      const overWallet = wallets.find((w) => w.id === over.id)
+
       // Only allow reordering within the same type
       if (activeWallet && overWallet && activeWallet.type === overWallet.type) {
         const oldIndex = sortedWallets.all.findIndex((w) => w.id === active.id)
         const newIndex = sortedWallets.all.findIndex((w) => w.id === over.id)
-        
+
         if (oldIndex !== -1 && newIndex !== -1) {
           const newOrder = arrayMove(sortedWallets.all, oldIndex, newIndex)
-          await reorderWallets(newOrder.map(w => w.id))
+          await reorderWallets(newOrder.map((w) => w.id))
         }
       }
     }
@@ -221,167 +217,219 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
   }
 
   if (collapsed) {
-    return (
-      <div className="h-full w-full border-l border-border-subtle panel-content-fade-right" />
-    )
+    return <div className="h-full w-full border-l border-border-subtle panel-content-fade-right" />
   }
 
   return (
     <div className={`h-full ${theme.styles.drawerContainer} panel-content-fade-right`}>
       <PanelGroup direction="vertical" className="h-full">
         <Panel defaultSize={50} minSize={30} maxSize={70} className="flex flex-col overflow-hidden">
-      <div className={`p-4 flex-shrink-0 ${theme.styles.panelHeader}`}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className={`text-lg font-semibold ${theme.styles.textPrimary}`}>Wallets</h2>
-        </div>
+          <div className={`p-4 flex-shrink-0 ${theme.styles.panelHeader}`}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className={`text-lg font-semibold ${theme.styles.textPrimary}`}>Wallets</h2>
+            </div>
 
-        <NetworkSelector />
+            <div className="space-y-3">
+              <MultiNetworkSelector />
+              <ExecutionNetworkSelector />
+            </div>
 
-        <div className="mt-4 space-y-2">
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowCreateGroupDialog(true)}
-              className={`${theme.styles.buttonPrimary} flex-1 flex items-center justify-center gap-2 px-3 py-2`}
-              style={theme.dynamicStyles.buttonPrimary}
-            >
-              <Users className="w-4 h-4" />
-              New Group
-            </button>
-            <DropdownMenu.Root>
-              <DropdownMenu.Trigger asChild>
-                <button 
-                  className={`${theme.styles.buttonSecondary} flex-1 flex items-center justify-center gap-2 px-3 py-2`}
-                  style={theme.dynamicStyles.buttonSecondary}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = theme.name === 'Xipz' 
-                      ? 'rgba(239, 68, 68, 0.1)' 
-                      : 'rgba(255, 0, 153, 0.1)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                  }}
+            <div className="mt-4 space-y-2">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowCreateGroupDialog(true)}
+                  className={`${theme.styles.buttonPrimary} flex-1 flex items-center justify-center gap-2 px-3 py-2`}
+                  style={theme.dynamicStyles.buttonPrimary}
                 >
-                  <Upload className="w-4 h-4" />
-                  Import
-                  <ChevronDown className="w-3 h-3" />
+                  <Users className="w-4 h-4" />
+                  New Group
                 </button>
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Portal>
-                <DropdownMenu.Content
-                  className={theme.styles.dropdown.content}
-                  sideOffset={5}
-                >
-                  <DropdownMenu.Item
-                    onClick={() => setShowImportGroupDialog(true)}
-                    className={`${theme.styles.dropdown.item} ${theme.styles.dropdown.itemHover}`}
-                  >
-                    <Users className="w-4 h-4" />
-                    Import Group (Seed Phrase)
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    onClick={() => setShowImportDialog(true)}
-                    className={`${theme.styles.dropdown.item} ${theme.styles.dropdown.itemHover}`}
-                  >
-                    <WalletIcon className="w-4 h-4" />
-                    Import Single Wallet
-                  </DropdownMenu.Item>
-                </DropdownMenu.Content>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Root>
-          </div>
-        </div>
-      </div>
-
-      <Tabs.Root defaultValue="groups" className="flex-1 flex flex-col min-h-0">
-        <Tabs.List className={`${theme.styles.tabs.list} flex-shrink-0`}>
-          <Tabs.Trigger
-            value="groups"
-            className={theme.styles.tabs.trigger}
-          >
-            Groups ({actualGroups.length})
-          </Tabs.Trigger>
-          <Tabs.Trigger
-            value="evm"
-            className={theme.styles.tabs.trigger}
-          >
-            EVM ({walletsByType.EVM.length})
-          </Tabs.Trigger>
-          <Tabs.Trigger
-            value="svm"
-            className={theme.styles.tabs.trigger}
-          >
-            SVM ({walletsByType.SVM.length})
-          </Tabs.Trigger>
-          <Tabs.Trigger
-            value="all"
-            className={theme.styles.tabs.trigger}
-          >
-            All ({wallets.length})
-          </Tabs.Trigger>
-        </Tabs.List>
-
-        <Tabs.Content value="groups" className="flex-1 overflow-hidden min-h-0">
-          <BetterScrollArea>
-            <div className="p-4">
-              {actualGroups.length === 0 ? (
-                <EmptyState
-                  icon={Users}
-                  title="No wallet groups yet"
-                  description="Create a group to manage multiple wallets with one recovery phrase"
-                  action={{
-                    label: 'Create Group',
-                    onClick: () => setShowCreateGroupDialog(true),
-                  }}
-                  className="h-full"
-                />
-              ) : (
-                <div className="space-y-3">
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleGroupDragEnd}
-                    modifiers={[restrictToVerticalAxis]}
-                  >
-                    <SortableContext
-                      items={actualGroups.map(g => g.id)}
-                      strategy={verticalListSortingStrategy}
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger asChild>
+                    <button
+                      className={`${theme.styles.buttonSecondary} flex-1 flex items-center justify-center gap-2 px-3 py-2`}
+                      style={theme.dynamicStyles.buttonSecondary}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor =
+                          theme.name === 'Xipz'
+                            ? 'rgba(239, 68, 68, 0.1)'
+                            : 'rgba(255, 0, 153, 0.1)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                      }}
                     >
-                      {actualGroups.map((group) => (
-                        <SortableWalletGroup
-                          key={group.id}
-                          id={group.id}
-                          group={group}
-                          wallets={wallets.filter((w) => w.groupId === group.id).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))}
-                          onAddWallet={() => {
-                            setSelectedGroupId(group.id)
-                            setShowAddToGroupDialog(true)
-                          }}
-                          onSelectWallet={(walletId) => setActiveWallet(walletId)}
-                          activeWalletId={activeWalletId}
-                          onExportGroup={(group) => setExportGroup(group)}
-                          onRenameWallet={(wallet) => setRenameWallet(wallet)}
-                          onDeleteWallet={(walletId) => removeWallet(walletId)}
-                          onCopyAddress={(address) => copyAddress(address)}
-                        />
-                      ))}
-                    </SortableContext>
-                  </DndContext>
+                      <Upload className="w-4 h-4" />
+                      Import
+                      <ChevronDown className="w-3 h-3" />
+                    </button>
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content className={theme.styles.dropdown.content} sideOffset={5}>
+                      <DropdownMenu.Item
+                        onClick={() => setShowImportGroupDialog(true)}
+                        className={`${theme.styles.dropdown.item} ${theme.styles.dropdown.itemHover}`}
+                      >
+                        <Users className="w-4 h-4" />
+                        Import Group (Seed Phrase)
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item
+                        onClick={() => setShowImportDialog(true)}
+                        className={`${theme.styles.dropdown.item} ${theme.styles.dropdown.itemHover}`}
+                      >
+                        <WalletIcon className="w-4 h-4" />
+                        Import Single Wallet
+                      </DropdownMenu.Item>
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Root>
+              </div>
+            </div>
+          </div>
 
-                  {/* Show imported wallets group if it has wallets */}
-                  {wallets.some((w) => w.groupId === 'default-imported') && (
-                    <div className="mt-6">
-                      <h3 className={`text-sm font-medium mb-2 ${theme.styles.textSecondary}`}>
-                        Imported Wallets
-                      </h3>
-                      <div className="space-y-2">
-                        {wallets
-                          .filter((w) => w.groupId === 'default-imported')
-                          .map((wallet) => (
-                            <WalletItem
+          <Tabs.Root defaultValue="groups" className="flex-1 flex flex-col min-h-0">
+            <Tabs.List className={`${theme.styles.tabs.list} flex-shrink-0`}>
+              <Tabs.Trigger value="groups" className={theme.styles.tabs.trigger}>
+                Groups ({actualGroups.length})
+              </Tabs.Trigger>
+              <Tabs.Trigger value="evm" className={theme.styles.tabs.trigger}>
+                EVM ({walletsByType.EVM.length})
+              </Tabs.Trigger>
+              <Tabs.Trigger value="svm" className={theme.styles.tabs.trigger}>
+                SVM ({walletsByType.SVM.length})
+              </Tabs.Trigger>
+              <Tabs.Trigger value="all" className={theme.styles.tabs.trigger}>
+                All ({wallets.length})
+              </Tabs.Trigger>
+            </Tabs.List>
+
+            <Tabs.Content value="groups" className="flex-1 overflow-hidden min-h-0">
+              <BetterScrollArea>
+                <div className="p-4">
+                  {actualGroups.length === 0 ? (
+                    <EmptyState
+                      icon={Users}
+                      title="No wallet groups yet"
+                      description="Create a group to manage multiple wallets with one recovery phrase"
+                      action={{
+                        label: 'Create Group',
+                        onClick: () => setShowCreateGroupDialog(true),
+                      }}
+                      className="h-full"
+                    />
+                  ) : (
+                    <div className="space-y-3">
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleGroupDragEnd}
+                        modifiers={[restrictToVerticalAxis]}
+                      >
+                        <SortableContext
+                          items={actualGroups.map((g) => g.id)}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          {actualGroups.map((group) => (
+                            <SortableWalletGroup
+                              key={group.id}
+                              id={group.id}
+                              group={group}
+                              wallets={wallets
+                                .filter((w) => w.groupId === group.id)
+                                .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))}
+                              onAddWallet={() => {
+                                setSelectedGroupId(group.id)
+                                setShowAddToGroupDialog(true)
+                              }}
+                              onSelectWallet={(walletId) => {
+                                if (walletId === activeWalletId) {
+                                  setActiveWallet(null)
+                                } else {
+                                  setActiveWallet(walletId)
+                                }
+                              }}
+                              activeWalletId={activeWalletId}
+                              onExportGroup={(group) => setExportGroup(group)}
+                              onRenameWallet={(wallet) => setRenameWallet(wallet)}
+                              onDeleteWallet={(walletId) => removeWallet(walletId)}
+                              onCopyAddress={(address) => copyAddress(address)}
+                            />
+                          ))}
+                        </SortableContext>
+                      </DndContext>
+
+                      {/* Show imported wallets group if it has wallets */}
+                      {wallets.some((w) => w.groupId === 'default-imported') && (
+                        <div className="mt-6">
+                          <h3 className={`text-sm font-medium mb-2 ${theme.styles.textSecondary}`}>
+                            Imported Wallets
+                          </h3>
+                          <div className="space-y-2">
+                            {wallets
+                              .filter((w) => w.groupId === 'default-imported')
+                              .map((wallet) => (
+                                <WalletItem
+                                  key={wallet.id}
+                                  wallet={wallet}
+                                  isActive={wallet.id === activeWalletId}
+                                  onSelect={() => {
+                                    if (wallet.id === activeWalletId) {
+                                      setActiveWallet(null)
+                                    } else {
+                                      setActiveWallet(wallet.id)
+                                    }
+                                  }}
+                                  onCopy={() => copyAddress(wallet.address)}
+                                  onRename={() => setRenameWallet(wallet)}
+                                  onExport={() => handleExportWallet(wallet)}
+                                  onDelete={() => removeWallet(wallet.id)}
+                                  network={activeNetwork}
+                                />
+                              ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </BetterScrollArea>
+            </Tabs.Content>
+
+            <Tabs.Content value="evm" className="flex-1 overflow-hidden min-h-0">
+              <BetterScrollArea>
+                <div className="p-4">
+                  {walletsByType.EVM.length === 0 ? (
+                    <EmptyState
+                      icon={WalletIcon}
+                      title="No EVM wallets yet"
+                      description="Create or import an EVM wallet to get started"
+                      action={{
+                        label: 'Create EVM Group',
+                        onClick: () => setShowCreateGroupDialog(true),
+                      }}
+                      className="h-full"
+                    />
+                  ) : (
+                    <div className="space-y-2">
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleWalletDragEnd}
+                        modifiers={[restrictToVerticalAxis]}
+                      >
+                        <SortableContext
+                          items={sortedWallets.EVM.map((w) => w.id)}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          {sortedWallets.EVM.map((wallet) => (
+                            <SortableWallet
                               key={wallet.id}
+                              id={wallet.id}
                               wallet={wallet}
                               isActive={wallet.id === activeWalletId}
-                              onSelect={() => setActiveWallet(wallet.id)}
+                              onSelect={() =>
+                                setActiveWallet(wallet.id === activeWalletId ? null : wallet.id)
+                              }
                               onCopy={() => copyAddress(wallet.address)}
                               onRename={() => setRenameWallet(wallet)}
                               onExport={() => handleExportWallet(wallet)}
@@ -389,211 +437,170 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
                               network={activeNetwork}
                             />
                           ))}
-                      </div>
+                        </SortableContext>
+                      </DndContext>
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-          </BetterScrollArea>
-        </Tabs.Content>
+              </BetterScrollArea>
+            </Tabs.Content>
 
-        <Tabs.Content value="evm" className="flex-1 overflow-hidden min-h-0">
-          <BetterScrollArea>
-            <div className="p-4">
-              {walletsByType.EVM.length === 0 ? (
-                <EmptyState
-                  icon={WalletIcon}
-                  title="No EVM wallets yet"
-                  description="Create or import an EVM wallet to get started"
-                  action={{
-                    label: 'Create EVM Group',
-                    onClick: () => setShowCreateGroupDialog(true),
-                  }}
-                  className="h-full"
-                />
-              ) : (
-                <div className="space-y-2">
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleWalletDragEnd}
-                    modifiers={[restrictToVerticalAxis]}
-                  >
-                    <SortableContext
-                      items={sortedWallets.EVM.map(w => w.id)}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      {sortedWallets.EVM.map((wallet) => (
-                        <SortableWallet
-                          key={wallet.id}
-                          id={wallet.id}
-                          wallet={wallet}
-                          isActive={wallet.id === activeWalletId}
-                          onSelect={() => setActiveWallet(wallet.id)}
-                          onCopy={() => copyAddress(wallet.address)}
-                          onRename={() => setRenameWallet(wallet)}
-                          onExport={() => handleExportWallet(wallet)}
-                          onDelete={() => removeWallet(wallet.id)}
-                          network={activeNetwork}
-                        />
-                      ))}
-                    </SortableContext>
-                  </DndContext>
-                </div>
-              )}
-            </div>
-          </BetterScrollArea>
-        </Tabs.Content>
-
-        <Tabs.Content value="svm" className="flex-1 overflow-hidden min-h-0">
-          <BetterScrollArea>
-            <div className="p-4">
-              {walletsByType.SVM.length === 0 ? (
-                <EmptyState
-                  icon={WalletIcon}
-                  title="No SVM wallets yet"
-                  description="Create or import a Solana wallet to get started"
-                  action={{
-                    label: 'Create SVM Group',
-                    onClick: () => setShowCreateGroupDialog(true),
-                  }}
-                  className="h-full"
-                />
-              ) : (
-                <div className="space-y-2">
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleWalletDragEnd}
-                    modifiers={[restrictToVerticalAxis]}
-                  >
-                    <SortableContext
-                      items={sortedWallets.SVM.map(w => w.id)}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      {sortedWallets.SVM.map((wallet) => (
-                        <SortableWallet
-                          key={wallet.id}
-                          id={wallet.id}
-                          wallet={wallet}
-                          isActive={wallet.id === activeWalletId}
-                          onSelect={() => setActiveWallet(wallet.id)}
-                          onCopy={() => copyAddress(wallet.address)}
-                          onRename={() => setRenameWallet(wallet)}
-                          onExport={() => handleExportWallet(wallet)}
-                          onDelete={() => removeWallet(wallet.id)}
-                          network={activeNetwork}
-                        />
-                      ))}
-                    </SortableContext>
-                  </DndContext>
-                </div>
-              )}
-            </div>
-          </BetterScrollArea>
-        </Tabs.Content>
-
-        <Tabs.Content value="all" className="flex-1 overflow-hidden min-h-0">
-          <BetterScrollArea>
-            <div className="p-4">
-              <div className="space-y-4">
-                <div>
-                  <h3 className={`text-sm font-medium mb-2 ${theme.styles.textSecondary}`}>
-                    EVM Wallets
-                  </h3>
-                  <div className="space-y-2">
-                    <DndContext
-                      sensors={sensors}
-                      collisionDetection={closestCenter}
-                      onDragEnd={handleWalletDragEnd}
-                      modifiers={[restrictToVerticalAxis]}
-                    >
-                      <SortableContext
-                        items={sortedWallets.EVM.map(w => w.id)}
-                        strategy={verticalListSortingStrategy}
+            <Tabs.Content value="svm" className="flex-1 overflow-hidden min-h-0">
+              <BetterScrollArea>
+                <div className="p-4">
+                  {walletsByType.SVM.length === 0 ? (
+                    <EmptyState
+                      icon={WalletIcon}
+                      title="No SVM wallets yet"
+                      description="Create or import a Solana wallet to get started"
+                      action={{
+                        label: 'Create SVM Group',
+                        onClick: () => setShowCreateGroupDialog(true),
+                      }}
+                      className="h-full"
+                    />
+                  ) : (
+                    <div className="space-y-2">
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleWalletDragEnd}
+                        modifiers={[restrictToVerticalAxis]}
                       >
-                        {sortedWallets.EVM.map((wallet) => (
-                          <SortableWallet
-                            key={wallet.id}
-                            id={wallet.id}
-                            wallet={wallet}
-                            isActive={wallet.id === activeWalletId}
-                            onSelect={() => setActiveWallet(wallet.id)}
-                            onCopy={() => copyAddress(wallet.address)}
-                            onRename={() => setRenameWallet(wallet)}
-                            onExport={() => handleExportWallet(wallet)}
-                            onDelete={() => removeWallet(wallet.id)}
-                            network={activeNetwork}
-                          />
-                        ))}
-                      </SortableContext>
-                    </DndContext>
+                        <SortableContext
+                          items={sortedWallets.SVM.map((w) => w.id)}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          {sortedWallets.SVM.map((wallet) => (
+                            <SortableWallet
+                              key={wallet.id}
+                              id={wallet.id}
+                              wallet={wallet}
+                              isActive={wallet.id === activeWalletId}
+                              onSelect={() =>
+                                setActiveWallet(wallet.id === activeWalletId ? null : wallet.id)
+                              }
+                              onCopy={() => copyAddress(wallet.address)}
+                              onRename={() => setRenameWallet(wallet)}
+                              onExport={() => handleExportWallet(wallet)}
+                              onDelete={() => removeWallet(wallet.id)}
+                              network={activeNetwork}
+                            />
+                          ))}
+                        </SortableContext>
+                      </DndContext>
+                    </div>
+                  )}
+                </div>
+              </BetterScrollArea>
+            </Tabs.Content>
+
+            <Tabs.Content value="all" className="flex-1 overflow-hidden min-h-0">
+              <BetterScrollArea>
+                <div className="p-4">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className={`text-sm font-medium mb-2 ${theme.styles.textSecondary}`}>
+                        EVM Wallets
+                      </h3>
+                      <div className="space-y-2">
+                        <DndContext
+                          sensors={sensors}
+                          collisionDetection={closestCenter}
+                          onDragEnd={handleWalletDragEnd}
+                          modifiers={[restrictToVerticalAxis]}
+                        >
+                          <SortableContext
+                            items={sortedWallets.EVM.map((w) => w.id)}
+                            strategy={verticalListSortingStrategy}
+                          >
+                            {sortedWallets.EVM.map((wallet) => (
+                              <SortableWallet
+                                key={wallet.id}
+                                id={wallet.id}
+                                wallet={wallet}
+                                isActive={wallet.id === activeWalletId}
+                                onSelect={() =>
+                                  setActiveWallet(wallet.id === activeWalletId ? null : wallet.id)
+                                }
+                                onCopy={() => copyAddress(wallet.address)}
+                                onRename={() => setRenameWallet(wallet)}
+                                onExport={() => handleExportWallet(wallet)}
+                                onDelete={() => removeWallet(wallet.id)}
+                                network={activeNetwork}
+                              />
+                            ))}
+                          </SortableContext>
+                        </DndContext>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className={`text-sm font-medium mb-2 ${theme.styles.textSecondary}`}>
+                        SVM Wallets
+                      </h3>
+                      <div className="space-y-2">
+                        <DndContext
+                          sensors={sensors}
+                          collisionDetection={closestCenter}
+                          onDragEnd={handleWalletDragEnd}
+                          modifiers={[restrictToVerticalAxis]}
+                        >
+                          <SortableContext
+                            items={sortedWallets.SVM.map((w) => w.id)}
+                            strategy={verticalListSortingStrategy}
+                          >
+                            {sortedWallets.SVM.map((wallet) => (
+                              <SortableWallet
+                                key={wallet.id}
+                                id={wallet.id}
+                                wallet={wallet}
+                                isActive={wallet.id === activeWalletId}
+                                onSelect={() =>
+                                  setActiveWallet(wallet.id === activeWalletId ? null : wallet.id)
+                                }
+                                onCopy={() => copyAddress(wallet.address)}
+                                onRename={() => setRenameWallet(wallet)}
+                                onExport={() => handleExportWallet(wallet)}
+                                onDelete={() => removeWallet(wallet.id)}
+                                network={activeNetwork}
+                              />
+                            ))}
+                          </SortableContext>
+                        </DndContext>
+                      </div>
+                    </div>
                   </div>
                 </div>
+              </BetterScrollArea>
+            </Tabs.Content>
+          </Tabs.Root>
 
-                <div>
-                  <h3 className={`text-sm font-medium mb-2 ${theme.styles.textSecondary}`}>
-                    SVM Wallets
-                  </h3>
-                  <div className="space-y-2">
-                    <DndContext
-                      sensors={sensors}
-                      collisionDetection={closestCenter}
-                      onDragEnd={handleWalletDragEnd}
-                      modifiers={[restrictToVerticalAxis]}
-                    >
-                      <SortableContext
-                        items={sortedWallets.SVM.map(w => w.id)}
-                        strategy={verticalListSortingStrategy}
-                      >
-                        {sortedWallets.SVM.map((wallet) => (
-                          <SortableWallet
-                            key={wallet.id}
-                            id={wallet.id}
-                            wallet={wallet}
-                            isActive={wallet.id === activeWalletId}
-                            onSelect={() => setActiveWallet(wallet.id)}
-                            onCopy={() => copyAddress(wallet.address)}
-                            onRename={() => setRenameWallet(wallet)}
-                            onExport={() => handleExportWallet(wallet)}
-                            onDelete={() => removeWallet(wallet.id)}
-                            network={activeNetwork}
-                          />
-                        ))}
-                      </SortableContext>
-                    </DndContext>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </BetterScrollArea>
-        </Tabs.Content>
-      </Tabs.Root>
-
-      <ImportWalletDialog open={showImportDialog} onOpenChange={setShowImportDialog} />
-      <RenameWalletDialog
-        open={renameWallet !== null}
-        onOpenChange={(open) => !open && setRenameWallet(null)}
-        wallet={renameWallet}
-      />
-      <CreateGroupDialog open={showCreateGroupDialog} onOpenChange={setShowCreateGroupDialog} />
-      <AddWalletToGroupDialog
-        open={showAddToGroupDialog}
-        onOpenChange={setShowAddToGroupDialog}
-        groupId={selectedGroupId}
-      />
-      <ExportGroupDialog
-        open={exportGroup !== null}
-        onOpenChange={(open) => !open && setExportGroup(null)}
-        group={exportGroup}
-      />
-      <ImportGroupDialog open={showImportGroupDialog} onOpenChange={setShowImportGroupDialog} />
+          <ImportWalletDialog open={showImportDialog} onOpenChange={setShowImportDialog} />
+          <RenameWalletDialog
+            open={renameWallet !== null}
+            onOpenChange={(open) => !open && setRenameWallet(null)}
+            wallet={renameWallet}
+          />
+          <CreateGroupDialog open={showCreateGroupDialog} onOpenChange={setShowCreateGroupDialog} />
+          <AddWalletToGroupDialog
+            open={showAddToGroupDialog}
+            onOpenChange={setShowAddToGroupDialog}
+            groupId={selectedGroupId}
+          />
+          <ExportGroupDialog
+            open={exportGroup !== null}
+            onOpenChange={(open) => !open && setExportGroup(null)}
+            group={exportGroup}
+          />
+          <ImportGroupDialog open={showImportGroupDialog} onOpenChange={setShowImportGroupDialog} />
         </Panel>
 
         {activeWalletId && (
           <>
-            <PanelResizeHandle className={`h-px transition-colors ${theme.styles.resizeHandle} ${theme.styles.resizeHandleHover}`} />
+            <PanelResizeHandle
+              className={`h-px transition-colors ${theme.styles.resizeHandle} ${theme.styles.resizeHandleHover}`}
+            />
             <Panel>
               <WalletDetailView />
             </Panel>
@@ -675,7 +682,7 @@ function WalletItem({
                 autoFocus
               />
             ) : (
-              <h4 
+              <h4
                 className={`font-medium ${theme.styles.textPrimary}`}
                 onDoubleClick={handleDoubleClick}
               >
@@ -717,19 +724,13 @@ function WalletItem({
 
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
-            <button
-              onClick={(e) => e.stopPropagation()}
-              className={theme.styles.buttonIcon}
-            >
+            <button onClick={(e) => e.stopPropagation()} className={theme.styles.buttonIcon}>
               <MoreVertical className={`w-4 h-4 ${theme.styles.iconSecondary}`} />
             </button>
           </DropdownMenu.Trigger>
 
           <DropdownMenu.Portal>
-            <DropdownMenu.Content
-              className={theme.styles.dropdown.content}
-              sideOffset={5}
-            >
+            <DropdownMenu.Content className={theme.styles.dropdown.content} sideOffset={5}>
               <DropdownMenu.Item
                 onClick={(e) => {
                   e.stopPropagation()
@@ -844,7 +845,12 @@ function WalletGroupItem({
             className="flex items-center gap-2 flex-1 text-left"
           >
             <div {...dragHandleProps} className="cursor-move p-1 -ml-1">
-              <svg width="12" height="12" viewBox="0 0 12 12" className={theme.styles.iconSecondary}>
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 12 12"
+                className={theme.styles.iconSecondary}
+              >
                 <circle cx="3" cy="3" r="1.5" fill="currentColor" />
                 <circle cx="9" cy="3" r="1.5" fill="currentColor" />
                 <circle cx="3" cy="9" r="1.5" fill="currentColor" />
@@ -867,7 +873,7 @@ function WalletGroupItem({
                   autoFocus
                 />
               ) : (
-                <h3 
+                <h3
                   className={`font-medium ${theme.styles.textPrimary}`}
                   onDoubleClick={handleDoubleClick}
                 >
@@ -878,7 +884,7 @@ function WalletGroupItem({
                 {(() => {
                   const evmCount = group.evmWalletCount || 0
                   const svmCount = group.svmWalletCount || 0
-                  
+
                   if (evmCount > 0 && svmCount > 0) {
                     const totalCount = evmCount + svmCount
                     return `Mixed • ${totalCount} Wallet${totalCount !== 1 ? 's' : ''} • ${evmCount} EVM / ${svmCount} SVM`
@@ -902,10 +908,7 @@ function WalletGroupItem({
             </DropdownMenu.Trigger>
 
             <DropdownMenu.Portal>
-              <DropdownMenu.Content
-                className={theme.styles.dropdown.content}
-                sideOffset={5}
-              >
+              <DropdownMenu.Content className={theme.styles.dropdown.content} sideOffset={5}>
                 <DropdownMenu.Item
                   onClick={onAddWallet}
                   className={`${theme.styles.dropdown.item} ${theme.styles.dropdown.itemHover}`}
@@ -1023,12 +1026,10 @@ function GroupWalletItem({
   return (
     <div
       className={`group relative p-2 rounded border ${
-        isActive
-          ? theme.styles.listItemActive
-          : `border-transparent ${theme.styles.listItemHover}`
+        isActive ? theme.styles.listItemActive : `border-transparent ${theme.styles.listItemHover}`
       }`}
     >
-      <div 
+      <div
         onClick={() => onSelectWallet(wallet.id)}
         className="flex items-center justify-between cursor-pointer"
       >
@@ -1045,7 +1046,7 @@ function GroupWalletItem({
               autoFocus
             />
           ) : (
-            <p 
+            <p
               className={`text-sm font-medium ${theme.styles.textPrimary}`}
               onDoubleClick={handleDoubleClick}
             >

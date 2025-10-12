@@ -1,8 +1,9 @@
 import { Wallet } from '../../types'
 import { Network } from '../../utils/networks'
 import { formatCryptoBalance, formatUSD } from '../../utils/formatters'
-import { TrendingUp, TrendingDown } from 'lucide-react'
+import { TrendingDown, TrendingUp } from 'lucide-react'
 import { BlockchainBalance } from '../../services/blockchain/blockchainService'
+import { useTheme } from '../../hooks/useTheme'
 
 interface TokenListProps {
   wallet: Wallet
@@ -13,6 +14,7 @@ interface TokenListProps {
 }
 
 export function TokenList({ wallet, network, balanceData, isLoading, error }: TokenListProps) {
+  const { theme } = useTheme()
 
   if (isLoading) {
     return (
@@ -34,9 +36,7 @@ export function TokenList({ wallet, network, balanceData, isLoading, error }: To
       <div className="p-4">
         <div className="text-center py-8">
           <p className="text-accent mb-2">{error}</p>
-          <p className="text-sm text-text-secondary">
-            Unable to load token data
-          </p>
+          <p className="text-sm text-text-secondary">Unable to load token data</p>
         </div>
       </div>
     )
@@ -46,9 +46,8 @@ export function TokenList({ wallet, network, balanceData, isLoading, error }: To
   const nativeCurrency = network.nativeCurrency || {
     name: network.symbol || 'ETH',
     symbol: network.symbol || 'ETH',
-    decimals: 18
+    decimals: 18,
   }
-
 
   // Create token list including native currency
   const allTokens = [
@@ -58,22 +57,27 @@ export function TokenList({ wallet, network, balanceData, isLoading, error }: To
       balance: balanceData.native,
       usdValue: balanceData.nativeUSD,
       change24h: 0, // TODO: Get from price data
-      isNative: true
+      isNative: true,
+      address: undefined,
     },
-    ...balanceData.tokens.map(token => ({
+    ...balanceData.tokens.map((token) => ({
       symbol: token.symbol,
       name: token.name,
       balance: token.balance,
       usdValue: token.usdValue || 0,
       change24h: 0,
       isNative: false,
-      address: token.address
-    }))
+      address: token.address,
+    })),
   ]
 
   return (
     <div className="p-4">
+      {/* Token list */}
       <div className="space-y-2">
+        <div className={`text-xs font-medium mb-2 ${theme.styles.textSecondary}`}>
+          Tokens on {network.name}
+        </div>
         {allTokens.map((token) => (
           <div
             key={token.symbol + (token.isNative ? '-native' : token.address || '')}
@@ -82,9 +86,11 @@ export function TokenList({ wallet, network, balanceData, isLoading, error }: To
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-surface-elevated rounded-full flex items-center justify-center overflow-hidden">
-                  {!token.isNative && token.address && balanceData.tokens.find(t => t.address === token.address)?.logoURI ? (
-                    <img 
-                      src={balanceData.tokens.find(t => t.address === token.address)?.logoURI} 
+                  {!token.isNative &&
+                  token.address &&
+                  balanceData.tokens.find((t) => t.address === token.address)?.logoURI ? (
+                    <img
+                      src={balanceData.tokens.find((t) => t.address === token.address)?.logoURI}
                       alt={token.symbol}
                       className="w-full h-full object-cover"
                       onError={(e) => {
@@ -94,9 +100,15 @@ export function TokenList({ wallet, network, balanceData, isLoading, error }: To
                       }}
                     />
                   ) : null}
-                  <span className={`text-sm font-medium text-text-primary ${
-                    !token.isNative && token.address && balanceData.tokens.find(t => t.address === token.address)?.logoURI ? 'hidden' : ''
-                  }`}>
+                  <span
+                    className={`text-sm font-medium text-text-primary ${
+                      !token.isNative &&
+                      token.address &&
+                      balanceData.tokens.find((t) => t.address === token.address)?.logoURI
+                        ? 'hidden'
+                        : ''
+                    }`}
+                  >
                     {token.symbol.slice(0, 2).toUpperCase()}
                   </span>
                 </div>
@@ -107,7 +119,9 @@ export function TokenList({ wallet, network, balanceData, isLoading, error }: To
               </div>
 
               <div className="text-right">
-                <p className="font-medium text-text-primary">{formatCryptoBalance(token.balance)}</p>
+                <p className="font-medium text-text-primary">
+                  {formatCryptoBalance(token.balance)}
+                </p>
                 <div className="flex items-center justify-end gap-1">
                   <span className="text-sm text-text-secondary">{formatUSD(token.usdValue)}</span>
                   {token.usdValue > 0 && (
@@ -122,7 +136,8 @@ export function TokenList({ wallet, network, balanceData, isLoading, error }: To
                           token.change24h >= 0 ? 'text-green-500' : 'text-accent'
                         }`}
                       >
-                        {token.change24h >= 0 ? '+' : ''}{token.change24h.toFixed(2)}%
+                        {token.change24h >= 0 ? '+' : ''}
+                        {token.change24h.toFixed(2)}%
                       </span>
                     </div>
                   )}

@@ -1,41 +1,70 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import {
-  Send,
-  Download,
-  History,
   Coins,
   Copy,
+  Download,
   ExternalLink,
-  TrendingUp,
-  TrendingDown,
+  History,
+  LayoutGrid,
   RefreshCw,
+  Send,
+  TrendingDown,
+  TrendingUp,
 } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import * as Tabs from '@radix-ui/react-tabs'
-import { formatAddress, formatCryptoBalance, formatTimeAgo } from '../../utils/formatters'
+import { formatAddress, formatTimeAgo } from '../../utils/formatters'
 import { SendDialog } from './SendDialog'
 import { ReceiveDialog } from './ReceiveDialog'
 import { TokenList } from './TokenList'
 import { TransactionHistory } from './TransactionHistory'
+import { NetworkSummary } from './NetworkSummary'
 import { useWalletBalance } from '../../hooks/useWalletBalance'
+import { useMultiNetworkBalance } from '../../hooks/useMultiNetworkBalance'
 import { useTheme } from '../../hooks/useTheme'
 
 export function WalletDetailView() {
-  const { activeWalletId, wallets, activeNetwork } = useWalletStore()
+  const { activeWalletId, wallets, activeNetwork, viewNetworks } = useWalletStore()
   const [showSendDialog, setShowSendDialog] = useState(false)
   const [showReceiveDialog, setShowReceiveDialog] = useState(false)
   const [, forceUpdate] = useState({})
   const { theme: themeConfig, themeName } = useTheme()
 
   const activeWallet = wallets.find((w) => w.id === activeWalletId)
-  const { balance, loading, error, refetch } = useWalletBalance(activeWallet, activeNetwork)
-  
+
+  // Use multi-network balance for viewing data across multiple networks
+  const {
+    balances: multiNetworkBalances,
+    loading: multiLoading,
+    error: multiError,
+    totalUSD: totalMultiUSD,
+    refetch: refetchMulti,
+  } = useMultiNetworkBalance(activeWallet, viewNetworks)
+
+  // Use single network balance for execution network
+  const {
+    balance: executionBalance,
+    loading: execLoading,
+    error: execError,
+  } = useWalletBalance(activeWallet, activeNetwork)
+
+  // Combine the data - use multi-network total for display, execution network for transactions
+  const loading = multiLoading
+  const error = multiError
+  const refetch = refetchMulti
+  const balance = {
+    ...executionBalance, // Use execution balance as base
+    totalUSD: totalMultiUSD, // Override with multi-network total
+    totalUSDChange: 0, // TODO: Calculate from multi-network data
+    lastUpdated: Date.now(),
+  }
+
   // Update the time ago display every second
   useEffect(() => {
     const interval = setInterval(() => {
       forceUpdate({})
     }, 1000)
-    
+
     return () => clearInterval(interval)
   }, [])
 
@@ -55,20 +84,26 @@ export function WalletDetailView() {
   const nativeCurrency = activeNetwork.nativeCurrency || {
     name: activeNetwork.symbol || 'ETH',
     symbol: activeNetwork.symbol || 'ETH',
-    decimals: 18
+    decimals: 18,
   }
-  
+
   // Get change from balance data (refresh-to-refresh)
   const changePercent = balance.totalUSDChange || 0
 
   return (
-    <div className={`h-full flex flex-col transition-all duration-300 ${themeConfig.styles.mainContainer}`}>
+    <div
+      className={`h-full flex flex-col transition-all duration-300 ${themeConfig.styles.mainContainer}`}
+    >
       {/* Wallet Header */}
       <div className={`p-6 transition-all duration-300 ${themeConfig.styles.panelHeader}`}>
         <div className="mb-4">
-          <h2 className={`text-2xl font-bold mb-1 ${themeConfig.styles.textPrimary}`}>{activeWallet.name}</h2>
+          <h2 className={`text-2xl font-bold mb-1 ${themeConfig.styles.textPrimary}`}>
+            {activeWallet.name}
+          </h2>
           <div className="flex items-center gap-2">
-            <p className={`text-sm ${themeConfig.styles.textSecondary}`}>{formatAddress(activeWallet.address)}</p>
+            <p className={`text-sm ${themeConfig.styles.textSecondary}`}>
+              {formatAddress(activeWallet.address)}
+            </p>
             <button
               onClick={copyAddress}
               className={`p-1 rounded transition-all duration-300 ${themeConfig.styles.buttonIcon}`}
@@ -98,14 +133,18 @@ export function WalletDetailView() {
               className={`p-1 rounded transition-all duration-300 disabled:opacity-50 ${themeConfig.styles.buttonIcon}`}
               title="Refresh all balances"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''} ${themeConfig.styles.iconSecondary}`} />
+              <RefreshCw
+                className={`w-4 h-4 ${loading ? 'animate-spin' : ''} ${themeConfig.styles.iconSecondary}`}
+              />
             </button>
           </div>
           {loading && balance.totalUSD === 0 ? (
             <div className="h-8 w-32 animate-pulse rounded bg-surface-base" />
           ) : (
             <>
-              <p className={`text-2xl font-bold ${themeConfig.styles.textPrimary}`}>${balance.totalUSD.toFixed(2)}</p>
+              <p className={`text-2xl font-bold ${themeConfig.styles.textPrimary}`}>
+                ${balance.totalUSD.toFixed(2)}
+              </p>
               <div className="flex items-center gap-2 mt-1">
                 <div className="flex items-center gap-1">
                   {changePercent >= 0 ? (
@@ -114,11 +153,10 @@ export function WalletDetailView() {
                     <TrendingDown className="w-4 h-4 text-accent" />
                   )}
                   <span
-                    className={`text-sm ${
-                      changePercent >= 0 ? 'text-green-500' : 'text-accent'
-                    }`}
+                    className={`text-sm ${changePercent >= 0 ? 'text-green-500' : 'text-accent'}`}
                   >
-                    {changePercent >= 0 ? '+' : ''}{changePercent.toFixed(2)}%
+                    {changePercent >= 0 ? '+' : ''}
+                    {changePercent.toFixed(2)}%
                   </span>
                 </div>
                 {balance.lastUpdated && (
@@ -127,9 +165,7 @@ export function WalletDetailView() {
                   </span>
                 )}
                 {error && balance.totalUSD > 0 && (
-                  <span className={`text-xs ${themeConfig.styles.textTertiary}`}>
-                    (cached)
-                  </span>
+                  <span className={`text-xs ${themeConfig.styles.textTertiary}`}>(cached)</span>
                 )}
               </div>
             </>
@@ -158,8 +194,15 @@ export function WalletDetailView() {
       </div>
 
       {/* Tabs Content */}
-      <Tabs.Root defaultValue="tokens" className="flex-1 flex flex-col overflow-hidden">
+      <Tabs.Root defaultValue="summary" className="flex-1 flex flex-col overflow-hidden">
         <Tabs.List className={themeConfig.styles.tabs.list}>
+          <Tabs.Trigger
+            value="summary"
+            className={`${themeConfig.styles.tabs.trigger} flex items-center justify-center gap-2`}
+          >
+            <LayoutGrid className="w-4 h-4" />
+            Summary
+          </Tabs.Trigger>
           <Tabs.Trigger
             value="tokens"
             className={`${themeConfig.styles.tabs.trigger} flex items-center justify-center gap-2`}
@@ -176,8 +219,24 @@ export function WalletDetailView() {
           </Tabs.Trigger>
         </Tabs.List>
 
+        <Tabs.Content value="summary" className="flex-1 overflow-y-auto">
+          <NetworkSummary
+            wallet={activeWallet}
+            multiNetworkBalances={multiNetworkBalances}
+            executionNetwork={activeNetwork}
+            isLoading={multiLoading}
+            error={multiError}
+          />
+        </Tabs.Content>
+
         <Tabs.Content value="tokens" className="flex-1 overflow-y-auto">
-          <TokenList wallet={activeWallet} network={activeNetwork} balanceData={balance} isLoading={loading} error={error} />
+          <TokenList
+            wallet={activeWallet}
+            network={activeNetwork}
+            balanceData={balance}
+            isLoading={loading}
+            error={error}
+          />
         </Tabs.Content>
 
         <Tabs.Content value="history" className="flex-1 overflow-y-auto">

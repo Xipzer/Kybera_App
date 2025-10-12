@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Tabs from '@radix-ui/react-tabs'
-import { X, AlertCircle } from 'lucide-react'
+import { AlertCircle, X } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import { EVMWalletService } from '../../services/blockchain/evmWallet'
 import { SVMWalletService } from '../../services/blockchain/svmWallet'
@@ -89,6 +89,7 @@ export function ImportWalletDialog({ open, onOpenChange }: ImportWalletDialogPro
         createdAt: new Date(),
         encryptedPrivateKey,
         isImported: true,
+        lastNetworkId: walletType === 'EVM' ? 'ethereum' : 'solana-mainnet', // Set default network
       }
 
       await addWallet(wallet)
@@ -113,17 +114,14 @@ export function ImportWalletDialog({ open, onOpenChange }: ImportWalletDialogPro
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="dialog-overlay" />
-        <Dialog.Content className={`dialog-content w-[500px] max-h-[85vh] overflow-y-auto ${theme.styles.dialogContainer}`}>
+        <Dialog.Content
+          className={`dialog-content w-[500px] max-h-[85vh] overflow-y-auto ${theme.styles.dialogContainer}`}
+        >
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <Dialog.Title className={theme.styles.heading}>
-                Import Wallet
-              </Dialog.Title>
+              <Dialog.Title className={theme.styles.heading}>Import Wallet</Dialog.Title>
               <Dialog.Close asChild>
-                <button
-                  onClick={handleClose}
-                  className={theme.styles.buttonIcon}
-                >
+                <button onClick={handleClose} className={theme.styles.buttonIcon}>
                   <X className={`w-5 h-5 ${theme.styles.iconSecondary}`} />
                 </button>
               </Dialog.Close>
@@ -131,16 +129,10 @@ export function ImportWalletDialog({ open, onOpenChange }: ImportWalletDialogPro
 
             <Tabs.Root value={walletType} onValueChange={(v) => setWalletType(v as ChainType)}>
               <Tabs.List className={`${theme.styles.tabs.list} mb-6`}>
-                <Tabs.Trigger
-                  value="EVM"
-                  className={theme.styles.tabs.trigger}
-                >
+                <Tabs.Trigger value="EVM" className={theme.styles.tabs.trigger}>
                   EVM (Ethereum, Base, BSC)
                 </Tabs.Trigger>
-                <Tabs.Trigger
-                  value="SVM"
-                  className={theme.styles.tabs.trigger}
-                >
+                <Tabs.Trigger value="SVM" className={theme.styles.tabs.trigger}>
                   SVM (Solana)
                 </Tabs.Trigger>
               </Tabs.List>
@@ -148,9 +140,7 @@ export function ImportWalletDialog({ open, onOpenChange }: ImportWalletDialogPro
 
             <div className="space-y-4">
               <div>
-                <label className={theme.styles.label}>
-                  Wallet Name
-                </label>
+                <label className={theme.styles.label}>Wallet Name</label>
                 <input
                   type="text"
                   value={walletName}
@@ -165,25 +155,17 @@ export function ImportWalletDialog({ open, onOpenChange }: ImportWalletDialogPro
                 onValueChange={(v) => setImportMethod(v as 'privateKey' | 'mnemonic')}
               >
                 <Tabs.List className={`${theme.styles.tabs.list} mb-4`}>
-                  <Tabs.Trigger
-                    value="privateKey"
-                    className={theme.styles.tabs.trigger}
-                  >
+                  <Tabs.Trigger value="privateKey" className={theme.styles.tabs.trigger}>
                     Private Key
                   </Tabs.Trigger>
-                  <Tabs.Trigger
-                    value="mnemonic"
-                    className={theme.styles.tabs.trigger}
-                  >
+                  <Tabs.Trigger value="mnemonic" className={theme.styles.tabs.trigger}>
                     Recovery Phrase
                   </Tabs.Trigger>
                 </Tabs.List>
 
                 <Tabs.Content value="privateKey">
                   <div>
-                    <label className={theme.styles.label}>
-                      Private Key
-                    </label>
+                    <label className={theme.styles.label}>Private Key</label>
                     <textarea
                       value={privateKey}
                       onChange={(e) => setPrivateKey(e.target.value)}
@@ -196,9 +178,7 @@ export function ImportWalletDialog({ open, onOpenChange }: ImportWalletDialogPro
 
                 <Tabs.Content value="mnemonic">
                   <div>
-                    <label className={theme.styles.label}>
-                      Recovery Phrase
-                    </label>
+                    <label className={theme.styles.label}>Recovery Phrase</label>
                     <textarea
                       value={mnemonic}
                       onChange={(e) => setMnemonic(e.target.value)}
