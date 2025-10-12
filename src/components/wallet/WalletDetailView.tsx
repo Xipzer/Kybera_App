@@ -19,9 +19,9 @@ import { ReceiveDialog } from './ReceiveDialog'
 import { TokenList } from './TokenList'
 import { TransactionHistory } from './TransactionHistory'
 import { NetworkSummary } from './NetworkSummary'
-import { useWalletBalance } from '../../hooks/useWalletBalance'
 import { useMultiNetworkBalance } from '../../hooks/useMultiNetworkBalance'
 import { useTheme } from '../../hooks/useTheme'
+import { EVM_NETWORKS, SVM_NETWORKS } from '../../utils/networks'
 
 export function WalletDetailView() {
   const { activeWalletId, wallets, activeNetwork, viewNetworks } = useWalletStore()
@@ -32,6 +32,11 @@ export function WalletDetailView() {
 
   const activeWallet = wallets.find((w) => w.id === activeWalletId)
 
+  // Convert viewNetworks (array of network IDs) to actual Network objects
+  const viewNetworkObjects = [...EVM_NETWORKS, ...SVM_NETWORKS].filter((network) =>
+    viewNetworks.includes(network.id),
+  )
+
   // Use multi-network balance for viewing data across multiple networks
   const {
     balances: multiNetworkBalances,
@@ -39,14 +44,24 @@ export function WalletDetailView() {
     error: multiError,
     totalUSD: totalMultiUSD,
     refetch: refetchMulti,
-  } = useMultiNetworkBalance(activeWallet, viewNetworks)
+  } = useMultiNetworkBalance(activeWallet ? [activeWallet] : [], viewNetworkObjects)
 
-  // Use single network balance for execution network
-  const {
-    balance: executionBalance,
-    loading: execLoading,
-    error: execError,
-  } = useWalletBalance(activeWallet, activeNetwork)
+  // Find the execution balance from the multi-network results to avoid duplicate fetching
+  const executionBalance = multiNetworkBalances.find((b) => b.networkId === activeNetwork.id) || {
+    walletAddress: activeWallet?.address || '',
+    networkId: activeNetwork.id,
+    native: '0',
+    nativeUSD: 0,
+    native24hChange: 0,
+    tokens: [],
+    totalUSD: 0,
+    total24hChange: 0,
+    lastUpdated: Date.now(),
+    dataQuality: {
+      onChainFromCache: false,
+      pricesFromCache: false,
+    },
+  }
 
   // Combine the data - use multi-network total for display, execution network for transactions
   const loading = multiLoading

@@ -1,5 +1,5 @@
 import { Globe } from 'lucide-react'
-import { MultiNetworkBalance } from '../../hooks/useMultiNetworkBalance'
+import { BlockchainBalance } from '../../services/blockchain/blockchainService'
 import { formatCryptoBalance, formatUSD } from '../../utils/formatters'
 import { useTheme } from '../../hooks/useTheme'
 import { Network } from '../../utils/networks'
@@ -7,7 +7,7 @@ import { Wallet } from '../../types'
 
 interface NetworkSummaryProps {
   wallet: Wallet | undefined
-  multiNetworkBalances: MultiNetworkBalance
+  multiNetworkBalances: BlockchainBalance[]
   executionNetwork: Network
   isLoading: boolean
   error: string | null
@@ -30,7 +30,7 @@ export function NetworkSummary({
     )
   }
 
-  if (isLoading && Object.keys(multiNetworkBalances).length === 0) {
+  if (isLoading && multiNetworkBalances.length === 0) {
     return (
       <div className="p-4">
         <div className="animate-pulse space-y-4">
@@ -42,7 +42,7 @@ export function NetworkSummary({
     )
   }
 
-  if (error && Object.keys(multiNetworkBalances).length === 0) {
+  if (error && multiNetworkBalances.length === 0) {
     return (
       <div className="p-4">
         <div className="text-center py-8">
@@ -53,13 +53,13 @@ export function NetworkSummary({
     )
   }
 
-  const sortedNetworks = Object.entries(multiNetworkBalances).sort((a, b) => {
+  const sortedNetworks = multiNetworkBalances.sort((a, b) => {
     // Sort by total USD value, highest first
-    return (b[1].totalUSD || 0) - (a[1].totalUSD || 0)
+    return (b.totalUSD || 0) - (a.totalUSD || 0)
   })
 
   const totalAcrossNetworks = sortedNetworks.reduce(
-    (sum, [_, balance]) => sum + (balance.totalUSD || 0),
+    (sum, balance) => sum + (balance.totalUSD || 0),
     0,
   )
 
@@ -71,14 +71,14 @@ export function NetworkSummary({
           Network Breakdown
         </h4>
 
-        {sortedNetworks.map(([networkId, networkBalance]) => {
-          const isExecutionNetwork = networkBalance.network.id === executionNetwork.id
+        {sortedNetworks.map((networkBalance) => {
+          const isExecutionNetwork = networkBalance.networkId === executionNetwork.id
           const percentOfTotal =
             totalAcrossNetworks > 0 ? (networkBalance.totalUSD / totalAcrossNetworks) * 100 : 0
 
           return (
             <div
-              key={networkId}
+              key={networkBalance.networkId}
               className={`p-4 rounded-lg border transition-all ${
                 isExecutionNetwork
                   ? 'bg-accent/5 border-accent/30'
@@ -101,7 +101,7 @@ export function NetworkSummary({
                   <div>
                     <div className="flex items-center gap-2">
                       <p className={`font-medium ${theme.styles.textPrimary}`}>
-                        {networkBalance.network.name}
+                        {networkBalance.networkId}
                       </p>
                       {isExecutionNetwork && (
                         <span className="px-1.5 py-0.5 text-xs bg-accent/10 text-accent rounded font-medium">
@@ -109,9 +109,6 @@ export function NetworkSummary({
                         </span>
                       )}
                     </div>
-                    <p className={`text-sm ${theme.styles.textSecondary}`}>
-                      {networkBalance.network.symbol}
-                    </p>
                   </div>
                 </div>
                 <div className="text-right">
@@ -130,7 +127,7 @@ export function NetworkSummary({
                   <span className={theme.styles.textSecondary}>Native Balance</span>
                   <div className="text-right">
                     <span className={theme.styles.textPrimary}>
-                      {formatCryptoBalance(networkBalance.native)} {networkBalance.network.symbol}
+                      {formatCryptoBalance(networkBalance.native)}
                     </span>
                     <span className={`ml-2 ${theme.styles.textSecondary}`}>
                       ({formatUSD(networkBalance.nativeUSD)})

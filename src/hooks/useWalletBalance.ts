@@ -1,82 +1,50 @@
-import { useEffect, useState } from 'react'
+/**
+ * Clean wallet balance hook using new blockchain service
+ */
+
+import { useEffect, useRef, useState } from 'react'
 import { Network, Wallet } from '../types'
 import { BlockchainBalance, blockchainService } from '../services/blockchain/blockchainService'
 import { db } from '../services/storage/database'
 
 export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
   const [balance, setBalance] = useState<BlockchainBalance>({
+    walletAddress: '',
+    networkId: network.id,
     native: '0',
     nativeUSD: 0,
+    native24hChange: 0,
     tokens: [],
     totalUSD: 0,
+    total24hChange: 0,
+    lastUpdated: Date.now(),
+    dataQuality: {
+      onChainFromCache: false,
+      pricesFromCache: false
+    }
   })
-  const [loading, setLoading] = useState(true) // Start with loading true
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [hasInitialized, setHasInitialized] = useState(false)
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Try to load cached data immediately
+  // Clean up interval on unmount
   useEffect(() => {
-    if (!wallet || wallet.type !== network.type) return
-
-    const loadCachedData = async () => {
-      try {
-        const cachedBalance = await db.walletBalances.get(`${wallet.address}_${network.id}`)
-        if (cachedBalance && !hasInitialized) {
-          // Get cached token balances
-          const cachedTokens = await db.tokenBalances
-            .where('walletAddress')
-            .equals(wallet.address)
-            .and((item) => item.networkId === network.id)
-            .toArray()
-
-          // Calculate total from cached values
-          let cachedTokensUSD = 0
-          for (const token of cachedTokens) {
-            if (token.usdValue) {
-              cachedTokensUSD += token.usdValue
-            }
-          }
-
-          const totalUSD = cachedBalance.nativeUSD + cachedTokensUSD
-
-          setBalance({
-            native: cachedBalance.nativeBalance,
-            nativeUSD: cachedBalance.nativeUSD,
-            tokens: cachedTokens.map((t) => ({
-              address: t.tokenAddress,
-              symbol: t.symbol,
-              name: t.name,
-              decimals: t.decimals,
-              balance: t.balance,
-              logoURI: t.logoURI,
-            })),
-            totalUSD,
-            totalUSDChange: 0,
-            lastUpdated: cachedBalance.lastUpdated,
-          })
-        }
-      } catch (err) {
-        console.error('Failed to load cached balance:', err)
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
       }
     }
-
-    loadCachedData()
-  }, [wallet?.address, network.id, wallet?.type, network.type, hasInitialized])
+  }, [])
 
   useEffect(() => {
     if (!wallet) {
-      setHasInitialized(false)
+      setLoading(false)
       return
     }
 
     // Check for network type mismatch
     if (wallet.type !== network.type) {
-      console.error('useWalletBalance: Network type mismatch', {
-        walletType: wallet.type,
-        networkType: network.type,
-        walletAddress: wallet.address,
-        networkName: network.name,
-      })
       setError(`Network type mismatch: wallet is ${wallet.type} but network is ${network.type}`)
       setLoading(false)
       return
@@ -84,25 +52,69 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
 
     let cancelled = false
 
-    const fetchBalance = async () => {
+    /**
+     * Load cached balance immediately for better UX
+     */
+    const loadCachedBalance = async () => {
       try {
-        // Only show loading on first fetch, not on refreshes
-        if (!hasInitialized) {
-          setLoading(true)
-        }
-        setError(null)
+        const cached = await db.walletBalances.get(`${wallet.address}_${network.id}`)
+        if (cached && !cancelled) {
+          const cachedTokens = await db.tokenBalances
+            .where('walletAddress')
+            .equals(wallet.address)
+            .and(item => item.networkId === network.id)
+            .toArray()
 
-        const result = await blockchainService.getBalance(wallet, network)
+          setBalance({
+            walletAddress: wallet.address,
+            networkId: network.id,
+            native: cached.nativeBalance,
+            nativeUSD: cached.nativeUSD,
+            native24hChange: 0,
+            tokens: cachedTokens.map(t => ({
+              address: t.tokenAddress,
+              symbol: t.symbol,
+              name: t.name,
+              decimals: t.decimals,
+              balance: t.balance,
+              usdValue: t.usdValue || 0,
+              usd24hChange: 0,
+              fromCache: true,
+              logoURI: t.logoURI
+            })),
+            totalUSD: cached.totalUSD,
+            total24hChange: 0,
+            lastUpdated: cached.lastUpdated,
+            dataQuality: {
+              onChainFromCache: true,
+              pricesFromCache: true
+            }
+          })
+        }
+      } catch (err) {
+        console.error('[useWalletBalance] Failed to load cached balance:', err)
+      }
+    }
+
+    /**
+     * Fetch fresh balance from blockchain
+     * @param isManualRefresh - If true, only fetches on-chain data
+     */
+    const fetchBalance = async (isManualRefresh: boolean = false) => {
+      if (cancelled) return
+
+      try {
+        setError(null)
+        const freshBalance = await blockchainService.getBalance(wallet, network, isManualRefresh)
 
         if (!cancelled) {
-          setBalance(result)
-          setHasInitialized(true)
+          setBalance(freshBalance)
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to fetch balance')
-          // Don't reset balance to default - keep the cached value
-          setHasInitialized(true) // Mark as initialized even on error
+          const errorMsg = err instanceof Error ? err.message : 'Failed to fetch balance'
+          setError(errorMsg)
+          console.error('[useWalletBalance] Error fetching balance:', err)
         }
       } finally {
         if (!cancelled) {
@@ -111,32 +123,78 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
       }
     }
 
-    fetchBalance()
+    /**
+     * Setup automatic refresh interval (3 minutes)
+     */
+    const setupInterval = () => {
+      // Clear existing interval
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
 
-    // Refresh balance every 3 minutes
-    const interval = setInterval(fetchBalance, 180000)
+      // Set up new interval
+      intervalRef.current = setInterval(() => {
+        console.log('[useWalletBalance] Auto-refreshing balance')
+        fetchBalance(false) // Auto-refresh includes prices
+      }, 180000) // 3 minutes
+
+      return intervalRef.current
+    }
+
+    // Initial data load sequence
+    const initializeData = async () => {
+      // 1. Load cached data immediately
+      await loadCachedBalance()
+
+      // 2. Fetch fresh data (auto-refresh mode)
+      await fetchBalance(false)
+
+      // 3. Setup automatic refresh
+      setupInterval()
+    }
+
+    initializeData()
 
     return () => {
       cancelled = true
-      clearInterval(interval)
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
     }
   }, [wallet, network])
+
+  /**
+   * Manual refresh function
+   * Only updates on-chain data, uses cached prices
+   */
+  const refetch = async () => {
+    if (!wallet) return
+
+    setError(null)
+    try {
+      const freshBalance = await blockchainService.getBalance(wallet, network, true)
+      setBalance(freshBalance)
+
+      // Reset the automatic refresh timer
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
+      intervalRef.current = setInterval(() => {
+        console.log('[useWalletBalance] Auto-refreshing balance')
+        blockchainService.getBalance(wallet, network, false).then(setBalance).catch(console.error)
+      }, 180000)
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to fetch balance'
+      setError(errorMsg)
+      console.error('[useWalletBalance] Error on manual refresh:', err)
+    }
+  }
 
   return {
     balance,
     loading,
     error,
-    refetch: async () => {
-      if (wallet) {
-        setError(null)
-        try {
-          const result = await blockchainService.getBalance(wallet, network)
-          setBalance(result)
-        } catch (err) {
-          setError(err instanceof Error ? err.message : 'Failed to fetch balance')
-          // Don't reset balance - keep showing cached value
-        }
-      }
-    },
+    refetch
   }
 }

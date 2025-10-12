@@ -1,140 +1,72 @@
-import { useEffect, useState } from 'react'
+/**
+ * Clean multi-network balance hook using new blockchain service
+ */
+
+import { useEffect, useRef, useState } from 'react'
 import { Network, Wallet } from '../types'
 import { BlockchainBalance, blockchainService } from '../services/blockchain/blockchainService'
-import { db } from '../services/storage/database'
-import { ALL_NETWORKS } from '../utils/networks'
 
 export interface MultiNetworkBalance {
-  [networkId: string]: BlockchainBalance & { network: Network }
+  balances: BlockchainBalance[]
+  totalUSD: number
+  total24hChange: number
+  loading: boolean
+  error: string | null
+  refetch: () => Promise<void>
 }
 
 export function useMultiNetworkBalance(
-  wallet: Wallet | undefined,
-  networkIds: string[] | undefined,
-) {
-  const [balances, setBalances] = useState<MultiNetworkBalance>({})
+  wallets: Wallet[],
+  networks: Network[]
+): MultiNetworkBalance {
+  const [balances, setBalances] = useState<BlockchainBalance[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [hasInitialized, setHasInitialized] = useState(false)
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Load cached data immediately
+  // Clean up interval on unmount
   useEffect(() => {
-    if (!wallet || !networkIds || networkIds.length === 0) return
-
-    const loadCachedData = async () => {
-      try {
-        const cachedBalances: MultiNetworkBalance = {}
-
-        for (const networkId of networkIds) {
-          const network = ALL_NETWORKS.find((n) => n.id === networkId)
-          if (!network || network.type !== wallet.type) continue
-
-          const cachedBalance = await db.walletBalances.get(`${wallet.address}_${network.id}`)
-          if (cachedBalance) {
-            // Get cached token balances
-            const cachedTokens = await db.tokenBalances
-              .where('walletAddress')
-              .equals(wallet.address)
-              .and((item) => item.networkId === network.id)
-              .toArray()
-
-            // Calculate total from cached values
-            let cachedTokensUSD = 0
-            for (const token of cachedTokens) {
-              if (token.usdValue) {
-                cachedTokensUSD += token.usdValue
-              }
-            }
-
-            const totalUSD = cachedBalance.nativeUSD + cachedTokensUSD
-
-            cachedBalances[networkId] = {
-              native: cachedBalance.nativeBalance,
-              nativeUSD: cachedBalance.nativeUSD,
-              tokens: cachedTokens.map((t) => ({
-                address: t.tokenAddress,
-                symbol: t.symbol,
-                name: t.name,
-                decimals: t.decimals,
-                balance: t.balance,
-                logoURI: t.logoURI,
-              })),
-              totalUSD,
-              totalUSDChange: 0,
-              lastUpdated: cachedBalance.lastUpdated,
-              network,
-            }
-          }
-        }
-
-        if (Object.keys(cachedBalances).length > 0 && !hasInitialized) {
-          setBalances(cachedBalances)
-        }
-      } catch (err) {
-        console.error('Failed to load cached balances:', err)
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
       }
     }
-
-    loadCachedData()
-  }, [wallet?.address, networkIds, wallet?.type, hasInitialized])
+  }, [])
 
   useEffect(() => {
-    if (!wallet || !networkIds || networkIds.length === 0) {
-      setHasInitialized(false)
-      setBalances({})
+    if (!wallets.length || !networks.length) {
       setLoading(false)
       return
     }
 
     let cancelled = false
 
-    const fetchBalances = async () => {
+    /**
+     * Fetch balances for all wallet/network combinations
+     * @param isManualRefresh - If true, only fetches on-chain data
+     */
+    const fetchAllBalances = async (isManualRefresh: boolean = false) => {
+      if (cancelled) return
+
       try {
-        // Only show loading on first fetch, not on refreshes
-        if (!hasInitialized) {
-          setLoading(true)
-        }
         setError(null)
+        console.log(`[useMultiNetworkBalance] Fetching balances for ${wallets.length} wallets on ${networks.length} networks`)
 
-        const newBalances: MultiNetworkBalance = {}
-        const promises: Promise<void>[] = []
-
-        for (const networkId of networkIds) {
-          const network = ALL_NETWORKS.find((n) => n.id === networkId)
-
-          // Skip networks that don't match wallet type
-          if (!network || network.type !== wallet.type) {
-            continue
-          }
-
-          const promise = blockchainService
-            .getBalance(wallet, network)
-            .then((result) => {
-              if (!cancelled) {
-                newBalances[networkId] = { ...result, network }
-              }
-            })
-            .catch((err) => {
-              console.error(`Failed to fetch balance for ${network.name}:`, err)
-              // Keep cached balance if fetch fails
-              if (balances[networkId]) {
-                newBalances[networkId] = balances[networkId]
-              }
-            })
-
-          promises.push(promise)
-        }
-
-        await Promise.all(promises)
+        const allBalances = await blockchainService.getMultiWalletBalances(
+          wallets,
+          networks,
+          isManualRefresh
+        )
 
         if (!cancelled) {
-          setBalances(newBalances)
-          setHasInitialized(true)
+          setBalances(allBalances)
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to fetch balances')
-          setHasInitialized(true)
+          const errorMsg = err instanceof Error ? err.message : 'Failed to fetch balances'
+          setError(errorMsg)
+          console.error('[useMultiNetworkBalance] Error fetching balances:', err)
         }
       } finally {
         if (!cancelled) {
@@ -143,60 +75,96 @@ export function useMultiNetworkBalance(
       }
     }
 
-    fetchBalances()
+    /**
+     * Setup automatic refresh interval (3 minutes)
+     */
+    const setupInterval = () => {
+      // Clear existing interval
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
 
-    // Refresh balances every 3 minutes
-    const interval = setInterval(fetchBalances, 180000)
+      // Set up new interval
+      intervalRef.current = setInterval(() => {
+        console.log('[useMultiNetworkBalance] Auto-refreshing all balances')
+        fetchAllBalances(false) // Auto-refresh includes prices
+      }, 180000) // 3 minutes
+
+      return intervalRef.current
+    }
+
+    // Initial fetch (auto-refresh mode)
+    fetchAllBalances(false)
+
+    // Setup automatic refresh
+    setupInterval()
 
     return () => {
       cancelled = true
-      clearInterval(interval)
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
     }
-  }, [wallet, networkIds?.join(',')]) // Join networkIds to create a stable dependency
+  }, [wallets.length, networks.length]) // Only re-run if number of wallets/networks changes
 
-  // Calculate aggregated totals
-  const totalUSD = Object.values(balances).reduce(
-    (sum, balance) => sum + (balance.totalUSD || 0),
-    0,
-  )
-  const totalTokens = Object.values(balances).reduce(
-    (sum, balance) => sum + balance.tokens.length,
-    0,
-  )
+  /**
+   * Manual refresh function
+   * Only updates on-chain data, uses cached prices
+   */
+  const refetch = async () => {
+    if (!wallets.length || !networks.length) return
+
+    setError(null)
+    setLoading(true)
+
+    try {
+      const allBalances = await blockchainService.getMultiWalletBalances(
+        wallets,
+        networks,
+        true // Manual refresh - on-chain data only
+      )
+      setBalances(allBalances)
+
+      // Reset the automatic refresh timer
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
+      intervalRef.current = setInterval(async () => {
+        console.log('[useMultiNetworkBalance] Auto-refreshing all balances')
+        const freshBalances = await blockchainService.getMultiWalletBalances(
+          wallets,
+          networks,
+          false
+        )
+        setBalances(freshBalances)
+      }, 180000)
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to fetch balances'
+      setError(errorMsg)
+      console.error('[useMultiNetworkBalance] Error on manual refresh:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Calculate totals
+  const totalUSD = balances.reduce((sum, balance) => sum + balance.totalUSD, 0)
+
+  // Calculate weighted 24h change
+  const total24hChange = totalUSD > 0
+    ? balances.reduce((sum, balance) => {
+        const weight = balance.totalUSD / totalUSD
+        return sum + (balance.total24hChange * weight)
+      }, 0)
+    : 0
 
   return {
     balances,
+    totalUSD,
+    total24hChange,
     loading,
     error,
-    totalUSD,
-    totalTokens,
-    refetch: async () => {
-      if (!wallet || !networkIds) return
-
-      setError(null)
-      try {
-        const newBalances: MultiNetworkBalance = {}
-
-        for (const networkId of networkIds) {
-          const network = ALL_NETWORKS.find((n) => n.id === networkId)
-          if (!network || network.type !== wallet.type) continue
-
-          try {
-            const result = await blockchainService.getBalance(wallet, network)
-            newBalances[networkId] = { ...result, network }
-          } catch (err) {
-            console.error(`Failed to fetch balance for ${network.name}:`, err)
-            // Keep existing balance on error
-            if (balances[networkId]) {
-              newBalances[networkId] = balances[networkId]
-            }
-          }
-        }
-
-        setBalances(newBalances)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch balances')
-      }
-    },
+    refetch
   }
 }
