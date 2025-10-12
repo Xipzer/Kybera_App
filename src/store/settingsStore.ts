@@ -4,12 +4,14 @@ import { db } from '../services/storage/database'
 
 interface SettingsState {
   openRouterApiKey: string | null
+  coinGeckoApiKey: string | null
   selectedModel: string
   autoLockTimeout: number
   defaultNetwork: string
 
   // Actions
   setOpenRouterApiKey: (key: string | null) => Promise<void>
+  setCoinGeckoApiKey: (key: string | null) => Promise<void>
   setSelectedModel: (model: string) => Promise<void>
   setAutoLockTimeout: (timeout: number) => Promise<void>
   setDefaultNetwork: (networkId: string) => Promise<void>
@@ -20,6 +22,7 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       openRouterApiKey: null,
+      coinGeckoApiKey: null,
       selectedModel: 'openai/gpt-4-turbo-preview',
       autoLockTimeout: 15, // minutes (0 means disabled)
       defaultNetwork: 'ethereum',
@@ -27,6 +30,11 @@ export const useSettingsStore = create<SettingsState>()(
       setOpenRouterApiKey: async (key) => {
         await db.settings.put({ key: 'openRouterApiKey', value: key })
         set({ openRouterApiKey: key })
+      },
+
+      setCoinGeckoApiKey: async (key) => {
+        await db.settings.put({ key: 'coinGeckoApiKey', value: key })
+        set({ coinGeckoApiKey: key })
       },
 
       setSelectedModel: async (model) => {
@@ -53,6 +61,7 @@ export const useSettingsStore = create<SettingsState>()(
 
         set({
           openRouterApiKey: settingsMap.openRouterApiKey || null,
+          coinGeckoApiKey: settingsMap.coinGeckoApiKey || null,
           selectedModel: settingsMap.selectedModel || 'openai/gpt-4-turbo-preview',
           autoLockTimeout: settingsMap.autoLockTimeout || 15,
           defaultNetwork: settingsMap.defaultNetwork || 'ethereum',

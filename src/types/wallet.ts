@@ -5,6 +5,7 @@ export interface Network {
   name: string
   chainId: number | string
   rpcUrl: string
+  alchemyRpcUrl?: string // Optional Alchemy RPC URL
   symbol: string
   explorer: string
   explorerUrl: string // Full URL for explorer
@@ -55,6 +56,7 @@ export interface TokenBalance {
   decimals: number
   balance: string
   usdValue?: number
+  change24h?: number
   logoURI?: string
 }
 
@@ -66,4 +68,9 @@ export interface Transaction {
   status: 'pending' | 'confirmed' | 'failed'
   timestamp: Date
   network: string
+  tokenAddress?: string // For token transfers
+  tokenSymbol?: string // For display
+  tokenDecimals?: number // For proper formatting
+  gasUsed?: string // Transaction fee
+  blockNumber?: number // For confirmation tracking
 }

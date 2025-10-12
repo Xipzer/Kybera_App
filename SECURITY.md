@@ -1,8 +1,8 @@
-# SmartWallet AI Security Documentation
+# OpenWallet Security Documentation
 
 ## Overview
 
-SmartWallet AI implements multiple layers of security to protect user funds and sensitive data. This document outlines the security measures in place.
+OpenWallet implements multiple layers of security to protect user funds and sensitive data. This document outlines the security measures in place.
 
 ## Security Layers
 
@@ -138,7 +138,7 @@ SmartWallet AI implements multiple layers of security to protect user funds and 
 If you discover a security vulnerability:
 
 1. **Do NOT** disclose publicly
-2. Email security@smartwallet.ai
+2. Email security@openwallet.dev
 3. Include detailed description
 4. Provide proof of concept if possible
 5. Allow time for patching

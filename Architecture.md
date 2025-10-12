@@ -1,8 +1,8 @@
-# Architecture.md - SmartWallet AI System Architecture
+# Architecture.md - OpenWallet System Architecture
 
 ## Overview
 
-SmartWallet AI is a multi-chain wallet management dashboard with integrated AI chat capabilities. The application follows a modular, component-based architecture using React with TypeScript.
+OpenWallet is a multi-chain wallet management dashboard with integrated AI chat capabilities. The application follows a modular, component-based architecture using React with TypeScript.
 
 ## Technology Stack
 

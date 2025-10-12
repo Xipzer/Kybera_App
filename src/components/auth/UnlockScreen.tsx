@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Lock, Wallet, AlertCircle, Sun, Moon, Palette } from 'lucide-react'
+import { Lock, Wallet, Sun, Moon, Palette } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import { useAuthStore } from '../../store/authStore'
 import { useUIStore } from '../../store/uiStore'
@@ -7,7 +7,7 @@ import { useTheme } from '../../hooks/useTheme'
 
 export function UnlockScreen() {
   const { unlock } = useWalletStore()
-  const { isInitialized, initializePassword, verifyPassword, isLockedOut, failedAttempts } = useAuthStore()
+  const { isInitialized, initializePassword, verifyPassword } = useAuthStore()
   const { 
     profilePicture, 
     theme: uiTheme, 
@@ -75,18 +75,11 @@ export function UnlockScreen() {
         unlock(password)
       } else {
         // Verify existing password
-        if (isLockedOut()) {
-          const remainingTime = Math.ceil((5 * 60 * 1000 - (Date.now() - (useAuthStore.getState().lastFailedAttempt || 0))) / 1000)
-          setError(`Too many failed attempts. Please try again in ${remainingTime} seconds`)
-          return
-        }
-        
         const isValid = await verifyPassword(password)
         if (isValid) {
           unlock(password)
         } else {
-          const attemptsLeft = 5 - failedAttempts
-          setError(`Invalid password. ${attemptsLeft} attempts remaining`)
+          setError('Invalid password')
         }
       }
     } catch (err) {
@@ -139,7 +132,7 @@ export function UnlockScreen() {
                 <Wallet className="w-8 h-8 text-white" />
               </div>
             )}
-            <h1 className="text-2xl font-bold text-text-primary">SmartWallet AI</h1>
+            <h1 className="text-2xl font-bold text-text-primary">OpenWallet</h1>
             <p className="text-text-secondary mt-2">
               {!isInitialized
                 ? 'Create a password to secure your wallet'
@@ -189,7 +182,7 @@ export function UnlockScreen() {
 
             <button
               type="submit"
-              disabled={isLoading || (isLockedOut && isLockedOut())}
+              disabled={isLoading}
               className={`w-full py-2 ${theme.styles.buttonPrimary} font-semibold disabled:opacity-50 disabled:cursor-not-allowed`}
               style={theme.dynamicStyles.buttonPrimary}
             >
@@ -204,12 +197,6 @@ export function UnlockScreen() {
             </button>
           </form>
 
-          {isInitialized && failedAttempts > 0 && failedAttempts < 5 && (
-            <div className="mt-4 flex items-center justify-center gap-2 text-sm text-yellow-500">
-              <AlertCircle className="w-4 h-4" />
-              <span>{5 - failedAttempts} attempts remaining</span>
-            </div>
-          )}
         </div>
       </div>
     </div>

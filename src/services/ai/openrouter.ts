@@ -30,7 +30,7 @@ export class OpenRouterService {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': window.location.origin,
-        'X-Title': 'SmartWallet AI',
+        'X-Title': 'OpenWallet',
       },
       body: JSON.stringify({
         model,
