@@ -20,9 +20,10 @@ export function useMultiNetworkBalance(
   networks: Network[]
 ): MultiNetworkBalance {
   const [balances, setBalances] = useState<BlockchainBalance[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(true) // Only true for initial load
   const [error, setError] = useState<string | null>(null)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const isFirstLoadRef = useRef(true)
 
   // Clean up interval on unmount
   useEffect(() => {
@@ -43,34 +44,83 @@ export function useMultiNetworkBalance(
     let cancelled = false
 
     /**
-     * Fetch balances for all wallet/network combinations
+     * Fetch balances for all wallet/network combinations progressively
      * @param isManualRefresh - If true, only fetches on-chain data
+     * @param existingBalances - Current balances to preserve during updates
      */
-    const fetchAllBalances = async (isManualRefresh: boolean = false) => {
+    const fetchAllBalances = async (
+      isManualRefresh: boolean = false,
+      existingBalances: BlockchainBalance[] = [],
+    ) => {
       if (cancelled) return
 
       try {
         setError(null)
-        console.log(`[useMultiNetworkBalance] Fetching balances for ${wallets.length} wallets on ${networks.length} networks`)
-
-        const allBalances = await blockchainService.getMultiWalletBalances(
-          wallets,
-          networks,
-          isManualRefresh
+        console.log(
+          `[useMultiNetworkBalance] Fetching balances for ${wallets.length} wallets on ${networks.length} networks`,
         )
 
-        if (!cancelled) {
-          setBalances(allBalances)
-        }
+        // Track completed fetches to update state progressively
+        const fetchedBalances: Map<string, BlockchainBalance> = new Map()
+
+        // Initialize with existing balances to preserve data while updating
+        existingBalances.forEach((b) => {
+          const key = `${b.walletAddress}_${b.networkId}`
+          fetchedBalances.set(key, b)
+        })
+
+        // Fetch balances for each wallet/network combination progressively
+        const fetchPromises = wallets.flatMap((wallet) =>
+          networks.map(async (network) => {
+            // Skip incompatible combinations
+            if (wallet.type !== network.type) {
+              return null
+            }
+
+            const key = `${wallet.address}_${network.id}`
+
+            try {
+              const balance = await blockchainService.getBalance(wallet, network, isManualRefresh)
+
+              if (!cancelled) {
+                // Update the map with the fetched balance
+                fetchedBalances.set(key, balance)
+
+                // Update state with all balances fetched so far
+                setBalances(Array.from(fetchedBalances.values()))
+
+                // Set loading to false after first successful fetch on initial load
+                if (isFirstLoadRef.current) {
+                  setLoading(false)
+                  isFirstLoadRef.current = false
+                }
+              }
+
+              return balance
+            } catch (error) {
+              console.error(
+                `[useMultiNetworkBalance] Failed to get balance for ${wallet.address} on ${network.name}`,
+                error,
+              )
+              // Continue with other fetches even if one fails
+              return null
+            }
+          }),
+        )
+
+        // Wait for all fetches to complete (but we're updating progressively)
+        await Promise.all(fetchPromises.filter((p) => p !== null))
       } catch (err) {
         if (!cancelled) {
           const errorMsg = err instanceof Error ? err.message : 'Failed to fetch balances'
           setError(errorMsg)
           console.error('[useMultiNetworkBalance] Error fetching balances:', err)
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false)
+
+          // Also set loading to false on error for first load
+          if (isFirstLoadRef.current) {
+            setLoading(false)
+            isFirstLoadRef.current = false
+          }
         }
       }
     }
@@ -87,14 +137,18 @@ export function useMultiNetworkBalance(
       // Set up new interval
       intervalRef.current = setInterval(() => {
         console.log('[useMultiNetworkBalance] Auto-refreshing all balances')
-        fetchAllBalances(false) // Auto-refresh includes prices
+        // Use functional state update to get current balances
+        setBalances((currentBalances) => {
+          fetchAllBalances(false, currentBalances) // Pass current balances
+          return currentBalances // Return unchanged for now, will be updated progressively
+        })
       }, 180000) // 3 minutes
 
       return intervalRef.current
     }
 
-    // Initial fetch (auto-refresh mode)
-    fetchAllBalances(false)
+    // Initial fetch (auto-refresh mode) - no existing balances on first load
+    fetchAllBalances(false, [])
 
     // Setup automatic refresh
     setupInterval()
@@ -116,35 +170,102 @@ export function useMultiNetworkBalance(
     if (!wallets.length || !networks.length) return
 
     setError(null)
-    setLoading(true)
+    // Don't set loading to true - we want to show existing data while refreshing
 
     try {
-      const allBalances = await blockchainService.getMultiWalletBalances(
-        wallets,
-        networks,
-        true // Manual refresh - on-chain data only
+      console.log('[useMultiNetworkBalance] Manual refresh triggered')
+
+      // Track completed fetches to update state progressively
+      const fetchedBalances: Map<string, BlockchainBalance> = new Map()
+
+      // Initialize with existing balances to preserve data while updating
+      balances.forEach((b) => {
+        const key = `${b.walletAddress}_${b.networkId}`
+        fetchedBalances.set(key, b)
+      })
+
+      // Fetch balances for each wallet/network combination progressively
+      const fetchPromises = wallets.flatMap((wallet) =>
+        networks.map(async (network) => {
+          // Skip incompatible combinations
+          if (wallet.type !== network.type) {
+            return null
+          }
+
+          const key = `${wallet.address}_${network.id}`
+
+          try {
+            const balance = await blockchainService.getBalance(wallet, network, true) // Manual refresh
+
+            // Update the map with the fetched balance
+            fetchedBalances.set(key, balance)
+
+            // Update state with all balances fetched so far
+            setBalances(Array.from(fetchedBalances.values()))
+
+            return balance
+          } catch (error) {
+            console.error(
+              `[useMultiNetworkBalance] Failed to refresh balance for ${wallet.address} on ${network.name}`,
+              error,
+            )
+            // Continue with other fetches even if one fails
+            return null
+          }
+        }),
       )
-      setBalances(allBalances)
+
+      // Wait for all fetches to complete (but we're updating progressively)
+      await Promise.all(fetchPromises.filter((p) => p !== null))
 
       // Reset the automatic refresh timer
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
       }
-      intervalRef.current = setInterval(async () => {
+      intervalRef.current = setInterval(() => {
         console.log('[useMultiNetworkBalance] Auto-refreshing all balances')
-        const freshBalances = await blockchainService.getMultiWalletBalances(
-          wallets,
-          networks,
-          false
-        )
-        setBalances(freshBalances)
+        // Use functional state update to get current balances
+        setBalances((currentBalances) => {
+          // Fetch progressively with existing balances
+          const fetchProgressively = async () => {
+            const fetchedBalances: Map<string, BlockchainBalance> = new Map()
+
+            currentBalances.forEach((b) => {
+              const key = `${b.walletAddress}_${b.networkId}`
+              fetchedBalances.set(key, b)
+            })
+
+            const fetchPromises = wallets.flatMap((wallet) =>
+              networks.map(async (network) => {
+                if (wallet.type !== network.type) return null
+                const key = `${wallet.address}_${network.id}`
+
+                try {
+                  const balance = await blockchainService.getBalance(wallet, network, false)
+                  fetchedBalances.set(key, balance)
+                  setBalances(Array.from(fetchedBalances.values()))
+                  return balance
+                } catch (error) {
+                  console.error(
+                    `[useMultiNetworkBalance] Auto-refresh failed for ${wallet.address} on ${network.name}`,
+                    error,
+                  )
+                  return null
+                }
+              }),
+            )
+
+            await Promise.all(fetchPromises.filter((p) => p !== null))
+          }
+
+          fetchProgressively()
+          return currentBalances // Return unchanged for now, will be updated progressively
+        })
       }, 180000)
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to fetch balances'
       setError(errorMsg)
       console.error('[useMultiNetworkBalance] Error on manual refresh:', err)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -152,12 +273,13 @@ export function useMultiNetworkBalance(
   const totalUSD = balances.reduce((sum, balance) => sum + balance.totalUSD, 0)
 
   // Calculate weighted 24h change
-  const total24hChange = totalUSD > 0
-    ? balances.reduce((sum, balance) => {
-        const weight = balance.totalUSD / totalUSD
-        return sum + (balance.total24hChange * weight)
-      }, 0)
-    : 0
+  const total24hChange =
+    totalUSD > 0
+      ? balances.reduce((sum, balance) => {
+          const weight = balance.totalUSD / totalUSD
+          return sum + balance.total24hChange * weight
+        }, 0)
+      : 0
 
   return {
     balances,
@@ -165,6 +287,6 @@ export function useMultiNetworkBalance(
     total24hChange,
     loading,
     error,
-    refetch
+    refetch,
   }
 }
