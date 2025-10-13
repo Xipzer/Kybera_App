@@ -22,6 +22,20 @@ export class BlockchainService {
   }
 
   /**
+   * Load cached balance immediately without fetching fresh data
+   * Returns null if no cache exists
+   */
+  async loadCachedBalance(wallet: Wallet, network: Network): Promise<AggregatedBalance | null> {
+    // Validate wallet/network compatibility
+    if (wallet.type !== network.type) {
+      return null
+    }
+
+    const aggregator = this.getAggregator(network)
+    return await aggregator.loadCachedBalance(wallet)
+  }
+
+  /**
    * Fetch balance for a wallet on a specific network
    * @param wallet - Wallet to fetch balance for
    * @param network - Network to fetch on

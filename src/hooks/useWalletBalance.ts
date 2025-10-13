@@ -5,7 +5,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Network, Wallet } from '../types'
 import { BlockchainBalance, blockchainService } from '../services/blockchain/blockchainService'
-import { db } from '../services/storage/database'
 
 export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
   const [balance, setBalance] = useState<BlockchainBalance>({
@@ -23,10 +22,10 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
       pricesFromCache: false,
     },
   })
-  const [loading, setLoading] = useState(true) // Only true for initial load
+  const [loading, setLoading] = useState(false) // Start with false, only true if no cache
   const [error, setError] = useState<string | null>(null)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
-  const isFirstLoadRef = useRef(true)
+  const hasCacheRef = useRef(false)
 
   // Clean up interval on unmount
   useEffect(() => {
@@ -54,56 +53,6 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
     let cancelled = false
 
     /**
-     * Load cached balance immediately for better UX
-     */
-    const loadCachedBalance = async () => {
-      try {
-        const cached = await db.walletBalances.get(`${wallet.address}_${network.id}`)
-        if (cached && !cancelled) {
-          const cachedTokens = await db.tokenBalances
-            .where('walletAddress')
-            .equals(wallet.address)
-            .and((item) => item.networkId === network.id)
-            .toArray()
-
-          setBalance({
-            walletAddress: wallet.address,
-            networkId: network.id,
-            native: cached.nativeBalance,
-            nativeUSD: cached.nativeUSD,
-            native24hChange: 0,
-            tokens: cachedTokens.map((t) => ({
-              address: t.tokenAddress,
-              symbol: t.symbol,
-              name: t.name,
-              decimals: t.decimals,
-              balance: t.balance,
-              usdValue: t.usdValue || 0,
-              usd24hChange: 0,
-              fromCache: true,
-              logoURI: t.logoURI,
-            })),
-            totalUSD: cached.totalUSD,
-            total24hChange: 0,
-            lastUpdated: cached.lastUpdated,
-            dataQuality: {
-              onChainFromCache: true,
-              pricesFromCache: true,
-            },
-          })
-
-          // Set loading to false after cache load on first load
-          if (isFirstLoadRef.current) {
-            setLoading(false)
-            isFirstLoadRef.current = false
-          }
-        }
-      } catch (err) {
-        console.error('[useWalletBalance] Failed to load cached balance:', err)
-      }
-    }
-
-    /**
      * Fetch fresh balance from blockchain
      * @param isManualRefresh - If true, only fetches on-chain data
      */
@@ -116,11 +65,9 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
 
         if (!cancelled) {
           setBalance(freshBalance)
-
-          // Only set loading to false on first load
-          if (isFirstLoadRef.current) {
+          // Turn off loading after fresh data arrives if it was on
+          if (loading) {
             setLoading(false)
-            isFirstLoadRef.current = false
           }
         }
       } catch (err) {
@@ -128,11 +75,9 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
           const errorMsg = err instanceof Error ? err.message : 'Failed to fetch balance'
           setError(errorMsg)
           console.error('[useWalletBalance] Error fetching balance:', err)
-
-          // Also set loading to false on error for first load
-          if (isFirstLoadRef.current) {
+          // Turn off loading on error
+          if (loading) {
             setLoading(false)
-            isFirstLoadRef.current = false
           }
         }
       }
@@ -158,10 +103,21 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
 
     // Initial data load sequence
     const initializeData = async () => {
-      // 1. Load cached data immediately
-      await loadCachedBalance()
+      // 1. Try to load cached data immediately
+      const cachedBalance = await blockchainService.loadCachedBalance(wallet, network)
 
-      // 2. Fetch fresh data (auto-refresh mode)
+      if (cachedBalance && !cancelled) {
+        // Display cached data immediately
+        setBalance(cachedBalance)
+        hasCacheRef.current = true
+        console.log('[useWalletBalance] Loaded cached balance')
+      } else {
+        // No cache, we need to show loading state
+        setLoading(true)
+        hasCacheRef.current = false
+      }
+
+      // 2. Fetch fresh data in the background (auto-refresh mode)
       await fetchBalance(false)
 
       // 3. Setup automatic refresh
@@ -211,6 +167,6 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
     balance,
     loading,
     error,
-    refetch
+    refetch,
   }
 }

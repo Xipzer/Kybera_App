@@ -52,6 +52,72 @@ export class BalanceAggregator {
   }
 
   /**
+   * Load cached balance immediately without fetching fresh data
+   * Returns null if no cache exists
+   */
+  async loadCachedBalance(wallet: Wallet): Promise<AggregatedBalance | null> {
+    const id = `${wallet.address}_${this.network.id}`
+
+    try {
+      // Load cached wallet balance summary
+      const cachedWalletBalance = await db.walletBalances.get(id)
+      if (!cachedWalletBalance) {
+        return null
+      }
+
+      // Load cached token balances
+      const cachedTokens = await db.tokenBalances
+        .where('walletAddress')
+        .equals(wallet.address)
+        .and((item) => item.networkId === this.network.id)
+        .toArray()
+
+      // Get cached price data
+      const tokenAddresses = cachedTokens.map((t) => t.tokenAddress)
+      const priceData = await this.priceService.fetchPrices(tokenAddresses, false) // Only use cache
+
+      // Build the aggregated balance from cache
+      const tokens: TokenWithUSD[] = cachedTokens.map((t) => ({
+        address: t.tokenAddress,
+        symbol: t.symbol,
+        name: t.name,
+        decimals: t.decimals,
+        balance: t.balance,
+        usdValue: t.usdValue || 0,
+        usd24hChange: priceData.tokenPrices.get(t.tokenAddress.toLowerCase())?.usd24hChange || 0,
+        fromCache: true,
+        logoURI: t.logoURI,
+      }))
+
+      const aggregated: AggregatedBalance = {
+        walletAddress: wallet.address,
+        networkId: this.network.id,
+        native: cachedWalletBalance.nativeBalance,
+        nativeUSD: cachedWalletBalance.nativeUSD,
+        native24hChange: priceData.native24hChange,
+        tokens,
+        totalUSD: cachedWalletBalance.totalUSD,
+        total24hChange: this.calculateWeighted24hChange(
+          cachedWalletBalance.nativeUSD,
+          priceData.native24hChange,
+          tokens,
+        ),
+        lastUpdated: cachedWalletBalance.lastUpdated,
+        dataQuality: {
+          onChainFromCache: true,
+          pricesFromCache: true,
+        },
+      }
+
+      console.log(`[Aggregator] Loaded cached balance for ${wallet.address}`)
+      return aggregated
+    } catch (error) {
+      console.error('[Aggregator] Failed to load cached balance', error)
+      return null
+    }
+  }
+
+  /**
    * Main method: Fetch complete balance with USD values
    * @param wallet - Wallet to fetch balance for
    * @param isManualRefresh - If true, only fetches on-chain data (not prices)

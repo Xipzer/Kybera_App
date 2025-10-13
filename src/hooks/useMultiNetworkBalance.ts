@@ -20,10 +20,10 @@ export function useMultiNetworkBalance(
   networks: Network[]
 ): MultiNetworkBalance {
   const [balances, setBalances] = useState<BlockchainBalance[]>([])
-  const [loading, setLoading] = useState(true) // Only true for initial load
+  const [loading, setLoading] = useState(false) // Start with false, only true if no cache
   const [error, setError] = useState<string | null>(null)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
-  const isFirstLoadRef = useRef(true)
+  const hasCacheRef = useRef(false)
 
   // Clean up interval on unmount
   useEffect(() => {
@@ -42,6 +42,37 @@ export function useMultiNetworkBalance(
     }
 
     let cancelled = false
+
+    /**
+     * Load cached balances immediately
+     */
+    const loadCachedBalances = async () => {
+      const cachedBalances: BlockchainBalance[] = []
+
+      for (const wallet of wallets) {
+        for (const network of networks) {
+          // Skip incompatible combinations
+          if (wallet.type !== network.type) {
+            continue
+          }
+
+          const cached = await blockchainService.loadCachedBalance(wallet, network)
+          if (cached) {
+            cachedBalances.push(cached)
+          }
+        }
+      }
+
+      if (cachedBalances.length > 0 && !cancelled) {
+        setBalances(cachedBalances)
+        hasCacheRef.current = true
+        console.log(`[useMultiNetworkBalance] Loaded ${cachedBalances.length} cached balances`)
+      } else {
+        hasCacheRef.current = false
+      }
+
+      return cachedBalances
+    }
 
     /**
      * Fetch balances for all wallet/network combinations progressively
@@ -89,10 +120,9 @@ export function useMultiNetworkBalance(
                 // Update state with all balances fetched so far
                 setBalances(Array.from(fetchedBalances.values()))
 
-                // Set loading to false after first successful fetch on initial load
-                if (isFirstLoadRef.current) {
+                // Turn off loading if it was on
+                if (loading) {
                   setLoading(false)
-                  isFirstLoadRef.current = false
                 }
               }
 
@@ -116,10 +146,9 @@ export function useMultiNetworkBalance(
           setError(errorMsg)
           console.error('[useMultiNetworkBalance] Error fetching balances:', err)
 
-          // Also set loading to false on error for first load
-          if (isFirstLoadRef.current) {
+          // Turn off loading on error
+          if (loading) {
             setLoading(false)
-            isFirstLoadRef.current = false
           }
         }
       }
@@ -147,11 +176,24 @@ export function useMultiNetworkBalance(
       return intervalRef.current
     }
 
-    // Initial fetch (auto-refresh mode) - no existing balances on first load
-    fetchAllBalances(false, [])
+    // Initial data load sequence
+    const initializeData = async () => {
+      // 1. Load cached balances immediately
+      const cachedBalances = await loadCachedBalances()
 
-    // Setup automatic refresh
-    setupInterval()
+      // Only show loading state if no cache exists
+      if (cachedBalances.length === 0) {
+        setLoading(true)
+      }
+
+      // 2. Fetch fresh data in the background (auto-refresh mode)
+      await fetchAllBalances(false, cachedBalances)
+
+      // 3. Setup automatic refresh
+      setupInterval()
+    }
+
+    initializeData()
 
     return () => {
       cancelled = true

@@ -27,6 +27,7 @@ export function WalletDetailView() {
   const { activeWalletId, wallets, activeNetwork, viewNetworks } = useWalletStore()
   const [showSendDialog, setShowSendDialog] = useState(false)
   const [showReceiveDialog, setShowReceiveDialog] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [, forceUpdate] = useState({})
   const { theme: themeConfig } = useTheme()
 
@@ -66,7 +67,6 @@ export function WalletDetailView() {
   // Combine the data - use multi-network total for display, execution network for transactions
   const loading = multiLoading
   const error = multiError
-  const refetch = refetchMulti
   const balance = {
     ...executionBalance, // Use execution balance as base
     totalUSD: totalMultiUSD, // Override with multi-network total
@@ -93,6 +93,17 @@ export function WalletDetailView() {
 
   const copyAddress = () => {
     navigator.clipboard.writeText(activeWallet.address)
+  }
+
+  // Handle manual refresh with spinner
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    try {
+      await refetchMulti()
+    } finally {
+      // Keep spinner for a minimum time for better UX
+      setTimeout(() => setIsRefreshing(false), 500)
+    }
   }
 
   // Get change from balance data (refresh-to-refresh)
@@ -136,13 +147,13 @@ export function WalletDetailView() {
           <div className="flex items-center justify-between mb-1">
             <p className={`text-sm ${themeConfig.styles.textSecondary}`}>Total Portfolio Value</p>
             <button
-              onClick={refetch}
-              disabled={loading}
+              onClick={handleRefresh}
+              disabled={isRefreshing}
               className={`p-1 rounded transition-all duration-300 disabled:opacity-50 ${themeConfig.styles.buttonIcon}`}
               title="Refresh all balances"
             >
               <RefreshCw
-                className={`w-4 h-4 ${loading ? 'animate-spin' : ''} ${themeConfig.styles.iconSecondary}`}
+                className={`w-4 h-4 ${isRefreshing || loading ? 'animate-spin' : ''} ${themeConfig.styles.iconSecondary}`}
               />
             </button>
           </div>
