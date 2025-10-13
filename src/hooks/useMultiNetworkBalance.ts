@@ -25,6 +25,22 @@ export function useMultiNetworkBalance(
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const hasCacheRef = useRef(false)
 
+  // Store references to avoid dependency issues
+  const walletsRef = useRef(wallets)
+  const networksRef = useRef(networks)
+  walletsRef.current = wallets
+  networksRef.current = networks
+
+  // Create stable identifiers for dependency tracking
+  const walletIds = wallets
+    .map((w) => w.id)
+    .sort()
+    .join(',')
+  const networkIds = networks
+    .map((n) => n.id)
+    .sort()
+    .join(',')
+
   // Clean up interval on unmount
   useEffect(() => {
     return () => {
@@ -36,8 +52,9 @@ export function useMultiNetworkBalance(
   }, [])
 
   useEffect(() => {
-    if (!wallets.length || !networks.length) {
+    if (!walletsRef.current.length || !networksRef.current.length) {
       setLoading(false)
+      setBalances([]) // Clear balances when no wallets
       return
     }
 
@@ -49,8 +66,8 @@ export function useMultiNetworkBalance(
     const loadCachedBalances = async () => {
       const cachedBalances: BlockchainBalance[] = []
 
-      for (const wallet of wallets) {
-        for (const network of networks) {
+      for (const wallet of walletsRef.current) {
+        for (const network of networksRef.current) {
           // Skip incompatible combinations
           if (wallet.type !== network.type) {
             continue
@@ -88,7 +105,7 @@ export function useMultiNetworkBalance(
       try {
         setError(null)
         console.log(
-          `[useMultiNetworkBalance] Fetching balances for ${wallets.length} wallets on ${networks.length} networks`,
+          `[useMultiNetworkBalance] Fetching balances for ${walletsRef.current.length} wallets on ${networksRef.current.length} networks`,
         )
 
         // Track completed fetches to update state progressively
@@ -101,8 +118,8 @@ export function useMultiNetworkBalance(
         })
 
         // Fetch balances for each wallet/network combination progressively
-        const fetchPromises = wallets.flatMap((wallet) =>
-          networks.map(async (network) => {
+        const fetchPromises = walletsRef.current.flatMap((wallet) =>
+          networksRef.current.map(async (network) => {
             // Skip incompatible combinations
             if (wallet.type !== network.type) {
               return null
@@ -178,6 +195,10 @@ export function useMultiNetworkBalance(
 
     // Initial data load sequence
     const initializeData = async () => {
+      // Clear previous wallet's balances to avoid showing stale data
+      setBalances([])
+      setError(null)
+
       // 1. Load cached balances immediately
       const cachedBalances = await loadCachedBalances()
 
@@ -202,14 +223,14 @@ export function useMultiNetworkBalance(
         intervalRef.current = null
       }
     }
-  }, [wallets.length, networks.length]) // Only re-run if number of wallets/networks changes
+  }, [walletIds, networkIds]) // Re-run when wallet IDs or network IDs change
 
   /**
    * Manual refresh function
    * Only updates on-chain data, uses cached prices
    */
   const refetch = async () => {
-    if (!wallets.length || !networks.length) return
+    if (!walletsRef.current.length || !networksRef.current.length) return
 
     setError(null)
     // Don't set loading to true - we want to show existing data while refreshing
@@ -227,8 +248,8 @@ export function useMultiNetworkBalance(
       })
 
       // Fetch balances for each wallet/network combination progressively
-      const fetchPromises = wallets.flatMap((wallet) =>
-        networks.map(async (network) => {
+      const fetchPromises = walletsRef.current.flatMap((wallet) =>
+        networksRef.current.map(async (network) => {
           // Skip incompatible combinations
           if (wallet.type !== network.type) {
             return null
@@ -277,8 +298,8 @@ export function useMultiNetworkBalance(
               fetchedBalances.set(key, b)
             })
 
-            const fetchPromises = wallets.flatMap((wallet) =>
-              networks.map(async (network) => {
+            const fetchPromises = walletsRef.current.flatMap((wallet) =>
+              networksRef.current.map(async (network) => {
                 if (wallet.type !== network.type) return null
                 const key = `${wallet.address}_${network.id}`
 

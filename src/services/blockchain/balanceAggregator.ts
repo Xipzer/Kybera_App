@@ -7,6 +7,7 @@ import { Network, Wallet } from '../../types'
 import { OnChainBalance, OnChainDataService } from './onChainDataService'
 import { PriceData, SimplePriceService } from './simplePriceService'
 import { db } from '../storage/database'
+import { tokenImageService } from '../tokens/tokenImageService'
 
 export interface TokenWithUSD {
   address: string
@@ -110,6 +111,10 @@ export class BalanceAggregator {
       }
 
       console.log(`[Aggregator] Loaded cached balance for ${wallet.address}`)
+
+      // Trigger background image fetching for tokens without logos
+      this.fetchMissingTokenImages(aggregated.tokens)
+
       return aggregated
     } catch (error) {
       console.error('[Aggregator] Failed to load cached balance', error)
@@ -141,6 +146,9 @@ export class BalanceAggregator {
 
     // Step 5: Cache the aggregated result
     await this.cacheAggregatedBalance(aggregated)
+
+    // Step 6: Trigger background image fetching for tokens without logos
+    this.fetchMissingTokenImages(aggregated.tokens)
 
     console.log(`[Aggregator] Total USD: $${aggregated.totalUSD.toFixed(2)}`)
     return aggregated
@@ -343,5 +351,42 @@ export class BalanceAggregator {
   async clearCache(wallet: Wallet): Promise<void> {
     await this.onChainService.clearCache(wallet.address)
     await this.priceService.clearCache()
+  }
+
+  /**
+   * Fetch missing token images in the background
+   * Only fetches images for tokens that don't have a cached logo
+   */
+  private async fetchMissingTokenImages(tokens: TokenWithUSD[]): Promise<void> {
+    // Process each token in the background without blocking
+    Promise.all(
+      tokens.map(async (token) => {
+        try {
+          // Skip if we already have a logo
+          if (token.logoURI) {
+            return
+          }
+
+          // Use tokenImageService which handles caching internally
+          // This will only fetch from CoinGecko if not already cached
+          const logoURI = await tokenImageService.getTokenImage({
+            address: token.address,
+            chainId: typeof this.network.chainId === 'number' ? this.network.chainId : 1,
+            symbol: token.symbol,
+            name: token.name,
+          })
+
+          if (logoURI) {
+            console.log(`[Aggregator] Fetched logo for ${token.symbol}`)
+          }
+        } catch (error) {
+          // Silently fail - images are not critical for functionality
+          console.debug(`[Aggregator] Failed to fetch logo for ${token.symbol}:`, error)
+        }
+      }),
+    ).catch((error) => {
+      // Log but don't throw - this is a background operation
+      console.debug('[Aggregator] Background image fetching error:', error)
+    })
   }
 }

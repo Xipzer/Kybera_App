@@ -103,6 +103,24 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
 
     // Initial data load sequence
     const initializeData = async () => {
+      // Clear previous balance to avoid showing stale data
+      setBalance({
+        walletAddress: wallet.address,
+        networkId: network.id,
+        native: '0',
+        nativeUSD: 0,
+        native24hChange: 0,
+        tokens: [],
+        totalUSD: 0,
+        total24hChange: 0,
+        lastUpdated: Date.now(),
+        dataQuality: {
+          onChainFromCache: false,
+          pricesFromCache: false,
+        },
+      })
+      setError(null)
+
       // 1. Try to load cached data immediately
       const cachedBalance = await blockchainService.loadCachedBalance(wallet, network)
 
