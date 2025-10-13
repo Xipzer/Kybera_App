@@ -1,6 +1,5 @@
 import { Edit2, MessageSquare, MoreVertical, Pin, SquarePen, Trash2 } from 'lucide-react'
 import { useChatStore } from '../../store/chatStore'
-import * as ScrollArea from '@radix-ui/react-scroll-area'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { EmptyState } from '../common/EmptyState'
 import { useState } from 'react'
@@ -86,131 +85,123 @@ export function ChatSidebar({ collapsed }: ChatSidebarProps) {
         </button>
       </div>
 
-      <ScrollArea.Root className="flex-1">
-        <ScrollArea.Viewport className="h-full w-full p-2">
-          {conversations.length === 0 ? (
-            <EmptyState
-              icon={MessageSquare}
-              title="No conversations"
-              description="Start a new chat to begin"
-              action={{
-                label: 'New Chat',
-                onClick: handleNewChat,
-              }}
-              className="h-full"
-            />
-          ) : (
-            <div className="space-y-1">
-              {sortedConversations.map((conversation) => (
-                <div
-                  key={conversation.id}
-                  onClick={() => setActiveConversation(conversation.id)}
-                  className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-                    conversation.id === activeConversationId
-                      ? 'bg-accent/10 border border-accent/30'
-                      : 'hover:bg-surface-hover'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    {conversation.pinned ? (
-                      <Pin className="w-4 h-4 text-accent flex-shrink-0" />
-                    ) : (
-                      <MessageSquare className="w-4 h-4 text-text-secondary flex-shrink-0" />
-                    )}
-                    <div className="min-w-0">
-                      {renamingId === conversation.id ? (
-                        <input
-                          type="text"
-                          value={renameValue}
-                          onChange={(e) => setRenameValue(e.target.value)}
-                          onBlur={() => handleRename(conversation.id)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              handleRename(conversation.id)
-                            } else if (e.key === 'Escape') {
-                              setRenamingId(null)
-                              setRenameValue('')
-                            }
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                          className="w-full px-1 py-0.5 text-sm bg-surface-elevated border border-border-default rounded focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent"
-                          autoFocus
-                        />
-                      ) : (
-                        <p className="text-sm font-medium text-text-primary truncate">
-                          {conversation.title}
-                        </p>
-                      )}
-                      <p className="text-xs text-text-tertiary">
-                        {conversation.messages.length} messages
-                      </p>
-                    </div>
-                  </div>
-
-                  <DropdownMenu.Root>
-                    <DropdownMenu.Trigger asChild>
-                      <button
+      <div className="flex-1 overflow-y-auto p-2">
+        {conversations.length === 0 ? (
+          <EmptyState
+            icon={MessageSquare}
+            title="No conversations"
+            description="Start a new chat to begin"
+            action={{
+              label: 'New Chat',
+              onClick: handleNewChat,
+            }}
+            className="h-full"
+          />
+        ) : (
+          <div className="space-y-1">
+            {sortedConversations.map((conversation) => (
+              <div
+                key={conversation.id}
+                onClick={() => setActiveConversation(conversation.id)}
+                className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
+                  conversation.id === activeConversationId
+                    ? 'bg-accent/10 border border-accent/30'
+                    : 'hover:bg-surface-hover'
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  {conversation.pinned ? (
+                    <Pin className="w-4 h-4 text-accent flex-shrink-0" />
+                  ) : (
+                    <MessageSquare className="w-4 h-4 text-text-secondary flex-shrink-0" />
+                  )}
+                  <div className="min-w-0">
+                    {renamingId === conversation.id ? (
+                      <input
+                        type="text"
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onBlur={() => handleRename(conversation.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleRename(conversation.id)
+                          } else if (e.key === 'Escape') {
+                            setRenamingId(null)
+                            setRenameValue('')
+                          }
+                        }}
                         onClick={(e) => e.stopPropagation()}
-                        className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-surface-hover transition-all"
-                      >
-                        <MoreVertical className="w-4 h-4 text-text-secondary" />
-                      </button>
-                    </DropdownMenu.Trigger>
-
-                    <DropdownMenu.Portal>
-                      <DropdownMenu.Content
-                        className="min-w-[160px] bg-surface-base rounded-lg shadow-lg border border-border-subtle p-1 z-50"
-                        sideOffset={5}
-                      >
-                        <DropdownMenu.Item
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            startRename(conversation.id, conversation.title)
-                          }}
-                          className="flex items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-surface-hover rounded cursor-pointer"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                          Rename
-                        </DropdownMenu.Item>
-
-                        <DropdownMenu.Item
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handlePin(conversation.id, conversation.pinned || false)
-                          }}
-                          className="flex items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-surface-hover rounded cursor-pointer"
-                        >
-                          <Pin className="w-4 h-4" />
-                          {conversation.pinned ? 'Unpin' : 'Pin'}
-                        </DropdownMenu.Item>
-
-                        <DropdownMenu.Separator className="h-px bg-border-subtle my-1" />
-
-                        <DropdownMenu.Item
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDeleteChat(conversation.id)
-                          }}
-                          className="flex items-center gap-2 px-3 py-2 text-sm text-accent hover:bg-accent/10 rounded cursor-pointer"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          Delete
-                        </DropdownMenu.Item>
-                      </DropdownMenu.Content>
-                    </DropdownMenu.Portal>
-                  </DropdownMenu.Root>
+                        className="w-full px-1 py-0.5 text-sm bg-surface-elevated border border-border-default rounded focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent"
+                        autoFocus
+                      />
+                    ) : (
+                      <p className="text-sm font-medium text-text-primary truncate">
+                        {conversation.title}
+                      </p>
+                    )}
+                    <p className="text-xs text-text-tertiary">
+                      {conversation.messages.length} messages
+                    </p>
+                  </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </ScrollArea.Viewport>
-        <ScrollArea.Scrollbar
-          className="flex select-none touch-none p-0.5 bg-surface-elevated transition-colors duration-[160ms] ease-out hover:bg-surface-hover data-[orientation=vertical]:w-2.5 data-[orientation=horizontal]:flex-col data-[orientation=horizontal]:h-2.5"
-          orientation="vertical"
-        >
-          <ScrollArea.Thumb className="flex-1 bg-border-default rounded-[10px] relative before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-full before:h-full before:min-w-[44px] before:min-h-[44px]" />
-        </ScrollArea.Scrollbar>
-      </ScrollArea.Root>
+
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger asChild>
+                    <button
+                      onClick={(e) => e.stopPropagation()}
+                      className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-surface-hover transition-all"
+                    >
+                      <MoreVertical className="w-4 h-4 text-text-secondary" />
+                    </button>
+                  </DropdownMenu.Trigger>
+
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content
+                      className="min-w-[160px] bg-surface-base rounded-lg shadow-lg border border-border-subtle p-1 z-50"
+                      sideOffset={5}
+                    >
+                      <DropdownMenu.Item
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          startRename(conversation.id, conversation.title)
+                        }}
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-surface-hover rounded cursor-pointer"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                        Rename
+                      </DropdownMenu.Item>
+
+                      <DropdownMenu.Item
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handlePin(conversation.id, conversation.pinned || false)
+                        }}
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-surface-hover rounded cursor-pointer"
+                      >
+                        <Pin className="w-4 h-4" />
+                        {conversation.pinned ? 'Unpin' : 'Pin'}
+                      </DropdownMenu.Item>
+
+                      <DropdownMenu.Separator className="h-px bg-border-subtle my-1" />
+
+                      <DropdownMenu.Item
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteChat(conversation.id)
+                        }}
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-accent hover:bg-accent/10 rounded cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete
+                      </DropdownMenu.Item>
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Root>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

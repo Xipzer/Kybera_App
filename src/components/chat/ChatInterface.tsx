@@ -7,7 +7,6 @@ import { ChatMessage } from './ChatMessage'
 import { ModelSelector } from './ModelSelector'
 import { SettingsDialog } from '../settings/SettingsDialog'
 import { OpenRouterService } from '../../services/ai/openrouter'
-import * as ScrollArea from '@radix-ui/react-scroll-area'
 import { useTheme } from '../../hooks/useTheme'
 
 export function ChatInterface() {
@@ -133,7 +132,7 @@ export function ChatInterface() {
     <div className="h-full flex flex-col bg-surface-base relative overflow-hidden">
       {/* Chat wallpaper */}
       {chatWallpaper && (
-        <div 
+        <div
           className="absolute inset-0 pointer-events-none"
           style={{
             backgroundImage: `url(${chatWallpaper})`,
@@ -144,28 +143,27 @@ export function ChatInterface() {
           }}
         />
       )}
-      
+
       {/* Content with relative positioning to stay above wallpaper */}
       <div className="relative z-10 h-full flex flex-col">
-      <div className="border-b border-border-subtle p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h2 className="text-lg font-semibold text-text-primary">
-              {activeConversation?.title || 'New Chat'}
-            </h2>
-            <ModelSelector />
+        <div className="border-b border-border-subtle p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <h2 className="text-lg font-semibold text-text-primary">
+                {activeConversation?.title || 'New Chat'}
+              </h2>
+              <ModelSelector />
+            </div>
+            <button
+              onClick={() => setShowSettings(true)}
+              className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
+            >
+              <Settings className="w-5 h-5 text-text-secondary" />
+            </button>
           </div>
-          <button
-            onClick={() => setShowSettings(true)}
-            className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
-          >
-            <Settings className="w-5 h-5 text-text-secondary" />
-          </button>
         </div>
-      </div>
 
-      <ScrollArea.Root className="flex-1">
-        <ScrollArea.Viewport className="h-full w-full">
+        <div className="flex-1 overflow-y-auto">
           <div className="max-w-4xl mx-auto p-4">
             {activeConversation?.messages.map((message) => (
               <ChatMessage key={message.id} message={message} />
@@ -183,11 +181,11 @@ export function ChatInterface() {
             )}
             {isLoading && !streamingContent && (
               <div className="flex gap-4 mb-6">
-                <div 
+                <div
                   className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center"
                   style={{
                     background: theme.dynamicStyles.buttonPrimary.background,
-                    boxShadow: theme.dynamicStyles.buttonPrimary.hoverShadow
+                    boxShadow: theme.dynamicStyles.buttonPrimary.hoverShadow,
                   }}
                 >
                   <div className="flex items-center gap-1">
@@ -200,40 +198,33 @@ export function ChatInterface() {
             )}
             <div ref={messagesEndRef} />
           </div>
-        </ScrollArea.Viewport>
-        <ScrollArea.Scrollbar
-          className="flex select-none touch-none p-0.5 bg-surface-elevated transition-colors duration-[160ms] ease-out hover:bg-surface-hover data-[orientation=vertical]:w-2.5 data-[orientation=horizontal]:flex-col data-[orientation=horizontal]:h-2.5"
-          orientation="vertical"
-        >
-          <ScrollArea.Thumb className="flex-1 bg-border-default rounded-[10px] relative before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-full before:h-full before:min-w-[44px] before:min-h-[44px]" />
-        </ScrollArea.Scrollbar>
-      </ScrollArea.Root>
+        </div>
 
-      <div className="border-t border-border-subtle p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex gap-2">
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyPress}
-              placeholder="Type your message..."
-              rows={1}
-              className={`flex-1 ${theme.styles.textarea} focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent`}
-              style={{ minHeight: '44px', maxHeight: '200px' }}
-            />
-            <button
-              onClick={handleSend}
-              disabled={!input.trim() || isLoading}
-              className={`${theme.styles.buttonPrimary} disabled:opacity-50 disabled:cursor-not-allowed`}
-              style={theme.dynamicStyles.buttonPrimary}
-            >
-              <Send className="w-5 h-5" />
-            </button>
+        <div className="border-t border-border-subtle p-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex gap-2">
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyPress}
+                placeholder="Type your message..."
+                rows={1}
+                className={`flex-1 ${theme.styles.textarea} focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent`}
+                style={{ minHeight: '44px', maxHeight: '200px' }}
+              />
+              <button
+                onClick={handleSend}
+                disabled={!input.trim() || isLoading}
+                className={`${theme.styles.buttonPrimary} disabled:opacity-50 disabled:cursor-not-allowed`}
+                style={theme.dynamicStyles.buttonPrimary}
+              >
+                <Send className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />
+        <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />
       </div>
     </div>
   )

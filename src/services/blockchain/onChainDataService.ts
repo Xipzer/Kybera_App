@@ -75,9 +75,27 @@ export class OnChainDataService {
       // Run discovery but don't wait for it to complete
       this.tokenDiscovery
         .discoverTokens(wallet.address)
-        .then((newTokens) => {
+        .then(async (newTokens) => {
           if (newTokens.length > 0) {
             console.log(`[OnChainData] Token discovery found ${newTokens.length} new tokens`)
+
+            // Cache the balances of newly discovered tokens
+            for (const token of newTokens) {
+              const cacheKey = `${wallet.address}_${this.networkId}_${token.address.toLowerCase()}`
+              const tokenBalance: TokenBalance = {
+                address: token.address.toLowerCase(),
+                symbol: token.symbol,
+                name: token.name,
+                decimals: token.decimals,
+                balance: token.balance,
+                lastUpdated: Date.now(),
+                fromCache: false,
+              }
+
+              // Cache the token balance
+              await this.cacheTokenBalance(cacheKey, tokenBalance)
+              console.log(`[OnChainData] Cached discovered token ${token.symbol}: ${token.balance}`)
+            }
           }
         })
         .catch((error) => {
