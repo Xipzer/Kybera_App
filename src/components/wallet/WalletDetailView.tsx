@@ -239,6 +239,7 @@ export function WalletDetailView() {
             wallet={activeWallet}
             multiNetworkBalances={multiNetworkBalances}
             executionNetwork={activeNetwork}
+            viewNetworks={viewNetworkObjects}
             isLoading={multiLoading}
             error={multiError}
           />

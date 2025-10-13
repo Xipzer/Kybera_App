@@ -9,6 +9,7 @@ interface NetworkSummaryProps {
   wallet: Wallet | undefined
   multiNetworkBalances: BlockchainBalance[]
   executionNetwork: Network
+  viewNetworks: Network[]
   isLoading: boolean
   error: string | null
 }
@@ -17,6 +18,7 @@ export function NetworkSummary({
   wallet,
   multiNetworkBalances,
   executionNetwork,
+  viewNetworks,
   isLoading,
   error,
 }: NetworkSummaryProps) {
@@ -53,6 +55,9 @@ export function NetworkSummary({
     )
   }
 
+  // Create a map of network ID to network name for quick lookup
+  const networkMap = new Map(viewNetworks.map((n) => [n.id, n.name]))
+
   const sortedNetworks = multiNetworkBalances.sort((a, b) => {
     // Sort by total USD value, highest first
     return (b.totalUSD || 0) - (a.totalUSD || 0)
@@ -75,6 +80,7 @@ export function NetworkSummary({
           const isExecutionNetwork = networkBalance.networkId === executionNetwork.id
           const percentOfTotal =
             totalAcrossNetworks > 0 ? (networkBalance.totalUSD / totalAcrossNetworks) * 100 : 0
+          const networkName = networkMap.get(networkBalance.networkId) || networkBalance.networkId
 
           return (
             <div
@@ -100,9 +106,7 @@ export function NetworkSummary({
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className={`font-medium ${theme.styles.textPrimary}`}>
-                        {networkBalance.networkId}
-                      </p>
+                      <p className={`font-medium ${theme.styles.textPrimary}`}>{networkName}</p>
                       {isExecutionNetwork && (
                         <span className="px-1.5 py-0.5 text-xs bg-accent/10 text-accent rounded font-medium">
                           EXEC
