@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { Wallet } from '../../types'
 import { Network } from '../../utils/networks'
-import { BlockchainBalance, blockchainService } from '../../services/blockchain/blockchainService'
+import { blockchainService } from '../../services/blockchain/blockchainService'
 import { useWalletStore } from '../../store/walletStore'
 import { useTheme } from '../../hooks/useTheme'
 import { formatAddress, formatCryptoBalance, formatUSD } from '../../utils/formatters'
@@ -66,7 +66,6 @@ export function SendDialog({
   const [walletSearchQuery, setWalletSearchQuery] = useState('')
 
   // Data state
-  const [balanceData, setBalanceData] = useState<BlockchainBalance | null>(null)
   const [availableTokens, setAvailableTokens] = useState<TokenOption[]>([])
   const [usdAmount, setUsdAmount] = useState(0)
 
@@ -104,7 +103,6 @@ export function SendDialog({
 
       try {
         const data = await blockchainService.getBalance(fromWallet, network)
-        setBalanceData(data)
 
         // Prepare token options
         const tokens: TokenOption[] = [

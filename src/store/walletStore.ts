@@ -23,7 +23,7 @@ interface WalletState {
   // Wallet Actions
   addWallet: (wallet: Wallet) => Promise<void>
   removeWallet: (id: string) => Promise<void>
-  setActiveWallet: (id: string) => void
+  setActiveWallet: (id: string | null) => void
   setActiveNetwork: (network: Network) => Promise<void>
   setViewNetworks: (networkIds: string[]) => void
   lock: () => void

@@ -8,9 +8,6 @@ import { Network, Wallet } from '../../types'
 import { db } from '../storage/database'
 import { EVMRpcService } from './evmRpcService'
 
-// Minimal ERC20 ABI for balance queries
-const ERC20_ABI = ['function balanceOf(address) view returns (uint256)']
-
 export interface TokenBalance {
   address: string
   symbol: string
@@ -37,7 +34,7 @@ export class OnChainDataService {
 
   constructor(network: Network) {
     this.networkId = network.id
-    this.chainId = network.chainId || 1
+    this.chainId = typeof network.chainId === 'number' ? network.chainId : 1
     this.provider = new ethers.JsonRpcProvider(network.rpcUrl)
     this.rpcService = new EVMRpcService(network.rpcUrl)
   }

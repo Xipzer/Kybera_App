@@ -100,6 +100,33 @@ export interface StoredDiscoveredToken {
   discoveredAt: number
 }
 
+export interface StoredCustomNetwork {
+  id: string
+  name: string
+  type: 'EVM' | 'SVM'
+  chainId: string | number
+  symbol: string
+  rpcUrl: string
+  explorer: string
+  explorerUrl: string
+  nativeCurrency: {
+    name: string
+    symbol: string
+    decimals: number
+  }
+  isMainnet?: boolean
+  alchemyRpcUrl?: string
+  isCustom: boolean
+  addedAt: number
+  updatedAt?: number
+}
+
+export interface StoredNetworkVisibility {
+  networkId: string // Primary key
+  isHidden: boolean
+  updatedAt: number
+}
+
 export class SmartWalletDB extends Dexie {
   wallets!: Table<StoredWallet>
   walletGroups!: Table<StoredWalletGroup>
@@ -114,6 +141,8 @@ export class SmartWalletDB extends Dexie {
   walletBalances!: Table<StoredWalletBalance>
   tokenMetadata!: Table<StoredTokenMetadata>
   discoveredTokens!: Table<StoredDiscoveredToken>
+  customNetworks!: Table<StoredCustomNetwork>
+  networkVisibility!: Table<StoredNetworkVisibility>
 
   constructor() {
     super('SmartWalletDB')
@@ -201,7 +230,7 @@ export class SmartWalletDB extends Dexie {
         auth: 'id',
         transactions: '++id, hash, from, to, network, timestamp',
       })
-      .upgrade(async (trans) => {
+      .upgrade(async () => {
         // No data migration needed, just schema update for optional fields
       })
 
@@ -377,6 +406,25 @@ export class SmartWalletDB extends Dexie {
       walletBalances: 'id, walletAddress, networkId, lastUpdated',
       tokenMetadata: 'id, chainId, address, lastUpdated',
       discoveredTokens: 'id, walletAddress, chainId, tokenAddress, discoveredAt',
+    })
+
+    // Version 14 adds custom networks and network visibility tables
+    this.version(14).stores({
+      wallets: '++id, groupId, address, type, order, lastNetworkId',
+      walletGroups: '++id, createdAt, order',
+      conversations: '++id, createdAt, pinned',
+      messages: '++id, conversationId, timestamp',
+      settings: 'key',
+      auth: 'id',
+      transactions: '++id, hash, from, to, network, timestamp',
+      tokenBalances: 'id, walletAddress, networkId, lastUpdated',
+      priceData: 'id, symbol, lastUpdated',
+      priceHistory: 'id, symbol, timestamp',
+      walletBalances: 'id, walletAddress, networkId, lastUpdated',
+      tokenMetadata: 'id, chainId, address, lastUpdated',
+      discoveredTokens: 'id, walletAddress, chainId, tokenAddress, discoveredAt',
+      customNetworks: 'id, type, chainId, addedAt',
+      networkVisibility: 'networkId, updatedAt',
     })
   }
 }

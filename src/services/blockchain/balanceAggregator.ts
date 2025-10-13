@@ -47,7 +47,8 @@ export class BalanceAggregator {
 
     // Map network to CoinGecko native token ID
     const nativeTokenId = this.getNativeTokenId(network.id)
-    this.priceService = new SimplePriceService(network.id, network.chainId || 1, nativeTokenId)
+    const chainId = typeof network.chainId === 'number' ? network.chainId : 1
+    this.priceService = new SimplePriceService(network.id, chainId, nativeTokenId)
   }
 
   /**

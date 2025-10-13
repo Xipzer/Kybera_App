@@ -23,30 +23,28 @@ class NetworkService {
   async getAllNetworks(): Promise<NetworkWithVisibility[]> {
     // Get default networks
     const defaultNetworks = [...EVM_NETWORKS, ...SVM_NETWORKS]
-    
+
     // Get custom networks from database
     const customNetworks = await db.customNetworks.toArray()
-    
+
     // Get visibility settings
     const visibilitySettings = await db.networkVisibility.toArray()
-    const visibilityMap = new Map(
-      visibilitySettings.map(v => [v.networkId, v.isHidden])
-    )
-    
+    const visibilityMap = new Map(visibilitySettings.map((v) => [v.networkId, v.isHidden]))
+
     // Combine all networks with visibility
     const allNetworks: NetworkWithVisibility[] = [
-      ...defaultNetworks.map(network => ({
+      ...defaultNetworks.map((network) => ({
         ...network,
         isCustom: false,
-        isHidden: visibilityMap.get(network.id) || false
+        isHidden: visibilityMap.get(network.id) || false,
       })),
-      ...customNetworks.map(network => ({
+      ...customNetworks.map((network) => ({
         ...network,
         isCustom: true,
-        isHidden: visibilityMap.get(network.id) || false
-      }))
+        isHidden: visibilityMap.get(network.id) || false,
+      })),
     ]
-    
+
     return allNetworks
   }
 
@@ -55,7 +53,7 @@ class NetworkService {
    */
   async getVisibleNetworks(): Promise<Network[]> {
     const allNetworks = await this.getAllNetworks()
-    return allNetworks.filter(n => !n.isHidden)
+    return allNetworks.filter((n) => !n.isHidden)
   }
 
   /**
@@ -63,7 +61,7 @@ class NetworkService {
    */
   async getNetworksByType(type: 'EVM' | 'SVM'): Promise<Network[]> {
     const visibleNetworks = await this.getVisibleNetworks()
-    return visibleNetworks.filter(n => n.type === type)
+    return visibleNetworks.filter((n) => n.type === type)
   }
 
   /**
@@ -71,7 +69,7 @@ class NetworkService {
    */
   async getNetworkById(id: string): Promise<Network | undefined> {
     const allNetworks = await this.getVisibleNetworks()
-    return allNetworks.find(n => n.id === id)
+    return allNetworks.find((n) => n.id === id)
   }
 
   /**
@@ -80,30 +78,44 @@ class NetworkService {
   async addCustomNetwork(network: Omit<Network, 'id'>): Promise<string> {
     // Generate unique ID
     const id = `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    
+
     // Validate network
     if (!network.name || !network.rpcUrl || !network.symbol) {
       throw new Error('Network name, RPC URL, and symbol are required')
     }
-    
+
     // Check for duplicate chainId
     const existingNetworks = await this.getAllNetworks()
-    const duplicate = existingNetworks.find(n => 
-      n.chainId === network.chainId && n.type === network.type
+    const duplicate = existingNetworks.find(
+      (n) => n.chainId === network.chainId && n.type === network.type,
     )
-    
+
     if (duplicate) {
-      throw new Error(`A network with chain ID ${network.chainId} already exists: ${duplicate.name}`)
+      throw new Error(
+        `A network with chain ID ${network.chainId} already exists: ${duplicate.name}`,
+      )
     }
-    
+
+    // Ensure explorer and nativeCurrency are set with defaults if not provided
+    const explorer = network.explorer || ''
+    const explorerUrl = network.explorerUrl || ''
+    const nativeCurrency = network.nativeCurrency || {
+      name: network.symbol,
+      symbol: network.symbol,
+      decimals: network.type === 'EVM' ? 18 : 9,
+    }
+
     // Add to database
     await db.customNetworks.add({
       id,
       ...network,
+      explorer,
+      explorerUrl,
+      nativeCurrency,
       isCustom: true,
-      addedAt: Date.now()
+      addedAt: Date.now(),
     })
-    
+
     return id
   }
 
@@ -112,28 +124,31 @@ class NetworkService {
    */
   async updateCustomNetwork(id: string, updates: Partial<Network>): Promise<void> {
     const customNetwork = await db.customNetworks.get(id)
-    
+
     if (!customNetwork) {
       throw new Error('Network not found or is not a custom network')
     }
-    
+
     // Validate chainId uniqueness if being changed
     if (updates.chainId && updates.chainId !== customNetwork.chainId) {
       const existingNetworks = await this.getAllNetworks()
-      const duplicate = existingNetworks.find(n => 
-        n.id !== id && 
-        n.chainId === updates.chainId && 
-        n.type === (updates.type || customNetwork.type)
+      const duplicate = existingNetworks.find(
+        (n) =>
+          n.id !== id &&
+          n.chainId === updates.chainId &&
+          n.type === (updates.type || customNetwork.type),
       )
-      
+
       if (duplicate) {
-        throw new Error(`A network with chain ID ${updates.chainId} already exists: ${duplicate.name}`)
+        throw new Error(
+          `A network with chain ID ${updates.chainId} already exists: ${duplicate.name}`,
+        )
       }
     }
-    
+
     await db.customNetworks.update(id, {
       ...updates,
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
     })
   }
 
@@ -142,14 +157,14 @@ class NetworkService {
    */
   async removeCustomNetwork(id: string): Promise<void> {
     const customNetwork = await db.customNetworks.get(id)
-    
+
     if (!customNetwork) {
       throw new Error('Network not found or is not a custom network')
     }
-    
+
     // Remove network
     await db.customNetworks.delete(id)
-    
+
     // Also remove visibility setting
     await db.networkVisibility.delete(id)
   }
@@ -159,17 +174,17 @@ class NetworkService {
    */
   async toggleNetworkVisibility(networkId: string): Promise<void> {
     const visibility = await db.networkVisibility.get(networkId)
-    
+
     if (visibility) {
       await db.networkVisibility.update(networkId, {
         isHidden: !visibility.isHidden,
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
       })
     } else {
       await db.networkVisibility.add({
         networkId,
         isHidden: true,
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
       })
     }
   }
@@ -179,17 +194,17 @@ class NetworkService {
    */
   async setNetworkVisibility(networkId: string, isHidden: boolean): Promise<void> {
     const visibility = await db.networkVisibility.get(networkId)
-    
+
     if (visibility) {
       await db.networkVisibility.update(networkId, {
         isHidden,
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
       })
     } else {
       await db.networkVisibility.add({
         networkId,
         isHidden,
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
       })
     }
   }

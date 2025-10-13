@@ -1,4 +1,3 @@
-import { Wallet } from '../../types'
 import { Network } from '../../utils/networks'
 import { formatCryptoBalance, formatUSD } from '../../utils/formatters'
 import { TrendingDown, TrendingUp } from 'lucide-react'
@@ -6,14 +5,13 @@ import { BlockchainBalance } from '../../services/blockchain/blockchainService'
 import { useTheme } from '../../hooks/useTheme'
 
 interface TokenListProps {
-  wallet: Wallet
   network: Network
   balanceData: BlockchainBalance
   isLoading: boolean
   error: string | null
 }
 
-export function TokenList({ wallet, network, balanceData, isLoading, error }: TokenListProps) {
+export function TokenList({ network, balanceData, isLoading, error }: TokenListProps) {
   const { theme } = useTheme()
 
   if (isLoading) {

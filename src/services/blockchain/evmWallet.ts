@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
-import { encryptData, decryptData } from '../../utils/crypto'
-import { memoryProtection, SecureString } from '../security/memoryProtection'
+import { decryptData, encryptData } from '../../utils/crypto'
+import { memoryProtection } from '../security/memoryProtection'
 
 export class EVMWalletService {
   static async createWallet(): Promise<{ address: string; privateKey: string; mnemonic: string }> {
@@ -11,15 +11,15 @@ export class EVMWalletService {
       mnemonic: wallet.mnemonic!.phrase,
     }
   }
-  
+
   static async createSeedPhrase(): Promise<string> {
     const wallet = ethers.Wallet.createRandom()
     return wallet.mnemonic!.phrase
   }
-  
+
   static async deriveWalletFromSeed(
     mnemonic: string,
-    index: number = 0
+    index: number = 0,
   ): Promise<{ address: string; privateKey: string }> {
     // BIP44 path for Ethereum: m/44'/60'/0'/0/index
     const path = `m/44'/60'/0'/0/${index}`
@@ -52,15 +52,20 @@ export class EVMWalletService {
     if (rpcUrl.includes('solana') || rpcUrl.includes('helius-rpc.com')) {
       throw new Error('Cannot use EVM wallet service with Solana RPC endpoint')
     }
-    
+
     try {
       const provider = new ethers.JsonRpcProvider(rpcUrl)
       const balance = await provider.getBalance(address)
       return ethers.formatEther(balance)
     } catch (error: any) {
       // Check if this is a network detection error that might indicate wrong RPC type
-      if (error.message?.includes('failed to detect network') && rpcUrl.includes('helius-rpc.com')) {
-        throw new Error('Attempted to use Solana RPC endpoint with EVM wallet. Please check network configuration.')
+      if (
+        error.message?.includes('failed to detect network') &&
+        rpcUrl.includes('helius-rpc.com')
+      ) {
+        throw new Error(
+          'Attempted to use Solana RPC endpoint with EVM wallet. Please check network configuration.',
+        )
       }
       throw error
     }
@@ -76,16 +81,16 @@ export class EVMWalletService {
     if (rpcUrl.includes('solana') || rpcUrl.includes('helius-rpc.com')) {
       throw new Error('Cannot use EVM wallet service with Solana RPC endpoint')
     }
-    
+
     // Store private key securely during transaction
     const keyId = `eth_tx_${Date.now()}`
     memoryProtection.storeSensitive(keyId, privateKey, 30000) // 30 second timeout
-    
+
     try {
       const provider = new ethers.JsonRpcProvider(rpcUrl)
       const securePrivateKey = memoryProtection.getSensitive(keyId)
       if (!securePrivateKey) throw new Error('Failed to retrieve secure key')
-      
+
       const wallet = new ethers.Wallet(securePrivateKey, provider)
 
       const tx = await wallet.sendTransaction({
@@ -117,29 +122,29 @@ export class EVMWalletService {
     from: string,
     to: string,
     amount: string,
-    rpcUrl: string
+    rpcUrl: string,
   ): Promise<string> {
     // Check if this is a Solana RPC URL
     if (rpcUrl.includes('solana') || rpcUrl.includes('helius-rpc.com')) {
       throw new Error('Cannot use EVM wallet service with Solana RPC endpoint')
     }
-    
+
     try {
       const provider = new ethers.JsonRpcProvider(rpcUrl)
-      
+
       // Estimate gas for a simple transfer
       const gasLimit = await provider.estimateGas({
         from,
         to,
-        value: ethers.parseEther(amount || '0')
+        value: ethers.parseEther(amount || '0'),
       })
-      
+
       // Get current gas price
       const gasPrice = await provider.getFeeData()
-      
+
       // Calculate fee (gasLimit * gasPrice)
       const fee = gasLimit * (gasPrice.gasPrice || 0n)
-      
+
       // Convert to ETH
       return ethers.formatEther(fee)
     } catch (error) {
@@ -148,47 +153,47 @@ export class EVMWalletService {
       return '0.001'
     }
   }
-  
+
   // Alias for compatibility
   static async estimateTransactionFee(
     from: string,
     rpcUrl: string,
     to: string,
-    amount?: string
+    amount?: string,
   ): Promise<string> {
     return this.estimateGasFee(from, to, amount || '0', rpcUrl)
   }
-  
+
   static async sendToken(
     privateKey: string,
     rpcUrl: string,
     tokenAddress: string,
     to: string,
     amount: string,
-    decimals: number
+    decimals: number,
   ): Promise<string> {
     // Store private key securely during transaction
     const keyId = `eth_token_tx_${Date.now()}`
     memoryProtection.storeSensitive(keyId, privateKey, 30000) // 30 second timeout
-    
+
     try {
       const provider = new ethers.JsonRpcProvider(rpcUrl)
       const securePrivateKey = memoryProtection.getSensitive(keyId)
       if (!securePrivateKey) throw new Error('Failed to retrieve secure key')
-      
+
       const wallet = new ethers.Wallet(securePrivateKey, provider)
-      
+
       // ERC20 ABI for transfer
       const erc20Abi = ['function transfer(address to, uint256 amount) returns (bool)']
       const contract = new ethers.Contract(tokenAddress, erc20Abi, wallet)
-      
+
       // Convert amount to token units
       const tokenAmount = ethers.parseUnits(amount, decimals)
-      
+
       // Send transaction
       const tx = await contract.transfer(to, tokenAmount)
       await tx.wait()
-      
+
       return tx.hash
     } finally {
       // Always wipe the key
@@ -217,34 +222,34 @@ export class EVMWalletService {
     if (rpcUrl.includes('solana') || rpcUrl.includes('helius-rpc.com')) {
       throw new Error('Cannot use EVM wallet service with Solana RPC endpoint')
     }
-    
+
     // Store private key securely
     const keyId = `erc20_key_${Date.now()}`
     memoryProtection.storeSensitive(keyId, privateKey, 30000)
-    
+
     try {
       const provider = new ethers.JsonRpcProvider(rpcUrl)
       const securePrivateKey = memoryProtection.getSensitive(keyId)
       if (!securePrivateKey) throw new Error('Failed to retrieve secure key')
-      
+
       const wallet = new ethers.Wallet(securePrivateKey, provider)
 
-    // ERC20 ABI for transfer function
-    const erc20Abi = [
-      'function transfer(address to, uint256 amount) returns (bool)',
-      'function balanceOf(address account) view returns (uint256)',
-      'function decimals() view returns (uint8)',
-    ]
+      // ERC20 ABI for transfer function
+      const erc20Abi = [
+        'function transfer(address to, uint256 amount) returns (bool)',
+        'function balanceOf(address account) view returns (uint256)',
+        'function decimals() view returns (uint8)',
+      ]
 
-    const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, wallet)
-    
-    // Convert amount to smallest unit based on decimals
-    const amountInWei = ethers.parseUnits(amount, decimals)
-    
+      const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, wallet)
+
+      // Convert amount to smallest unit based on decimals
+      const amountInWei = ethers.parseUnits(amount, decimals)
+
       // Send the transaction
       const tx = await tokenContract.transfer(to, amountInWei)
       await tx.wait()
-      
+
       return tx.hash
     } finally {
       // Always wipe the key
@@ -261,28 +266,28 @@ export class EVMWalletService {
     if (rpcUrl.includes('solana') || rpcUrl.includes('helius-rpc.com')) {
       throw new Error('Cannot use EVM wallet service with Solana RPC endpoint')
     }
-    
+
     const provider = new ethers.JsonRpcProvider(rpcUrl)
-    
+
     try {
       const erc20Abi = [
         'function balanceOf(address account) view returns (uint256)',
         'function decimals() view returns (uint8)',
       ]
-      
+
       const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, provider)
-      
+
       // Check if the contract exists by getting the code
       const code = await provider.getCode(tokenAddress)
       if (code === '0x') {
         throw new Error('Contract does not exist at this address')
       }
-      
+
       const [balance, decimals] = await Promise.all([
         tokenContract.balanceOf(walletAddress),
         tokenContract.decimals(),
       ])
-      
+
       return {
         balance: ethers.formatUnits(balance, decimals),
         decimals,

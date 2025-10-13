@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { X, Copy } from 'lucide-react'
+import { Copy, X } from 'lucide-react'
 import { Wallet } from '../../types'
 import QRCode from 'qrcode'
-import { useTheme } from '../../hooks/useTheme'
 
 interface ReceiveDialogProps {
   open: boolean
@@ -12,7 +11,6 @@ interface ReceiveDialogProps {
 }
 
 export function ReceiveDialog({ open, onOpenChange, wallet }: ReceiveDialogProps) {
-  const { theme } = useTheme()
   const [qrCodeUrl, setQrCodeUrl] = useState('')
   const [copied, setCopied] = useState(false)
 
@@ -57,7 +55,7 @@ export function ReceiveDialog({ open, onOpenChange, wallet }: ReceiveDialogProps
                 <p className="text-sm text-text-secondary mb-4">
                   Share this address to receive {wallet.type} assets
                 </p>
-                
+
                 {qrCodeUrl && (
                   <div className="inline-block p-4 bg-primary-950 rounded-lg mb-4">
                     <img src={qrCodeUrl} alt="QR Code" className="w-48 h-48" />
@@ -90,13 +88,10 @@ export function ReceiveDialog({ open, onOpenChange, wallet }: ReceiveDialogProps
                         <Copy className="w-4 h-4 text-text-secondary" />
                       </button>
                     </div>
-                    {copied && (
-                      <p className="text-xs text-green-500 mt-1">Copied to clipboard!</p>
-                    )}
+                    {copied && <p className="text-xs text-green-500 mt-1">Copied to clipboard!</p>}
                   </div>
                 </div>
               </div>
-
             </div>
           </div>
         </Dialog.Content>

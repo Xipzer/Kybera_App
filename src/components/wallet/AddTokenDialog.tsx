@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { X, Plus, AlertCircle } from 'lucide-react'
+import { AlertCircle, Plus, X } from 'lucide-react'
 import { Network } from '../../types'
 import { db } from '../../services/storage/database'
-import { JsonRpcProvider, Contract, isAddress } from 'ethers'
+import { Contract, isAddress, JsonRpcProvider } from 'ethers'
 import { useTheme } from '../../hooks/useTheme'
 import { tokenImageService } from '../../services/tokens/tokenImageService'
 
@@ -15,7 +15,13 @@ interface AddTokenDialogProps {
   onTokenAdded: () => void
 }
 
-export function AddTokenDialog({ isOpen, onClose, walletAddress, network, onTokenAdded }: AddTokenDialogProps) {
+export function AddTokenDialog({
+  isOpen,
+  onClose,
+  walletAddress,
+  network,
+  onTokenAdded,
+}: AddTokenDialogProps) {
   const { theme } = useTheme()
   const [tokenAddress, setTokenAddress] = useState('')
   const [tokenSymbol, setTokenSymbol] = useState('')
@@ -38,17 +44,17 @@ export function AddTokenDialog({ isOpen, onClose, walletAddress, network, onToke
         const erc20Abi = [
           'function symbol() view returns (string)',
           'function name() view returns (string)',
-          'function decimals() view returns (uint8)'
+          'function decimals() view returns (uint8)',
         ]
-        
+
         const contract = new Contract(address, erc20Abi, provider)
-        
+
         const [symbol, name, decimals] = await Promise.all([
           contract.symbol(),
           contract.name(),
-          contract.decimals()
+          contract.decimals(),
         ])
-        
+
         setTokenSymbol(symbol)
         setTokenName(name)
         setTokenDecimals(decimals.toString())
@@ -70,7 +76,7 @@ export function AddTokenDialog({ isOpen, onClose, walletAddress, network, onToke
       if (network.type === 'EVM' && !isAddress(tokenAddress)) {
         throw new Error('Invalid token address')
       }
-      
+
       if (network.type === 'SVM') {
         // Validate Solana address
         const { PublicKey } = await import('@solana/web3.js')
@@ -94,38 +100,38 @@ export function AddTokenDialog({ isOpen, onClose, walletAddress, network, onToke
       await db.discoveredTokens.put({
         id: `${walletAddress}_${network.chainId}_${tokenAddress.toLowerCase()}`,
         walletAddress,
-        chainId: network.chainId.toString(),
+        chainId: network.chainId as number,
         tokenAddress: tokenAddress.toLowerCase(),
         symbol: tokenSymbol,
         name: tokenName,
         decimals: decimals,
         logoURI: logoURI || undefined,
-        tags: ['custom'],
         addedManually: true,
         discoveredAt: Date.now(),
-        lastSeen: Date.now()
       })
 
       // Fetch image from CoinGecko if no logo URL was provided
       if (!logoURI && network.type === 'EVM') {
-        tokenImageService.getTokenImage({
-          address: tokenAddress,
-          chainId: network.chainId as number,
-          symbol: tokenSymbol,
-          name: tokenName
-        }).catch(err => console.error('Failed to fetch token image:', err))
+        tokenImageService
+          .getTokenImage({
+            address: tokenAddress,
+            chainId: network.chainId as number,
+            symbol: tokenSymbol,
+            name: tokenName,
+          })
+          .catch((err) => console.error('Failed to fetch token image:', err))
       }
 
       // Notify parent
       onTokenAdded()
-      
+
       // Reset form
       setTokenAddress('')
       setTokenSymbol('')
       setTokenName('')
       setTokenDecimals('18')
       setLogoURI('')
-      
+
       onClose()
     } catch (err: any) {
       setError(err.message || 'Failed to add token')
@@ -148,17 +154,14 @@ export function AddTokenDialog({ isOpen, onClose, walletAddress, network, onToke
     <Dialog.Root open={isOpen} onOpenChange={onClose}>
       <Dialog.Portal>
         <Dialog.Overlay className="dialog-overlay" />
-        <Dialog.Content className={`dialog-content w-[500px] max-h-[85vh] overflow-y-auto ${theme.styles.dialogContainer}`}>
+        <Dialog.Content
+          className={`dialog-content w-[500px] max-h-[85vh] overflow-y-auto ${theme.styles.dialogContainer}`}
+        >
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <Dialog.Title className={theme.styles.heading}>
-                Add Custom Token
-              </Dialog.Title>
+              <Dialog.Title className={theme.styles.heading}>Add Custom Token</Dialog.Title>
               <Dialog.Close asChild>
-                <button
-                  onClick={handleClose}
-                  className={theme.styles.buttonIcon}
-                >
+                <button onClick={handleClose} className={theme.styles.buttonIcon}>
                   <X className={`w-5 h-5 ${theme.styles.iconSecondary}`} />
                 </button>
               </Dialog.Close>
@@ -167,9 +170,7 @@ export function AddTokenDialog({ isOpen, onClose, walletAddress, network, onToke
             <form onSubmit={handleSubmit}>
               <div className="space-y-4">
                 <div>
-                  <label className={theme.styles.label}>
-                    Token Address
-                  </label>
+                  <label className={theme.styles.label}>Token Address</label>
                   <div className="relative">
                     <input
                       type="text"
@@ -188,9 +189,7 @@ export function AddTokenDialog({ isOpen, onClose, walletAddress, network, onToke
                 </div>
 
                 <div>
-                  <label className={theme.styles.label}>
-                    Token Symbol
-                  </label>
+                  <label className={theme.styles.label}>Token Symbol</label>
                   <input
                     type="text"
                     value={tokenSymbol}
@@ -203,9 +202,7 @@ export function AddTokenDialog({ isOpen, onClose, walletAddress, network, onToke
                 </div>
 
                 <div>
-                  <label className={theme.styles.label}>
-                    Token Name
-                  </label>
+                  <label className={theme.styles.label}>Token Name</label>
                   <input
                     type="text"
                     value={tokenName}
@@ -218,9 +215,7 @@ export function AddTokenDialog({ isOpen, onClose, walletAddress, network, onToke
                 </div>
 
                 <div>
-                  <label className={theme.styles.label}>
-                    Decimals
-                  </label>
+                  <label className={theme.styles.label}>Decimals</label>
                   <input
                     type="number"
                     value={tokenDecimals}
@@ -235,9 +230,7 @@ export function AddTokenDialog({ isOpen, onClose, walletAddress, network, onToke
                 </div>
 
                 <div>
-                  <label className={theme.styles.label}>
-                    Logo URL (optional)
-                  </label>
+                  <label className={theme.styles.label}>Logo URL (optional)</label>
                   <input
                     type="url"
                     value={logoURI}

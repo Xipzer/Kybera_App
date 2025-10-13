@@ -1,9 +1,22 @@
-import { Keypair, Connection, PublicKey, LAMPORTS_PER_SOL, SystemProgram, Transaction } from '@solana/web3.js'
-import { getAssociatedTokenAddress, createTransferInstruction, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, getMint } from '@solana/spl-token'
+import {
+  Connection,
+  Keypair,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+} from '@solana/web3.js'
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  createTransferInstruction,
+  getAssociatedTokenAddress,
+  getMint,
+  TOKEN_PROGRAM_ID,
+} from '@solana/spl-token'
 import * as bip39 from 'bip39'
 import { derivePath } from 'ed25519-hd-key'
-import { encryptData, decryptData } from '../../utils/crypto'
-import { memoryProtection, SecureString, ObfuscatedValue } from '../security/memoryProtection'
+import { decryptData, encryptData } from '../../utils/crypto'
+import { memoryProtection } from '../security/memoryProtection'
 
 export class SVMWalletService {
   static async createWallet(): Promise<{ address: string; privateKey: string; mnemonic: string }> {
@@ -18,21 +31,21 @@ export class SVMWalletService {
       mnemonic,
     }
   }
-  
+
   static async createSeedPhrase(): Promise<string> {
     return bip39.generateMnemonic()
   }
-  
+
   static async deriveWalletFromSeed(
     mnemonic: string,
-    index: number = 0
+    index: number = 0,
   ): Promise<{ address: string; privateKey: string }> {
     const seed = await bip39.mnemonicToSeed(mnemonic)
     // BIP44 path for Solana: m/44'/501'/index'/0'
     const path = `m/44'/501'/${index}'/0'`
     const derivedSeed = derivePath(path, seed.toString('hex')).key
     const keypair = Keypair.fromSeed(derivedSeed)
-    
+
     return {
       address: keypair.publicKey.toBase58(),
       privateKey: Buffer.from(keypair.secretKey).toString('hex'),
@@ -67,7 +80,9 @@ export class SVMWalletService {
       const connection = new Connection(rpcUrl, 'confirmed')
       const publicKey = new PublicKey(address)
       const balance = await connection.getBalance(publicKey)
-      console.log(`Solana balance for ${address}: ${balance} lamports = ${balance / LAMPORTS_PER_SOL} SOL`)
+      console.log(
+        `Solana balance for ${address}: ${balance} lamports = ${balance / LAMPORTS_PER_SOL} SOL`,
+      )
       return (balance / LAMPORTS_PER_SOL).toString()
     } catch (error) {
       console.error('Failed to fetch Solana balance:', error)
@@ -84,12 +99,12 @@ export class SVMWalletService {
     // Store private key securely during transaction
     const keyId = `tx_key_${Date.now()}`
     memoryProtection.storeSensitive(keyId, privateKey, 30000) // 30 second timeout
-    
+
     try {
       const connection = new Connection(rpcUrl)
       const securePrivateKey = memoryProtection.getSensitive(keyId)
       if (!securePrivateKey) throw new Error('Failed to retrieve secure key')
-      
+
       const secretKey = Uint8Array.from(Buffer.from(securePrivateKey, 'hex'))
       const fromKeypair = Keypair.fromSecretKey(secretKey)
       const toPublicKey = new PublicKey(to)
@@ -104,7 +119,7 @@ export class SVMWalletService {
 
       const signature = await connection.sendTransaction(transaction, [fromKeypair])
       await connection.confirmTransaction(signature)
-      
+
       // Clear sensitive data from keypair
       secretKey.fill(0)
 
@@ -136,51 +151,48 @@ export class SVMWalletService {
     from: string,
     to: string,
     amount: string,
-    rpcUrl: string
+    rpcUrl: string,
   ): Promise<string> {
     try {
       const connection = new Connection(rpcUrl, 'confirmed')
-      
+
       // Get recent blockhash for fee calculation
       const { blockhash } = await connection.getLatestBlockhash()
-      
+
       // Create a dummy transaction to estimate fees
       const transaction = new Transaction()
       transaction.recentBlockhash = blockhash
       transaction.feePayer = new PublicKey(from)
-      
+
       // Add transfer instruction
       transaction.add(
         SystemProgram.transfer({
           fromPubkey: new PublicKey(from),
           toPubkey: new PublicKey(to),
-          lamports: parseFloat(amount || '0') * LAMPORTS_PER_SOL
-        })
+          lamports: parseFloat(amount || '0') * LAMPORTS_PER_SOL,
+        }),
       )
-      
+
       // Get fee for this transaction
-      const fee = await connection.getFeeForMessage(
-        transaction.compileMessage(),
-        'confirmed'
-      )
-      
+      const fee = await connection.getFeeForMessage(transaction.compileMessage(), 'confirmed')
+
       if (fee.value === null) {
         // Fallback to default fee with priority
         return '0.00089'
       }
-      
+
       // Base fee in lamports
       let totalFee = fee.value
-      
+
       // Add priority fee (common on Solana now)
       // Using a realistic priority fee based on current network conditions
       // This matches what wallets like Phantom use (~0.00085 SOL)
       const priorityFee = 850000 // 0.00085 SOL in lamports
       totalFee += priorityFee
-      
+
       // Add small buffer for safety
       totalFee += 35000 // 0.000035 SOL
-      
+
       // Convert lamports to SOL
       return (totalFee / LAMPORTS_PER_SOL).toString()
     } catch (error) {
@@ -210,55 +222,57 @@ export class SVMWalletService {
     // Store private key securely
     const keyId = `spl_key_${Date.now()}`
     memoryProtection.storeSensitive(keyId, privateKey, 30000)
-    
+
     try {
       const connection = new Connection(rpcUrl)
       const securePrivateKey = memoryProtection.getSensitive(keyId)
       if (!securePrivateKey) throw new Error('Failed to retrieve secure key')
-      
+
       const secretKey = Uint8Array.from(Buffer.from(securePrivateKey, 'hex'))
       const fromKeypair = Keypair.fromSecretKey(secretKey)
       const toPublicKey = new PublicKey(to)
       const mintPublicKey = new PublicKey(tokenMintAddress)
 
-    // Get the token mint info to determine decimals
-    const mintInfo = await getMint(connection, mintPublicKey)
-    
-    // Get the associated token accounts
-    const fromTokenAccount = await getAssociatedTokenAddress(
-      mintPublicKey,
-      fromKeypair.publicKey,
-      false,
-      TOKEN_PROGRAM_ID,
-      ASSOCIATED_TOKEN_PROGRAM_ID
-    )
-    
-    const toTokenAccount = await getAssociatedTokenAddress(
-      mintPublicKey,
-      toPublicKey,
-      false,
-      TOKEN_PROGRAM_ID,
-      ASSOCIATED_TOKEN_PROGRAM_ID
-    )
+      // Get the token mint info to determine decimals
+      const mintInfo = await getMint(connection, mintPublicKey)
 
-    // Convert amount to smallest unit based on decimals
-    const amountInSmallestUnit = BigInt(Math.floor(parseFloat(amount) * Math.pow(10, mintInfo.decimals)))
+      // Get the associated token accounts
+      const fromTokenAccount = await getAssociatedTokenAddress(
+        mintPublicKey,
+        fromKeypair.publicKey,
+        false,
+        TOKEN_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+      )
 
-    // Create the transfer instruction
-    const transferInstruction = createTransferInstruction(
-      fromTokenAccount,
-      toTokenAccount,
-      fromKeypair.publicKey,
-      amountInSmallestUnit,
-      [],
-      TOKEN_PROGRAM_ID
-    )
+      const toTokenAccount = await getAssociatedTokenAddress(
+        mintPublicKey,
+        toPublicKey,
+        false,
+        TOKEN_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+      )
+
+      // Convert amount to smallest unit based on decimals
+      const amountInSmallestUnit = BigInt(
+        Math.floor(parseFloat(amount) * Math.pow(10, mintInfo.decimals)),
+      )
+
+      // Create the transfer instruction
+      const transferInstruction = createTransferInstruction(
+        fromTokenAccount,
+        toTokenAccount,
+        fromKeypair.publicKey,
+        amountInSmallestUnit,
+        [],
+        TOKEN_PROGRAM_ID,
+      )
 
       // Create and send transaction
       const transaction = new Transaction().add(transferInstruction)
       const signature = await connection.sendTransaction(transaction, [fromKeypair])
       await connection.confirmTransaction(signature)
-      
+
       // Clear sensitive data
       secretKey.fill(0)
 
@@ -280,14 +294,14 @@ export class SVMWalletService {
 
     // Get mint info for decimals
     const mintInfo = await getMint(connection, mintPublicKey)
-    
+
     // Get associated token account
     const tokenAccount = await getAssociatedTokenAddress(
       mintPublicKey,
       walletPublicKey,
       false,
       TOKEN_PROGRAM_ID,
-      ASSOCIATED_TOKEN_PROGRAM_ID
+      ASSOCIATED_TOKEN_PROGRAM_ID,
     )
 
     try {

@@ -30,7 +30,7 @@ export class BlockchainService {
   async getBalance(
     wallet: Wallet,
     network: Network,
-    isManualRefresh: boolean = false
+    isManualRefresh: boolean = false,
   ): Promise<AggregatedBalance> {
     console.log(`[Blockchain] Getting balance for ${wallet.address} on ${network.name}`)
 
@@ -50,9 +50,11 @@ export class BlockchainService {
   async getMultiWalletBalances(
     wallets: Wallet[],
     networks: Network[],
-    isManualRefresh: boolean = false
+    isManualRefresh: boolean = false,
   ): Promise<AggregatedBalance[]> {
-    console.log(`[Blockchain] Getting balances for ${wallets.length} wallets on ${networks.length} networks`)
+    console.log(
+      `[Blockchain] Getting balances for ${wallets.length} wallets on ${networks.length} networks`,
+    )
 
     const balances: AggregatedBalance[] = []
 
@@ -68,7 +70,10 @@ export class BlockchainService {
           const balance = await this.getBalance(wallet, network, isManualRefresh)
           balances.push(balance)
         } catch (error) {
-          console.error(`[Blockchain] Failed to get balance for ${wallet.address} on ${network.name}`, error)
+          console.error(
+            `[Blockchain] Failed to get balance for ${wallet.address} on ${network.name}`,
+            error,
+          )
           // Continue with other wallets/networks
         }
       }
@@ -86,7 +91,7 @@ export class BlockchainService {
     tokenAddress: string,
     symbol: string,
     name: string,
-    decimals: number
+    decimals: number,
   ): Promise<void> {
     const aggregator = this.getAggregator(network)
     await aggregator.addToken(wallet, tokenAddress, symbol, name, decimals)
@@ -95,11 +100,7 @@ export class BlockchainService {
   /**
    * Remove a token from tracking
    */
-  async removeToken(
-    wallet: Wallet,
-    network: Network,
-    tokenAddress: string
-  ): Promise<void> {
+  async removeToken(wallet: Wallet, network: Network, tokenAddress: string): Promise<void> {
     const aggregator = this.getAggregator(network)
     await aggregator.removeToken(wallet, tokenAddress)
   }
@@ -116,7 +117,7 @@ export class BlockchainService {
    * Clear all caches
    */
   async clearAllCaches(): Promise<void> {
-    for (const aggregator of this.aggregators.values()) {
+    for (const _aggregator of this.aggregators.values()) {
       // We'd need to track wallets to clear all properly
       // For now, this is a placeholder
     }
@@ -142,11 +143,11 @@ export class BlockchainService {
    * Send a transaction (stub - needs implementation)
    */
   async sendTransaction(
-    wallet: Wallet,
-    network: Network,
-    to: string,
-    amount: string,
-    password: string
+    _wallet: Wallet,
+    _network: Network,
+    _to: string,
+    _amount: string,
+    _password: string,
   ): Promise<string> {
     // TODO: Implement transaction sending
     console.warn('[Blockchain] sendTransaction not yet implemented')
@@ -157,13 +158,13 @@ export class BlockchainService {
    * Send a token transaction (stub - needs implementation)
    */
   async sendToken(
-    wallet: Wallet,
-    network: Network,
-    tokenAddress: string,
-    to: string,
-    amount: string,
-    decimals: number,
-    password: string
+    _wallet: Wallet,
+    _network: Network,
+    _tokenAddress: string,
+    _to: string,
+    _amount: string,
+    _decimals: number,
+    _password: string,
   ): Promise<string> {
     // TODO: Implement token sending
     console.warn('[Blockchain] sendToken not yet implemented')
@@ -175,9 +176,9 @@ export class BlockchainService {
    */
   async estimateTransactionFee(
     wallet: Wallet,
-    network: Network,
-    to: string,
-    amount: string
+    _network: Network,
+    _to: string,
+    _amount: string,
   ): Promise<string> {
     // TODO: Implement proper fee estimation
     // For now, return reasonable defaults
@@ -192,10 +193,7 @@ export class BlockchainService {
   /**
    * Get transaction history (stub - needs implementation)
    */
-  async getTransactionHistory(
-    wallet: Wallet,
-    network: Network
-  ): Promise<Transaction[]> {
+  async getTransactionHistory(_wallet: Wallet, _network: Network): Promise<Transaction[]> {
     // TODO: Implement transaction history fetching
     console.warn('[Blockchain] getTransactionHistory not yet implemented')
     return []

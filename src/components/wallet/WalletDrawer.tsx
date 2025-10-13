@@ -953,7 +953,7 @@ function WalletGroupItem({
               </p>
               <button
                 onClick={onAddWallet}
-                className={`text-sm ${theme.styles.buttonLink || 'text-accent hover:text-accent-hover hover:underline transition-colors'}`}
+                className="text-sm text-accent hover:text-accent-hover hover:underline transition-colors"
               >
                 Add a wallet
               </button>

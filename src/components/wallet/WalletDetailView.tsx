@@ -28,7 +28,7 @@ export function WalletDetailView() {
   const [showSendDialog, setShowSendDialog] = useState(false)
   const [showReceiveDialog, setShowReceiveDialog] = useState(false)
   const [, forceUpdate] = useState({})
-  const { theme: themeConfig, themeName } = useTheme()
+  const { theme: themeConfig } = useTheme()
 
   const activeWallet = wallets.find((w) => w.id === activeWalletId)
 
@@ -93,13 +93,6 @@ export function WalletDetailView() {
 
   const copyAddress = () => {
     navigator.clipboard.writeText(activeWallet.address)
-  }
-
-  // Get native currency info with fallback
-  const nativeCurrency = activeNetwork.nativeCurrency || {
-    name: activeNetwork.symbol || 'ETH',
-    symbol: activeNetwork.symbol || 'ETH',
-    decimals: 18,
   }
 
   // Get change from balance data (refresh-to-refresh)
@@ -247,7 +240,6 @@ export function WalletDetailView() {
 
         <Tabs.Content value="tokens" className="flex-1 overflow-y-auto">
           <TokenList
-            wallet={activeWallet}
             network={activeNetwork}
             balanceData={balance}
             isLoading={loading}
