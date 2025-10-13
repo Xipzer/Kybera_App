@@ -10,7 +10,7 @@ const AVAILABLE_MODELS = [
   { id: 'google/gemini-pro', name: 'Gemini Pro', provider: 'Google' },
   { id: 'meta-llama/llama-2-70b-chat', name: 'Llama 2 70B', provider: 'Meta' },
   { id: 'deepseek/deepseek-chat-v3.1:free', name: 'DeepSeek V3.1', provider: 'Deepseek' },
-  { id: 'tngtech/deepseek-r1t2-chimera:free', name: 'DeepSeek R1T2 Chimera', provider: 'TNG Tech' }
+  { id: 'tngtech/deepseek-r1t2-chimera:free', name: 'DeepSeek R1T2 Chimera', provider: 'TNG Tech' },
 ]
 
 export function ModelSelector() {
