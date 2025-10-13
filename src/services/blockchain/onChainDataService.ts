@@ -7,6 +7,7 @@ import { ethers } from 'ethers'
 import { Network, Wallet } from '../../types'
 import { db } from '../storage/database'
 import { EVMRpcService } from './evmRpcService'
+import { TokenDiscoveryService } from './tokenDiscoveryService'
 
 export interface TokenBalance {
   address: string
@@ -31,12 +32,14 @@ export class OnChainDataService {
   private provider: ethers.JsonRpcProvider
   private networkId: string
   private chainId: number
+  private tokenDiscovery: TokenDiscoveryService
 
   constructor(network: Network) {
     this.networkId = network.id
     this.chainId = typeof network.chainId === 'number' ? network.chainId : 1
     this.provider = new ethers.JsonRpcProvider(network.rpcUrl)
     this.rpcService = new EVMRpcService(network.rpcUrl)
+    this.tokenDiscovery = new TokenDiscoveryService(network)
   }
 
   /**
@@ -67,11 +70,26 @@ export class OnChainDataService {
       result.native = (await this.getCachedNativeBalance(wallet.address)) || '0'
     }
 
-    // Step 2: Get list of tokens to check (from discovered tokens)
+    // Step 2: Run automatic token discovery if available (non-blocking)
+    if (this.tokenDiscovery.isAvailable()) {
+      // Run discovery but don't wait for it to complete
+      this.tokenDiscovery
+        .discoverTokens(wallet.address)
+        .then((newTokens) => {
+          if (newTokens.length > 0) {
+            console.log(`[OnChainData] Token discovery found ${newTokens.length} new tokens`)
+          }
+        })
+        .catch((error) => {
+          console.debug(`[OnChainData] Token discovery failed:`, error)
+        })
+    }
+
+    // Step 3: Get list of tokens to check (from discovered tokens)
     const tokens = await this.getTokensToCheck(wallet.address)
     console.log(`[OnChainData] Checking ${tokens.length} tokens`)
 
-    // Step 3: Fetch each token balance sequentially
+    // Step 4: Fetch each token balance sequentially
     for (const token of tokens) {
       const tokenBalance = await this.fetchSingleTokenBalance(
         wallet.address,
