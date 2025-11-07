@@ -127,6 +127,27 @@ export interface StoredNetworkVisibility {
   updatedAt: number
 }
 
+export interface StoredAIActionHistory {
+  id: string
+  actionName: string
+  parameters: Record<string, any>
+  result: {
+    success: boolean
+    data?: any
+    error?: string
+    message?: string
+    transactionHash?: string
+    explorerUrl?: string
+  }
+  status: 'pending' | 'approved' | 'rejected' | 'executing' | 'completed' | 'failed'
+  executedAt: number
+  walletId: string | null
+  networkId: string
+  conversationId?: string
+  duration?: number
+  error?: string
+}
+
 export class SmartWalletDB extends Dexie {
   wallets!: Table<StoredWallet>
   walletGroups!: Table<StoredWalletGroup>
@@ -143,6 +164,7 @@ export class SmartWalletDB extends Dexie {
   discoveredTokens!: Table<StoredDiscoveredToken>
   customNetworks!: Table<StoredCustomNetwork>
   networkVisibility!: Table<StoredNetworkVisibility>
+  aiActionHistory!: Table<StoredAIActionHistory>
 
   constructor() {
     super('SmartWalletDB')
@@ -425,6 +447,26 @@ export class SmartWalletDB extends Dexie {
       discoveredTokens: 'id, walletAddress, chainId, tokenAddress, discoveredAt',
       customNetworks: 'id, type, chainId, addedAt',
       networkVisibility: 'networkId, updatedAt',
+    })
+
+    // Version 15 adds AI action history for audit trail
+    this.version(15).stores({
+      wallets: '++id, groupId, address, type, order, lastNetworkId',
+      walletGroups: '++id, createdAt, order',
+      conversations: '++id, createdAt, pinned',
+      messages: '++id, conversationId, timestamp',
+      settings: 'key',
+      auth: 'id',
+      transactions: '++id, hash, from, to, network, timestamp',
+      tokenBalances: 'id, walletAddress, networkId, lastUpdated',
+      priceData: 'id, symbol, lastUpdated',
+      priceHistory: 'id, symbol, timestamp',
+      walletBalances: 'id, walletAddress, networkId, lastUpdated',
+      tokenMetadata: 'id, chainId, address, lastUpdated',
+      discoveredTokens: 'id, walletAddress, chainId, tokenAddress, discoveredAt',
+      customNetworks: 'id, type, chainId, addedAt',
+      networkVisibility: 'networkId, updatedAt',
+      aiActionHistory: 'id, actionName, executedAt, walletId, conversationId',
     })
   }
 }

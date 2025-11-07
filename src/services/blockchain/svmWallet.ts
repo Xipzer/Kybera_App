@@ -319,4 +319,15 @@ export class SVMWalletService {
       }
     }
   }
+
+  // Alias for compatibility with action handlers
+  static async sendTokenTransaction(
+    privateKey: string,
+    toAddress: string,
+    amount: string,
+    tokenAddress: string,
+    rpcUrl: string,
+  ): Promise<string> {
+    return this.sendSPLToken(privateKey, tokenAddress, toAddress, amount, rpcUrl)
+  }
 }

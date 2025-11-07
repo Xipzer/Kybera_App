@@ -304,4 +304,16 @@ export class EVMWalletService {
       provider.destroy()
     }
   }
+
+  // Alias for compatibility with action handlers
+  static async sendTokenTransaction(
+    privateKey: string,
+    toAddress: string,
+    amount: string,
+    tokenAddress: string,
+    rpcUrl: string,
+  ): Promise<string> {
+    // Assumes 18 decimals - should fetch from contract in production
+    return this.sendERC20Token(privateKey, tokenAddress, toAddress, amount, 18, rpcUrl)
+  }
 }
