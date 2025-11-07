@@ -28,8 +28,8 @@ export class SimplePriceService {
   private chainId: number
   private nativeTokenId: string // CoinGecko ID for native token
 
-  // Cache duration: 3 minutes for auto-refresh alignment
-  private CACHE_DURATION = 3 * 60 * 1000
+  // Cache duration: 5 minutes to align with price refresh interval
+  private CACHE_DURATION = 5 * 60 * 1000
 
   constructor(networkId: string, chainId: number, nativeTokenId: string) {
     this.networkId = networkId

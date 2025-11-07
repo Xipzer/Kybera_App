@@ -69,12 +69,11 @@ export class CoinGeckoService {
     
     // CoinGecko has a limit on URL length, batch if necessary
     const MAX_ADDRESSES_PER_REQUEST = 30 // Conservative limit to avoid URL length issues
-    
+
+    // If we have more addresses than the limit, split into batches and fetch in parallel
     if (sortedAddresses.length > MAX_ADDRESSES_PER_REQUEST) {
-      console.debug(`Too many addresses (${sortedAddresses.length}), will batch requests`)
-      // For now, just take the first batch
-      // TODO: Implement proper batching
-      sortedAddresses.splice(MAX_ADDRESSES_PER_REQUEST)
+      console.debug(`Batching ${sortedAddresses.length} addresses into parallel requests`)
+      return await this.fetchTokenPricesInBatches(platformId, sortedAddresses, MAX_ADDRESSES_PER_REQUEST)
     }
     
     const requestId = `token-prices:${platformId}:${sortedAddresses.join(',')}`
@@ -149,6 +148,88 @@ export class CoinGeckoService {
     }
   }
   
+  /**
+   * Fetch token prices in parallel batches
+   */
+  private async fetchTokenPricesInBatches(
+    platformId: string,
+    sortedAddresses: string[],
+    batchSize: number
+  ): Promise<Record<string, TokenPrice>> {
+    const batches: string[][] = []
+
+    // Split addresses into batches
+    for (let i = 0; i < sortedAddresses.length; i += batchSize) {
+      batches.push(sortedAddresses.slice(i, i + batchSize))
+    }
+
+    console.debug(`Split ${sortedAddresses.length} addresses into ${batches.length} batches`)
+
+    // Fetch all batches in parallel
+    const batchPromises = batches.map(async (batch, index) => {
+      const requestId = `token-prices:${platformId}:batch-${index}:${batch.join(',')}`
+      const addresses = batch.join(',')
+      const url = `${this.API_BASE}/simple/token_price/${platformId}?contract_addresses=${addresses}&vs_currencies=usd&include_24hr_change=true`
+
+      try {
+        const data = await rateLimiter.execute(requestId, async () => {
+          console.debug(`Fetching batch ${index + 1}/${batches.length} (${batch.length} tokens)`)
+
+          const apiKey = useSettingsStore.getState().coinGeckoApiKey
+          const headers: any = {}
+          if (apiKey) {
+            headers['x-cg-demo-api-key'] = apiKey
+          }
+
+          const response = await fetch(url, { headers })
+
+          if (!response.ok) {
+            if (response.status === 429) {
+              throw new Error('Rate limit exceeded')
+            } else if (response.status === 400) {
+              const errorText = await response.text()
+              console.error(`CoinGecko API 400 error (batch ${index + 1}):`, errorText)
+              throw new Error(`CoinGecko API error 400: ${errorText}`)
+            } else {
+              console.warn(`CoinGecko API error (batch ${index + 1}): ${response.status}`)
+              throw new Error(`CoinGecko API error: ${response.status}`)
+            }
+          }
+
+          return response.json()
+        })
+
+        // Transform the response for this batch
+        const batchPrices: Record<string, TokenPrice> = {}
+        for (const [address, priceData] of Object.entries(data)) {
+          batchPrices[address] = {
+            usd: (priceData as any).usd || 0,
+            usd_24h_change: (priceData as any).usd_24h_change || 0
+          }
+        }
+
+        console.debug(`Batch ${index + 1}/${batches.length} returned ${Object.keys(batchPrices).length} prices`)
+        return batchPrices
+      } catch (error) {
+        console.warn(`Batch ${index + 1}/${batches.length} failed:`, error)
+        return {} // Return empty object for failed batch
+      }
+    })
+
+    // Wait for all batches to complete
+    const batchResults = await Promise.all(batchPromises)
+
+    // Merge all batch results
+    const allPrices: Record<string, TokenPrice> = {}
+    for (const batchResult of batchResults) {
+      Object.assign(allPrices, batchResult)
+    }
+
+    console.debug(`Total prices fetched: ${Object.keys(allPrices).length} out of ${sortedAddresses.length}`)
+
+    return allPrices
+  }
+
   /**
    * Fetch native token price (ETH, BNB, etc.)
    */
