@@ -326,6 +326,53 @@ export class BalanceAggregator {
   }
 
   /**
+   * Update only prices for cached blockchain data
+   * This is called on a slower interval to respect CoinGecko rate limits
+   * @param wallet - Wallet to update prices for
+   * @returns Updated balance with fresh prices, or null if no cached data exists
+   */
+  async updatePricesOnly(wallet: Wallet): Promise<AggregatedBalance | null> {
+    console.log(`[Aggregator] Updating prices only for ${wallet.address} on ${this.network.name}`)
+
+    // Step 1: Load cached blockchain data
+    const cached = await this.loadCachedBalance(wallet)
+    if (!cached) {
+      console.log('[Aggregator] No cached data to update prices for')
+      return null
+    }
+
+    // Step 2: Extract token addresses from cached data
+    const tokenAddresses = cached.tokens.map((t) => t.address)
+
+    // Step 3: Fetch fresh prices (force refresh)
+    const priceData = await this.priceService.fetchPrices(tokenAddresses, true)
+
+    // Step 4: Rebuild on-chain data structure from cache
+    const onChainData: OnChainBalance = {
+      walletAddress: cached.walletAddress,
+      networkId: cached.networkId,
+      native: cached.native,
+      tokens: cached.tokens.map((t) => ({
+        address: t.address,
+        symbol: t.symbol,
+        name: t.name,
+        decimals: t.decimals,
+        balance: t.balance,
+        fromCache: true,
+      })),
+    }
+
+    // Step 5: Recalculate USD values with fresh prices
+    const aggregated = await this.aggregateData(onChainData, priceData)
+
+    // Step 6: Update cache with new USD values
+    await this.cacheAggregatedBalance(aggregated)
+
+    console.log(`[Aggregator] Updated prices only - Total USD: $${aggregated.totalUSD.toFixed(2)}`)
+    return aggregated
+  }
+
+  /**
    * Add a token to track for this wallet
    */
   async addToken(

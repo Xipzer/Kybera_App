@@ -292,9 +292,31 @@ export class OnChainDataService {
 
   /**
    * Cache a single token balance
+   * If balance is zero, removes the token from cache (cleanup)
    */
   private async cacheTokenBalance(cacheKey: string, balance: TokenBalance): Promise<void> {
     try {
+      const balanceNum = parseFloat(balance.balance)
+
+      // If balance is zero, remove from cache instead of caching
+      if (balanceNum === 0 || balance.balance === '0') {
+        console.log(`[OnChainData] Removing ${balance.symbol} from cache (zero balance)`)
+        await db.tokenBalances.delete(cacheKey)
+
+        // Also remove from discovered tokens if not manually added
+        const walletAddress = cacheKey.split('_')[0]
+        const discoveredTokenId = `${walletAddress}_${this.chainId}_${balance.address.toLowerCase()}`
+        const discoveredToken = await db.discoveredTokens.get(discoveredTokenId)
+
+        if (discoveredToken && !discoveredToken.addedManually) {
+          console.log(`[OnChainData] Removing ${balance.symbol} from discovered tokens (zero balance)`)
+          await db.discoveredTokens.delete(discoveredTokenId)
+        }
+
+        return
+      }
+
+      // Balance is non-zero, cache it
       await db.tokenBalances.put({
         id: cacheKey,
         walletAddress: cacheKey.split('_')[0],

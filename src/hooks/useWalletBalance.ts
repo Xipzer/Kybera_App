@@ -24,15 +24,20 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
   })
   const [loading, setLoading] = useState(false) // Start with false, only true if no cache
   const [error, setError] = useState<string | null>(null)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const blockchainIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const priceIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const hasCacheRef = useRef(false)
 
-  // Clean up interval on unmount
+  // Clean up intervals on unmount
   useEffect(() => {
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
+      if (blockchainIntervalRef.current) {
+        clearInterval(blockchainIntervalRef.current)
+        blockchainIntervalRef.current = null
+      }
+      if (priceIntervalRef.current) {
+        clearInterval(priceIntervalRef.current)
+        priceIntervalRef.current = null
       }
     }
   }, [])
@@ -84,21 +89,40 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
     }
 
     /**
-     * Setup automatic refresh interval (3 minutes)
+     * Setup separate automatic refresh intervals
+     * - Blockchain data: 30 seconds (fast, cheap RPCs)
+     * - Price data: 5 minutes (slow, rate-limited CoinGecko API)
      */
-    const setupInterval = () => {
-      // Clear existing interval
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
+    const setupIntervals = () => {
+      // Clear existing intervals
+      if (blockchainIntervalRef.current) {
+        clearInterval(blockchainIntervalRef.current)
+      }
+      if (priceIntervalRef.current) {
+        clearInterval(priceIntervalRef.current)
       }
 
-      // Set up new interval
-      intervalRef.current = setInterval(() => {
-        console.log('[useWalletBalance] Auto-refreshing balance')
-        fetchBalance(false) // Auto-refresh includes prices
-      }, 180000) // 3 minutes
+      // Fast interval for blockchain data only (30 seconds)
+      blockchainIntervalRef.current = setInterval(() => {
+        console.log('[useWalletBalance] Auto-refreshing blockchain data')
+        fetchBalance(true) // true = skip price fetching, reuse cached prices
+      }, 30000) // 30 seconds
 
-      return intervalRef.current
+      // Slow interval for prices only (5 minutes)
+      priceIntervalRef.current = setInterval(() => {
+        console.log('[useWalletBalance] Auto-refreshing prices')
+        // Update prices only using cached blockchain data
+        blockchainService.updatePricesOnly(wallet, network)
+          .then(updatedBalance => {
+            if (updatedBalance && !cancelled) {
+              setBalance(updatedBalance)
+              console.log('[useWalletBalance] Updated prices, new total USD:', updatedBalance.totalUSD)
+            }
+          })
+          .catch(err => {
+            console.error('[useWalletBalance] Error updating prices:', err)
+          })
+      }, 300000) // 5 minutes
     }
 
     // Initial data load sequence
@@ -138,17 +162,21 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
       // 2. Fetch fresh data in the background (auto-refresh mode)
       await fetchBalance(false)
 
-      // 3. Setup automatic refresh
-      setupInterval()
+      // 3. Setup automatic refresh intervals (separate for blockchain and prices)
+      setupIntervals()
     }
 
     initializeData()
 
     return () => {
       cancelled = true
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
+      if (blockchainIntervalRef.current) {
+        clearInterval(blockchainIntervalRef.current)
+        blockchainIntervalRef.current = null
+      }
+      if (priceIntervalRef.current) {
+        clearInterval(priceIntervalRef.current)
+        priceIntervalRef.current = null
       }
     }
   }, [wallet, network])
@@ -166,14 +194,26 @@ export function useWalletBalance(wallet: Wallet | undefined, network: Network) {
       const freshBalance = await blockchainService.getBalance(wallet, network, true)
       setBalance(freshBalance)
 
-      // Reset the automatic refresh timer
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
+      // Reset the automatic refresh intervals
+      if (blockchainIntervalRef.current) {
+        clearInterval(blockchainIntervalRef.current)
       }
-      intervalRef.current = setInterval(() => {
-        console.log('[useWalletBalance] Auto-refreshing balance')
-        blockchainService.getBalance(wallet, network, false).then(setBalance).catch(console.error)
-      }, 180000)
+      if (priceIntervalRef.current) {
+        clearInterval(priceIntervalRef.current)
+      }
+
+      // Restart intervals
+      blockchainIntervalRef.current = setInterval(() => {
+        console.log('[useWalletBalance] Auto-refreshing blockchain data')
+        blockchainService.updateBlockchainOnly(wallet, network).then(setBalance).catch(console.error)
+      }, 30000)
+
+      priceIntervalRef.current = setInterval(() => {
+        console.log('[useWalletBalance] Auto-refreshing prices')
+        blockchainService.updatePricesOnly(wallet, network)
+          .then(updated => updated && setBalance(updated))
+          .catch(console.error)
+      }, 300000)
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to fetch balance'
       setError(errorMsg)

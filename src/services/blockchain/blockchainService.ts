@@ -58,6 +58,44 @@ export class BlockchainService {
   }
 
   /**
+   * Update blockchain data only (no price fetching)
+   * This should be called on a fast interval (30s-1m) to get fresh balances
+   * @param wallet - Wallet to fetch balance for
+   * @param network - Network to fetch on
+   */
+  async updateBlockchainOnly(wallet: Wallet, network: Network): Promise<AggregatedBalance> {
+    console.log(`[Blockchain] Updating blockchain data only for ${wallet.address} on ${network.name}`)
+
+    // Validate wallet/network compatibility
+    if (wallet.type !== network.type) {
+      throw new Error(`Wallet type ${wallet.type} incompatible with network type ${network.type}`)
+    }
+
+    const aggregator = this.getAggregator(network)
+    // isManualRefresh=true means skip price fetching
+    return await aggregator.fetchBalance(wallet, true)
+  }
+
+  /**
+   * Update prices only (no blockchain data fetching)
+   * This should be called on a slow interval (5-10m) to respect CoinGecko rate limits
+   * @param wallet - Wallet to update prices for
+   * @param network - Network the wallet is on
+   * @returns Updated balance with fresh prices, or null if no cached data exists
+   */
+  async updatePricesOnly(wallet: Wallet, network: Network): Promise<AggregatedBalance | null> {
+    console.log(`[Blockchain] Updating prices only for ${wallet.address} on ${network.name}`)
+
+    // Validate wallet/network compatibility
+    if (wallet.type !== network.type) {
+      throw new Error(`Wallet type ${wallet.type} incompatible with network type ${network.type}`)
+    }
+
+    const aggregator = this.getAggregator(network)
+    return await aggregator.updatePricesOnly(wallet)
+  }
+
+  /**
    * Fetch balances for multiple wallets on multiple networks
    * Used by portfolio view
    */
