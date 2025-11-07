@@ -47,6 +47,7 @@ export function WalletDetailView() {
     loading: multiLoading,
     error: multiError,
     totalUSD: totalMultiUSD,
+    total24hChange: total24hChangeMulti,
     refetch: refetchMulti,
   } = useMultiNetworkBalance(activeWallet ? [activeWallet] : [], viewNetworkObjects)
 
@@ -73,7 +74,7 @@ export function WalletDetailView() {
   const balance = {
     ...executionBalance, // Use execution balance as base
     totalUSD: totalMultiUSD, // Override with multi-network total
-    totalUSDChange: 0, // TODO: Calculate from multi-network data
+    total24hChange: total24hChangeMulti, // Multi-network weighted 24h change
     lastUpdated: Date.now(),
   }
 
@@ -109,8 +110,8 @@ export function WalletDetailView() {
     }
   }
 
-  // Get change from balance data (refresh-to-refresh)
-  const changePercent = balance.totalUSDChange || 0
+  // Get weighted 24h portfolio change
+  const changePercent = balance.total24hChange || 0
 
   return (
     <div
