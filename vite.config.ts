@@ -23,4 +23,18 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    // Disable sourcemaps in production for security
+    sourcemap: false,
+    // Use esbuild for minification (faster, built-in)
+    minify: 'esbuild',
+    // esbuild minification options
+    target: 'es2020',
+  },
+  esbuild: {
+    // Remove console and debugger in production
+    drop: ['console', 'debugger'],
+    // Remove legal comments
+    legalComments: 'none',
+  },
 })

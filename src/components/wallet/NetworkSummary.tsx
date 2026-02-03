@@ -58,7 +58,17 @@ export function NetworkSummary({
   // Create a map of network ID to network name for quick lookup
   const networkMap = new Map(viewNetworks.map((n) => [n.id, n.name]))
 
-  const sortedNetworks = multiNetworkBalances.sort((a, b) => {
+  // Deduplicate by networkId (keep the most recent/last entry) and sort by USD value
+  const deduplicatedBalances = Array.from(
+    multiNetworkBalances
+      .reduce((map, balance) => {
+        map.set(balance.networkId, balance)
+        return map
+      }, new Map<string, (typeof multiNetworkBalances)[0]>())
+      .values(),
+  )
+
+  const sortedNetworks = [...deduplicatedBalances].sort((a, b) => {
     // Sort by total USD value, highest first
     return (b.totalUSD || 0) - (a.totalUSD || 0)
   })

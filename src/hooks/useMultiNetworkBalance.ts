@@ -149,14 +149,14 @@ export function useMultiNetworkBalance(
   useEffect(() => {
     const unsubscribe = blockchainEventBus.on('token:discovery:complete', (event) => {
       if (!mountedRef.current) return
-      
+
       console.log(`[useMultiNetworkBalance] Token discovery found ${event.count} new tokens`)
-      
+
       // Debounce discovery events - wait for all discoveries to settle
       if (discoveryTimeoutRef.current) {
         clearTimeout(discoveryTimeoutRef.current)
       }
-      
+
       discoveryTimeoutRef.current = setTimeout(() => {
         if (mountedRef.current && !fetchingRef.current) {
           console.log('[useMultiNetworkBalance] Refetching after discovery settled')
@@ -167,15 +167,26 @@ export function useMultiNetworkBalance(
     return () => unsubscribe()
   }, [fetchBalances]) // Only depends on fetchBalances, uses refs for balances
 
+  // Track previous wallet IDs to detect wallet switches
+  const prevWalletIdsRef = useRef(walletIds)
+  
   // Main effect - load cached then fetch fresh
   // Uses a mount ID to handle StrictMode double-mount correctly
   const mountIdRef = useRef(0)
-  
+
   useEffect(() => {
     if (!walletsRef.current.length || !networksRef.current.length) {
       setLoading(false)
       setBalances([])
       return
+    }
+
+    // Clear balances immediately when wallet changes to prevent stale data showing
+    const walletChanged = prevWalletIdsRef.current !== walletIds
+    if (walletChanged) {
+      setBalances([])
+      setLoading(true)
+      prevWalletIdsRef.current = walletIds
     }
 
     // Increment mount ID - only the latest mount should fetch
@@ -191,7 +202,7 @@ export function useMultiNetworkBalance(
 
       setError(null)
 
-      // 1. Load cached balances
+      // 1. Load cached balances for the NEW wallet
       const cachedBalances: BlockchainBalance[] = []
       for (const wallet of walletsRef.current) {
         for (const network of networksRef.current) {
@@ -206,6 +217,7 @@ export function useMultiNetworkBalance(
 
       if (cachedBalances.length > 0) {
         setBalances(cachedBalances)
+        setLoading(false)
         console.log(`[useMultiNetworkBalance] Loaded ${cachedBalances.length} cached balances`)
       } else {
         setLoading(true)
