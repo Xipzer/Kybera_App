@@ -1,9 +1,163 @@
-import { useState, useEffect } from 'react'
-import { Lock, Wallet, Sun, Moon, Palette } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Lock, Wallet, Sun, Moon, Palette, Shield, Fingerprint } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import { useAuthStore } from '../../store/authStore'
 import { useUIStore } from '../../store/uiStore'
 import { useTheme } from '../../hooks/useTheme'
+
+// Theme color configurations for the lock screen
+const themeColors = {
+  light: {
+    bg: 'from-slate-400 via-cyan-300 to-pink-300',
+    meshGradient1: 'from-cyan-500/10',
+    meshGradient2: 'from-pink-500/10',
+    particleColor: '0, 140, 180',
+    cardBg: 'bg-white/40',
+    cardBorder: 'border-gray-500/20',
+    cardGlow: 'opacity-10',
+    textPrimary: 'text-gray-900',
+    textSecondary: 'text-gray-600',
+    textMuted: 'text-gray-500',
+    inputBg: 'bg-black/10',
+    inputBorder: 'border-gray-500/30',
+    inputFocusBorder: 'focus:border-cyan-500',
+    accentGradient: 'from-cyan-400 via-cyan-500 to-pink-400',
+    glowColor: 'cyan',
+    buttonGradient: 'from-cyan-500 via-teal-400 to-pink-500',
+    buttonShadow: 'shadow-cyan-500/25 hover:shadow-cyan-500/40',
+  },
+  dark: {
+    bg: 'from-slate-900 via-slate-800 to-slate-900',
+    meshGradient1: 'from-cyan-900/40',
+    meshGradient2: 'from-pink-900/30',
+    particleColor: '0, 225, 255',
+    cardBg: 'bg-black/30',
+    cardBorder: 'border-white/10',
+    cardGlow: 'opacity-25 group-hover:opacity-40',
+    textPrimary: 'text-white',
+    textSecondary: 'text-white/70',
+    textMuted: 'text-white/40',
+    inputBg: 'bg-white/5',
+    inputBorder: 'border-white/10',
+    inputFocusBorder: 'focus:border-cyan-500/50',
+    accentGradient: 'from-cyan-400 via-cyan-300 to-pink-400',
+    glowColor: 'cyan',
+    buttonGradient: 'from-cyan-500 via-cyan-400 to-pink-500',
+    buttonShadow: 'shadow-cyan-500/25 hover:shadow-cyan-500/40',
+  },
+  xipz: {
+    bg: 'from-slate-900 via-purple-900 to-slate-900',
+    meshGradient1: 'from-purple-900/40',
+    meshGradient2: 'from-fuchsia-900/30',
+    particleColor: '139, 92, 246',
+    cardBg: 'bg-black/30',
+    cardBorder: 'border-white/10',
+    cardGlow: 'opacity-25 group-hover:opacity-40',
+    textPrimary: 'text-white',
+    textSecondary: 'text-white/70',
+    textMuted: 'text-white/40',
+    inputBg: 'bg-white/5',
+    inputBorder: 'border-white/10',
+    inputFocusBorder: 'focus:border-purple-500/50',
+    accentGradient: 'from-violet-500 via-purple-500 to-fuchsia-500',
+    glowColor: 'purple',
+    buttonGradient: 'from-violet-500 via-purple-500 to-fuchsia-500',
+    buttonShadow: 'shadow-purple-500/25 hover:shadow-purple-500/40',
+  },
+}
+
+// Animated background particles
+function ParticleField({ color }: { color: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    
+    const resize = () => {
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+    }
+    resize()
+    window.addEventListener('resize', resize)
+    
+    const particles: { x: number; y: number; vx: number; vy: number; size: number; opacity: number }[] = []
+    const particleCount = 50
+    
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        size: Math.random() * 2 + 1,
+        opacity: Math.random() * 0.5 + 0.1
+      })
+    }
+    
+    let animationId: number
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      
+      particles.forEach((p, i) => {
+        p.x += p.vx
+        p.y += p.vy
+        
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1
+        
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${color}, ${p.opacity})`
+        ctx.fill()
+        
+        // Draw connections
+        particles.slice(i + 1).forEach(p2 => {
+          const dx = p.x - p2.x
+          const dy = p.y - p2.y
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          
+          if (dist < 150) {
+            ctx.beginPath()
+            ctx.moveTo(p.x, p.y)
+            ctx.lineTo(p2.x, p2.y)
+            ctx.strokeStyle = `rgba(${color}, ${0.1 * (1 - dist / 150)})`
+            ctx.stroke()
+          }
+        })
+      })
+      
+      animationId = requestAnimationFrame(animate)
+    }
+    animate()
+    
+    return () => {
+      window.removeEventListener('resize', resize)
+      cancelAnimationFrame(animationId)
+    }
+  }, [color])
+  
+  return <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />
+}
+
+// Animated glow ring around logo
+function GlowRing({ children, gradient }: { children: React.ReactNode; gradient: string }) {
+  return (
+    <div className="relative">
+      {/* Outer glow pulse */}
+      <div className={`absolute inset-0 rounded-full bg-gradient-to-r ${gradient} opacity-75 blur-xl animate-pulse`} />
+      {/* Rotating gradient border */}
+      <div className={`absolute -inset-1 rounded-full bg-gradient-to-r ${gradient} animate-spin-slow opacity-75`} style={{ animationDuration: '3s' }} />
+      {/* Inner content */}
+      <div className="relative">
+        {children}
+      </div>
+    </div>
+  )
+}
 
 export function UnlockScreen() {
   const { unlock } = useWalletStore()
@@ -23,7 +177,11 @@ export function UnlockScreen() {
   const [error, setError] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const { theme } = useTheme()
+  const [isFocused, setIsFocused] = useState(false)
+  const { themeName } = useTheme()
+  
+  // Get theme-specific colors
+  const colors = themeColors[themeName] || themeColors.dark
   
   // Determine which wallpaper to use
   const wallpaper = syncWallpaper ? chatWallpaper : lockscreenWallpaper
@@ -48,7 +206,6 @@ export function UnlockScreen() {
   }
   
   useEffect(() => {
-    // Check if password is already initialized
     if (isInitialized) {
       setError('')
     }
@@ -61,7 +218,6 @@ export function UnlockScreen() {
 
     try {
       if (!isInitialized) {
-        // First time setup
         if (password.length < 8) {
           setError('Password must be at least 8 characters long')
           return
@@ -74,7 +230,6 @@ export function UnlockScreen() {
         await initializePassword(password)
         unlock(password)
       } else {
-        // Verify existing password
         const isValid = await verifyPassword(password)
         if (isValid) {
           unlock(password)
@@ -82,7 +237,7 @@ export function UnlockScreen() {
           setError('Invalid password')
         }
       }
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again.')
     } finally {
       setIsLoading(false)
@@ -90,11 +245,18 @@ export function UnlockScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-lockscreen flex items-center justify-center p-4 relative">
-      {/* Background Wallpaper */}
+    <div className={`min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br ${colors.bg}`}>
+      {/* Animated mesh gradient background */}
+      <div className={`absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] ${colors.meshGradient1} via-transparent to-transparent`} />
+      <div className={`absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] ${colors.meshGradient2} via-transparent to-transparent`} />
+      
+      {/* Particle effect */}
+      <ParticleField color={colors.particleColor} />
+      
+      {/* Custom wallpaper overlay */}
       {wallpaper && (
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat mix-blend-overlay"
           style={{
             backgroundImage: `url(${wallpaper})`,
             opacity: opacity
@@ -102,103 +264,181 @@ export function UnlockScreen() {
         />
       )}
       
+      {/* Noise texture overlay for depth */}
+      <div className="absolute inset-0 opacity-[0.015] pointer-events-none" style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`
+      }} />
+      
       <div className="max-w-md w-full relative z-10">
-        <div className="bg-surface-base border border-border-subtle rounded-lg shadow-2xl p-8 backdrop-blur-sm relative">
-          {/* Theme Toggle Button */}
-          <button
-            onClick={cycleTheme}
-            className="absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 bg-surface-elevated hover:bg-surface-hover text-text-secondary hover:text-text-primary"
-            aria-label="Change theme"
-          >
-            {getThemeIcon()}
-          </button>
+        {/* Glassmorphism card */}
+        <div className="relative group">
+          {/* Glow effect behind card */}
+          <div className={`absolute -inset-1 bg-gradient-to-r ${colors.accentGradient} rounded-2xl blur-lg ${colors.cardGlow} transition-opacity duration-500`} />
           
-          <div className="flex flex-col items-center mb-8">
-            {profilePicture ? (
-              <div className="w-20 h-20 rounded-full overflow-hidden mb-4 ring-2 ring-accent ring-offset-2 ring-offset-surface-base">
-                <img 
-                  src={profilePicture} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            ) : (
-              <div 
-                className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-                style={{
-                  background: theme.dynamicStyles.buttonPrimary.background
-                }}
-              >
-                <Wallet className="w-8 h-8 text-white" />
-              </div>
-            )}
-            <h1 className="text-2xl font-bold text-text-primary">OpenWallet</h1>
-            <p className="text-text-secondary mt-2">
-              {!isInitialized
-                ? 'Create a password to secure your wallet'
-                : 'Enter your password to unlock'}
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-tertiary" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter password"
-                  className="w-full pl-10 pr-3 py-2 border border-border-subtle rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-colors"
-                  autoFocus
-                />
+          <div className={`relative ${colors.cardBg} backdrop-blur-xl border ${colors.cardBorder} rounded-2xl shadow-2xl p-8 overflow-hidden`}>
+            {/* Subtle inner glow */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/[0.05] to-transparent pointer-events-none" />
+            
+            {/* Theme Toggle Button */}
+            <button
+              onClick={cycleTheme}
+              className={`absolute top-4 right-4 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${colors.inputBg} hover:bg-white/10 border ${colors.inputBorder} ${colors.textMuted} hover:${colors.textPrimary} hover:scale-105`}
+              aria-label="Change theme"
+            >
+              {getThemeIcon()}
+            </button>
+            
+            {/* Header section */}
+            <div className="flex flex-col items-center mb-8 relative">
+              {profilePicture ? (
+                <GlowRing gradient={colors.accentGradient}>
+                  <div className="w-24 h-24 rounded-full overflow-hidden ring-2 ring-white/20">
+                    <img 
+                      src={profilePicture} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </GlowRing>
+              ) : (
+                <GlowRing gradient={colors.accentGradient}>
+                  <div className={`w-24 h-24 rounded-full flex items-center justify-center bg-gradient-to-br ${colors.accentGradient} shadow-lg ${colors.buttonShadow}`}>
+                    <Wallet className="w-10 h-10 text-white drop-shadow-lg" />
+                  </div>
+                </GlowRing>
+              )}
+              
+              <div className="mt-6 text-center">
+                <h1 className={`text-3xl font-bold bg-gradient-to-r ${colors.accentGradient} bg-clip-text text-transparent`}>
+                  OpenWallet
+                </h1>
+                <div className="flex items-center justify-center gap-2 mt-2">
+                  <Shield className="w-4 h-4 text-emerald-400" />
+                  <p className={`text-sm ${colors.textMuted}`}>
+                    {!isInitialized
+                      ? 'Create a secure password'
+                      : 'Secured & Encrypted'}
+                  </p>
+                </div>
               </div>
             </div>
 
-            {!isInitialized && (
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">
-                  Confirm Password
+            <form onSubmit={handleSubmit} className="space-y-5 relative">
+              {/* Password field */}
+              <div className="space-y-2">
+                <label className={`block text-xs font-medium ${colors.textMuted} uppercase tracking-wider`}>
+                  Password
                 </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-tertiary" />
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm password"
-                    className="w-full pl-10 pr-3 py-2 border border-border-subtle rounded-lg bg-surface-elevated text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-colors"
-                  />
+                <div className={`relative group/input transition-all duration-300 ${isFocused ? 'scale-[1.02]' : ''}`}>
+                  {/* Input glow on focus */}
+                  <div className={`absolute -inset-0.5 bg-gradient-to-r ${colors.accentGradient} rounded-xl blur transition-opacity duration-300 ${isFocused ? 'opacity-50' : 'opacity-0'}`} />
+                  
+                  <div className="relative flex items-center">
+                    <div className={`absolute left-4 ${colors.textMuted} transition-colors`}>
+                      <Fingerprint className="w-5 h-5" />
+                    </div>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      onFocus={() => setIsFocused(true)}
+                      onBlur={() => setIsFocused(false)}
+                      placeholder="Enter password"
+                      className={`w-full pl-12 pr-4 py-3.5 ${colors.inputBg} border ${colors.inputBorder} rounded-xl ${colors.textPrimary} placeholder:${colors.textMuted} focus:outline-none ${colors.inputFocusBorder} transition-all duration-300`}
+                      autoFocus
+                    />
+                  </div>
                 </div>
               </div>
-            )}
 
-            {error && (
-              <div className="p-3 bg-accent/10 border border-accent/30 rounded-lg">
-                <p className="text-sm text-accent-400">{error}</p>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={`w-full py-2 ${theme.styles.buttonPrimary} font-semibold disabled:opacity-50 disabled:cursor-not-allowed`}
-              style={theme.dynamicStyles.buttonPrimary}
-            >
-              {isLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Processing...
-                </span>
-              ) : (
-                !isInitialized ? 'Create Wallet' : 'Unlock'
+              {/* Confirm password field (setup only) */}
+              {!isInitialized && (
+                <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                  <label className={`block text-xs font-medium ${colors.textMuted} uppercase tracking-wider`}>
+                    Confirm Password
+                  </label>
+                  <div className="relative group/input">
+                    <div className={`absolute left-4 ${colors.textMuted} transition-colors`}>
+                      <Lock className="w-5 h-5" />
+                    </div>
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm password"
+                      className={`w-full pl-12 pr-4 py-3.5 ${colors.inputBg} border ${colors.inputBorder} rounded-xl ${colors.textPrimary} placeholder:${colors.textMuted} focus:outline-none ${colors.inputFocusBorder} transition-all duration-300`}
+                    />
+                  </div>
+                </div>
               )}
-            </button>
-          </form>
 
+              {/* Error message */}
+              {error && (
+                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl backdrop-blur-sm animate-in shake duration-300">
+                  <p className="text-sm text-red-400 text-center">{error}</p>
+                </div>
+              )}
+
+              {/* Submit button */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="relative w-full group/btn"
+              >
+                <div className={`flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r ${colors.buttonGradient} rounded-xl font-semibold text-white shadow-lg ${colors.buttonShadow} transition-all duration-300 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100`}>
+                  {isLoading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    <>
+                      {!isInitialized ? (
+                        <>
+                          <Shield className="w-5 h-5" />
+                          <span>Create Wallet</span>
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="w-5 h-5" />
+                          <span>Unlock</span>
+                        </>
+                      )}
+                    </>
+                  )}
+                </div>
+              </button>
+            </form>
+
+            {/* Footer security badge */}
+            <div className={`mt-6 pt-6 border-t ${colors.cardBorder}`}>
+              <div className={`flex items-center justify-center gap-2 text-xs ${colors.textMuted}`}>
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>256-bit AES Encryption</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+      
+      {/* CSS for custom animations */}
+      <style>{`
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+          animation: spin-slow 3s linear infinite;
+        }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-5px); }
+          75% { transform: translateX(5px); }
+        }
+        .shake {
+          animation: shake 0.3s ease-in-out;
+        }
+      `}</style>
     </div>
   )
 }
