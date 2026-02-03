@@ -9,7 +9,6 @@ import {
   ParsedToolCall,
   ActionHistoryEntry,
   PendingAction,
-  ActionStatus,
 } from '../../types'
 import { getActionConfig } from './actions/actionRegistry'
 import { useWalletStore } from '../../store/walletStore'
