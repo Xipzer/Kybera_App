@@ -5,6 +5,7 @@ import {
   Download,
   Edit2,
   ExternalLink,
+  Lock,
   MoreVertical,
   Plus,
   Trash2,
@@ -233,6 +234,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
     activeNetwork,
     reorderWalletGroups,
     reorderWallets,
+    lock,
   } = useWalletStore()
 
   // DnD sensors
@@ -334,7 +336,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
         <Panel defaultSize={50} minSize={30} maxSize={70} className="flex flex-col overflow-hidden">
           {/* Header */}
           <div className={`p-4 flex-shrink-0 ${theme.styles.panelHeader}`}>
-            {/* Title with icon */}
+            {/* Title with icon and lock button */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <div className={`p-1.5 rounded-lg ${colors.titleIconBg}`}>
@@ -346,6 +348,13 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
                   Wallets
                 </h2>
               </div>
+              <button
+                onClick={lock}
+                className={`${theme.styles.buttonIcon} p-2 rounded-lg ${theme.styles.iconSecondary} hover:${theme.styles.iconPrimary}`}
+                title="Lock wallet"
+              >
+                <Lock className="w-4 h-4" />
+              </button>
             </div>
 
             <div className="space-y-3">
