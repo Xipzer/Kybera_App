@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Coins,
   Copy,
@@ -36,9 +36,22 @@ export function WalletDetailView() {
   const activeWallet = wallets.find((w) => w.id === activeWalletId)
 
   // Convert viewNetworks (array of network IDs) to actual Network objects
-  const viewNetworkObjects = [...EVM_NETWORKS, ...SVM_NETWORKS].filter((network) =>
-    viewNetworks.includes(network.id),
-  )
+  // Default to all networks of wallet type if viewNetworks not yet initialized
+  const viewNetworkObjects = useMemo(() => {
+    const allNetworks = [...EVM_NETWORKS, ...SVM_NETWORKS]
+
+    // If viewNetworks is populated, use it
+    if (viewNetworks && viewNetworks.length > 0) {
+      return allNetworks.filter((network) => viewNetworks.includes(network.id))
+    }
+
+    // Otherwise default to wallet type's networks (or all EVM if no wallet)
+    if (activeWallet) {
+      return activeWallet.type === 'EVM' ? EVM_NETWORKS : SVM_NETWORKS
+    }
+
+    return EVM_NETWORKS // Default fallback
+  }, [viewNetworks, activeWallet])
 
   // Use multi-network balance for viewing data across multiple networks
   const {

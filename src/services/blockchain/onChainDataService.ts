@@ -195,13 +195,21 @@ export class OnChainDataService {
       }
     >()
 
-    // First, get discovered tokens from database
-    const discovered = await db.discoveredTokens
-      .where('walletAddress')
-      .equals(walletAddress)
-      .and((item) => item.chainId === this.chainId)
-      .toArray()
+    // Fetch discovered tokens and cached tokens in parallel
+    const [discovered, cachedTokens] = await Promise.all([
+      db.discoveredTokens
+        .where('walletAddress')
+        .equals(walletAddress)
+        .and((item) => item.chainId === this.chainId)
+        .toArray(),
+      db.tokenBalances
+        .where('walletAddress')
+        .equals(walletAddress)
+        .and((item) => item.networkId === this.networkId)
+        .toArray(),
+    ])
 
+    // Add discovered tokens
     for (const token of discovered) {
       tokensToCheck.set(token.tokenAddress.toLowerCase(), {
         address: token.tokenAddress,
@@ -211,16 +219,8 @@ export class OnChainDataService {
       })
     }
 
-    // Also check cached token balances for this wallet/network
-    // This ensures we don't lose tokens that were previously fetched
-    const cachedTokens = await db.tokenBalances
-      .where('walletAddress')
-      .equals(walletAddress)
-      .and((item) => item.networkId === this.networkId)
-      .toArray()
-
+    // Add cached tokens (if not already present from discovered)
     for (const cached of cachedTokens) {
-      // Add to tokens to check if not already present
       if (!tokensToCheck.has(cached.tokenAddress.toLowerCase())) {
         tokensToCheck.set(cached.tokenAddress.toLowerCase(), {
           address: cached.tokenAddress,

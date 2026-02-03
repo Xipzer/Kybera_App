@@ -57,11 +57,8 @@ export function createProvider(rpcUrl: string, chainId?: number): ethers.JsonRpc
   const resolvedChainId = chainId ?? inferChainId(rpcUrl)
 
   if (resolvedChainId) {
-    // Create a static network to bypass detection
-    const network = ethers.Network.from(resolvedChainId)
-    return new ethers.JsonRpcProvider(rpcUrl, network, {
-      staticNetwork: network,
-    })
+    const staticNetwork = ethers.Network.from(resolvedChainId)
+    return new ethers.JsonRpcProvider(rpcUrl, staticNetwork, { staticNetwork })
   }
 
   // Fallback to auto-detection if chainId unknown
@@ -70,16 +67,18 @@ export function createProvider(rpcUrl: string, chainId?: number): ethers.JsonRpc
 
 /**
  * Create a provider from network config - prefers Alchemy RPC
+ * Only works for EVM networks
  */
 export function createProviderFromNetwork(network: Network): ethers.JsonRpcProvider {
-  const chainId =
-    typeof network.chainId === 'number' ? network.chainId : parseInt(network.chainId as string, 10)
+  if (network.type !== 'EVM') {
+    throw new Error(`Cannot create EVM provider for ${network.type} network: ${network.name}`)
+  }
 
-  if (isNaN(chainId)) {
-    // Non-numeric chainId (e.g., Solana) - shouldn't use EVM provider
+  const chainId = typeof network.chainId === 'number' ? network.chainId : Number(network.chainId)
+
+  if (!Number.isInteger(chainId) || chainId < 0) {
     throw new Error(`Invalid EVM chainId: ${network.chainId}`)
   }
 
-  const rpcUrl = getBestRpcUrl(network)
-  return createProvider(rpcUrl, chainId)
+  return createProvider(getBestRpcUrl(network), chainId)
 }

@@ -184,21 +184,25 @@ export class BalanceAggregator {
     const nativeBalance = parseFloat(onChain.native || '0')
     const nativeUSD = nativeBalance * prices.nativePrice
 
+    // Fetch all token logos in parallel
+    const logoPromises = onChain.tokens.map((t) => this.getTokenLogo(t.address))
+    const logos = await Promise.all(logoPromises)
+
     // Calculate token USD values
     const tokensWithUSD: TokenWithUSD[] = []
     let totalTokensUSD = 0
 
-    for (const token of onChain.tokens) {
+    for (let i = 0; i < onChain.tokens.length; i++) {
+      const token = onChain.tokens[i]
       const tokenPrice = prices.tokenPrices.get(token.address.toLowerCase())
       const balance = parseFloat(token.balance || '0')
       const usdValue = balance * (tokenPrice?.usdPrice || 0)
-      const logoURI = await this.getTokenLogo(token.address)
 
       tokensWithUSD.push({
         ...token,
         usdValue,
         usd24hChange: tokenPrice?.usd24hChange || 0,
-        logoURI,
+        logoURI: logos[i],
       })
 
       totalTokensUSD += usdValue
@@ -275,11 +279,10 @@ export class BalanceAggregator {
         previousTotalUSD: (await db.walletBalances.get(id))?.totalUSD,
       })
 
-      // Update individual token balances with USD values
-      for (const token of balance.tokens) {
-        const tokenId = `${balance.walletAddress}_${balance.networkId}_${token.address}`
-        await db.tokenBalances.put({
-          id: tokenId,
+      // Update individual token balances with USD values (batch operation)
+      if (balance.tokens.length > 0) {
+        const tokenRecords = balance.tokens.map((token) => ({
+          id: `${balance.walletAddress}_${balance.networkId}_${token.address}`,
           walletAddress: balance.walletAddress,
           networkId: balance.networkId,
           tokenAddress: token.address,
@@ -290,7 +293,8 @@ export class BalanceAggregator {
           usdValue: token.usdValue,
           logoURI: token.logoURI,
           lastUpdated: balance.lastUpdated,
-        })
+        }))
+        await db.tokenBalances.bulkPut(tokenRecords)
       }
 
       console.log('[Aggregator] Cached aggregated balance')

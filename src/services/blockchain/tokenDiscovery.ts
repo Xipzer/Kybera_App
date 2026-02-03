@@ -34,8 +34,27 @@ const SPAM_PATTERNS = [
 
 // Cooldown period between discovery runs for same wallet (5 minutes)
 const DISCOVERY_COOLDOWN_MS = 5 * 60 * 1000
+// Max entries to keep in the map to prevent unbounded growth
+const MAX_COOLDOWN_ENTRIES = 100
 // Track last discovery time per wallet+chain
 const lastDiscoveryTime = new Map<string, number>()
+
+/** Clean up stale entries from the cooldown map */
+function cleanupStaleCooldowns(): void {
+  if (lastDiscoveryTime.size <= MAX_COOLDOWN_ENTRIES) return
+  
+  const cutoff = Date.now() - DISCOVERY_COOLDOWN_MS * 2
+  for (const [key, time] of lastDiscoveryTime) {
+    if (time < cutoff) lastDiscoveryTime.delete(key)
+  }
+  
+  // If still too many, remove oldest entries
+  if (lastDiscoveryTime.size > MAX_COOLDOWN_ENTRIES) {
+    const entries = [...lastDiscoveryTime.entries()].sort((a, b) => a[1] - b[1])
+    const toRemove = entries.slice(0, entries.length - MAX_COOLDOWN_ENTRIES)
+    toRemove.forEach(([key]) => lastDiscoveryTime.delete(key))
+  }
+}
 
 export class TokenDiscoveryService {
   private network: Network
@@ -56,16 +75,16 @@ export class TokenDiscoveryService {
    * Has a cooldown to prevent running too frequently
    */
   async discoverTokens(walletAddress: string, force = false): Promise<DiscoveredToken[]> {
-    if (!this.alchemyService) {
-      return []
-    }
+    if (!this.alchemyService) return []
+
+    // Cleanup stale cooldown entries periodically
+    cleanupStaleCooldowns()
 
     // Check cooldown (skip if forced)
     const cacheKey = `${walletAddress}_${this.chainId}`
-    const lastRun = lastDiscoveryTime.get(cacheKey) || 0
     const now = Date.now()
 
-    if (!force && now - lastRun < DISCOVERY_COOLDOWN_MS) {
+    if (!force && now - (lastDiscoveryTime.get(cacheKey) || 0) < DISCOVERY_COOLDOWN_MS) {
       console.log(`[TokenDiscovery] Skipping ${this.network.name} - cooldown active`)
       return []
     }
@@ -89,24 +108,27 @@ export class TokenDiscoveryService {
         (await this.getExistingTokens(walletAddress)).map((t) => t.toLowerCase()),
       )
 
+      // Filter to tokens that need processing
+      type TokenBalanceEntry = { contractAddress: string; tokenBalance: string }
+      const tokensToProcess = (tokenBalances.tokenBalances as TokenBalanceEntry[]).filter((tb) => {
+        const tokenAddress = tb.contractAddress.toLowerCase()
+        // Skip existing or zero balance
+        return !existingAddresses.has(tokenAddress) && tb.tokenBalance && tb.tokenBalance !== '0x0'
+      })
+
+      // Process tokens in parallel batches (5 at a time to avoid rate limits)
+      const BATCH_SIZE = 5
       const newTokens: DiscoveredToken[] = []
 
-      for (const tokenBalance of tokenBalances.tokenBalances) {
-        const tokenAddress = tokenBalance.contractAddress.toLowerCase()
-
-        // Skip existing
-        if (existingAddresses.has(tokenAddress)) continue
-
-        // Skip zero balance
-        if (!tokenBalance.tokenBalance || tokenBalance.tokenBalance === '0x0') continue
-
-        const token = await this.processToken(
-          walletAddress,
-          tokenAddress,
-          tokenBalance.tokenBalance,
+      for (let i = 0; i < tokensToProcess.length; i += BATCH_SIZE) {
+        const batch = tokensToProcess.slice(i, i + BATCH_SIZE)
+        const results = await Promise.all(
+          batch.map((tb: TokenBalanceEntry) =>
+            this.processToken(walletAddress, tb.contractAddress.toLowerCase(), tb.tokenBalance),
+          ),
         )
-        if (token) {
-          newTokens.push(token)
+        for (const token of results) {
+          if (token) newTokens.push(token)
         }
       }
 

@@ -199,20 +199,30 @@ export const useWalletStore = create<WalletState>()(
           createdAt: new Date(w.createdAt),
         }))
 
-        // Check if active wallet's type matches active network
         const state = get()
+        const updates: Partial<WalletState> = { wallets }
+
+        // Check if active wallet's type matches active network
         if (state.activeWalletId) {
           const activeWallet = wallets.find((w) => w.id === state.activeWalletId)
-          if (activeWallet && activeWallet.type !== state.activeNetwork.type) {
+          if (activeWallet) {
             // Fix network mismatch
-            const correctNetwork =
-              activeWallet.type === 'EVM' ? state.activeEVMNetwork : state.activeSVMNetwork
-            set({ wallets, activeNetwork: correctNetwork })
-            return
+            if (activeWallet.type !== state.activeNetwork.type) {
+              const correctNetwork =
+                activeWallet.type === 'EVM' ? state.activeEVMNetwork : state.activeSVMNetwork
+              updates.activeNetwork = correctNetwork
+            }
+
+            // Initialize viewNetworks if empty - critical for immediate cache loading
+            if (!state.viewNetworks || state.viewNetworks.length === 0) {
+              const viewableNetworks = activeWallet.type === 'EVM' ? EVM_NETWORKS : SVM_NETWORKS
+              updates.viewNetworks = viewableNetworks.map((n) => n.id)
+              console.log('[walletStore] Initialized viewNetworks on load:', updates.viewNetworks)
+            }
           }
         }
 
-        set({ wallets })
+        set(updates)
       },
 
       createWalletGroup: async (name, password) => {
@@ -536,14 +546,11 @@ export const useWalletStore = create<WalletState>()(
           persistedState.activeSVMNetwork = SVM_NETWORKS[0]
         }
 
-        // Fix activeNetwork if it's mismatched with the wallet type
-        if (persistedState.activeWalletId) {
-          // We can't check wallet type here since wallets aren't loaded yet
-          // So we'll ensure activeNetwork is valid
-          if (persistedState.activeNetwork && persistedState.activeNetwork.type === 'SVM') {
-            // If it's a Solana network but we can't verify the wallet type,
-            // we'll let setActiveWallet handle it properly
-          }
+        // Don't persist empty viewNetworks - it will be initialized by loadWallets
+        // This prevents the race condition where empty array is hydrated before wallets load
+        if (!persistedState.viewNetworks || persistedState.viewNetworks.length === 0) {
+          // Remove from persisted state so it defaults based on wallet type
+          delete persistedState.viewNetworks
         }
 
         return persistedState
