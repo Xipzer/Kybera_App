@@ -2,16 +2,17 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   Coins,
   Copy,
-  Download,
   ExternalLink,
   History,
   LayoutGrid,
   RefreshCw,
-  Send,
   TrendingDown,
   TrendingUp,
   Clock,
   CheckCircle2,
+  Wallet,
+  ArrowUpRight,
+  ArrowDownLeft,
 } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import * as Tabs from '@radix-ui/react-tabs'
@@ -25,13 +26,98 @@ import { useMultiNetworkBalance } from '../../hooks/useMultiNetworkBalance'
 import { useTheme } from '../../hooks/useTheme'
 import { EVM_NETWORKS, SVM_NETWORKS } from '../../utils/networks'
 
+// Theme color configurations for wallet detail view
+const detailThemeColors = {
+  light: {
+    headerBg: 'bg-white/60',
+    headerBorder: 'border-gray-200/50',
+    titleGradient: 'from-cyan-600 via-teal-500 to-cyan-600',
+    walletIconBg: 'bg-gradient-to-r from-cyan-500 via-teal-400 to-cyan-600',
+    portfolioBg: 'bg-gradient-to-br from-white/80 to-gray-50/80',
+    portfolioBorder: 'border-gray-200/50',
+    portfolioGlow: '',
+    valueGradient: 'from-gray-900 to-gray-700',
+    sendGradient: 'from-cyan-500 via-teal-400 to-cyan-600',
+    sendShadow: 'shadow-cyan-500/20 hover:shadow-cyan-500/30',
+    receiveGradient: 'from-gray-100 to-gray-200',
+    receiveBorder: 'border-gray-300/50',
+    receiveText: 'text-gray-700',
+    tabActiveBg: 'bg-cyan-500/10',
+    tabActiveBorder: 'border-cyan-500/30',
+    tabActiveText: 'text-cyan-600',
+    tabInactiveText: 'text-gray-500',
+    tabHover: 'hover:bg-gray-100/60',
+    badgeLiveBg: 'bg-green-500/10',
+    badgeLiveText: 'text-green-600',
+    badgeCachedBg: 'bg-yellow-500/10',
+    badgeCachedText: 'text-yellow-600',
+    addressBg: 'bg-gray-100/50',
+    iconButtonHover: 'hover:bg-gray-100',
+  },
+  dark: {
+    headerBg: 'bg-black/20',
+    headerBorder: 'border-white/5',
+    titleGradient: 'from-cyan-400 via-cyan-300 to-pink-400',
+    walletIconBg: 'bg-gradient-to-r from-cyan-500 via-cyan-400 to-pink-500',
+    portfolioBg: 'bg-gradient-to-br from-white/5 to-white/[0.02]',
+    portfolioBorder: 'border-white/10',
+    portfolioGlow: 'shadow-lg shadow-cyan-500/5',
+    valueGradient: 'from-white to-white/80',
+    sendGradient: 'from-cyan-500 via-cyan-400 to-pink-500',
+    sendShadow: 'shadow-cyan-500/25 hover:shadow-cyan-500/40',
+    receiveGradient: 'from-white/5 to-white/10',
+    receiveBorder: 'border-white/10',
+    receiveText: 'text-white',
+    tabActiveBg: 'bg-cyan-500/10',
+    tabActiveBorder: 'border-cyan-500/30',
+    tabActiveText: 'text-cyan-400',
+    tabInactiveText: 'text-white/50',
+    tabHover: 'hover:bg-white/5',
+    badgeLiveBg: 'bg-green-500/10',
+    badgeLiveText: 'text-green-400',
+    badgeCachedBg: 'bg-yellow-500/10',
+    badgeCachedText: 'text-yellow-400',
+    addressBg: 'bg-white/5',
+    iconButtonHover: 'hover:bg-white/10',
+  },
+  xipz: {
+    headerBg: 'bg-primary-900/50',
+    headerBorder: 'border-primary-800/50',
+    titleGradient: 'from-red-400 via-red-500 to-red-400',
+    walletIconBg: 'bg-gradient-to-r from-red-500 via-red-600 to-red-500',
+    portfolioBg: 'bg-gradient-to-br from-white/5 to-white/[0.02]',
+    portfolioBorder: 'border-primary-800/50',
+    portfolioGlow: 'shadow-lg shadow-red-500/5',
+    valueGradient: 'from-white to-white/80',
+    sendGradient: 'from-red-500 via-red-600 to-red-500',
+    sendShadow: 'shadow-red-500/25 hover:shadow-red-500/40',
+    receiveGradient: 'from-white/5 to-white/10',
+    receiveBorder: 'border-primary-800/50',
+    receiveText: 'text-white',
+    tabActiveBg: 'bg-red-500/10',
+    tabActiveBorder: 'border-red-500/30',
+    tabActiveText: 'text-red-400',
+    tabInactiveText: 'text-primary-400',
+    tabHover: 'hover:bg-primary-800/30',
+    badgeLiveBg: 'bg-green-500/10',
+    badgeLiveText: 'text-green-400',
+    badgeCachedBg: 'bg-yellow-500/10',
+    badgeCachedText: 'text-yellow-400',
+    addressBg: 'bg-primary-800/30',
+    iconButtonHover: 'hover:bg-primary-800/50',
+  },
+}
+
 export function WalletDetailView() {
   const { activeWalletId, wallets, activeNetwork, viewNetworks } = useWalletStore()
   const [showSendDialog, setShowSendDialog] = useState(false)
   const [showReceiveDialog, setShowReceiveDialog] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [, forceUpdate] = useState({})
-  const { theme: themeConfig } = useTheme()
+  const { themeName } = useTheme()
+
+  // Get theme-specific colors
+  const colors = detailThemeColors[themeName] || detailThemeColors.dark
 
   const activeWallet = wallets.find((w) => w.id === activeWalletId)
 
@@ -101,8 +187,15 @@ export function WalletDetailView() {
 
   if (!activeWallet) {
     return (
-      <div className={`p-6 text-center ${themeConfig.styles.textSecondary}`}>
-        <p>Select a wallet to view details</p>
+      <div className={`h-full flex items-center justify-center p-6`}>
+        <div className="text-center">
+          <div
+            className={`w-16 h-16 mx-auto mb-4 rounded-2xl ${colors.walletIconBg} flex items-center justify-center shadow-lg`}
+          >
+            <Wallet className="w-8 h-8 text-white" />
+          </div>
+          <p className="text-text-secondary">Select a wallet to view details</p>
+        </div>
       </div>
     )
   }
@@ -126,61 +219,73 @@ export function WalletDetailView() {
   const changePercent = balance.total24hChange || 0
 
   return (
-    <div
-      className={`h-full flex flex-col transition-all duration-300 ${themeConfig.styles.mainContainer}`}
-    >
-      {/* Wallet Header */}
-      <div className={`p-6 transition-all duration-300 ${themeConfig.styles.panelHeader}`}>
-        <div className="mb-4">
-          <h2 className={`text-2xl font-bold mb-1 ${themeConfig.styles.textPrimary}`}>
-            {activeWallet.name}
-          </h2>
-          <div className="flex items-center gap-2">
-            <p className={`text-sm ${themeConfig.styles.textSecondary}`}>
+    <div className={`h-full flex flex-col transition-all duration-300`}>
+      {/* Wallet Header with glassmorphism */}
+      <div className={`p-6 ${colors.headerBg} backdrop-blur-sm border-b ${colors.headerBorder}`}>
+        {/* Wallet name and address */}
+        <div className="mb-5">
+          <div className="flex items-center gap-3 mb-2">
+            <div className={`p-2 rounded-xl ${colors.walletIconBg} shadow-lg`}>
+              <Wallet className="w-5 h-5 text-white" />
+            </div>
+            <h2
+              className={`text-2xl font-bold bg-gradient-to-r ${colors.titleGradient} bg-clip-text text-transparent`}
+            >
+              {activeWallet.name}
+            </h2>
+          </div>
+
+          {/* Address with copy/explorer buttons */}
+          <div
+            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg ${colors.addressBg}`}
+          >
+            <p className={`text-sm text-text-secondary font-mono`}>
               {formatAddress(activeWallet.address)}
             </p>
             <button
               onClick={copyAddress}
-              className={`p-1 rounded transition-all duration-300 ${themeConfig.styles.buttonIcon}`}
+              className={`p-1 rounded-lg transition-all duration-200 ${colors.iconButtonHover} hover:scale-110`}
               title="Copy address"
             >
-              <Copy className={`w-4 h-4 ${themeConfig.styles.iconSecondary}`} />
+              <Copy className={`w-3.5 h-3.5 text-text-secondary`} />
             </button>
             <a
               href={`${activeNetwork.explorerUrl || activeNetwork.explorer}/address/${activeWallet.address}`}
               target="_blank"
               rel="noopener noreferrer"
-              className={`p-1 rounded transition-all duration-300 ${themeConfig.styles.buttonIcon}`}
+              className={`p-1 rounded-lg transition-all duration-200 ${colors.iconButtonHover} hover:scale-110`}
               title="View on explorer"
             >
-              <ExternalLink className={`w-4 h-4 ${themeConfig.styles.iconSecondary}`} />
+              <ExternalLink className={`w-3.5 h-3.5 text-text-secondary`} />
             </a>
           </div>
         </div>
 
-        {/* Total Portfolio Value */}
-        <div className="mb-6 p-4 rounded-lg bg-surface-elevated">
-          <div className="flex items-center justify-between mb-1">
+        {/* Total Portfolio Value Card */}
+        <div
+          className={`mb-5 p-5 rounded-2xl ${colors.portfolioBg} border ${colors.portfolioBorder} ${colors.portfolioGlow} backdrop-blur-sm`}
+        >
+          <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <p className={`text-sm ${themeConfig.styles.textSecondary}`}>Total Portfolio Value</p>
-              {/* Data quality badge - "Live" means fresh on-chain data (prices can be cached) */}
+              <p className={`text-sm text-text-secondary`}>Total Portfolio Value</p>
+              {/* Data quality badge */}
               {!loading && balance.dataQuality && (
                 <div className="flex items-center gap-1">
                   {balance.dataQuality.onChainFromCache ? (
                     <div
-                      className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-500/10"
+                      className={`flex items-center gap-1 px-2 py-0.5 rounded-full ${colors.badgeCachedBg}`}
                       title="Blockchain data from cache - refreshing..."
                     >
                       <Clock className="w-3 h-3 text-yellow-500" />
-                      <span className="text-xs text-yellow-600 dark:text-yellow-400">Cached</span>
+                      <span className={`text-xs ${colors.badgeCachedText}`}>Cached</span>
                     </div>
                   ) : (
                     <div
-                      className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/10"
+                      className={`flex items-center gap-1 px-2 py-0.5 rounded-full ${colors.badgeLiveBg}`}
                       title="Blockchain data fresh"
                     >
                       <CheckCircle2 className="w-3 h-3 text-green-500" />
-                      <span className="text-xs text-green-600 dark:text-green-400">Live</span>
+                      <span className={`text-xs ${colors.badgeLiveText}`}>Live</span>
                     </div>
                   )}
                 </div>
@@ -189,42 +294,51 @@ export function WalletDetailView() {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className={`p-1 rounded transition-all duration-300 disabled:opacity-50 ${themeConfig.styles.buttonIcon}`}
+              className={`p-2 rounded-lg transition-all duration-200 disabled:opacity-50 ${colors.iconButtonHover} hover:scale-105`}
               title="Refresh all balances"
             >
               <RefreshCw
-                className={`w-4 h-4 ${isRefreshing || loading ? 'animate-spin' : ''} ${themeConfig.styles.iconSecondary}`}
+                className={`w-4 h-4 ${isRefreshing || loading ? 'animate-spin' : ''} text-text-secondary`}
               />
             </button>
           </div>
+
           {loading && balance.totalUSD === 0 ? (
-            <div className="h-8 w-32 animate-pulse rounded bg-surface-base" />
+            <div className="h-10 w-40 animate-pulse rounded-lg bg-white/10" />
           ) : (
             <>
-              <p className={`text-2xl font-bold ${themeConfig.styles.textPrimary}`}>
-                ${balance.totalUSD.toFixed(2)}
+              <p
+                className={`text-3xl font-bold bg-gradient-to-r ${colors.valueGradient} bg-clip-text text-transparent`}
+              >
+                $
+                {balance.totalUSD.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </p>
-              <div className="flex items-center gap-2 mt-1">
-                <div className="flex items-center gap-1">
+              <div className="flex items-center gap-3 mt-2">
+                <div
+                  className={`flex items-center gap-1.5 px-2 py-1 rounded-lg ${changePercent >= 0 ? 'bg-green-500/10' : 'bg-red-500/10'}`}
+                >
                   {changePercent >= 0 ? (
                     <TrendingUp className="w-4 h-4 text-green-500" />
                   ) : (
-                    <TrendingDown className="w-4 h-4 text-accent" />
+                    <TrendingDown className="w-4 h-4 text-red-500" />
                   )}
                   <span
-                    className={`text-sm ${changePercent >= 0 ? 'text-green-500' : 'text-accent'}`}
+                    className={`text-sm font-medium ${changePercent >= 0 ? 'text-green-500' : 'text-red-500'}`}
                   >
                     {changePercent >= 0 ? '+' : ''}
                     {changePercent.toFixed(2)}%
                   </span>
                 </div>
                 {balance.lastUpdated && (
-                  <span className={`text-xs ${themeConfig.styles.textTertiary}`}>
-                    ({formatTimeAgo(balance.lastUpdated)})
+                  <span className={`text-xs text-text-tertiary`}>
+                    Updated {formatTimeAgo(balance.lastUpdated)}
                   </span>
                 )}
                 {error && balance.totalUSD > 0 && (
-                  <span className={`text-xs ${themeConfig.styles.textTertiary}`}>(cached)</span>
+                  <span className={`text-xs text-text-tertiary`}>(cached)</span>
                 )}
               </div>
             </>
@@ -235,18 +349,16 @@ export function WalletDetailView() {
         <div className="flex gap-3">
           <button
             onClick={() => setShowSendDialog(true)}
-            className={`flex-1 flex items-center justify-center gap-2 ${themeConfig.styles.buttonPrimary}`}
-            style={themeConfig.dynamicStyles.buttonPrimary}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r ${colors.sendGradient} rounded-xl font-medium text-white shadow-lg ${colors.sendShadow} transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]`}
           >
-            <Send className="w-4 h-4" />
+            <ArrowUpRight className="w-5 h-5" />
             Send
           </button>
           <button
             onClick={() => setShowReceiveDialog(true)}
-            className={`flex-1 flex items-center justify-center gap-2 ${themeConfig.styles.buttonSecondary}`}
-            style={themeConfig.dynamicStyles.buttonSecondary}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r ${colors.receiveGradient} border ${colors.receiveBorder} rounded-xl font-medium ${colors.receiveText} transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]`}
           >
-            <Download className="w-4 h-4" />
+            <ArrowDownLeft className="w-5 h-5" />
             Receive
           </button>
         </div>
@@ -254,24 +366,27 @@ export function WalletDetailView() {
 
       {/* Tabs Content */}
       <Tabs.Root defaultValue="summary" className="flex-1 flex flex-col overflow-hidden">
-        <Tabs.List className={themeConfig.styles.tabs.list}>
+        {/* Modernized tabs */}
+        <Tabs.List
+          className={`flex gap-1 p-2 ${colors.headerBg} backdrop-blur-sm border-b ${colors.headerBorder}`}
+        >
           <Tabs.Trigger
             value="summary"
-            className={`${themeConfig.styles.tabs.trigger} flex items-center justify-center gap-2`}
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${colors.tabInactiveText} ${colors.tabHover} data-[state=active]:${colors.tabActiveBg} data-[state=active]:${colors.tabActiveText} data-[state=active]:shadow-sm`}
           >
             <LayoutGrid className="w-4 h-4" />
             Summary
           </Tabs.Trigger>
           <Tabs.Trigger
             value="tokens"
-            className={`${themeConfig.styles.tabs.trigger} flex items-center justify-center gap-2`}
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${colors.tabInactiveText} ${colors.tabHover} data-[state=active]:${colors.tabActiveBg} data-[state=active]:${colors.tabActiveText} data-[state=active]:shadow-sm`}
           >
             <Coins className="w-4 h-4" />
             Tokens
           </Tabs.Trigger>
           <Tabs.Trigger
             value="history"
-            className={`${themeConfig.styles.tabs.trigger} flex items-center justify-center gap-2`}
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${colors.tabInactiveText} ${colors.tabHover} data-[state=active]:${colors.tabActiveBg} data-[state=active]:${colors.tabActiveText} data-[state=active]:shadow-sm`}
           >
             <History className="w-4 h-4" />
             History

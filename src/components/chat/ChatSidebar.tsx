@@ -1,9 +1,61 @@
-import { Edit2, MessageSquare, MoreVertical, Pin, SquarePen, Trash2 } from 'lucide-react'
+import { Edit2, MessageSquare, MoreVertical, Pin, SquarePen, Trash2, Sparkles } from 'lucide-react'
 import { useChatStore } from '../../store/chatStore'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { EmptyState } from '../common/EmptyState'
 import { useState } from 'react'
 import { useTheme } from '../../hooks/useTheme'
+
+// Theme color configurations for chat sidebar
+const sidebarThemeColors = {
+  light: {
+    headerBg: 'bg-white/60',
+    headerBorder: 'border-gray-200/50',
+    newChatGradient: 'from-cyan-500 via-teal-400 to-cyan-600',
+    newChatShadow: 'shadow-cyan-500/20 hover:shadow-cyan-500/30',
+    activeCardBg: 'bg-cyan-50/80',
+    activeCardBorder: 'border-cyan-400/40',
+    activeCardGlow: 'shadow-cyan-400/10',
+    hoverCardBg: 'hover:bg-gray-100/60',
+    cardBorder: 'border-gray-200/30',
+    iconActive: 'text-cyan-500',
+    iconDefault: 'text-gray-400',
+    inputBg: 'bg-white/80',
+    inputBorder: 'border-gray-300/50',
+    inputFocus: 'focus:border-cyan-400 focus:ring-cyan-400/20',
+  },
+  dark: {
+    headerBg: 'bg-surface-elevated/50',
+    headerBorder: 'border-border-subtle',
+    newChatGradient: 'from-cyan-500 via-cyan-400 to-pink-500',
+    newChatShadow: 'shadow-cyan-500/25 hover:shadow-cyan-500/40',
+    activeCardBg: 'bg-cyan-500/10',
+    activeCardBorder: 'border-cyan-500/30',
+    activeCardGlow: 'shadow-cyan-500/10',
+    hoverCardBg: 'hover:bg-white/5',
+    cardBorder: 'border-white/5',
+    iconActive: 'text-cyan-400',
+    iconDefault: 'text-white/40',
+    inputBg: 'bg-white/5',
+    inputBorder: 'border-white/10',
+    inputFocus: 'focus:border-cyan-500/50 focus:ring-cyan-500/20',
+  },
+  xipz: {
+    headerBg: 'bg-primary-900/50',
+    headerBorder: 'border-primary-800/50',
+    newChatGradient: 'from-red-500 via-red-600 to-red-500',
+    newChatShadow: 'shadow-red-500/25 hover:shadow-red-500/40',
+    activeCardBg: 'bg-red-500/10',
+    activeCardBorder: 'border-red-500/30',
+    activeCardGlow: 'shadow-red-500/10',
+    hoverCardBg: 'hover:bg-primary-800/30',
+    cardBorder: 'border-primary-800/30',
+    iconActive: 'text-red-400',
+    iconDefault: 'text-primary-400',
+    inputBg: 'bg-primary-900/50',
+    inputBorder: 'border-primary-800/50',
+    inputFocus: 'focus:border-red-500/50 focus:ring-red-500/20',
+  },
+}
 
 interface ChatSidebarProps {
   collapsed?: boolean
@@ -20,7 +72,10 @@ export function ChatSidebar({ collapsed }: ChatSidebarProps) {
   } = useChatStore()
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
-  const { theme } = useTheme()
+  const { theme, themeName } = useTheme()
+
+  // Get theme-specific colors
+  const colors = sidebarThemeColors[themeName] || sidebarThemeColors.dark
 
   const handleNewChat = async () => {
     await createConversation()
@@ -59,10 +114,10 @@ export function ChatSidebar({ collapsed }: ChatSidebarProps) {
       <div className="h-full w-full border-r border-border-subtle flex flex-col items-center justify-start py-4 gap-4 panel-content-fade">
         <button
           onClick={handleNewChat}
-          className="p-1 rounded hover:bg-surface-hover transition-all"
+          className={`p-2.5 rounded-xl bg-gradient-to-r ${colors.newChatGradient} shadow-lg ${colors.newChatShadow} hover:scale-105 active:scale-95 transition-all duration-200`}
           title="New Chat"
         >
-          <SquarePen className="w-5 h-5 text-accent hover:text-accent-400 transition-colors" />
+          <SquarePen className="w-4 h-4 text-white" />
         </button>
       </div>
     )
@@ -70,21 +125,29 @@ export function ChatSidebar({ collapsed }: ChatSidebarProps) {
 
   return (
     <div className="h-full flex flex-col panel-content-fade">
-      <div className="p-4 border-b border-border-subtle">
+      {/* Header */}
+      <div className={`p-4 ${colors.headerBg} border-b ${colors.headerBorder}`}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-text-primary">Chats</h2>
+          <div className="flex items-center gap-2">
+            <div className={`p-1.5 rounded-lg bg-gradient-to-r ${colors.newChatGradient}`}>
+              <MessageSquare className="w-4 h-4 text-white" />
+            </div>
+            <h2 className="text-lg font-semibold text-text-primary">Chats</h2>
+          </div>
         </div>
 
-        <button
-          onClick={handleNewChat}
-          className={`w-full flex items-center justify-center gap-2 px-3 py-2 ${theme.styles.buttonPrimary}`}
-          style={theme.dynamicStyles.buttonPrimary}
-        >
-          <SquarePen className="w-4 h-4" />
-          New Chat
+        {/* New Chat button with gradient */}
+        <button onClick={handleNewChat} className={`relative w-full group overflow-hidden`}>
+          <div
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r ${colors.newChatGradient} rounded-xl font-medium text-white shadow-lg ${colors.newChatShadow} transition-all duration-300 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]`}
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>New Chat</span>
+          </div>
         </button>
       </div>
 
+      {/* Conversation list */}
       <div className="flex-1 overflow-y-auto p-2">
         {conversations.length === 0 ? (
           <EmptyState
@@ -98,107 +161,133 @@ export function ChatSidebar({ collapsed }: ChatSidebarProps) {
             className="h-full"
           />
         ) : (
-          <div className="space-y-1">
-            {sortedConversations.map((conversation) => (
-              <div
-                key={conversation.id}
-                onClick={() => setActiveConversation(conversation.id)}
-                className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-                  conversation.id === activeConversationId
-                    ? 'bg-accent/10 border border-accent/30'
-                    : 'hover:bg-surface-hover'
-                }`}
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  {conversation.pinned ? (
-                    <Pin className="w-4 h-4 text-accent flex-shrink-0" />
-                  ) : (
-                    <MessageSquare className="w-4 h-4 text-text-secondary flex-shrink-0" />
+          <div className="space-y-1.5">
+            {sortedConversations.map((conversation) => {
+              const isActive = conversation.id === activeConversationId
+
+              return (
+                <div
+                  key={conversation.id}
+                  onClick={() => setActiveConversation(conversation.id)}
+                  className={`group relative flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-200 border ${
+                    isActive
+                      ? `${colors.activeCardBg} ${colors.activeCardBorder} shadow-lg ${colors.activeCardGlow}`
+                      : `${colors.hoverCardBg} ${colors.cardBorder} hover:border-white/10`
+                  }`}
+                >
+                  {/* Active indicator line */}
+                  {isActive && (
+                    <div
+                      className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full bg-gradient-to-b ${colors.newChatGradient}`}
+                    />
                   )}
-                  <div className="min-w-0">
-                    {renamingId === conversation.id ? (
-                      <input
-                        type="text"
-                        value={renameValue}
-                        onChange={(e) => setRenameValue(e.target.value)}
-                        onBlur={() => handleRename(conversation.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            handleRename(conversation.id)
-                          } else if (e.key === 'Escape') {
-                            setRenamingId(null)
-                            setRenameValue('')
-                          }
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                        className="w-full px-1 py-0.5 text-sm bg-surface-elevated border border-border-default rounded focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent"
-                        autoFocus
-                      />
-                    ) : (
-                      <p className="text-sm font-medium text-text-primary truncate">
-                        {conversation.title}
-                      </p>
-                    )}
-                    <p className="text-xs text-text-tertiary">
-                      {conversation.messages.length} messages
-                    </p>
+
+                  <div className="flex items-center gap-3 min-w-0 pl-1">
+                    {/* Icon with conditional styling */}
+                    <div
+                      className={`flex-shrink-0 p-1.5 rounded-lg transition-colors ${
+                        isActive ? `bg-gradient-to-r ${colors.newChatGradient}` : 'bg-surface-hover'
+                      }`}
+                    >
+                      {conversation.pinned ? (
+                        <Pin
+                          className={`w-3.5 h-3.5 ${isActive ? 'text-white' : colors.iconActive}`}
+                        />
+                      ) : (
+                        <MessageSquare
+                          className={`w-3.5 h-3.5 ${isActive ? 'text-white' : colors.iconDefault}`}
+                        />
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      {renamingId === conversation.id ? (
+                        <input
+                          type="text"
+                          value={renameValue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          onBlur={() => handleRename(conversation.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleRename(conversation.id)
+                            } else if (e.key === 'Escape') {
+                              setRenamingId(null)
+                              setRenameValue('')
+                            }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className={`w-full px-2 py-1 text-sm ${colors.inputBg} border ${colors.inputBorder} rounded-lg focus:outline-none focus:ring-2 ${colors.inputFocus} text-text-primary transition-all`}
+                          autoFocus
+                        />
+                      ) : (
+                        <>
+                          <p className="text-sm font-medium truncate text-text-primary">
+                            {conversation.title}
+                          </p>
+                          <p className="text-xs text-text-tertiary mt-0.5">
+                            {conversation.messages.length} messages
+                          </p>
+                        </>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Dropdown menu - using theme styles */}
+                  <DropdownMenu.Root>
+                    <DropdownMenu.Trigger asChild>
+                      <button
+                        onClick={(e) => e.stopPropagation()}
+                        className={`p-1.5 rounded-lg opacity-0 group-hover:opacity-100 ${theme.styles.buttonIcon} transition-all duration-200 hover:scale-105`}
+                      >
+                        <MoreVertical className="w-4 h-4 text-text-secondary" />
+                      </button>
+                    </DropdownMenu.Trigger>
+
+                    <DropdownMenu.Portal>
+                      <DropdownMenu.Content
+                        className={theme.styles.dropdown.content}
+                        sideOffset={5}
+                      >
+                        <DropdownMenu.Item
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            startRename(conversation.id, conversation.title)
+                          }}
+                          className={`${theme.styles.dropdown.item} ${theme.styles.dropdown.itemHover}`}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                          Rename
+                        </DropdownMenu.Item>
+
+                        <DropdownMenu.Item
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handlePin(conversation.id, conversation.pinned || false)
+                          }}
+                          className={`${theme.styles.dropdown.item} ${theme.styles.dropdown.itemHover}`}
+                        >
+                          <Pin className="w-4 h-4" />
+                          {conversation.pinned ? 'Unpin' : 'Pin'}
+                        </DropdownMenu.Item>
+
+                        <DropdownMenu.Separator className={theme.styles.dropdown.separator} />
+
+                        <DropdownMenu.Item
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeleteChat(conversation.id)
+                          }}
+                          className="flex items-center gap-2 px-3 py-2 text-sm text-accent hover:bg-accent/10 rounded cursor-pointer transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete
+                        </DropdownMenu.Item>
+                      </DropdownMenu.Content>
+                    </DropdownMenu.Portal>
+                  </DropdownMenu.Root>
                 </div>
-
-                <DropdownMenu.Root>
-                  <DropdownMenu.Trigger asChild>
-                    <button
-                      onClick={(e) => e.stopPropagation()}
-                      className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-surface-hover transition-all"
-                    >
-                      <MoreVertical className="w-4 h-4 text-text-secondary" />
-                    </button>
-                  </DropdownMenu.Trigger>
-
-                  <DropdownMenu.Portal>
-                    <DropdownMenu.Content
-                      className="min-w-[160px] bg-surface-base rounded-lg shadow-lg border border-border-subtle p-1 z-50"
-                      sideOffset={5}
-                    >
-                      <DropdownMenu.Item
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          startRename(conversation.id, conversation.title)
-                        }}
-                        className="flex items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-surface-hover rounded cursor-pointer"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                        Rename
-                      </DropdownMenu.Item>
-
-                      <DropdownMenu.Item
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handlePin(conversation.id, conversation.pinned || false)
-                        }}
-                        className="flex items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-surface-hover rounded cursor-pointer"
-                      >
-                        <Pin className="w-4 h-4" />
-                        {conversation.pinned ? 'Unpin' : 'Pin'}
-                      </DropdownMenu.Item>
-
-                      <DropdownMenu.Separator className="h-px bg-border-subtle my-1" />
-
-                      <DropdownMenu.Item
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDeleteChat(conversation.id)
-                        }}
-                        className="flex items-center gap-2 px-3 py-2 text-sm text-accent hover:bg-accent/10 rounded cursor-pointer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Delete
-                      </DropdownMenu.Item>
-                    </DropdownMenu.Content>
-                  </DropdownMenu.Portal>
-                </DropdownMenu.Root>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

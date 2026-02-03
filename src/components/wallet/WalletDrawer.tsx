@@ -11,6 +11,8 @@ import {
   Upload,
   Users,
   Wallet as WalletIcon,
+  Sparkles,
+  Layers,
 } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
@@ -29,6 +31,109 @@ import { ImportGroupDialog } from './ImportGroupDialog'
 import { WalletDetailView } from './WalletDetailView'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { useTheme } from '../../hooks/useTheme'
+
+// Theme color configurations for wallet drawer
+const drawerThemeColors = {
+  light: {
+    headerBg: 'bg-white/60',
+    headerBorder: 'border-gray-200/50',
+    titleGradient: 'from-cyan-600 via-teal-500 to-cyan-600',
+    titleIconBg: 'bg-gradient-to-r from-cyan-500 via-teal-400 to-cyan-600',
+    buttonPrimaryGradient: 'from-cyan-500 via-teal-400 to-cyan-600',
+    buttonPrimaryShadow: 'shadow-cyan-500/20 hover:shadow-cyan-500/30',
+    buttonSecondaryBg: 'bg-gray-100/80',
+    buttonSecondaryBorder: 'border-gray-200/50',
+    buttonSecondaryHover: 'hover:bg-gray-200/80',
+    tabActiveBg: 'bg-cyan-500/10',
+    tabActiveBorder: 'border-cyan-500/30',
+    tabActiveText: 'text-cyan-600',
+    tabInactiveText: 'text-gray-500',
+    tabHover: 'hover:bg-gray-100/60',
+    groupCardBg: 'bg-white/60',
+    groupCardBorder: 'border-gray-200/30',
+    groupCardHover: 'hover:border-gray-300/50',
+    groupHeaderBg: 'bg-gray-50/50',
+    walletCardBg: 'bg-white/40',
+    walletCardBorder: 'border-gray-200/30',
+    walletCardActiveBg: 'bg-cyan-50/80',
+    walletCardActiveBorder: 'border-cyan-400/40',
+    walletCardActiveGlow: 'shadow-cyan-400/10',
+    walletCardHover: 'hover:bg-gray-50/60',
+    dropdownBg: 'bg-white/95',
+    dropdownBorder: 'border-gray-200/50',
+    dropdownHover: 'hover:bg-gray-100/80',
+    deleteText: 'text-red-500',
+    deleteHover: 'hover:bg-red-50/80',
+    accentLine: 'bg-gradient-to-b from-cyan-500 to-teal-400',
+    dragHandleColor: 'text-gray-400',
+  },
+  dark: {
+    headerBg: 'bg-black/20',
+    headerBorder: 'border-white/5',
+    titleGradient: 'from-cyan-400 via-cyan-300 to-pink-400',
+    titleIconBg: 'bg-gradient-to-r from-cyan-500 via-cyan-400 to-pink-500',
+    buttonPrimaryGradient: 'from-cyan-500 via-cyan-400 to-pink-500',
+    buttonPrimaryShadow: 'shadow-cyan-500/25 hover:shadow-cyan-500/40',
+    buttonSecondaryBg: 'bg-white/5',
+    buttonSecondaryBorder: 'border-white/10',
+    buttonSecondaryHover: 'hover:bg-white/10',
+    tabActiveBg: 'bg-cyan-500/10',
+    tabActiveBorder: 'border-cyan-500/30',
+    tabActiveText: 'text-cyan-400',
+    tabInactiveText: 'text-white/50',
+    tabHover: 'hover:bg-white/5',
+    groupCardBg: 'bg-white/5',
+    groupCardBorder: 'border-white/10',
+    groupCardHover: 'hover:border-white/20',
+    groupHeaderBg: 'bg-black/20',
+    walletCardBg: 'bg-white/5',
+    walletCardBorder: 'border-white/5',
+    walletCardActiveBg: 'bg-cyan-500/10',
+    walletCardActiveBorder: 'border-cyan-500/30',
+    walletCardActiveGlow: 'shadow-cyan-500/10',
+    walletCardHover: 'hover:bg-white/10',
+    dropdownBg: 'bg-slate-900/95',
+    dropdownBorder: 'border-white/10',
+    dropdownHover: 'hover:bg-white/10',
+    deleteText: 'text-red-400',
+    deleteHover: 'hover:bg-red-500/10',
+    accentLine: 'bg-gradient-to-b from-cyan-500 to-pink-500',
+    dragHandleColor: 'text-white/30',
+  },
+  xipz: {
+    headerBg: 'bg-primary-900/50',
+    headerBorder: 'border-primary-800/50',
+    titleGradient: 'from-red-400 via-red-500 to-red-400',
+    titleIconBg: 'bg-gradient-to-r from-red-500 via-red-600 to-red-500',
+    buttonPrimaryGradient: 'from-red-500 via-red-600 to-red-500',
+    buttonPrimaryShadow: 'shadow-red-500/25 hover:shadow-red-500/40',
+    buttonSecondaryBg: 'bg-primary-800/30',
+    buttonSecondaryBorder: 'border-primary-800/50',
+    buttonSecondaryHover: 'hover:bg-primary-800/50',
+    tabActiveBg: 'bg-red-500/10',
+    tabActiveBorder: 'border-red-500/30',
+    tabActiveText: 'text-red-400',
+    tabInactiveText: 'text-primary-400',
+    tabHover: 'hover:bg-primary-800/30',
+    groupCardBg: 'bg-primary-900/30',
+    groupCardBorder: 'border-primary-800/50',
+    groupCardHover: 'hover:border-primary-700/50',
+    groupHeaderBg: 'bg-primary-800/30',
+    walletCardBg: 'bg-primary-900/30',
+    walletCardBorder: 'border-primary-800/30',
+    walletCardActiveBg: 'bg-red-500/10',
+    walletCardActiveBorder: 'border-red-500/30',
+    walletCardActiveGlow: 'shadow-red-500/10',
+    walletCardHover: 'hover:bg-primary-800/30',
+    dropdownBg: 'bg-primary-900',
+    dropdownBorder: 'border-primary-800/50',
+    dropdownHover: 'hover:bg-primary-800/50',
+    deleteText: 'text-red-400',
+    deleteHover: 'hover:bg-red-500/10',
+    accentLine: 'bg-gradient-to-b from-red-500 to-red-600',
+    dragHandleColor: 'text-primary-400',
+  },
+}
 import {
   closestCenter,
   DndContext,
@@ -149,7 +254,10 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
   const [selectedGroupId, setSelectedGroupId] = useState<string | undefined>()
   const [exportGroup, setExportGroup] = useState<any | null>(null)
   const [showImportGroupDialog, setShowImportGroupDialog] = useState(false)
-  const { theme } = useTheme()
+  const { theme, themeName } = useTheme()
+
+  // Get theme-specific colors
+  const colors = drawerThemeColors[themeName] || drawerThemeColors.dark
 
   // Memoize filtered data to avoid recalculation on every render
   const actualGroups = useMemo(
@@ -224,9 +332,20 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
     <div className={`h-full ${theme.styles.drawerContainer} panel-content-fade-right`}>
       <PanelGroup direction="vertical" className="h-full">
         <Panel defaultSize={50} minSize={30} maxSize={70} className="flex flex-col overflow-hidden">
+          {/* Header */}
           <div className={`p-4 flex-shrink-0 ${theme.styles.panelHeader}`}>
+            {/* Title with icon */}
             <div className="flex items-center justify-between mb-4">
-              <h2 className={`text-lg font-semibold ${theme.styles.textPrimary}`}>Wallets</h2>
+              <div className="flex items-center gap-2">
+                <div className={`p-1.5 rounded-lg ${colors.titleIconBg}`}>
+                  <WalletIcon className="w-4 h-4 text-white" />
+                </div>
+                <h2
+                  className={`text-lg font-semibold bg-gradient-to-r ${colors.titleGradient} bg-clip-text text-transparent`}
+                >
+                  Wallets
+                </h2>
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -234,30 +353,24 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
               <ExecutionNetworkSelector />
             </div>
 
+            {/* Action buttons with modern styling */}
             <div className="mt-4 space-y-2">
               <div className="flex gap-2">
+                {/* New Group button with gradient */}
                 <button
                   onClick={() => setShowCreateGroupDialog(true)}
-                  className={`${theme.styles.buttonPrimary} flex-1 flex items-center justify-center gap-2 px-3 py-2`}
-                  style={theme.dynamicStyles.buttonPrimary}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r ${colors.buttonPrimaryGradient} rounded-xl font-medium text-white shadow-lg ${colors.buttonPrimaryShadow} transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]`}
                 >
-                  <Users className="w-4 h-4" />
+                  <Sparkles className="w-4 h-4" />
                   New Group
                 </button>
+
+                {/* Import dropdown using theme styles */}
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild>
                     <button
                       className={`${theme.styles.buttonSecondary} flex-1 flex items-center justify-center gap-2 px-3 py-2`}
                       style={theme.dynamicStyles.buttonSecondary}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor =
-                          theme.name === 'Xipz'
-                            ? 'rgba(239, 68, 68, 0.1)'
-                            : 'rgba(255, 0, 153, 0.1)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent'
-                      }}
                     >
                       <Upload className="w-4 h-4" />
                       Import
@@ -288,8 +401,13 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
           </div>
 
           <Tabs.Root defaultValue="groups" className="flex-1 flex flex-col min-h-0">
+            {/* Tabs using theme.styles for proper active state */}
             <Tabs.List className={`${theme.styles.tabs.list} flex-shrink-0`}>
-              <Tabs.Trigger value="groups" className={theme.styles.tabs.trigger}>
+              <Tabs.Trigger
+                value="groups"
+                className={`${theme.styles.tabs.trigger} flex items-center justify-center gap-1.5`}
+              >
+                <Layers className="w-3.5 h-3.5" />
                 Groups ({actualGroups.length})
               </Tabs.Trigger>
               <Tabs.Trigger value="evm" className={theme.styles.tabs.trigger}>
@@ -632,7 +750,8 @@ function WalletItem({
   onDelete,
   network,
 }: WalletItemProps) {
-  const { theme } = useTheme()
+  const { theme, themeName } = useTheme()
+  const colors = drawerThemeColors[themeName] || drawerThemeColors.dark
   const [isEditingName, setIsEditingName] = useState(false)
   const [editedName, setEditedName] = useState(wallet.name)
   const { updateWallet } = useWalletStore()
@@ -660,15 +779,22 @@ function WalletItem({
 
   return (
     <div
-      className={`group p-3 rounded-lg border transition-all cursor-pointer ${
+      className={`group relative p-3 rounded-xl border transition-all duration-200 cursor-pointer ${
         isActive
-          ? theme.styles.listItemActive
-          : `${theme.styles.listItem} ${theme.styles.listItemHover}`
+          ? `${colors.walletCardActiveBg} ${colors.walletCardActiveBorder} shadow-lg ${colors.walletCardActiveGlow}`
+          : `${colors.walletCardBg} ${colors.walletCardBorder} ${colors.walletCardHover}`
       }`}
       onClick={onSelect}
     >
+      {/* Active indicator line */}
+      {isActive && (
+        <div
+          className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full ${colors.accentLine}`}
+        />
+      )}
+
       <div className="flex items-center justify-between">
-        <div className="flex-1 min-w-0 mr-2">
+        <div className="flex-1 min-w-0 mr-2 pl-1">
           <div className="flex items-center gap-2">
             {isEditingName ? (
               <input
@@ -678,23 +804,24 @@ function WalletItem({
                 onBlur={handleNameSubmit}
                 onKeyDown={handleNameKeyDown}
                 onClick={(e) => e.stopPropagation()}
-                className={`font-medium px-1 py-0 bg-transparent border-b border-accent focus:outline-none ${theme.styles.textPrimary}`}
+                className={`font-medium px-2 py-1 bg-white/5 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/30 text-text-primary`}
                 autoFocus
               />
             ) : (
-              <h4
-                className={`font-medium ${theme.styles.textPrimary}`}
-                onDoubleClick={handleDoubleClick}
-              >
+              <h4 className={`font-medium text-text-primary`} onDoubleClick={handleDoubleClick}>
                 {wallet.name}
               </h4>
             )}
             {wallet.isImported && (
-              <span className={`text-xs ${theme.styles.textTertiary}`}>Imported</span>
+              <span
+                className={`text-xs px-1.5 py-0.5 rounded-md ${colors.walletCardBg} text-text-tertiary`}
+              >
+                Imported
+              </span>
             )}
           </div>
           <div className="flex items-center gap-2 mt-1">
-            <p className={`text-sm ${theme.styles.textSecondary}`}>
+            <p className={`text-sm text-text-secondary font-mono`}>
               {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
             </p>
             <button
@@ -702,10 +829,10 @@ function WalletItem({
                 e.stopPropagation()
                 onCopy()
               }}
-              className={`p-0.5 rounded transition-colors ${theme.styles.buttonIcon} opacity-0 group-hover:opacity-100`}
+              className={`p-1 rounded-lg transition-all ${colors.walletCardHover} opacity-0 group-hover:opacity-100 hover:scale-110`}
               title="Copy address"
             >
-              <Copy className={`w-3 h-3 ${theme.styles.iconSecondary}`} />
+              <Copy className={`w-3 h-3 text-text-secondary`} />
             </button>
             {network && (
               <a
@@ -713,10 +840,10 @@ function WalletItem({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className={`p-0.5 rounded transition-colors ${theme.styles.buttonIcon} opacity-0 group-hover:opacity-100`}
+                className={`p-1 rounded-lg transition-all ${colors.walletCardHover} opacity-0 group-hover:opacity-100 hover:scale-110`}
                 title="View on explorer"
               >
-                <ExternalLink className={`w-3 h-3 ${theme.styles.iconSecondary}`} />
+                <ExternalLink className={`w-3 h-3 text-text-secondary`} />
               </a>
             )}
           </div>
@@ -724,7 +851,10 @@ function WalletItem({
 
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
-            <button onClick={(e) => e.stopPropagation()} className={theme.styles.buttonIcon}>
+            <button
+              onClick={(e) => e.stopPropagation()}
+              className={`${theme.styles.buttonIcon} opacity-0 group-hover:opacity-100`}
+            >
               <MoreVertical className={`w-4 h-4 ${theme.styles.iconSecondary}`} />
             </button>
           </DropdownMenu.Trigger>
@@ -771,7 +901,7 @@ function WalletItem({
                   e.stopPropagation()
                   onDelete()
                 }}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-accent hover:bg-accent/10 rounded cursor-pointer transition-all duration-300"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-accent hover:bg-accent/10 rounded cursor-pointer transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
                 Delete
@@ -810,7 +940,8 @@ function WalletGroupItem({
   dragHandleProps,
 }: WalletGroupItemProps) {
   const { removeWalletGroup, updateWalletGroup, activeNetwork } = useWalletStore()
-  const { theme } = useTheme()
+  const { theme, themeName } = useTheme()
+  const colors = drawerThemeColors[themeName] || drawerThemeColors.dark
   const [isExpanded, setIsExpanded] = useState(true)
   const [isEditingName, setIsEditingName] = useState(false)
   const [editedName, setEditedName] = useState(group.name)
@@ -837,30 +968,36 @@ function WalletGroupItem({
   }
 
   return (
-    <div className={theme.styles.groupContainer}>
-      <div className={theme.styles.groupHeader}>
+    <div
+      className={`${colors.groupCardBg} backdrop-blur-sm rounded-xl border ${colors.groupCardBorder} ${colors.groupCardHover} transition-all duration-200 overflow-hidden`}
+    >
+      {/* Group header */}
+      <div className={`${colors.groupHeaderBg} px-3 py-3`}>
         <div className="flex items-center justify-between">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="flex items-center gap-2 flex-1 text-left"
           >
-            <div {...dragHandleProps} className="cursor-move p-1 -ml-1">
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 12 12"
-                className={theme.styles.iconSecondary}
-              >
+            {/* Drag handle */}
+            <div
+              {...dragHandleProps}
+              className={`cursor-move p-1.5 -ml-1 rounded-lg ${colors.walletCardHover} transition-colors`}
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" className={colors.dragHandleColor}>
                 <circle cx="3" cy="3" r="1.5" fill="currentColor" />
                 <circle cx="9" cy="3" r="1.5" fill="currentColor" />
                 <circle cx="3" cy="9" r="1.5" fill="currentColor" />
                 <circle cx="9" cy="9" r="1.5" fill="currentColor" />
               </svg>
             </div>
+
+            {/* Expand/collapse icon */}
             <ChevronDown
-              className={`w-4 h-4 transition-transform ${isExpanded ? '' : '-rotate-90'} ${theme.styles.iconSecondary}`}
+              className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? '' : '-rotate-90'} text-text-secondary`}
             />
-            <div>
+
+            {/* Group info */}
+            <div className="flex-1 min-w-0">
               {isEditingName ? (
                 <input
                   type="text"
@@ -869,18 +1006,18 @@ function WalletGroupItem({
                   onBlur={handleNameSubmit}
                   onKeyDown={handleNameKeyDown}
                   onClick={(e) => e.stopPropagation()}
-                  className={`font-medium px-1 py-0 bg-transparent border-b border-accent focus:outline-none ${theme.styles.textPrimary}`}
+                  className={`font-medium px-2 py-1 bg-white/5 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/30 text-text-primary`}
                   autoFocus
                 />
               ) : (
                 <h3
-                  className={`font-medium ${theme.styles.textPrimary}`}
+                  className={`font-semibold text-text-primary truncate`}
                   onDoubleClick={handleDoubleClick}
                 >
                   {group.name}
                 </h3>
               )}
-              <p className={`text-sm ${theme.styles.textSecondary}`}>
+              <p className={`text-xs text-text-secondary mt-0.5`}>
                 {(() => {
                   const evmCount = group.evmWalletCount || 0
                   const svmCount = group.svmWalletCount || 0
@@ -900,6 +1037,7 @@ function WalletGroupItem({
             </div>
           </button>
 
+          {/* Group actions dropdown */}
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
               <button className={theme.styles.buttonIcon}>
@@ -933,7 +1071,7 @@ function WalletGroupItem({
                       removeWalletGroup(group.id)
                     }
                   }}
-                  className="flex items-center gap-2 px-3 py-2 text-sm rounded cursor-pointer transition-all duration-300 text-accent hover:bg-accent/10"
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-accent hover:bg-accent/10 rounded cursor-pointer transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                   Delete Group
@@ -944,17 +1082,17 @@ function WalletGroupItem({
         </div>
       </div>
 
+      {/* Expanded wallet list */}
       {isExpanded && (
-        <div className="p-2 space-y-1">
+        <div className="p-2 space-y-1.5">
           {wallets.length === 0 ? (
             <div className="p-4 text-center">
-              <p className={`text-sm mb-2 ${theme.styles.textTertiary}`}>
-                No wallets in this group yet
-              </p>
+              <p className={`text-sm mb-3 text-text-tertiary`}>No wallets in this group yet</p>
               <button
                 onClick={onAddWallet}
-                className="text-sm text-accent hover:text-accent-hover hover:underline transition-colors"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-gradient-to-r ${colors.buttonPrimaryGradient} rounded-lg text-white font-medium shadow-md hover:shadow-lg transition-all hover:scale-105`}
               >
+                <Plus className="w-3.5 h-3.5" />
                 Add a wallet
               </button>
             </div>
@@ -997,7 +1135,8 @@ function GroupWalletItem({
   onDeleteWallet,
   network,
 }: GroupWalletItemProps) {
-  const { theme } = useTheme()
+  const { themeName } = useTheme()
+  const colors = drawerThemeColors[themeName] || drawerThemeColors.dark
   const [isEditingName, setIsEditingName] = useState(false)
   const [editedName, setEditedName] = useState(wallet.name)
   const { updateWallet } = useWalletStore()
@@ -1025,15 +1164,24 @@ function GroupWalletItem({
 
   return (
     <div
-      className={`group relative p-2 rounded border ${
-        isActive ? theme.styles.listItemActive : `border-transparent ${theme.styles.listItemHover}`
+      className={`group relative p-2.5 rounded-lg border transition-all duration-200 ${
+        isActive
+          ? `${colors.walletCardActiveBg} ${colors.walletCardActiveBorder} shadow-md ${colors.walletCardActiveGlow}`
+          : `border-transparent ${colors.walletCardHover}`
       }`}
     >
+      {/* Active indicator */}
+      {isActive && (
+        <div
+          className={`absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-r-full ${colors.accentLine}`}
+        />
+      )}
+
       <div
         onClick={() => onSelectWallet(wallet.id)}
         className="flex items-center justify-between cursor-pointer"
       >
-        <div className="flex-1 min-w-0 mr-2">
+        <div className="flex-1 min-w-0 mr-2 pl-1">
           {isEditingName ? (
             <input
               type="text"
@@ -1042,19 +1190,19 @@ function GroupWalletItem({
               onBlur={handleNameSubmit}
               onKeyDown={handleNameKeyDown}
               onClick={(e) => e.stopPropagation()}
-              className={`text-sm font-medium px-1 py-0 bg-transparent border-b border-accent focus:outline-none ${theme.styles.textPrimary}`}
+              className={`text-sm font-medium px-2 py-1 bg-white/5 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/30 text-text-primary`}
               autoFocus
             />
           ) : (
             <p
-              className={`text-sm font-medium ${theme.styles.textPrimary}`}
+              className={`text-sm font-medium text-text-primary`}
               onDoubleClick={handleDoubleClick}
             >
               {wallet.name}
             </p>
           )}
-          <div className="flex items-center gap-2">
-            <p className={`text-xs ${theme.styles.textSecondary}`}>
+          <div className="flex items-center gap-2 mt-0.5">
+            <p className={`text-xs text-text-secondary font-mono`}>
               {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
             </p>
             <button
@@ -1062,10 +1210,10 @@ function GroupWalletItem({
                 e.stopPropagation()
                 onCopyAddress(wallet.address)
               }}
-              className={`p-0.5 rounded transition-colors ${theme.styles.buttonIcon} opacity-0 group-hover:opacity-100`}
+              className={`p-1 rounded-lg transition-all ${colors.walletCardHover} opacity-0 group-hover:opacity-100 hover:scale-110`}
               title="Copy address"
             >
-              <Copy className={`w-3 h-3 ${theme.styles.iconSecondary}`} />
+              <Copy className={`w-3 h-3 text-text-secondary`} />
             </button>
             {network && (
               <a
@@ -1073,28 +1221,32 @@ function GroupWalletItem({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className={`p-0.5 rounded transition-colors ${theme.styles.buttonIcon} opacity-0 group-hover:opacity-100`}
+                className={`p-1 rounded-lg transition-all ${colors.walletCardHover} opacity-0 group-hover:opacity-100 hover:scale-110`}
                 title="View on explorer"
               >
-                <ExternalLink className={`w-3 h-3 ${theme.styles.iconSecondary}`} />
+                <ExternalLink className={`w-3 h-3 text-text-secondary`} />
               </a>
             )}
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className={`text-xs ${theme.styles.textTertiary}`}>{wallet.type}</span>
+          <span
+            className={`text-xs px-1.5 py-0.5 rounded-md ${colors.walletCardBg} text-text-tertiary`}
+          >
+            {wallet.type}
+          </span>
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
               <button
                 onClick={(e) => e.stopPropagation()}
-                className={`p-1 rounded opacity-0 group-hover:opacity-100 transition-all ${theme.styles.buttonIcon}`}
+                className={`p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-all ${colors.walletCardHover} hover:scale-110`}
               >
-                <MoreVertical className={`w-3 h-3 ${theme.styles.iconSecondary}`} />
+                <MoreVertical className={`w-3.5 h-3.5 text-text-secondary`} />
               </button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal>
               <DropdownMenu.Content
-                className={`min-w-[140px] rounded-lg shadow-lg p-1 ${theme.styles.dropdown.content}`}
+                className={`min-w-[150px] ${colors.dropdownBg} backdrop-blur-xl rounded-xl shadow-2xl border ${colors.dropdownBorder} p-1.5 z-50 animate-in fade-in-0 zoom-in-95 duration-200`}
                 sideOffset={5}
               >
                 <DropdownMenu.Item
@@ -1102,9 +1254,9 @@ function GroupWalletItem({
                     e.stopPropagation()
                     onCopyAddress(wallet.address)
                   }}
-                  className={`${theme.styles.dropdown.item} ${theme.styles.dropdown.itemHover}`}
+                  className={`flex items-center gap-2 px-3 py-2 text-sm text-text-primary ${colors.dropdownHover} rounded-lg cursor-pointer transition-colors`}
                 >
-                  <Copy className={`w-3 h-3 ${theme.styles.iconSecondary}`} />
+                  <Copy className={`w-3.5 h-3.5`} />
                   Copy Address
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
@@ -1112,20 +1264,20 @@ function GroupWalletItem({
                     e.stopPropagation()
                     onRenameWallet(wallet)
                   }}
-                  className={`${theme.styles.dropdown.item} ${theme.styles.dropdown.itemHover}`}
+                  className={`flex items-center gap-2 px-3 py-2 text-sm text-text-primary ${colors.dropdownHover} rounded-lg cursor-pointer transition-colors`}
                 >
-                  <Edit2 className="w-3 h-3" />
+                  <Edit2 className="w-3.5 h-3.5" />
                   Rename
                 </DropdownMenu.Item>
-                <DropdownMenu.Separator className={theme.styles.dropdown.separator} />
+                <DropdownMenu.Separator className={`h-px ${colors.dropdownBorder} my-1.5`} />
                 <DropdownMenu.Item
                   onClick={(e) => {
                     e.stopPropagation()
                     onDeleteWallet(wallet.id)
                   }}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm text-accent hover:bg-accent/10 rounded cursor-pointer transition-all duration-300"
+                  className={`flex items-center gap-2 px-3 py-2 text-sm ${colors.deleteText} ${colors.deleteHover} rounded-lg cursor-pointer transition-colors`}
                 >
-                  <Trash2 className="w-3 h-3" />
+                  <Trash2 className="w-3.5 h-3.5" />
                   Delete
                 </DropdownMenu.Item>
               </DropdownMenu.Content>
