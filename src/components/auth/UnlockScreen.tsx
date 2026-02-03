@@ -5,66 +5,7 @@ import { useAuthStore } from '../../store/authStore'
 import { useUIStore } from '../../store/uiStore'
 import { useTheme } from '../../hooks/useTheme'
 
-// Theme color configurations for the lock screen
-const themeColors = {
-  light: {
-    bg: 'from-slate-400 via-cyan-300 to-pink-300',
-    meshGradient1: 'from-cyan-500/10',
-    meshGradient2: 'from-pink-500/10',
-    particleColor: '0, 140, 180',
-    cardBg: 'bg-white/40',
-    cardBorder: 'border-gray-500/20',
-    cardGlow: 'opacity-10',
-    textPrimary: 'text-gray-900',
-    textSecondary: 'text-gray-600',
-    textMuted: 'text-gray-500',
-    inputBg: 'bg-black/10',
-    inputBorder: 'border-gray-500/30',
-    inputFocusBorder: 'focus:border-cyan-500',
-    accentGradient: 'from-cyan-400 via-cyan-500 to-pink-400',
-    glowColor: 'cyan',
-    buttonGradient: 'from-cyan-500 via-teal-400 to-pink-500',
-    buttonShadow: 'shadow-cyan-500/25 hover:shadow-cyan-500/40',
-  },
-  dark: {
-    bg: 'from-slate-900 via-slate-800 to-slate-900',
-    meshGradient1: 'from-cyan-900/40',
-    meshGradient2: 'from-pink-900/30',
-    particleColor: '0, 225, 255',
-    cardBg: 'bg-black/30',
-    cardBorder: 'border-white/10',
-    cardGlow: 'opacity-25 group-hover:opacity-40',
-    textPrimary: 'text-white',
-    textSecondary: 'text-white/70',
-    textMuted: 'text-white/40',
-    inputBg: 'bg-white/5',
-    inputBorder: 'border-white/10',
-    inputFocusBorder: 'focus:border-cyan-500/50',
-    accentGradient: 'from-cyan-400 via-cyan-300 to-pink-400',
-    glowColor: 'cyan',
-    buttonGradient: 'from-cyan-500 via-cyan-400 to-pink-500',
-    buttonShadow: 'shadow-cyan-500/25 hover:shadow-cyan-500/40',
-  },
-  xipz: {
-    bg: 'from-primary-950 via-primary-900 to-primary-950',
-    meshGradient1: 'from-red-900/40',
-    meshGradient2: 'from-red-800/30',
-    particleColor: '239, 68, 68',
-    cardBg: 'bg-primary-900/50',
-    cardBorder: 'border-primary-800/50',
-    cardGlow: 'opacity-25 group-hover:opacity-40',
-    textPrimary: 'text-primary-100',
-    textSecondary: 'text-primary-200',
-    textMuted: 'text-primary-400',
-    inputBg: 'bg-primary-800/50',
-    inputBorder: 'border-primary-800/50',
-    inputFocusBorder: 'focus:border-red-500/50',
-    accentGradient: 'from-red-500 via-red-600 to-red-500',
-    glowColor: 'red',
-    buttonGradient: 'from-red-500 via-red-600 to-red-500',
-    buttonShadow: 'shadow-red-500/25 hover:shadow-red-500/40',
-  },
-}
+
 
 // Animated background particles
 function ParticleField({ color }: { color: string }) {
@@ -182,10 +123,10 @@ export function UnlockScreen() {
   const [isLoading, setIsLoading] = useState(false)
   const [isFocused, setIsFocused] = useState(false)
   const [isConfirmFocused, setIsConfirmFocused] = useState(false)
-  const { themeName } = useTheme()
+  const { theme } = useTheme()
   
-  // Get theme-specific colors
-  const colors = themeColors[themeName] || themeColors.dark
+  // Get unlock screen theme styles
+  const styles = theme.styles.unlockScreen
   
   // Determine which wallpaper to use
   const wallpaper = syncWallpaper ? chatWallpaper : lockscreenWallpaper
@@ -250,18 +191,18 @@ export function UnlockScreen() {
 
   return (
     <div
-      className={`min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br ${colors.bg}`}
+      className={`min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br ${styles.bg}`}
     >
       {/* Animated mesh gradient background */}
       <div
-        className={`absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] ${colors.meshGradient1} via-transparent to-transparent`}
+        className={`absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] ${styles.meshGradient1} via-transparent to-transparent`}
       />
       <div
-        className={`absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] ${colors.meshGradient2} via-transparent to-transparent`}
+        className={`absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] ${styles.meshGradient2} via-transparent to-transparent`}
       />
 
       {/* Particle effect */}
-      <ParticleField color={colors.particleColor} />
+      <ParticleField color={styles.particleColor} />
 
       {/* Custom wallpaper overlay */}
       {wallpaper && (
@@ -287,11 +228,11 @@ export function UnlockScreen() {
         <div className="relative group">
           {/* Glow effect behind card */}
           <div
-            className={`absolute -inset-1 bg-gradient-to-r ${colors.accentGradient} rounded-2xl blur-lg ${colors.cardGlow} transition-opacity duration-500`}
+            className={`absolute -inset-1 bg-gradient-to-r ${styles.accentGradient} rounded-2xl blur-lg ${styles.cardGlow} transition-opacity duration-500`}
           />
 
           <div
-            className={`relative ${colors.cardBg} backdrop-blur-xl border ${colors.cardBorder} rounded-2xl shadow-2xl p-8 overflow-hidden`}
+            className={`relative ${styles.cardBg} backdrop-blur-xl border ${styles.cardBorder} rounded-2xl shadow-2xl p-8 overflow-hidden`}
           >
             {/* Subtle inner glow */}
             <div className="absolute inset-0 bg-gradient-to-br from-white/[0.05] to-transparent pointer-events-none" />
@@ -299,7 +240,7 @@ export function UnlockScreen() {
             {/* Theme Toggle Button */}
             <button
               onClick={cycleTheme}
-              className={`absolute top-4 right-4 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${colors.inputBg} hover:bg-white/10 border ${colors.inputBorder} ${colors.textMuted} hover:${colors.textPrimary} hover:scale-105`}
+              className={`absolute top-4 right-4 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${styles.inputBg} hover:bg-white/10 border ${styles.inputBorder} ${styles.textMuted} hover:${styles.textPrimary} hover:scale-105`}
               aria-label="Change theme"
             >
               {getThemeIcon()}
@@ -308,7 +249,7 @@ export function UnlockScreen() {
             {/* Header section */}
             <div className="flex flex-col items-center mb-8 relative">
               {profilePicture ? (
-                <GlowRing gradient={colors.accentGradient}>
+                <GlowRing gradient={styles.accentGradient}>
                   <div className="w-24 h-24 rounded-full overflow-hidden ring-2 ring-white/20">
                     <img
                       src={profilePicture}
@@ -318,9 +259,9 @@ export function UnlockScreen() {
                   </div>
                 </GlowRing>
               ) : (
-                <GlowRing gradient={colors.accentGradient}>
+                <GlowRing gradient={styles.accentGradient}>
                   <div
-                    className={`w-24 h-24 rounded-full flex items-center justify-center bg-gradient-to-br ${colors.accentGradient} shadow-lg ${colors.buttonShadow}`}
+                    className={`w-24 h-24 rounded-full flex items-center justify-center bg-gradient-to-br ${styles.accentGradient} shadow-lg ${styles.buttonShadow}`}
                   >
                     <Wallet className="w-10 h-10 text-white drop-shadow-lg" />
                   </div>
@@ -329,13 +270,13 @@ export function UnlockScreen() {
 
               <div className="mt-6 text-center">
                 <h1
-                  className={`text-3xl font-bold bg-gradient-to-r ${colors.accentGradient} bg-clip-text text-transparent`}
+                  className={`text-3xl font-bold bg-gradient-to-r ${styles.accentGradient} bg-clip-text text-transparent`}
                 >
                   OpenWallet
                 </h1>
                 <div className="flex items-center justify-center gap-2 mt-2">
                   <Shield className="w-4 h-4 text-emerald-400" />
-                  <p className={`text-sm ${colors.textMuted}`}>
+                  <p className={`text-sm ${styles.textMuted}`}>
                     {!isInitialized ? 'Create a secure password' : 'Secured & Encrypted'}
                   </p>
                 </div>
@@ -346,7 +287,7 @@ export function UnlockScreen() {
               {/* Password field */}
               <div className="space-y-2">
                 <label
-                  className={`block text-xs font-medium ${colors.textMuted} uppercase tracking-wider`}
+                  className={`block text-xs font-medium ${styles.textMuted} uppercase tracking-wider`}
                 >
                   Password
                 </label>
@@ -355,11 +296,11 @@ export function UnlockScreen() {
                 >
                   {/* Input glow on focus */}
                   <div
-                    className={`absolute -inset-0.5 bg-gradient-to-r ${colors.accentGradient} rounded-xl blur transition-opacity duration-300 ${isFocused ? 'opacity-50' : 'opacity-0'}`}
+                    className={`absolute -inset-0.5 bg-gradient-to-r ${styles.accentGradient} rounded-xl blur transition-opacity duration-300 ${isFocused ? 'opacity-50' : 'opacity-0'}`}
                   />
 
                   <div className="relative flex items-center">
-                    <div className={`absolute left-4 ${colors.textMuted} transition-colors`}>
+                    <div className={`absolute left-4 ${styles.textMuted} transition-colors`}>
                       <Fingerprint className="w-5 h-5" />
                     </div>
                     <input
@@ -369,7 +310,7 @@ export function UnlockScreen() {
                       onFocus={() => setIsFocused(true)}
                       onBlur={() => setIsFocused(false)}
                       placeholder="Enter password"
-                      className={`w-full pl-12 pr-4 py-3.5 ${colors.inputBg} border ${colors.inputBorder} rounded-xl ${colors.textPrimary} placeholder:${colors.textMuted} focus:outline-none ${colors.inputFocusBorder} transition-all duration-300`}
+                      className={`w-full pl-12 pr-4 py-3.5 ${styles.inputBg} border ${styles.inputBorder} rounded-xl ${styles.textPrimary} placeholder:${styles.textMuted} focus:outline-none ${styles.inputFocusBorder} transition-all duration-300`}
                       autoFocus
                     />
                   </div>
@@ -380,7 +321,7 @@ export function UnlockScreen() {
               {!isInitialized && (
                 <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
                   <label
-                    className={`block text-xs font-medium ${colors.textMuted} uppercase tracking-wider`}
+                    className={`block text-xs font-medium ${styles.textMuted} uppercase tracking-wider`}
                   >
                     Confirm Password
                   </label>
@@ -389,11 +330,11 @@ export function UnlockScreen() {
                   >
                     {/* Input glow on focus */}
                     <div
-                      className={`absolute -inset-0.5 bg-gradient-to-r ${colors.accentGradient} rounded-xl blur transition-opacity duration-300 ${isConfirmFocused ? 'opacity-50' : 'opacity-0'}`}
+                      className={`absolute -inset-0.5 bg-gradient-to-r ${styles.accentGradient} rounded-xl blur transition-opacity duration-300 ${isConfirmFocused ? 'opacity-50' : 'opacity-0'}`}
                     />
 
                     <div className="relative flex items-center">
-                      <div className={`absolute left-4 ${colors.textMuted} transition-colors`}>
+                      <div className={`absolute left-4 ${styles.textMuted} transition-colors`}>
                         <Lock className="w-5 h-5" />
                       </div>
                       <input
@@ -403,7 +344,7 @@ export function UnlockScreen() {
                         onFocus={() => setIsConfirmFocused(true)}
                         onBlur={() => setIsConfirmFocused(false)}
                         placeholder="Confirm password"
-                        className={`w-full pl-12 pr-4 py-3.5 ${colors.inputBg} border ${colors.inputBorder} rounded-xl ${colors.textPrimary} placeholder:${colors.textMuted} focus:outline-none ${colors.inputFocusBorder} transition-all duration-300`}
+                        className={`w-full pl-12 pr-4 py-3.5 ${styles.inputBg} border ${styles.inputBorder} rounded-xl ${styles.textPrimary} placeholder:${styles.textMuted} focus:outline-none ${styles.inputFocusBorder} transition-all duration-300`}
                       />
                     </div>
                   </div>
@@ -420,7 +361,7 @@ export function UnlockScreen() {
               {/* Submit button */}
               <button type="submit" disabled={isLoading} className="relative w-full group/btn">
                 <div
-                  className={`flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r ${colors.buttonGradient} rounded-xl font-semibold text-white shadow-lg ${colors.buttonShadow} transition-all duration-300 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100`}
+                  className={`flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r ${styles.buttonGradient} rounded-xl font-semibold text-white shadow-lg ${styles.buttonShadow} transition-all duration-300 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100`}
                 >
                   {isLoading ? (
                     <>
@@ -447,8 +388,8 @@ export function UnlockScreen() {
             </form>
 
             {/* Footer security badge */}
-            <div className={`mt-6 pt-6 border-t ${colors.cardBorder}`}>
-              <div className={`flex items-center justify-center gap-2 text-xs ${colors.textMuted}`}>
+            <div className={`mt-6 pt-6 border-t ${styles.cardBorder}`}>
+              <div className={`flex items-center justify-center gap-2 text-xs ${styles.textMuted}`}>
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span>256-bit AES Encryption</span>
               </div>

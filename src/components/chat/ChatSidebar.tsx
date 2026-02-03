@@ -5,57 +5,7 @@ import { EmptyState } from '../common/EmptyState'
 import { useState } from 'react'
 import { useTheme } from '../../hooks/useTheme'
 
-// Theme color configurations for chat sidebar
-const sidebarThemeColors = {
-  light: {
-    headerBg: 'bg-white/60',
-    headerBorder: 'border-gray-200/50',
-    newChatGradient: 'from-cyan-500 via-teal-400 to-cyan-600',
-    newChatShadow: 'shadow-cyan-500/20 hover:shadow-cyan-500/30',
-    activeCardBg: 'bg-cyan-50/80',
-    activeCardBorder: 'border-cyan-400/40',
-    activeCardGlow: 'shadow-cyan-400/10',
-    hoverCardBg: 'hover:bg-gray-100/60',
-    cardBorder: 'border-gray-200/30',
-    iconActive: 'text-cyan-500',
-    iconDefault: 'text-gray-400',
-    inputBg: 'bg-white/80',
-    inputBorder: 'border-gray-300/50',
-    inputFocus: 'focus:border-cyan-400 focus:ring-cyan-400/20',
-  },
-  dark: {
-    headerBg: 'bg-surface-elevated/50',
-    headerBorder: 'border-border-subtle',
-    newChatGradient: 'from-cyan-500 via-cyan-400 to-pink-500',
-    newChatShadow: 'shadow-cyan-500/25 hover:shadow-cyan-500/40',
-    activeCardBg: 'bg-cyan-500/10',
-    activeCardBorder: 'border-cyan-500/30',
-    activeCardGlow: 'shadow-cyan-500/10',
-    hoverCardBg: 'hover:bg-white/5',
-    cardBorder: 'border-white/5',
-    iconActive: 'text-cyan-400',
-    iconDefault: 'text-white/40',
-    inputBg: 'bg-white/5',
-    inputBorder: 'border-white/10',
-    inputFocus: 'focus:border-cyan-500/50 focus:ring-cyan-500/20',
-  },
-  xipz: {
-    headerBg: 'bg-primary-900/50',
-    headerBorder: 'border-primary-800/50',
-    newChatGradient: 'from-red-500 via-red-600 to-red-500',
-    newChatShadow: 'shadow-red-500/25 hover:shadow-red-500/40',
-    activeCardBg: 'bg-red-500/10',
-    activeCardBorder: 'border-red-500/30',
-    activeCardGlow: 'shadow-red-500/10',
-    hoverCardBg: 'hover:bg-primary-800/30',
-    cardBorder: 'border-primary-800/30',
-    iconActive: 'text-red-400',
-    iconDefault: 'text-primary-400',
-    inputBg: 'bg-primary-900/50',
-    inputBorder: 'border-primary-800/50',
-    inputFocus: 'focus:border-red-500/50 focus:ring-red-500/20',
-  },
-}
+
 
 interface ChatSidebarProps {
   collapsed?: boolean
@@ -72,10 +22,10 @@ export function ChatSidebar({ collapsed }: ChatSidebarProps) {
   } = useChatStore()
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
-  const { theme, themeName } = useTheme()
+  const { theme } = useTheme()
 
-  // Get theme-specific colors
-  const colors = sidebarThemeColors[themeName] || sidebarThemeColors.dark
+  // Get chat sidebar theme styles
+  const styles = theme.styles.chatSidebar
 
   const handleNewChat = async () => {
     await createConversation()
@@ -114,7 +64,7 @@ export function ChatSidebar({ collapsed }: ChatSidebarProps) {
       <div className="h-full w-full border-r border-border-subtle flex flex-col items-center justify-start py-4 gap-4 panel-content-fade">
         <button
           onClick={handleNewChat}
-          className={`p-2.5 rounded-xl bg-gradient-to-r ${colors.newChatGradient} shadow-lg ${colors.newChatShadow} hover:scale-105 active:scale-95 transition-all duration-200`}
+          className={`p-2.5 rounded-xl bg-gradient-to-r ${styles.newChatGradient} shadow-lg ${styles.newChatShadow} hover:scale-105 active:scale-95 transition-all duration-200`}
           title="New Chat"
         >
           <SquarePen className="w-4 h-4 text-white" />
@@ -126,10 +76,10 @@ export function ChatSidebar({ collapsed }: ChatSidebarProps) {
   return (
     <div className="h-full flex flex-col panel-content-fade">
       {/* Header */}
-      <div className={`p-4 ${colors.headerBg} border-b ${colors.headerBorder}`}>
+      <div className={`p-4 ${styles.headerBg} border-b ${styles.headerBorder}`}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className={`p-1.5 rounded-lg bg-gradient-to-r ${colors.newChatGradient}`}>
+            <div className={`p-1.5 rounded-lg bg-gradient-to-r ${styles.newChatGradient}`}>
               <MessageSquare className="w-4 h-4 text-white" />
             </div>
             <h2 className="text-lg font-semibold text-text-primary">Chats</h2>
@@ -139,7 +89,7 @@ export function ChatSidebar({ collapsed }: ChatSidebarProps) {
         {/* New Chat button with gradient */}
         <button onClick={handleNewChat} className={`relative w-full group overflow-hidden`}>
           <div
-            className={`flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r ${colors.newChatGradient} rounded-xl font-medium text-white shadow-lg ${colors.newChatShadow} transition-all duration-300 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]`}
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r ${styles.newChatGradient} rounded-xl font-medium text-white shadow-lg ${styles.newChatShadow} transition-all duration-300 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]`}
           >
             <Sparkles className="w-4 h-4" />
             <span>New Chat</span>
@@ -171,14 +121,14 @@ export function ChatSidebar({ collapsed }: ChatSidebarProps) {
                   onClick={() => setActiveConversation(conversation.id)}
                   className={`group relative flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-200 border ${
                     isActive
-                      ? `${colors.activeCardBg} ${colors.activeCardBorder} shadow-lg ${colors.activeCardGlow}`
-                      : `${colors.hoverCardBg} ${colors.cardBorder} hover:border-white/10`
+                      ? `${styles.activeCardBg} ${styles.activeCardBorder} shadow-lg ${styles.activeCardGlow}`
+                      : `${styles.hoverCardBg} ${styles.cardBorder} hover:border-white/10`
                   }`}
                 >
                   {/* Active indicator line */}
                   {isActive && (
                     <div
-                      className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full bg-gradient-to-b ${colors.newChatGradient}`}
+                      className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full bg-gradient-to-b ${styles.newChatGradient}`}
                     />
                   )}
 
@@ -186,16 +136,16 @@ export function ChatSidebar({ collapsed }: ChatSidebarProps) {
                     {/* Icon with conditional styling */}
                     <div
                       className={`flex-shrink-0 p-1.5 rounded-lg transition-colors ${
-                        isActive ? `bg-gradient-to-r ${colors.newChatGradient}` : 'bg-surface-hover'
+                        isActive ? `bg-gradient-to-r ${styles.newChatGradient}` : 'bg-surface-hover'
                       }`}
                     >
                       {conversation.pinned ? (
                         <Pin
-                          className={`w-3.5 h-3.5 ${isActive ? 'text-white' : colors.iconActive}`}
+                          className={`w-3.5 h-3.5 ${isActive ? 'text-white' : styles.iconActive}`}
                         />
                       ) : (
                         <MessageSquare
-                          className={`w-3.5 h-3.5 ${isActive ? 'text-white' : colors.iconDefault}`}
+                          className={`w-3.5 h-3.5 ${isActive ? 'text-white' : styles.iconDefault}`}
                         />
                       )}
                     </div>
@@ -216,7 +166,7 @@ export function ChatSidebar({ collapsed }: ChatSidebarProps) {
                             }
                           }}
                           onClick={(e) => e.stopPropagation()}
-                          className={`w-full px-2 py-1 text-sm ${colors.inputBg} border ${colors.inputBorder} rounded-lg focus:outline-none focus:ring-2 ${colors.inputFocus} text-text-primary transition-all`}
+                          className={`w-full px-2 py-1 text-sm ${styles.inputBg} border ${styles.inputBorder} rounded-lg focus:outline-none focus:ring-2 ${styles.inputFocus} text-text-primary transition-all`}
                           autoFocus
                         />
                       ) : (

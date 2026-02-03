@@ -5,57 +5,7 @@ import { useTheme } from '../../hooks/useTheme'
 import { Network } from '../../utils/networks'
 import { Wallet } from '../../types'
 
-// Theme color configurations for network summary
-const summaryThemeColors = {
-  light: {
-    cardBg: 'bg-white/70',
-    cardBorder: 'border-gray-200/50',
-    cardHover: 'hover:border-gray-300/60 hover:shadow-md',
-    cardShadow: 'shadow-sm',
-    execCardBg: 'bg-gradient-to-br from-cyan-50/80 to-teal-50/80',
-    execCardBorder: 'border-cyan-300/50',
-    execCardGlow: 'shadow-cyan-200/30',
-    execIconBg: 'bg-gradient-to-br from-cyan-500 to-teal-400',
-    execBadgeBg: 'bg-cyan-500',
-    iconBg: 'bg-gradient-to-br from-gray-100 to-gray-200',
-    dividerColor: 'border-gray-200/50',
-    progressBg: 'bg-gray-200/50',
-    progressFill: 'bg-gradient-to-r from-cyan-500 to-teal-400',
-    headerGradient: 'from-cyan-600 to-teal-500',
-  },
-  dark: {
-    cardBg: 'bg-white/5',
-    cardBorder: 'border-white/10',
-    cardHover: 'hover:border-white/20 hover:bg-white/[0.07]',
-    cardShadow: '',
-    execCardBg: 'bg-gradient-to-br from-cyan-500/10 to-pink-500/5',
-    execCardBorder: 'border-cyan-500/30',
-    execCardGlow: 'shadow-cyan-500/10',
-    execIconBg: 'bg-gradient-to-br from-cyan-500 to-pink-500',
-    execBadgeBg: 'bg-cyan-500',
-    iconBg: 'bg-gradient-to-br from-white/10 to-white/5',
-    dividerColor: 'border-white/10',
-    progressBg: 'bg-white/10',
-    progressFill: 'bg-gradient-to-r from-cyan-500 to-pink-500',
-    headerGradient: 'from-cyan-400 to-pink-400',
-  },
-  xipz: {
-    cardBg: 'bg-primary-800/30',
-    cardBorder: 'border-primary-800/50',
-    cardHover: 'hover:border-primary-700/50 hover:bg-primary-800/50',
-    cardShadow: '',
-    execCardBg: 'bg-gradient-to-br from-red-500/10 to-red-600/5',
-    execCardBorder: 'border-red-500/30',
-    execCardGlow: 'shadow-red-500/10',
-    execIconBg: 'bg-gradient-to-br from-red-500 to-red-600',
-    execBadgeBg: 'bg-red-500',
-    iconBg: 'bg-gradient-to-br from-primary-800/50 to-primary-900/50',
-    dividerColor: 'border-primary-800/50',
-    progressBg: 'bg-primary-800/50',
-    progressFill: 'bg-gradient-to-r from-red-500 to-red-600',
-    headerGradient: 'from-red-400 via-red-500 to-red-400',
-  },
-}
+
 
 interface NetworkSummaryProps {
   wallet: Wallet | undefined
@@ -74,8 +24,8 @@ export function NetworkSummary({
   isLoading,
   error,
 }: NetworkSummaryProps) {
-  const { themeName } = useTheme()
-  const colors = summaryThemeColors[themeName] || summaryThemeColors.dark
+  const { theme } = useTheme()
+  const styles = theme.styles.networkSummary
 
   if (!wallet) {
     return (
@@ -94,7 +44,7 @@ export function NetworkSummary({
         <div className="animate-pulse space-y-3">
           <div className="h-6 w-40 bg-white/10 rounded-lg" />
           {[1, 2, 3].map((i) => (
-            <div key={i} className={`h-28 ${colors.cardBg} rounded-xl`} />
+            <div key={i} className={`h-28 ${styles.cardBg} rounded-xl`} />
           ))}
         </div>
       </div>
@@ -143,7 +93,7 @@ export function NetworkSummary({
       {/* Network Breakdown Header */}
       <div className="space-y-3">
         <h4
-          className={`text-sm font-medium mb-3 bg-gradient-to-r ${colors.headerGradient} bg-clip-text text-transparent`}
+          className={`text-sm font-medium mb-3 bg-gradient-to-r ${styles.headerGradient} bg-clip-text text-transparent`}
         >
           Network Breakdown
         </h4>
@@ -160,8 +110,8 @@ export function NetworkSummary({
               key={networkBalance.networkId}
               className={`p-4 rounded-xl border transition-all duration-200 ${
                 isExecutionNetwork
-                  ? `${colors.execCardBg} ${colors.execCardBorder} shadow-lg ${colors.execCardGlow}`
-                  : `${colors.cardBg} ${colors.cardBorder} ${colors.cardHover} ${colors.cardShadow}`
+                  ? `${styles.execCardBg} ${styles.execCardBorder} shadow-lg ${styles.execCardGlow}`
+                  : `${styles.cardBg} ${styles.cardBorder} ${styles.cardHover} ${styles.cardShadow}`
               }`}
             >
               {/* Network header */}
@@ -169,7 +119,7 @@ export function NetworkSummary({
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-11 h-11 rounded-xl flex items-center justify-center shadow-lg ${
-                      isExecutionNetwork ? colors.execIconBg : colors.iconBg
+                      isExecutionNetwork ? styles.execIconBg : styles.iconBg
                     }`}
                   >
                     <Globe
@@ -181,7 +131,7 @@ export function NetworkSummary({
                       <p className="font-semibold text-text-primary">{networkName}</p>
                       {isExecutionNetwork && (
                         <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs ${colors.execBadgeBg} text-white rounded-md font-medium shadow-sm`}
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs ${styles.execBadgeBg} text-white rounded-md font-medium shadow-sm`}
                         >
                           <Zap className="w-3 h-3" />
                           EXEC
@@ -201,15 +151,15 @@ export function NetworkSummary({
               </div>
 
               {/* Progress bar showing percentage */}
-              <div className={`h-1.5 ${colors.progressBg} rounded-full overflow-hidden mb-3`}>
+              <div className={`h-1.5 ${styles.progressBg} rounded-full overflow-hidden mb-3`}>
                 <div
-                  className={`h-full ${colors.progressFill} rounded-full transition-all duration-500`}
+                  className={`h-full ${styles.progressFill} rounded-full transition-all duration-500`}
                   style={{ width: `${percentOfTotal}%` }}
                 />
               </div>
 
               {/* Token details */}
-              <div className={`pt-3 border-t ${colors.dividerColor}`}>
+              <div className={`pt-3 border-t ${styles.dividerColor}`}>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-text-secondary">Native Balance</span>
                   <div className="text-right">

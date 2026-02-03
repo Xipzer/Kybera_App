@@ -4,51 +4,7 @@ import { TrendingDown, TrendingUp, Clock, CheckCircle2, Coins } from 'lucide-rea
 import { BlockchainBalance } from '../../services/blockchain/blockchainService'
 import { useTheme } from '../../hooks/useTheme'
 
-// Theme color configurations for token list
-const tokenThemeColors = {
-  light: {
-    cardBg: 'bg-white/70',
-    cardBorder: 'border-gray-200/50',
-    cardHover: 'hover:border-gray-300/60 hover:shadow-md',
-    cardShadow: 'shadow-sm',
-    iconBg: 'bg-gradient-to-br from-gray-100 to-gray-200',
-    badgeLiveBg: 'bg-green-500/10',
-    badgeLiveText: 'text-green-600',
-    badgeCachedBg: 'bg-yellow-500/10',
-    badgeCachedText: 'text-yellow-600',
-    badgePartialBg: 'bg-blue-500/10',
-    badgePartialText: 'text-blue-600',
-    headerGradient: 'from-cyan-600 to-teal-500',
-  },
-  dark: {
-    cardBg: 'bg-white/5',
-    cardBorder: 'border-white/10',
-    cardHover: 'hover:border-white/20 hover:bg-white/[0.07]',
-    cardShadow: '',
-    iconBg: 'bg-gradient-to-br from-white/10 to-white/5',
-    badgeLiveBg: 'bg-green-500/10',
-    badgeLiveText: 'text-green-400',
-    badgeCachedBg: 'bg-yellow-500/10',
-    badgeCachedText: 'text-yellow-400',
-    badgePartialBg: 'bg-blue-500/10',
-    badgePartialText: 'text-blue-400',
-    headerGradient: 'from-cyan-400 to-pink-400',
-  },
-  xipz: {
-    cardBg: 'bg-primary-800/30',
-    cardBorder: 'border-primary-800/50',
-    cardHover: 'hover:border-primary-700/50 hover:bg-primary-800/50',
-    cardShadow: '',
-    iconBg: 'bg-gradient-to-br from-primary-800/50 to-primary-900/50',
-    badgeLiveBg: 'bg-green-500/10',
-    badgeLiveText: 'text-green-400',
-    badgeCachedBg: 'bg-yellow-500/10',
-    badgeCachedText: 'text-yellow-400',
-    badgePartialBg: 'bg-blue-500/10',
-    badgePartialText: 'text-blue-400',
-    headerGradient: 'from-red-400 via-red-500 to-red-400',
-  },
-}
+
 
 interface TokenListProps {
   network: Network
@@ -58,8 +14,8 @@ interface TokenListProps {
 }
 
 export function TokenList({ network, balanceData, isLoading, error }: TokenListProps) {
-  const { themeName } = useTheme()
-  const colors = tokenThemeColors[themeName] || tokenThemeColors.dark
+  const { theme } = useTheme()
+  const styles = theme.styles.tokenList
 
   if (isLoading) {
     return (
@@ -67,7 +23,7 @@ export function TokenList({ network, balanceData, isLoading, error }: TokenListP
         <div className="animate-pulse space-y-3">
           <div className="h-6 w-32 bg-white/10 rounded-lg" />
           {[1, 2, 3].map((i) => (
-            <div key={i} className={`h-20 ${colors.cardBg} rounded-xl`} />
+            <div key={i} className={`h-20 ${styles.cardBg} rounded-xl`} />
           ))}
         </div>
       </div>
@@ -132,7 +88,7 @@ export function TokenList({ network, balanceData, isLoading, error }: TokenListP
       <div className="space-y-3">
         <div className="flex items-center justify-between mb-3">
           <div
-            className={`text-sm font-medium bg-gradient-to-r ${colors.headerGradient} bg-clip-text text-transparent`}
+            className={`text-sm font-medium bg-gradient-to-r ${styles.headerGradient} bg-clip-text text-transparent`}
           >
             Tokens on {network.name}
           </div>
@@ -141,26 +97,26 @@ export function TokenList({ network, balanceData, isLoading, error }: TokenListP
             <div className="flex items-center gap-1">
               {allFresh ? (
                 <div
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full ${colors.badgeLiveBg}`}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full ${styles.badgeLiveBg}`}
                 >
                   <CheckCircle2 className="w-3 h-3 text-green-500" />
-                  <span className={`text-xs font-medium ${colors.badgeLiveText}`}>All Live</span>
+                  <span className={`text-xs font-medium ${styles.badgeLiveText}`}>All Live</span>
                 </div>
               ) : allCached ? (
                 <div
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full ${colors.badgeCachedBg}`}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full ${styles.badgeCachedBg}`}
                 >
                   <Clock className="w-3 h-3 text-yellow-500" />
-                  <span className={`text-xs font-medium ${colors.badgeCachedText}`}>
+                  <span className={`text-xs font-medium ${styles.badgeCachedText}`}>
                     Updating...
                   </span>
                 </div>
               ) : partial ? (
                 <div
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full ${colors.badgePartialBg}`}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full ${styles.badgePartialBg}`}
                 >
                   <Clock className="w-3 h-3 text-blue-500" />
-                  <span className={`text-xs font-medium ${colors.badgePartialText}`}>
+                  <span className={`text-xs font-medium ${styles.badgePartialText}`}>
                     {totalCount - cachedCount}/{totalCount} Live
                   </span>
                 </div>
@@ -173,13 +129,13 @@ export function TokenList({ network, balanceData, isLoading, error }: TokenListP
         {allTokens.map((token) => (
           <div
             key={token.symbol + (token.isNative ? '-native' : token.address || '')}
-            className={`p-4 ${colors.cardBg} border ${colors.cardBorder} rounded-xl ${colors.cardHover} ${colors.cardShadow} transition-all duration-200 cursor-pointer`}
+            className={`p-4 ${styles.cardBg} border ${styles.cardBorder} rounded-xl ${styles.cardHover} ${styles.cardShadow} transition-all duration-200 cursor-pointer`}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {/* Token icon */}
                 <div
-                  className={`w-11 h-11 ${colors.iconBg} rounded-xl flex items-center justify-center overflow-hidden`}
+                  className={`w-11 h-11 ${styles.iconBg} rounded-xl flex items-center justify-center overflow-hidden`}
                 >
                   {!token.isNative &&
                   token.address &&
