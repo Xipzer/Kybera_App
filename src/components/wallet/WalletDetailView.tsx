@@ -12,7 +12,6 @@ import {
   TrendingUp,
   Clock,
   CheckCircle2,
-  AlertCircle,
 } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import * as Tabs from '@radix-ui/react-tabs'
@@ -151,37 +150,21 @@ export function WalletDetailView() {
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-2">
               <p className={`text-sm ${themeConfig.styles.textSecondary}`}>Total Portfolio Value</p>
-              {/* Data quality badge */}
+              {/* Data quality badge - "Live" means fresh on-chain data (prices can be cached) */}
               {!loading && balance.dataQuality && (
                 <div className="flex items-center gap-1">
-                  {balance.dataQuality.onChainFromCache && balance.dataQuality.pricesFromCache ? (
+                  {balance.dataQuality.onChainFromCache ? (
                     <div
                       className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-500/10"
-                      title="All data from cache - refreshing..."
+                      title="Blockchain data from cache - refreshing..."
                     >
                       <Clock className="w-3 h-3 text-yellow-500" />
                       <span className="text-xs text-yellow-600 dark:text-yellow-400">Cached</span>
                     </div>
-                  ) : balance.dataQuality.onChainFromCache ? (
-                    <div
-                      className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10"
-                      title="Blockchain data cached, prices fresh"
-                    >
-                      <AlertCircle className="w-3 h-3 text-blue-500" />
-                      <span className="text-xs text-blue-600 dark:text-blue-400">Partial</span>
-                    </div>
-                  ) : balance.dataQuality.pricesFromCache ? (
-                    <div
-                      className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10"
-                      title="Blockchain data fresh, prices cached"
-                    >
-                      <AlertCircle className="w-3 h-3 text-blue-500" />
-                      <span className="text-xs text-blue-600 dark:text-blue-400">Partial</span>
-                    </div>
                   ) : (
                     <div
                       className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/10"
-                      title="All data fresh from blockchain"
+                      title="Blockchain data fresh"
                     >
                       <CheckCircle2 className="w-3 h-3 text-green-500" />
                       <span className="text-xs text-green-600 dark:text-green-400">Live</span>

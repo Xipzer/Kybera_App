@@ -9,6 +9,7 @@ import { EVMWalletService } from '../../blockchain/evmWallet'
 import { SVMWalletService } from '../../blockchain/svmWallet'
 import { coinGeckoService } from '../../api/coinGeckoService'
 import { AlchemyService } from '../../blockchain/alchemyService'
+import { createProvider } from '../../blockchain/provider'
 
 /**
  * Sends native tokens (ETH, BNB, SOL, etc.)
@@ -58,11 +59,13 @@ export async function sendNativeToken(
 
     if (activeNetwork.type === 'EVM') {
       // EVM transaction
+      const chainId = typeof activeNetwork.chainId === 'number' ? activeNetwork.chainId : 1
       txHash = await EVMWalletService.sendTransaction(
         privateKey,
         params.toAddress,
         params.amount,
         activeNetwork.rpcUrl,
+        chainId,
       )
       explorerUrl = `${activeNetwork.explorerUrl}/tx/${txHash}`
     } else {
@@ -149,22 +152,25 @@ export async function sendToken(
 
     if (activeNetwork.type === 'EVM') {
       // EVM ERC20 transfer
-      txHash = await EVMWalletService.sendTokenTransaction(
+      const chainId = typeof activeNetwork.chainId === 'number' ? activeNetwork.chainId : 1
+      txHash = await EVMWalletService.sendToken(
         privateKey,
+        activeNetwork.rpcUrl,
+        chainId,
+        params.tokenAddress,
         params.toAddress,
         params.amount,
-        params.tokenAddress,
-        activeNetwork.rpcUrl,
+        18, // TODO: fetch decimals from token contract
       )
       explorerUrl = `${activeNetwork.explorerUrl}/tx/${txHash}`
     } else {
       // Solana SPL transfer
-      txHash = await SVMWalletService.sendTokenTransaction(
+      txHash = await SVMWalletService.sendSPLToken(
         privateKey,
+        activeNetwork.rpcUrl,
+        params.tokenAddress,
         params.toAddress,
         params.amount,
-        params.tokenAddress,
-        activeNetwork.rpcUrl,
       )
       explorerUrl = `${activeNetwork.explorerUrl}/tx/${txHash}`
     }
@@ -230,7 +236,8 @@ export async function estimateGas(
       }
     }
 
-    const provider = new ethers.JsonRpcProvider(activeNetwork.rpcUrl)
+    const chainId = typeof activeNetwork.chainId === 'number' ? activeNetwork.chainId : 1
+    const provider = createProvider(activeNetwork.rpcUrl, chainId)
 
     let gasEstimate: bigint
     let gasPrice: bigint

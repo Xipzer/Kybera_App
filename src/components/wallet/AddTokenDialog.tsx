@@ -3,9 +3,10 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { AlertCircle, Plus, X } from 'lucide-react'
 import { Network } from '../../types'
 import { db } from '../../services/storage/database'
-import { Contract, isAddress, JsonRpcProvider } from 'ethers'
+import { Contract, isAddress } from 'ethers'
 import { useTheme } from '../../hooks/useTheme'
 import { tokenImageService } from '../../services/tokens/tokenImageService'
+import { createProvider } from '../../services/blockchain/provider'
 
 interface AddTokenDialogProps {
   isOpen: boolean
@@ -39,8 +40,9 @@ export function AddTokenDialog({
     // Auto-detect token info for EVM chains
     if (network.type === 'EVM' && isAddress(address)) {
       setAutoDetecting(true)
+      const chainId = typeof network.chainId === 'number' ? network.chainId : 1
+      const provider = createProvider(network.rpcUrl, chainId)
       try {
-        const provider = new JsonRpcProvider(network.rpcUrl)
         const erc20Abi = [
           'function symbol() view returns (string)',
           'function name() view returns (string)',
@@ -62,6 +64,7 @@ export function AddTokenDialog({
         console.error('Failed to auto-detect token info:', err)
       } finally {
         setAutoDetecting(false)
+        provider.destroy()
       }
     }
   }

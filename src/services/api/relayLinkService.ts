@@ -4,6 +4,7 @@
  */
 
 import { ethers } from 'ethers'
+import { createProvider } from '../blockchain/provider'
 
 export interface BridgeQuote {
   fromChainId: number
@@ -109,7 +110,7 @@ class RelayLinkService {
     rpcUrl: string,
   ): Promise<BridgeTransaction> {
     try {
-      const provider = new ethers.JsonRpcProvider(rpcUrl)
+      const provider = createProvider(rpcUrl, fromChainId)
       const wallet = new ethers.Wallet(privateKey, provider)
 
       // First, get the bridge quote
@@ -155,7 +156,9 @@ class RelayLinkService {
         }
 
         // Execute bridge
-        const relayAbi = ['function bridge(uint256 toChainId, address token, uint256 amount, address recipient)']
+        const relayAbi = [
+          'function bridge(uint256 toChainId, address token, uint256 amount, address recipient)',
+        ]
         const relayContract = new ethers.Contract(relayContractAddress, relayAbi, wallet)
 
         const tx = await relayContract.bridge(toChainId, token, amountBN, recipient)
@@ -239,7 +242,12 @@ class RelayLinkService {
   /**
    * Encodes data for Relay contract call
    */
-  private encodeRelayData(toChainId: number, recipient: string, token: string, amount: string): string {
+  private encodeRelayData(
+    toChainId: number,
+    recipient: string,
+    token: string,
+    amount: string,
+  ): string {
     // Encode the calldata for the Relay contract
     // This is a simplified example
     const iface = new ethers.Interface([

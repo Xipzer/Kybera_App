@@ -131,24 +131,42 @@ export class BalanceAggregator {
     console.log(`[Aggregator] Fetching balance for ${wallet.address} on ${this.network.name}`)
     console.log(`[Aggregator] Manual refresh: ${isManualRefresh}`)
 
-    // Step 1: Fetch on-chain data (sequential per-token with cache fallback)
+    // Step 1: Fetch on-chain data (parallel token batches with cache fallback)
     const onChainData = await this.onChainService.fetchWalletBalance(wallet)
-
-    // Step 2: Determine if we need to fetch prices
-    const shouldFetchPrices = !isManualRefresh // Auto-refresh fetches prices
     const tokenAddresses = onChainData.tokens.map((t) => t.address)
 
-    // Step 3: Fetch or get cached prices
-    const priceData = await this.priceService.fetchPrices(tokenAddresses, shouldFetchPrices)
+    // Step 2: Get cached prices first (fast, non-blocking)
+    // This ensures we return quickly with fresh on-chain data + cached prices
+    const cachedPriceData = await this.priceService.fetchPrices(tokenAddresses, false)
 
-    // Step 4: Combine on-chain data with prices
-    const aggregated = await this.aggregateData(onChainData, priceData)
+    // Step 3: Combine on-chain data with cached prices
+    const aggregated = await this.aggregateData(onChainData, cachedPriceData)
 
-    // Step 5: Cache the aggregated result
+    // Step 4: Cache the aggregated result
     await this.cacheAggregatedBalance(aggregated)
 
-    // Step 6: Trigger background image fetching for tokens without logos
+    // Step 5: Trigger background tasks (non-blocking)
     this.fetchMissingTokenImages(aggregated.tokens)
+
+    // Step 6: If not manual refresh, fetch fresh prices in background
+    // This updates prices without blocking the UI
+    if (!isManualRefresh) {
+      this.priceService
+        .fetchPrices(tokenAddresses, true)
+        .then(async (freshPrices) => {
+          // Re-aggregate with fresh prices if they're different
+          if (freshPrices.nativePrice !== cachedPriceData.nativePrice) {
+            const updatedBalance = await this.aggregateData(onChainData, freshPrices)
+            await this.cacheAggregatedBalance(updatedBalance)
+            console.log(
+              `[Aggregator] Background price update - Total USD: $${updatedBalance.totalUSD.toFixed(2)}`,
+            )
+          }
+        })
+        .catch((err) => {
+          console.debug('[Aggregator] Background price fetch failed:', err)
+        })
+    }
 
     console.log(`[Aggregator] Total USD: $${aggregated.totalUSD.toFixed(2)}`)
     return aggregated

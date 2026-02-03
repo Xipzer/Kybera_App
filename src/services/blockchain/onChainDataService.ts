@@ -7,6 +7,8 @@ import { ethers } from 'ethers'
 import { Network, Wallet } from '../../types'
 import { db } from '../storage/database'
 import { EVMRpcService } from './evmRpcService'
+import { createProviderFromNetwork, getBestRpcUrl } from './provider'
+import { TokenDiscoveryService } from './tokenDiscovery'
 
 export interface TokenBalance {
   address: string
@@ -31,12 +33,16 @@ export class OnChainDataService {
   private provider: ethers.JsonRpcProvider
   private networkId: string
   private chainId: number
+  private tokenDiscovery: TokenDiscoveryService
 
   constructor(network: Network) {
     this.networkId = network.id
     this.chainId = typeof network.chainId === 'number' ? network.chainId : 1
-    this.provider = new ethers.JsonRpcProvider(network.rpcUrl)
-    this.rpcService = new EVMRpcService(network.rpcUrl)
+    // Use Alchemy RPC if available for better reliability
+    const rpcUrl = getBestRpcUrl(network)
+    this.provider = createProviderFromNetwork(network)
+    this.rpcService = new EVMRpcService(rpcUrl)
+    this.tokenDiscovery = new TokenDiscoveryService(network)
   }
 
   /**
@@ -67,22 +73,37 @@ export class OnChainDataService {
       result.native = (await this.getCachedNativeBalance(wallet.address)) || '0'
     }
 
-    // Step 2: Get list of tokens to check (from discovered tokens)
+    // Step 2: Run token discovery (non-blocking background task)
+    if (this.tokenDiscovery.isAvailable()) {
+      this.tokenDiscovery.discoverTokens(wallet.address).catch((err) => {
+        console.debug('[OnChainData] Token discovery error:', err)
+      })
+    }
+
+    // Step 3: Get list of tokens to check (from discovered tokens)
     const tokens = await this.getTokensToCheck(wallet.address)
     console.log(`[OnChainData] Checking ${tokens.length} tokens`)
 
-    // Step 4: Fetch each token balance sequentially
-    for (const token of tokens) {
-      const tokenBalance = await this.fetchSingleTokenBalance(
-        wallet.address,
-        token.address,
-        token.symbol,
-        token.name,
-        token.decimals,
+    // Step 4: Fetch token balances in parallel batches (5 at a time to avoid rate limits)
+    const BATCH_SIZE = 5
+    for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
+      const batch = tokens.slice(i, i + BATCH_SIZE)
+      const batchResults = await Promise.all(
+        batch.map((token) =>
+          this.fetchSingleTokenBalance(
+            wallet.address,
+            token.address,
+            token.symbol,
+            token.name,
+            token.decimals,
+          ),
+        ),
       )
 
-      if (tokenBalance) {
-        result.tokens.push(tokenBalance)
+      for (const tokenBalance of batchResults) {
+        if (tokenBalance) {
+          result.tokens.push(tokenBalance)
+        }
       }
     }
 
@@ -273,7 +294,9 @@ export class OnChainDataService {
         const discoveredToken = await db.discoveredTokens.get(discoveredTokenId)
 
         if (discoveredToken && !discoveredToken.addedManually) {
-          console.log(`[OnChainData] Removing ${balance.symbol} from discovered tokens (zero balance)`)
+          console.log(
+            `[OnChainData] Removing ${balance.symbol} from discovered tokens (zero balance)`,
+          )
           await db.discoveredTokens.delete(discoveredTokenId)
         }
 

@@ -5,6 +5,7 @@
 
 import { ethers } from 'ethers'
 import { Connection, VersionedTransaction, PublicKey } from '@solana/web3.js'
+import { createProvider } from '../blockchain/provider'
 
 export interface SwapQuote {
   fromToken: string
@@ -179,7 +180,7 @@ class SwapService {
       // Note: 1inch API requires an API key for production use
       const response = await fetch(`${this.ONEINCH_API_URL}/${chainId}/quote?${params}`, {
         headers: {
-          'Authorization': 'Bearer YOUR_1INCH_API_KEY', // Would need to be configured
+          Authorization: 'Bearer YOUR_1INCH_API_KEY', // Would need to be configured
         },
       })
 
@@ -191,7 +192,8 @@ class SwapService {
 
       const toAmount = ethers.formatUnits(data.dstAmount, 18)
       const toAmountMin = ethers.formatUnits(
-        BigInt(data.dstAmount) - (BigInt(data.dstAmount) * BigInt(Math.floor(slippage * 100))) / BigInt(10000),
+        BigInt(data.dstAmount) -
+          (BigInt(data.dstAmount) * BigInt(Math.floor(slippage * 100))) / BigInt(10000),
         18,
       )
 
@@ -226,7 +228,7 @@ class SwapService {
     rpcUrl: string,
   ): Promise<SwapTransaction> {
     try {
-      const provider = new ethers.JsonRpcProvider(rpcUrl)
+      const provider = createProvider(rpcUrl, chainId)
       const wallet = new ethers.Wallet(privateKey, provider)
 
       // Get swap transaction data from 1inch
@@ -243,7 +245,7 @@ class SwapService {
 
       const response = await fetch(`${this.ONEINCH_API_URL}/${chainId}/swap?${params}`, {
         headers: {
-          'Authorization': 'Bearer YOUR_1INCH_API_KEY', // Would need to be configured
+          Authorization: 'Bearer YOUR_1INCH_API_KEY', // Would need to be configured
         },
       })
 
@@ -308,7 +310,14 @@ class SwapService {
     if (chainType === 'SVM') {
       return this.getJupiterQuote(fromToken, toToken, amount, slippage)
     } else {
-      return this.get1inchQuote(chainId as number, fromToken, toToken, amount, slippage, walletAddress)
+      return this.get1inchQuote(
+        chainId as number,
+        fromToken,
+        toToken,
+        amount,
+        slippage,
+        walletAddress,
+      )
     }
   }
 
