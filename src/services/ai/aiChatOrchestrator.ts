@@ -4,7 +4,7 @@
  */
 
 import { AIMessage, ParsedToolCall, PendingAction, ActionResult } from '../../types'
-import { EnhancedOpenRouterService } from './openrouterEnhanced'
+import { OpenRouterService } from './openrouter'
 import { ALL_TOOLS } from './tools/toolDefinitions'
 import { actionExecutor } from './actionExecutor'
 import { contextBuilder } from './contextBuilder'
@@ -64,7 +64,7 @@ class AIChatOrchestrator {
       })
 
       // Send to LLM with tools
-      const response = await EnhancedOpenRouterService.sendMessage(
+      const response = await OpenRouterService.sendMessage(
         messages,
         selectedModel || 'openai/gpt-4-turbo-preview',
         openRouterApiKey,
@@ -189,11 +189,7 @@ class AIChatOrchestrator {
       }
 
       // Execute the action
-      const result = await actionExecutor.executePendingAction(
-        actionId,
-        conversationId,
-        onProgress,
-      )
+      const result = await actionExecutor.executePendingAction(actionId, conversationId, onProgress)
 
       const messages = this.conversationMessages.get(conversationId)!
 
@@ -211,7 +207,7 @@ class AIChatOrchestrator {
         throw new Error('OpenRouter API key not configured')
       }
 
-      const followUpResponse = await EnhancedOpenRouterService.sendMessage(
+      const followUpResponse = await OpenRouterService.sendMessage(
         messages,
         selectedModel || 'openai/gpt-4-turbo-preview',
         openRouterApiKey,
@@ -281,7 +277,7 @@ class AIChatOrchestrator {
         throw new Error('OpenRouter API key not configured')
       }
 
-      const followUpResponse = await EnhancedOpenRouterService.sendMessage(
+      const followUpResponse = await OpenRouterService.sendMessage(
         messages,
         selectedModel || 'openai/gpt-4-turbo-preview',
         openRouterApiKey,

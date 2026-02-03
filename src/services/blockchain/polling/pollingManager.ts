@@ -1,15 +1,15 @@
 import { blockchainEventBus } from '../core/eventBus'
 
-export interface AdaptivePollingConfig {
+export interface PollingConfig {
   intervals: {
-    active: number      // User actively interacting
-    idle: number        // User present but not active
-    background: number  // Tab hidden or minimized
-    offline: number     // No network connection
+    active: number // User actively interacting
+    idle: number // User present but not active
+    background: number // Tab hidden or minimized
+    offline: number // No network connection
   }
   thresholds: {
-    activityTimeout: number  // Time before considering user idle
-    errorBackoff: number[]   // Exponential backoff on errors
+    activityTimeout: number // Time before considering user idle
+    errorBackoff: number[] // Exponential backoff on errors
   }
 }
 
@@ -20,18 +20,18 @@ interface PollTask {
   timer?: NodeJS.Timeout
 }
 
-export class AdaptivePollingManager {
-  private config: AdaptivePollingConfig = {
+export class PollingManager {
+  private config: PollingConfig = {
     intervals: {
-      active: 5000,      // 5 seconds
-      idle: 30000,       // 30 seconds
+      active: 5000, // 5 seconds
+      idle: 30000, // 30 seconds
       background: 60000, // 1 minute
-      offline: 0         // Stop polling
+      offline: 0, // Stop polling
     },
     thresholds: {
-      activityTimeout: 60000,  // 1 minute
-      errorBackoff: [5000, 10000, 30000, 60000] // Up to 1 minute
-    }
+      activityTimeout: 60000, // 1 minute
+      errorBackoff: [5000, 10000, 30000, 60000], // Up to 1 minute
+    },
   }
 
   private lastActivity = Date.now()
@@ -41,11 +41,11 @@ export class AdaptivePollingManager {
   private activityListeners: Array<() => void> = []
   private isInitialized = false
 
-  constructor(customConfig?: Partial<AdaptivePollingConfig>) {
+  constructor(customConfig?: Partial<PollingConfig>) {
     if (customConfig) {
       this.config = {
         intervals: { ...this.config.intervals, ...customConfig.intervals },
-        thresholds: { ...this.config.thresholds, ...customConfig.thresholds }
+        thresholds: { ...this.config.thresholds, ...customConfig.thresholds },
       }
     }
     this.initialize()
@@ -53,7 +53,7 @@ export class AdaptivePollingManager {
 
   private initialize(): void {
     if (this.isInitialized || typeof window === 'undefined') return
-    
+
     this.setupEventListeners()
     this.isInitialized = true
   }
@@ -61,7 +61,7 @@ export class AdaptivePollingManager {
   private setupEventListeners(): void {
     // User activity detection
     const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart', 'mousemove']
-    
+
     const handleActivity = () => {
       const now = Date.now()
       // Only update if it's been more than 1 second since last activity
@@ -71,27 +71,25 @@ export class AdaptivePollingManager {
         this.adjustAllPollingIntervals()
       }
     }
-    
-    activityEvents.forEach(event => {
+
+    activityEvents.forEach((event) => {
       const listener = () => handleActivity()
       document.addEventListener(event, listener, { passive: true })
-      this.activityListeners.push(() => 
-        document.removeEventListener(event, listener)
-      )
+      this.activityListeners.push(() => document.removeEventListener(event, listener))
     })
 
     // Visibility change detection
     const handleVisibilityChange = () => {
       this.visibilityState = document.visibilityState
-      blockchainEventBus.emit('activity:detected', { 
-        type: this.visibilityState === 'visible' ? 'user' : 'background' 
+      blockchainEventBus.emit('activity:detected', {
+        type: this.visibilityState === 'visible' ? 'user' : 'background',
       })
       this.adjustAllPollingIntervals()
     }
-    
+
     document.addEventListener('visibilitychange', handleVisibilityChange)
-    this.activityListeners.push(() => 
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    this.activityListeners.push(() =>
+      document.removeEventListener('visibilitychange', handleVisibilityChange),
     )
 
     // Network status detection
@@ -100,16 +98,16 @@ export class AdaptivePollingManager {
       blockchainEventBus.emit('connection:status', { status: 'connected' })
       this.adjustAllPollingIntervals()
     }
-    
+
     const handleOffline = () => {
       this.connectionStatus = 'offline'
       blockchainEventBus.emit('connection:status', { status: 'disconnected' })
       this.adjustAllPollingIntervals()
     }
-    
+
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
-    
+
     this.activityListeners.push(() => {
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
@@ -124,10 +122,7 @@ export class AdaptivePollingManager {
 
     // Error backoff
     if (errorCount > 0) {
-      const backoffIndex = Math.min(
-        errorCount - 1, 
-        this.config.thresholds.errorBackoff.length - 1
-      )
+      const backoffIndex = Math.min(errorCount - 1, this.config.thresholds.errorBackoff.length - 1)
       return this.config.thresholds.errorBackoff[backoffIndex]
     }
 
@@ -146,18 +141,14 @@ export class AdaptivePollingManager {
     return this.config.intervals.idle
   }
 
-  startPolling(
-    id: string,
-    callback: () => Promise<void>,
-    options?: { immediate?: boolean }
-  ): void {
+  startPolling(id: string, callback: () => Promise<void>, options?: { immediate?: boolean }): void {
     // Stop existing poll
     this.stopPolling(id)
 
     const pollTask: PollTask = {
       callback,
       lastRun: 0,
-      errorCount: 0
+      errorCount: 0,
     }
 
     const executePoll = async () => {
@@ -177,7 +168,7 @@ export class AdaptivePollingManager {
         console.error(`Polling error for ${id}:`, error)
         blockchainEventBus.emit('error', {
           source: 'adaptive_polling',
-          error: error as Error
+          error: error as Error,
         })
       }
 
@@ -196,7 +187,7 @@ export class AdaptivePollingManager {
 
   private scheduleNextPoll(id: string, task: PollTask): void {
     const interval = this.getCurrentInterval(task.errorCount)
-    
+
     if (interval > 0) {
       task.timer = setTimeout(async () => {
         const currentTask = this.polls.get(id)
@@ -238,7 +229,7 @@ export class AdaptivePollingManager {
   }
 
   stopAll(): void {
-    for (const [id, task] of this.polls) {
+    for (const [_id, task] of this.polls) {
       if (task.timer) {
         clearTimeout(task.timer)
       }
@@ -291,29 +282,29 @@ export class AdaptivePollingManager {
         connection: this.connectionStatus,
         visibility: this.visibilityState,
         lastActivity: this.lastActivity,
-        currentState
-      }
+        currentState,
+      },
     }
   }
 
-  updateConfig(newConfig: Partial<AdaptivePollingConfig>): void {
+  updateConfig(newConfig: Partial<PollingConfig>): void {
     this.config = {
       intervals: { ...this.config.intervals, ...newConfig.intervals },
-      thresholds: { ...this.config.thresholds, ...newConfig.thresholds }
+      thresholds: { ...this.config.thresholds, ...newConfig.thresholds },
     }
     this.adjustAllPollingIntervals()
   }
 
   destroy(): void {
     this.stopAll()
-    
+
     // Remove all event listeners
-    this.activityListeners.forEach(cleanup => cleanup())
+    this.activityListeners.forEach((cleanup) => cleanup())
     this.activityListeners = []
-    
+
     this.isInitialized = false
   }
 }
 
 // Create singleton instance
-export const adaptivePollingManager = new AdaptivePollingManager()
+export const pollingManager = new PollingManager()

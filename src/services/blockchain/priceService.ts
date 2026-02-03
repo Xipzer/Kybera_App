@@ -1,5 +1,5 @@
 /**
- * Simple, clean price fetching service
+ * Price fetching service with caching
  * Handles price data separately from on-chain data
  */
 
@@ -23,7 +23,7 @@ export interface PriceData {
   lastUpdated: number
 }
 
-export class SimplePriceService {
+export class PriceService {
   private networkId: string
   private chainId: number
   private nativeTokenId: string // CoinGecko ID for native token

@@ -332,7 +332,9 @@ export async function getTransactionHistory(
         }
       }
       // Note: getTransactionHistory is not yet implemented in AlchemyService
-      // This is a placeholder for future implementation
+      // TODO: Implement using alchemyService with limit parameter
+      void alchemyService // Suppress unused warning until implementation
+      void limit // Suppress unused warning until implementation
       const _txHistory: any[] = []
 
       return {

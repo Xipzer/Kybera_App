@@ -36,7 +36,6 @@ export interface BridgeTransaction {
 
 class RelayLinkService {
   private readonly RELAY_API_URL = 'https://api.relay.link'
-  private readonly RELAY_SDK_URL = 'https://relay.link/execute'
 
   /**
    * Gets a quote for bridging tokens

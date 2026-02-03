@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { hashPassword, verifyPassword } from '../utils/auth'
 import { db } from '../services/storage/database'
-import { reencryptWalletData } from '../utils/reencryption'
+import { reencryptWalletData } from '../utils/dbUtils'
 
 interface AuthState {
   passwordHash: string | null

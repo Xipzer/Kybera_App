@@ -5,7 +5,6 @@
 
 import { useWalletStore } from '../../store/walletStore'
 import { blockchainService } from '../blockchain/blockchainService'
-import { ALL_TOOLS } from './tools/toolDefinitions'
 
 class ContextBuilder {
   /**

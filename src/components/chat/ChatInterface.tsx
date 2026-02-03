@@ -6,7 +6,7 @@ import { useUIStore } from '../../store/uiStore'
 import { ChatMessage } from './ChatMessage'
 import { ModelSelector } from './ModelSelector'
 import { SettingsDialog } from '../settings/SettingsDialog'
-import { EnhancedOpenRouterService } from '../../services/ai/openrouterEnhanced'
+import { OpenRouterService } from '../../services/ai/openrouter'
 import { useTheme } from '../../hooks/useTheme'
 
 export function ChatInterface() {
@@ -70,7 +70,7 @@ export function ChatInterface() {
       let fullResponse = ''
 
       // Call OpenRouter API with streaming
-      const response = await EnhancedOpenRouterService.sendMessage(
+      const response = await OpenRouterService.sendMessage(
         messages,
         selectedModel,
         openRouterApiKey!,

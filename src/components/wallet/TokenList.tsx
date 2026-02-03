@@ -159,12 +159,10 @@ export function TokenList({ network, balanceData, isLoading, error }: TokenListP
                   {token.fromCache ? (
                     <Clock
                       className="w-3.5 h-3.5 text-yellow-500"
-                      title="Cached data - refreshing..."
                     />
                   ) : (
                     <CheckCircle2
                       className="w-3.5 h-3.5 text-green-500"
-                      title="Fresh data from blockchain"
                     />
                   )}
                 </div>

@@ -5,7 +5,7 @@
 
 import { Network, Wallet } from '../../types'
 import { OnChainBalance, OnChainDataService } from './onChainDataService'
-import { PriceData, SimplePriceService } from './simplePriceService'
+import { PriceData, PriceService } from './priceService'
 import { db } from '../storage/database'
 import { tokenImageService } from '../tokens/tokenImageService'
 
@@ -39,7 +39,7 @@ export interface AggregatedBalance {
 
 export class BalanceAggregator {
   private onChainService: OnChainDataService
-  private priceService: SimplePriceService
+  private priceService: PriceService
   private network: Network
 
   constructor(network: Network) {
@@ -49,7 +49,7 @@ export class BalanceAggregator {
     // Map network to CoinGecko native token ID
     const nativeTokenId = this.getNativeTokenId(network.id)
     const chainId = typeof network.chainId === 'number' ? network.chainId : 1
-    this.priceService = new SimplePriceService(network.id, chainId, nativeTokenId)
+    this.priceService = new PriceService(network.id, chainId, nativeTokenId)
   }
 
   /**
@@ -359,7 +359,9 @@ export class BalanceAggregator {
         decimals: t.decimals,
         balance: t.balance,
         fromCache: true,
+        lastUpdated: cached.lastUpdated,
       })),
+      lastUpdated: cached.lastUpdated,
     }
 
     // Step 5: Recalculate USD values with fresh prices

@@ -102,8 +102,6 @@ class SwapService {
       const quote = await this.getJupiterQuote(fromToken, toToken, amount, slippage)
 
       // Get swap transaction from Jupiter
-      const amountLamports = Math.floor(parseFloat(amount) * 1e9)
-
       const swapResponse = await fetch(`${this.JUPITER_API_URL}/swap`, {
         method: 'POST',
         headers: {
@@ -345,7 +343,7 @@ class SwapService {
   /**
    * Helper to derive public key from private key (Solana)
    */
-  private getPublicKeyFromPrivateKey(privateKey: string): PublicKey {
+  private getPublicKeyFromPrivateKey(_privateKey: string): PublicKey {
     // This is a placeholder - actual implementation would properly derive the public key
     // from the private key using Solana's keypair methods
     throw new Error('Not implemented - use proper Solana keypair derivation')

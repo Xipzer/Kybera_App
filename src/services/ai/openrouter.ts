@@ -1,5 +1,5 @@
 /**
- * Enhanced OpenRouter Service with Function Calling Support
+ * OpenRouter Service with Function Calling Support
  */
 
 import { AIMessage, ToolCall, ToolDefinition } from '../../types'
@@ -31,7 +31,7 @@ export interface OpenRouterResponse {
   finishReason?: string
 }
 
-export class EnhancedOpenRouterService {
+export class OpenRouterService {
   private static OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
   /**
@@ -62,7 +62,7 @@ export class EnhancedOpenRouterService {
     const response = await fetch(this.OPENROUTER_API_URL, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': window.location.origin,
         'X-Title': 'SmartWallet AI',
@@ -76,11 +76,7 @@ export class EnhancedOpenRouterService {
     }
 
     if (requestBody.stream) {
-      return this.handleStreamingResponse(
-        response,
-        options?.onChunk,
-        options?.onToolCall,
-      )
+      return this.handleStreamingResponse(response, options?.onChunk, options?.onToolCall)
     } else {
       return this.handleNonStreamingResponse(response)
     }
@@ -189,9 +185,7 @@ export class EnhancedOpenRouterService {
   /**
    * Handles non-streaming response
    */
-  private static async handleNonStreamingResponse(
-    response: Response,
-  ): Promise<OpenRouterResponse> {
+  private static async handleNonStreamingResponse(response: Response): Promise<OpenRouterResponse> {
     const data = await response.json()
     const choice = data.choices?.[0]
 
@@ -212,7 +206,7 @@ export class EnhancedOpenRouterService {
   static async getModels(apiKey: string): Promise<any[]> {
     const response = await fetch('https://openrouter.ai/api/v1/models', {
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
       },
     })
 

@@ -38,8 +38,8 @@ export class WebSocketProvider {
       reconnectDelay: 1000,
       maxReconnectAttempts: 5,
       heartbeatInterval: 30000,
-      connectionTimeout: 10000
-    }
+      connectionTimeout: 10000,
+    },
   ) {}
 
   /**
@@ -61,7 +61,7 @@ export class WebSocketProvider {
    */
   async connect(network: string): Promise<boolean> {
     if (this.isDestroyed) return false
-    
+
     const url = this.config.urls[network]
     if (!url) {
       console.warn(`[WebSocket] No URL configured for network: ${network}`)
@@ -78,7 +78,7 @@ export class WebSocketProvider {
     try {
       console.log(`[WebSocket] Connecting to ${network} at ${url}`)
       const ws = new WebSocket(url)
-      
+
       // Set up connection timeout
       const connectionTimeout = setTimeout(() => {
         if (ws.readyState !== WebSocket.OPEN) {
@@ -94,13 +94,13 @@ export class WebSocketProvider {
         this.sockets.set(network, ws)
         this.reconnectAttempts.set(network, 0)
         this.startHeartbeat(network, ws)
-        
+
         // Send queued messages
         this.flushMessageQueue(network)
-        
-        blockchainEventBus.emit('connection:status', { 
+
+        blockchainEventBus.emit('connection:status', {
           status: 'connected',
-          network 
+          network,
         })
       }
 
@@ -116,9 +116,9 @@ export class WebSocketProvider {
       ws.onerror = (error) => {
         clearTimeout(connectionTimeout)
         console.error(`[WebSocket] Error on ${network}:`, error)
-        blockchainEventBus.emit('connection:status', { 
+        blockchainEventBus.emit('connection:status', {
           status: 'error',
-          network 
+          network,
         })
       }
 
@@ -146,12 +146,11 @@ export class WebSocketProvider {
           resolve(false)
         }, this.config.connectionTimeout)
       })
-
     } catch (error) {
       console.error(`[WebSocket] Failed to create WebSocket for ${network}:`, error)
-      blockchainEventBus.emit('connection:status', { 
+      blockchainEventBus.emit('connection:status', {
         status: 'error',
-        network 
+        network,
       })
       return false
     }
@@ -167,7 +166,7 @@ export class WebSocketProvider {
           blockchainEventBus.emit('balance:update', {
             wallet: message.address,
             network: network,
-            balance: message.data
+            balance: message.data,
           })
         }
         break
@@ -175,7 +174,7 @@ export class WebSocketProvider {
       case 'price':
         if (message.data) {
           blockchainEventBus.emit('price:update', {
-            tokens: message.data
+            tokens: message.data,
           })
         }
         break
@@ -183,7 +182,7 @@ export class WebSocketProvider {
       case 'transaction':
         if (message.data) {
           blockchainEventBus.emit('transaction:new', {
-            transaction: message.data
+            transaction: message.data,
           })
         }
         break
@@ -204,15 +203,15 @@ export class WebSocketProvider {
   /**
    * Handle WebSocket disconnection
    */
-  private handleDisconnection(network: string, reason: string): void {
+  private handleDisconnection(network: string, _reason: string): void {
     this.stopHeartbeat(network)
     this.sockets.delete(network)
 
     if (this.isDestroyed) return
 
-    blockchainEventBus.emit('connection:status', { 
+    blockchainEventBus.emit('connection:status', {
       status: 'disconnected',
-      network 
+      network,
     })
 
     const attempts = this.reconnectAttempts.get(network) || 0
@@ -232,9 +231,9 @@ export class WebSocketProvider {
       this.reconnectTimers.set(network, timer)
     } else {
       console.error(`[WebSocket] Max reconnection attempts reached for ${network}`)
-      blockchainEventBus.emit('connection:status', { 
+      blockchainEventBus.emit('connection:status', {
         status: 'error',
-        network 
+        network,
       })
     }
   }
@@ -271,7 +270,7 @@ export class WebSocketProvider {
   subscribe(network: string, addresses: string[]): void {
     const ws = this.sockets.get(network)
     const existingSubs = this.subscriptions.get(network) || new Set()
-    const newSubs = addresses.filter(addr => !existingSubs.has(addr.toLowerCase()))
+    const newSubs = addresses.filter((addr) => !existingSubs.has(addr.toLowerCase()))
 
     if (newSubs.length === 0) return
 
@@ -279,18 +278,18 @@ export class WebSocketProvider {
       const request: SubscriptionRequest = {
         type: 'subscribe',
         addresses: newSubs,
-        events: ['balance', 'transaction']
+        events: ['balance', 'transaction'],
       }
 
       ws.send(JSON.stringify(request))
-      newSubs.forEach(addr => existingSubs.add(addr.toLowerCase()))
+      newSubs.forEach((addr) => existingSubs.add(addr.toLowerCase()))
       this.subscriptions.set(network, existingSubs)
     } else {
       // Queue the subscription request
       console.debug(`[WebSocket] Queueing subscription for ${network} (not connected)`)
       this.queueMessage(network, {
         type: 'subscribe',
-        addresses: newSubs
+        addresses: newSubs,
       } as any)
     }
   }
@@ -305,11 +304,11 @@ export class WebSocketProvider {
     if (ws && subs && ws.readyState === WebSocket.OPEN) {
       const request: SubscriptionRequest = {
         type: 'unsubscribe',
-        addresses: addresses
+        addresses: addresses,
       }
 
       ws.send(JSON.stringify(request))
-      addresses.forEach(addr => subs.delete(addr.toLowerCase()))
+      addresses.forEach((addr) => subs.delete(addr.toLowerCase()))
     }
   }
 
@@ -330,7 +329,7 @@ export class WebSocketProvider {
     const ws = this.sockets.get(network)
 
     if (queue && ws && ws.readyState === WebSocket.OPEN) {
-      queue.forEach(message => {
+      queue.forEach((message) => {
         try {
           ws.send(JSON.stringify(message))
         } catch (error) {
@@ -366,7 +365,7 @@ export class WebSocketProvider {
    * Disconnect from all networks
    */
   disconnectAll(): void {
-    Array.from(this.sockets.keys()).forEach(network => {
+    Array.from(this.sockets.keys()).forEach((network) => {
       this.disconnect(network)
     })
   }

@@ -9,7 +9,7 @@ import { ResponsiveLayout } from './components/layout/ResponsiveLayout'
 import { ChatInterface } from './components/chat/ChatInterface'
 import { UnlockScreen } from './components/auth/UnlockScreen'
 import { initializeMemoryProtection } from './services/security/memoryProtection'
-import { cleanupDiscoveredTokens } from './utils/cleanupTokens'
+import { cleanupDiscoveredTokens } from './utils/dbUtils'
 
 const queryClient = new QueryClient()
 
