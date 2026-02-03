@@ -90,7 +90,7 @@ export async function createSolanaWallet(
  */
 export async function listWallets(
   params: { type?: 'EVM' | 'SVM' },
-  context: ActionContext,
+  _context: ActionContext,
 ): Promise<ActionResult> {
   try {
     const { wallets, walletGroups } = useWalletStore.getState()
@@ -131,7 +131,7 @@ export async function listWallets(
  */
 export async function switchWallet(
   params: { walletId: string },
-  context: ActionContext,
+  _context: ActionContext,
 ): Promise<ActionResult> {
   try {
     const { setActiveWallet, wallets } = useWalletStore.getState()
@@ -171,7 +171,7 @@ export async function switchWallet(
  */
 export async function getWalletBalance(
   params: { walletId?: string; includeUsdValue?: boolean },
-  context: ActionContext,
+  _context: ActionContext,
 ): Promise<ActionResult> {
   try {
     const { wallets, activeWalletId, activeNetwork } = useWalletStore.getState()
@@ -263,7 +263,7 @@ export async function createWalletGroup(
  */
 export async function switchNetwork(
   params: { networkId: string },
-  context: ActionContext,
+  _context: ActionContext,
 ): Promise<ActionResult> {
   try {
     const { setActiveNetwork, activeWalletId, wallets } = useWalletStore.getState()
@@ -318,7 +318,7 @@ export async function switchNetwork(
  */
 export async function listNetworks(
   params: { type?: 'EVM' | 'SVM' },
-  context: ActionContext,
+  _context: ActionContext,
 ): Promise<ActionResult> {
   try {
     let networks = params.type === 'EVM' ? EVM_NETWORKS : params.type === 'SVM' ? SVM_NETWORKS : [...EVM_NETWORKS, ...SVM_NETWORKS]

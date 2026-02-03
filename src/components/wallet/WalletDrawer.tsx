@@ -15,7 +15,7 @@ import {
 import { useWalletStore } from '../../store/walletStore'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import * as Tabs from '@radix-ui/react-tabs'
-import { BetterScrollArea } from '../common/BetterScrollArea'
+
 import { MultiNetworkSelector } from './MultiNetworkSelector'
 import { ExecutionNetworkSelector } from './ExecutionNetworkSelector'
 // import { CreateWalletDialog } from './CreateWalletDialog' - Deprecated in favor of groups
@@ -304,7 +304,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
             </Tabs.List>
 
             <Tabs.Content value="groups" className="flex-1 overflow-hidden min-h-0">
-              <BetterScrollArea>
+              <div className="h-full w-full overflow-y-auto">
                 <div className="p-4">
                   {actualGroups.length === 0 ? (
                     <EmptyState
@@ -392,11 +392,11 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
                     </div>
                   )}
                 </div>
-              </BetterScrollArea>
+              </div>
             </Tabs.Content>
 
             <Tabs.Content value="evm" className="flex-1 overflow-hidden min-h-0">
-              <BetterScrollArea>
+              <div className="h-full w-full overflow-y-auto">
                 <div className="p-4">
                   {walletsByType.EVM.length === 0 ? (
                     <EmptyState
@@ -442,11 +442,11 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
                     </div>
                   )}
                 </div>
-              </BetterScrollArea>
+              </div>
             </Tabs.Content>
 
             <Tabs.Content value="svm" className="flex-1 overflow-hidden min-h-0">
-              <BetterScrollArea>
+              <div className="h-full w-full overflow-y-auto">
                 <div className="p-4">
                   {walletsByType.SVM.length === 0 ? (
                     <EmptyState
@@ -492,11 +492,11 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
                     </div>
                   )}
                 </div>
-              </BetterScrollArea>
+              </div>
             </Tabs.Content>
 
             <Tabs.Content value="all" className="flex-1 overflow-hidden min-h-0">
-              <BetterScrollArea>
+              <div className="h-full w-full overflow-y-auto">
                 <div className="p-4">
                   <div className="space-y-4">
                     <div>
@@ -572,7 +572,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
                     </div>
                   </div>
                 </div>
-              </BetterScrollArea>
+              </div>
             </Tabs.Content>
           </Tabs.Root>
 

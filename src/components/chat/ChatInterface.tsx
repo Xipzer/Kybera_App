@@ -6,7 +6,7 @@ import { useUIStore } from '../../store/uiStore'
 import { ChatMessage } from './ChatMessage'
 import { ModelSelector } from './ModelSelector'
 import { SettingsDialog } from '../settings/SettingsDialog'
-import { OpenRouterService } from '../../services/ai/openrouter'
+import { EnhancedOpenRouterService } from '../../services/ai/openrouterEnhanced'
 import { useTheme } from '../../hooks/useTheme'
 
 export function ChatInterface() {
@@ -60,7 +60,7 @@ export function ChatInterface() {
     try {
       // Prepare messages for API
       const messages = [
-        ...(conversation?.messages || []).map(msg => ({
+        ...(conversation?.messages || []).map((msg) => ({
           role: msg.role,
           content: msg.content,
         })),
@@ -68,22 +68,24 @@ export function ChatInterface() {
       ]
 
       let fullResponse = ''
-      
+
       // Call OpenRouter API with streaming
-      const response = await OpenRouterService.sendMessage(
+      const response = await EnhancedOpenRouterService.sendMessage(
         messages,
         selectedModel,
         openRouterApiKey!,
-        (chunk) => {
-          fullResponse += chunk
-          setStreamingContent(fullResponse)
-        }
+        {
+          onChunk: (chunk) => {
+            fullResponse += chunk
+            setStreamingContent(fullResponse)
+          },
+        },
       )
 
       // Add assistant message
       await addMessage(conversationId, {
         role: 'assistant',
-        content: response,
+        content: response.content || '',
       })
     } catch (error) {
       console.error('Error calling OpenRouter:', error)

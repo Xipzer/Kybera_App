@@ -7,7 +7,6 @@ import { ethers } from 'ethers'
 import { Network, Wallet } from '../../types'
 import { db } from '../storage/database'
 import { EVMRpcService } from './evmRpcService'
-import { TokenDiscoveryService } from './tokenDiscoveryService'
 
 export interface TokenBalance {
   address: string
@@ -32,14 +31,12 @@ export class OnChainDataService {
   private provider: ethers.JsonRpcProvider
   private networkId: string
   private chainId: number
-  private tokenDiscovery: TokenDiscoveryService
 
   constructor(network: Network) {
     this.networkId = network.id
     this.chainId = typeof network.chainId === 'number' ? network.chainId : 1
     this.provider = new ethers.JsonRpcProvider(network.rpcUrl)
     this.rpcService = new EVMRpcService(network.rpcUrl)
-    this.tokenDiscovery = new TokenDiscoveryService(network)
   }
 
   /**
@@ -70,40 +67,7 @@ export class OnChainDataService {
       result.native = (await this.getCachedNativeBalance(wallet.address)) || '0'
     }
 
-    // Step 2: Run automatic token discovery if available (non-blocking)
-    if (this.tokenDiscovery.isAvailable()) {
-      // Run discovery but don't wait for it to complete
-      this.tokenDiscovery
-        .discoverTokens(wallet.address)
-        .then(async (newTokens) => {
-          if (newTokens.length > 0) {
-            console.log(`[OnChainData] Token discovery found ${newTokens.length} new tokens`)
-
-            // Cache the balances of newly discovered tokens
-            for (const token of newTokens) {
-              const cacheKey = `${wallet.address}_${this.networkId}_${token.address.toLowerCase()}`
-              const tokenBalance: TokenBalance = {
-                address: token.address.toLowerCase(),
-                symbol: token.symbol,
-                name: token.name,
-                decimals: token.decimals,
-                balance: token.balance,
-                lastUpdated: Date.now(),
-                fromCache: false,
-              }
-
-              // Cache the token balance
-              await this.cacheTokenBalance(cacheKey, tokenBalance)
-              console.log(`[OnChainData] Cached discovered token ${token.symbol}: ${token.balance}`)
-            }
-          }
-        })
-        .catch((error) => {
-          console.debug(`[OnChainData] Token discovery failed:`, error)
-        })
-    }
-
-    // Step 3: Get list of tokens to check (from discovered tokens)
+    // Step 2: Get list of tokens to check (from discovered tokens)
     const tokens = await this.getTokensToCheck(wallet.address)
     console.log(`[OnChainData] Checking ${tokens.length} tokens`)
 
