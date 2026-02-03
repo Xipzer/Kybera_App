@@ -891,7 +891,12 @@ function WalletGroupItem({
               {...dragHandleProps}
               className={`cursor-move p-1.5 -ml-1 rounded-lg ${walletStyles.walletCardHover} transition-colors`}
             >
-              <svg width="12" height="12" viewBox="0 0 12 12" className={walletStyles.dragHandleColor}>
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 12 12"
+                className={walletStyles.dragHandleColor}
+              >
                 <circle cx="3" cy="3" r="1.5" fill="currentColor" />
                 <circle cx="9" cy="3" r="1.5" fill="currentColor" />
                 <circle cx="3" cy="9" r="1.5" fill="currentColor" />

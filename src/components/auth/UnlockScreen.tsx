@@ -106,16 +106,16 @@ function GlowRing({ children, gradient }: { children: React.ReactNode; gradient:
 export function UnlockScreen() {
   const { unlock } = useWalletStore()
   const { isInitialized, initializePassword, verifyPassword } = useAuthStore()
-  const { 
-    profilePicture, 
-    theme: uiTheme, 
+  const {
+    profilePicture,
+    theme: uiTheme,
     setTheme: setUiTheme,
     lockscreenWallpaper,
     lockscreenOpacity,
     syncWallpaper,
     chatWallpaper,
     syncOpacity,
-    wallpaperOpacity
+    wallpaperOpacity,
   } = useUIStore()
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -124,21 +124,21 @@ export function UnlockScreen() {
   const [isFocused, setIsFocused] = useState(false)
   const [isConfirmFocused, setIsConfirmFocused] = useState(false)
   const { theme } = useTheme()
-  
+
   // Get unlock screen theme styles
   const styles = theme.styles.unlockScreen
-  
+
   // Determine which wallpaper to use
   const wallpaper = syncWallpaper ? chatWallpaper : lockscreenWallpaper
   const opacity = syncOpacity ? wallpaperOpacity : lockscreenOpacity
-  
+
   const cycleTheme = () => {
     const themes = ['light', 'dark', 'xipz'] as const
     const currentIndex = themes.indexOf(uiTheme)
     const nextTheme = themes[(currentIndex + 1) % themes.length]
     setUiTheme(nextTheme)
   }
-  
+
   const getThemeIcon = () => {
     switch (uiTheme) {
       case 'light':
@@ -149,7 +149,7 @@ export function UnlockScreen() {
         return <Palette className="w-5 h-5" />
     }
   }
-  
+
   useEffect(() => {
     if (isInitialized) {
       setError('')
@@ -171,7 +171,7 @@ export function UnlockScreen() {
           setError('Passwords do not match')
           return
         }
-        
+
         await initializePassword(password)
         unlock(password)
       } else {
