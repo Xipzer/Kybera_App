@@ -476,7 +476,7 @@ export const themes: Record<string, ThemeConfig> = {
 
       // Chat interface - Kybera Landing inspired (Light)
       chatInterface: {
-        headerBg: 'bg-white/70',
+        headerBg: 'bg-white',
         headerBorder: 'border-indigo-200/40',
         titleGradient: 'from-indigo-500 via-purple-500 to-indigo-600',
         settingsHover: 'hover:bg-indigo-50/80',
@@ -757,7 +757,7 @@ export const themes: Record<string, ThemeConfig> = {
 
       // Chat interface - Kybera Landing inspired
       chatInterface: {
-        headerBg: 'bg-[#0a0a12]/50',
+        headerBg: 'bg-[#0a0a12]',
         headerBorder: 'border-[#8b8bff]/10',
         titleGradient: 'from-[#8b8bff] via-[#a78bfa] to-[#8b8bff]',
         settingsHover: 'hover:bg-[#8b8bff]/10',
@@ -1041,7 +1041,7 @@ export const themes: Record<string, ThemeConfig> = {
 
       // Chat interface
       chatInterface: {
-        headerBg: 'bg-primary-900/50',
+        headerBg: 'bg-primary-900',
         headerBorder: 'border-primary-800/50',
         titleGradient: 'from-red-400 via-red-500 to-red-400',
         settingsHover: 'hover:bg-primary-800/50',
@@ -1319,7 +1319,7 @@ export const themes: Record<string, ThemeConfig> = {
 
       // Chat interface
       chatInterface: {
-        headerBg: 'bg-surface-elevated/50',
+        headerBg: 'bg-surface-base',
         headerBorder: 'border-border-subtle',
         titleGradient: 'from-cyan-400 via-cyan-300 to-pink-400',
         settingsHover: 'hover:bg-white/10',
@@ -1599,7 +1599,7 @@ export const themes: Record<string, ThemeConfig> = {
 
       // Chat interface
       chatInterface: {
-        headerBg: 'bg-white/70',
+        headerBg: 'bg-white',
         headerBorder: 'border-gray-200/50',
         titleGradient: 'from-cyan-600 via-teal-500 to-cyan-600',
         settingsHover: 'hover:bg-gray-100/80',

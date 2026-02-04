@@ -5,6 +5,7 @@ import { MobileNav } from './MobileNav'
 import { AnimatedPanel, MobileOverlay } from '../common/AnimatedPanel'
 import { WalletDrawer } from '../wallet/WalletDrawer'
 import { SettingsPanel } from '../settings/SettingsPanel'
+import { useUIStore } from '../../store/uiStore'
 
 interface ResponsiveLayoutProps {
   children: ReactNode
@@ -13,6 +14,15 @@ interface ResponsiveLayoutProps {
 export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
   const isMobile = useMediaQuery('(max-width: 1024px)')
   const [mobilePanel, setMobilePanel] = useState<'wallet' | 'settings' | null>(null)
+  const { theme: uiTheme } = useUIStore()
+
+  // Apply theme class to document for mobile (desktop handles this in AnimatedMainLayout)
+  useEffect(() => {
+    if (isMobile) {
+      document.documentElement.classList.remove('light', 'dark', 'xipz', 'ogDark', 'ogLight')
+      document.documentElement.classList.add(uiTheme)
+    }
+  }, [isMobile, uiTheme])
 
   // Close mobile panels when switching to desktop
   useEffect(() => {

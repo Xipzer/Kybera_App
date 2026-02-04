@@ -790,6 +790,8 @@ Use these criteria:
     const pros: string[] = []
     const cons: string[] = []
     let rating: 'green' | 'yellow' | 'orange' | 'red' = 'yellow'
+    let explicitRatingFound = false
+    let ratingReason = ''
     
     for (const line of lines) {
       // Only try to extract token name/symbol if we haven't found them yet
@@ -797,29 +799,36 @@ Use these criteria:
         // Pattern 1: "## 🦑 **Squaer (SQUAER)**" or "**TokenName (SYMBOL)**"
         const tokenMatch1 = line.match(/\*\*([^(]+)\s*\(([^)]+)\)\*\*/)
         if (tokenMatch1) {
-          tokenName = tokenMatch1[1].trim().replace(/^[#\s]+/, '').replace(/[🦑🐸🚀💎🔥✨🌙⭐]/g, '').trim()
+          tokenName = tokenMatch1[1]
+            .trim()
+            .replace(/^[#\s]+/, '')
+            .replace(/[🦑🐸🚀💎🔥✨🌙⭐]/g, '')
+            .trim()
           tokenSymbol = tokenMatch1[2].trim().replace(/\$/g, '')
         }
-        
+
         // Pattern 2: "# TokenName ($SYMBOL)" or "## TokenName ($SYMBOL)"
         const tokenMatch2 = line.match(/^#+\s*([^($]+)\s*\(\$?([A-Z0-9]+)\)/i)
         if (tokenMatch2 && tokenName === 'Unknown Token') {
-          tokenName = tokenMatch2[1].trim().replace(/[🦑🐸🚀💎🔥✨🌙⭐]/g, '').trim()
+          tokenName = tokenMatch2[1]
+            .trim()
+            .replace(/[🦑🐸🚀💎🔥✨🌙⭐]/g, '')
+            .trim()
           tokenSymbol = tokenMatch2[2].trim()
         }
-        
+
         // Pattern 3: "Token: NAME" or "Name: TOKEN"
         const tokenMatch3 = line.match(/(?:Token|Name):\s*\*?\*?([^(,\n]+)/i)
         if (tokenMatch3 && tokenName === 'Unknown Token') {
           tokenName = tokenMatch3[1].trim().replace(/\*\*/g, '')
         }
-        
+
         // Pattern 4: "Symbol: $SYMBOL" or "Ticker: SYMBOL"
         const tokenMatch4 = line.match(/(?:Symbol|Ticker):\s*\$?([A-Z0-9]+)/i)
         if (tokenMatch4 && tokenSymbol === '???') {
           tokenSymbol = tokenMatch4[1].trim()
         }
-        
+
         // Pattern 5: Look for $SYMBOL anywhere in header lines
         if (line.startsWith('#') && tokenSymbol === '???') {
           const symbolMatch = line.match(/\$([A-Z0-9]{2,10})/i)
@@ -828,50 +837,95 @@ Use these criteria:
           }
         }
       }
-      
+
       // Look for market cap - multiple patterns
       const mcapMatch = line.match(/Market\s*Cap[^\d]*\$?([\d,.]+)\s*([KMB])?/i)
       if (mcapMatch && marketCap === 0) {
         marketCap = this.parseNumber(mcapMatch[1] + (mcapMatch[2] || ''))
       }
-      
+
       // Look for price - multiple patterns
       const priceMatch = line.match(/(?:Price|Current Price)[^\d]*\$?([\d.]+(?:e[+-]?\d+)?)/i)
       if (priceMatch && price === 0) {
         price = parseFloat(priceMatch[1])
       }
-      
+
       // Look for rating keywords
       const lineLower = line.toLowerCase()
-      
+
       // Rating keywords (matches prompt format: SAFE / POTENTIAL / HIGH RISK / AVOID)
-      if (lineLower.includes('rating: safe') || lineLower.includes('🟩 safe') || (lineLower.includes('safe') && lineLower.includes('rating'))) {
+      // Only explicit "Rating:" patterns should set the rating definitively
+      // Also extract the rating reason (text after the rating indicator)
+      const ratingMatch = line.match(
+        /(?:Rating:\s*)?(?:🟩\s*SAFE|🟨\s*POTENTIAL|🟧\s*HIGH\s*RISK|🟥\s*AVOID)\s*[—\-–:]*\s*(.*)/i,
+      )
+      if (ratingMatch && ratingMatch[1]) {
+        ratingReason = ratingMatch[1].trim()
+      }
+
+      if (
+        lineLower.includes('rating: safe') ||
+        lineLower.includes('🟩 safe') ||
+        (lineLower.includes('safe') && lineLower.includes('rating'))
+      ) {
         rating = 'green'
-      } else if (lineLower.includes('rating: potential') || lineLower.includes('🟨 potential') || (lineLower.includes('potential') && lineLower.includes('rating'))) {
+        explicitRatingFound = true
+      } else if (
+        lineLower.includes('rating: potential') ||
+        lineLower.includes('🟨 potential') ||
+        (lineLower.includes('potential') && lineLower.includes('rating'))
+      ) {
         rating = 'yellow'
-      } else if (lineLower.includes('rating: high risk') || lineLower.includes('🟧 high risk') || (lineLower.includes('high risk') && lineLower.includes('rating'))) {
+        explicitRatingFound = true
+      } else if (
+        lineLower.includes('rating: high risk') ||
+        lineLower.includes('🟧 high risk') ||
+        (lineLower.includes('high risk') && lineLower.includes('rating'))
+      ) {
         rating = 'orange'
-      } else if (lineLower.includes('rating: avoid') || lineLower.includes('🟥 avoid') || (lineLower.includes('avoid') && lineLower.includes('rating'))) {
+        explicitRatingFound = true
+      } else if (
+        lineLower.includes('rating: avoid') ||
+        lineLower.includes('🟥 avoid') ||
+        (lineLower.includes('avoid') && lineLower.includes('rating'))
+      ) {
         rating = 'red'
+        explicitRatingFound = true
       }
-      // Fallback keywords without "rating:" prefix
-      else if (lineLower.includes('avoid') && !lineLower.includes('to avoid')) {
-        rating = 'red'
-      } else if (lineLower.includes('high risk')) {
-        rating = 'orange'
-      } else if (lineLower.includes('low risk') || lineLower.includes('safe bet')) {
-        rating = 'green'
+      // Fallback keywords without "rating:" prefix - only use if no explicit rating found yet
+      else if (!explicitRatingFound) {
+        if (lineLower.includes('avoid') && !lineLower.includes('to avoid')) {
+          rating = 'red'
+        } else if (lineLower.includes('high risk')) {
+          rating = 'orange'
+        } else if (lineLower.includes('low risk') || lineLower.includes('safe bet')) {
+          rating = 'green'
+        }
       }
-      
+
       // Look for red flags as cons (🟥 red square, ❌, 🚨, ⚠️)
-      if (line.includes('🟥') || line.includes('🚨') || line.includes('Red Flag') || line.includes('⚠️') || line.includes('❌')) {
-        const text = line.replace(/[🟥🚨⚠️❌]/g, '').replace(/\*\*/g, '').replace(/^[-*]\s*/, '').trim()
+      if (
+        line.includes('🟥') ||
+        line.includes('🚨') ||
+        line.includes('Red Flag') ||
+        line.includes('⚠️') ||
+        line.includes('❌')
+      ) {
+        const text = line
+          .replace(/[🟥🚨⚠️❌]/g, '')
+          .replace(/\*\*/g, '')
+          .replace(/^[-*]\s*/, '')
+          .trim()
         if (text.length > 5 && !cons.includes(text)) cons.push(text)
       }
-      
+
       // Look for green checkmarks as pros (🟩 green square, ✅, ✓)
       if (line.includes('🟩') || line.includes('✅') || line.includes('✓')) {
-        const text = line.replace(/[🟩✅✓]/g, '').replace(/\*\*/g, '').replace(/^[-*]\s*/, '').trim()
+        const text = line
+          .replace(/[🟩✅✓]/g, '')
+          .replace(/\*\*/g, '')
+          .replace(/^[-*]\s*/, '')
+          .trim()
         if (text.length > 5 && !pros.includes(text)) pros.push(text)
       }
     }
@@ -893,6 +947,7 @@ Use these criteria:
       pros: pros.slice(0, 5),
       cons: cons.slice(0, 5),
       rating,
+      ratingReason,
       timestamp: new Date(),
       status: 'completed',
       rawResponse: responseText,

@@ -129,6 +129,12 @@ export interface TokenResearch {
   status: 'pending' | 'researching' | 'completed' | 'failed'
   errorMessage?: string
 
+  // Raw AI response for detailed view
+  rawResponse?: string
+
+  // Parsed sections from AI response
+  ratingReason?: string // The reason/summary for the rating
+
   // User actions
   dismissed?: boolean // User clicked "Fade"
   traded?: boolean // User clicked "Ape"

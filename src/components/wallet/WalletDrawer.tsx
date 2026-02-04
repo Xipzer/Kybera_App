@@ -13,7 +13,6 @@ import {
   Users,
   Wallet as WalletIcon,
   Sparkles,
-  Layers,
 } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
@@ -397,11 +396,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
           <Tabs.Root defaultValue="groups" className="flex-1 flex flex-col min-h-0">
             {/* Tabs using theme.styles for proper active state */}
             <Tabs.List className={`${theme.styles.tabs.list} flex-shrink-0`}>
-              <Tabs.Trigger
-                value="groups"
-                className={`${theme.styles.tabs.trigger} flex items-center justify-center gap-1.5`}
-              >
-                <Layers className="w-3.5 h-3.5" />
+              <Tabs.Trigger value="groups" className={theme.styles.tabs.trigger}>
                 Groups ({actualGroups.length})
               </Tabs.Trigger>
               <Tabs.Trigger value="evm" className={theme.styles.tabs.trigger}>
@@ -941,7 +936,10 @@ function WalletGroupItem({
   const { removeWalletGroup, updateWalletGroup, activeNetwork } = useWalletStore()
   const { theme } = useTheme()
   const walletStyles = theme.styles.wallet
-  const [isExpanded, setIsExpanded] = useState(true)
+
+  // Only expand by default if this group contains the active wallet
+  const containsActiveWallet = wallets.some((w) => w.id === activeWalletId)
+  const [isExpanded, setIsExpanded] = useState(containsActiveWallet)
   const [isEditingName, setIsEditingName] = useState(false)
   const [editedName, setEditedName] = useState(group.name)
 
