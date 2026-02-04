@@ -3,25 +3,59 @@ import { useTheme } from '../../hooks/useTheme'
 
 interface MobileNavProps {
   onOpenWallet: () => void
+  onClosePanel: () => void
   onOpenSettings: () => void
+  activePanel?: 'wallet' | 'settings' | null
 }
 
-export function MobileNav({ onOpenWallet, onOpenSettings }: MobileNavProps) {
+export function MobileNav({
+  onOpenWallet,
+  onClosePanel,
+  onOpenSettings,
+  activePanel,
+}: MobileNavProps) {
   const { theme } = useTheme()
   const styles = theme.styles.mobileNav
 
+  // Handle Research tab - closes any panel if open
+  const handleResearchClick = () => {
+    if (activePanel !== null) {
+      onClosePanel()
+    }
+  }
+
+  // Handle Wallets tab - if settings is open, close it and open wallet
+  const handleWalletClick = () => {
+    onOpenWallet()
+  }
+
+  // Handle Settings tab - if wallet is open, close it and open settings
+  const handleSettingsClick = () => {
+    onOpenSettings()
+  }
+
   // Bottom tab items - main navigation
   const bottomTabs = [
-    { icon: Home, label: 'Research', onClick: () => {}, isActive: true },
-    { icon: Wallet, label: 'Wallets', onClick: onOpenWallet, isActive: false },
-    { icon: Settings, label: 'Settings', onClick: onOpenSettings, isActive: false },
+    { icon: Home, label: 'Research', onClick: handleResearchClick, isActive: activePanel === null },
+    {
+      icon: Wallet,
+      label: 'Wallets',
+      onClick: handleWalletClick,
+      isActive: activePanel === 'wallet',
+    },
+    {
+      icon: Settings,
+      label: 'Settings',
+      onClick: handleSettingsClick,
+      isActive: activePanel === 'settings',
+    },
   ]
 
   return (
     <>
-      {/* Bottom Tab Bar - Modern floating style */}
+      {/* Bottom Tab Bar - Always visible, z-50 to stay above panels */}
       <nav
-        className={`lg:hidden fixed bottom-0 left-0 right-0 z-30`}
+        className={`lg:hidden fixed bottom-0 left-0 right-0 z-50`}
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
         {/* Background with glassmorphism */}

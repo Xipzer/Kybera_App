@@ -33,6 +33,7 @@ import { ImportGroupDialog } from './ImportGroupDialog'
 import { WalletDetailView } from './WalletDetailView'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { useTheme } from '../../hooks/useTheme'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
 
 
 import {
@@ -68,6 +69,8 @@ const restrictToVerticalAxis = ({
 interface WalletDrawerProps {
   onToggle?: () => void
   collapsed?: boolean
+  isMobilePanel?: boolean
+  onCollapse?: () => void
 }
 
 // Custom animation to prevent bounce
@@ -124,7 +127,9 @@ function SortableWallet(props: WalletItemProps & { id: string }) {
   )
 }
 
-export function WalletDrawer({ collapsed }: WalletDrawerProps) {
+export function WalletDrawer({ collapsed, isMobilePanel, onCollapse }: WalletDrawerProps) {
+  const isMobile = useMediaQuery('(max-width: 1024px)')
+  const [isWalletListCollapsed, setIsWalletListCollapsed] = useState(false)
   const {
     wallets,
     walletGroups,
@@ -230,15 +235,88 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
     return <div className="h-full w-full border-l border-border-subtle panel-content-fade-right" />
   }
 
+  // Collapsed view - header bar + active wallet detail if selected (works on both mobile and desktop)
+  if (isWalletListCollapsed) {
+    return (
+      <div
+        className={`h-full flex flex-col ${theme.styles.drawerContainer} panel-content-fade-right`}
+      >
+        {/* Collapsed header */}
+        <div
+          className={`p-4 flex-shrink-0 ${theme.styles.panelHeader} border-b border-border-subtle`}
+        >
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setIsWalletListCollapsed(false)}
+              className="flex items-center gap-2 touch-manipulation hover:opacity-80 transition-opacity"
+            >
+              <div className={`p-1.5 rounded-lg ${walletStyles.titleIconBg}`}>
+                <WalletIcon className="w-4 h-4 text-white" />
+              </div>
+              <h2
+                className={`text-lg font-semibold bg-gradient-to-r ${walletStyles.titleGradient} bg-clip-text text-transparent`}
+              >
+                Wallets
+              </h2>
+              <ChevronDown className="w-4 h-4 text-text-secondary" />
+            </button>
+            <button
+              onClick={lock}
+              className={`${theme.styles.buttonIcon} p-2 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation`}
+              title="Lock wallet"
+            >
+              <Lock className="w-4 h-4 text-text-secondary" />
+            </button>
+          </div>
+        </div>
+
+        {/* Active wallet detail view - still visible when collapsed */}
+        {activeWalletId && (
+          <div className="flex-1 overflow-y-auto">
+            <WalletDetailView />
+          </div>
+        )}
+
+        {/* Dialogs still need to be available */}
+        <ImportWalletDialog open={showImportDialog} onOpenChange={setShowImportDialog} />
+        <RenameWalletDialog
+          open={renameWallet !== null}
+          onOpenChange={(open) => !open && setRenameWallet(null)}
+          wallet={renameWallet}
+        />
+        <CreateGroupDialog open={showCreateGroupDialog} onOpenChange={setShowCreateGroupDialog} />
+        <AddWalletToGroupDialog
+          open={showAddToGroupDialog}
+          onOpenChange={setShowAddToGroupDialog}
+          groupId={selectedGroupId}
+        />
+        <ExportGroupDialog
+          open={exportGroup !== null}
+          onOpenChange={(open) => !open && setExportGroup(null)}
+          group={exportGroup}
+        />
+        <ExportWalletDialog
+          open={exportWallet !== null}
+          onOpenChange={(open) => !open && setExportWallet(null)}
+          wallet={exportWallet}
+        />
+        <ImportGroupDialog open={showImportGroupDialog} onOpenChange={setShowImportGroupDialog} />
+      </div>
+    )
+  }
+
   return (
     <div className={`h-full ${theme.styles.drawerContainer} panel-content-fade-right`}>
       <PanelGroup direction="vertical" className="h-full">
         <Panel defaultSize={50} minSize={30} maxSize={70} className="flex flex-col overflow-hidden">
           {/* Header */}
           <div className={`p-4 flex-shrink-0 ${theme.styles.panelHeader}`}>
-            {/* Title with icon and lock button */}
+            {/* Title with icon and lock button - clickable to collapse on both mobile and desktop */}
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsWalletListCollapsed(true)}
+                className="flex items-center gap-2 touch-manipulation hover:opacity-80 transition-opacity"
+              >
                 <div className={`p-1.5 rounded-lg ${walletStyles.titleIconBg}`}>
                   <WalletIcon className="w-4 h-4 text-white" />
                 </div>
@@ -247,13 +325,14 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
                 >
                   Wallets
                 </h2>
-              </div>
+                <ChevronDown className="w-4 h-4 text-text-secondary rotate-180" />
+              </button>
               <button
                 onClick={lock}
-                className={`${theme.styles.buttonIcon} p-2 rounded-lg ${theme.styles.iconSecondary} hover:${theme.styles.iconPrimary}`}
+                className={`${theme.styles.buttonIcon} p-2 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation`}
                 title="Lock wallet"
               >
-                <Lock className="w-4 h-4" />
+                <Lock className="w-4 h-4 text-text-secondary" />
               </button>
             </div>
 
@@ -268,7 +347,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
                 {/* New Group button with gradient */}
                 <button
                   onClick={() => setShowCreateGroupDialog(true)}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r ${walletStyles.buttonPrimaryGradient} rounded-xl font-medium text-white shadow-lg ${walletStyles.buttonPrimaryShadow} transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]`}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 min-h-[44px] bg-gradient-to-r ${walletStyles.buttonPrimaryGradient} rounded-xl font-medium text-white shadow-lg ${walletStyles.buttonPrimaryShadow} transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] touch-manipulation`}
                 >
                   <Sparkles className="w-4 h-4" />
                   New Group
@@ -278,7 +357,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild>
                     <button
-                      className={`${theme.styles.buttonSecondary} flex-1 flex items-center justify-center gap-2 px-3 py-2`}
+                      className={`${theme.styles.buttonSecondary} flex-1 flex items-center justify-center gap-2 px-3 py-3 min-h-[44px] touch-manipulation`}
                       style={theme.dynamicStyles.buttonSecondary}
                     >
                       <Upload className="w-4 h-4" />

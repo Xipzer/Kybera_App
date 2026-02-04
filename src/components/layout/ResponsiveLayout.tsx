@@ -4,6 +4,7 @@ import { MainLayout } from './AnimatedMainLayout'
 import { MobileNav } from './MobileNav'
 import { AnimatedPanel, MobileOverlay } from '../common/AnimatedPanel'
 import { WalletDrawer } from '../wallet/WalletDrawer'
+import { SettingsPanel } from '../settings/SettingsPanel'
 import { SettingsDialog } from '../settings/SettingsDialog'
 
 interface ResponsiveLayoutProps {
@@ -13,7 +14,6 @@ interface ResponsiveLayoutProps {
 export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
   const isMobile = useMediaQuery('(max-width: 1024px)')
   const [mobilePanel, setMobilePanel] = useState<'wallet' | 'settings' | null>(null)
-  const [showSettings, setShowSettings] = useState(false)
 
   // Close mobile panels when switching to desktop
   useEffect(() => {
@@ -34,10 +34,12 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
     }
   }, [isMobile, mobilePanel])
 
+  const closePanel = () => setMobilePanel(null)
+
   if (isMobile) {
     return (
       <>
-        {/* Main mobile container - no top padding since header is removed */}
+        {/* Main mobile container - bottom nav always visible */}
         <div className="flex flex-col h-[100dvh] pb-[72px] bg-bg-base">
           {/* Main content area - scrollable */}
           <main className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
@@ -45,52 +47,40 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
           </main>
         </div>
 
-        {/* Mobile bottom navigation only */}
+        {/* Mobile bottom navigation - always visible on all screens */}
         <MobileNav
-          onOpenWallet={() => setMobilePanel('wallet')}
-          onOpenSettings={() => setShowSettings(true)}
+          onOpenWallet={() => setMobilePanel(mobilePanel === 'wallet' ? null : 'wallet')}
+          onClosePanel={closePanel}
+          onOpenSettings={() => setMobilePanel(mobilePanel === 'settings' ? null : 'settings')}
+          activePanel={mobilePanel}
         />
 
         {/* Mobile overlay for panels */}
-        <MobileOverlay isOpen={mobilePanel !== null} onClick={() => setMobilePanel(null)} />
+        <MobileOverlay isOpen={mobilePanel !== null} onClick={closePanel} />
 
         {/* Wallet panel - slides from right */}
         <AnimatedPanel
           isOpen={mobilePanel === 'wallet'}
           direction="right"
           width="w-full sm:w-[85vw] sm:max-w-[400px]"
-          className="pt-0"
+          className="pb-[72px]"
         >
-          {/* Mobile wallet header */}
-          <div className="sticky top-0 z-10 h-14 px-4 flex items-center justify-between bg-surface-base/95 backdrop-blur-xl border-b border-border-subtle">
-            <h2 className="text-lg font-semibold text-text-primary">Wallets</h2>
-            <button
-              onClick={() => setMobilePanel(null)}
-              className="p-2 rounded-xl bg-surface-hover hover:bg-surface-elevated transition-colors active:scale-95 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
-              aria-label="Close wallet panel"
-            >
-              <svg
-                className="w-5 h-5 text-text-secondary"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-          <div className="h-[calc(100dvh-56px)] overflow-y-auto overscroll-contain">
-            <WalletDrawer />
+          <div className="h-full overflow-y-auto overscroll-contain">
+            <WalletDrawer isMobilePanel onCollapse={closePanel} />
           </div>
         </AnimatedPanel>
 
-        {/* Settings dialog */}
-        <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />
+        {/* Settings panel - slides from right */}
+        <AnimatedPanel
+          isOpen={mobilePanel === 'settings'}
+          direction="right"
+          width="w-full sm:w-[85vw] sm:max-w-[400px]"
+          className="pb-[72px]"
+        >
+          <div className="h-full overflow-y-auto overscroll-contain">
+            <SettingsPanel />
+          </div>
+        </AnimatedPanel>
       </>
     )
   }

@@ -184,7 +184,7 @@ export function ResearchCard({ research, onApe, onFade, compact = false }: Resea
         </div>
 
         {/* Market data */}
-        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           <div>
             <div className="text-xs text-text-tertiary uppercase tracking-wide mb-1">Price</div>
             <div className="text-text-primary font-medium">{formatPrice(research.price)}</div>
@@ -225,7 +225,7 @@ export function ResearchCard({ research, onApe, onFade, compact = false }: Resea
       {/* Expandable content */}
       <div className={expanded ? '' : 'hidden'}>
         {/* Pros & Cons */}
-        <div className="p-4 grid md:grid-cols-2 gap-4">
+        <div className="p-3 sm:p-4 grid sm:grid-cols-2 gap-3 sm:gap-4">
           {/* Pros */}
           <div
             className={`${isDark ? 'bg-green-500/5' : 'bg-green-50'} border ${isDark ? 'border-green-500/20' : 'border-green-200'} rounded-xl p-4`}
@@ -289,7 +289,7 @@ export function ResearchCard({ research, onApe, onFade, compact = false }: Resea
                 <Users className="w-5 h-5 text-cyan-500" />
                 <h4 className="font-medium text-text-primary">Developer</h4>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-sm">
                 {research.developer.twitterHandle && (
                   <div>
                     <div className="text-text-tertiary mb-1">Twitter</div>
@@ -345,7 +345,7 @@ export function ResearchCard({ research, onApe, onFade, compact = false }: Resea
                   </span>
                 )}
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-sm">
                 <div>
                   <div className="text-text-tertiary mb-1">Top 10</div>
                   <div className="text-text-primary font-medium">

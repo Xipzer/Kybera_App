@@ -47,7 +47,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
       )}
 
       {/* Message bubble */}
-      <div className={`relative max-w-[75%] group`}>
+      <div className={`relative max-w-[85%] sm:max-w-[75%] group`}>
         {isUser ? (
           // User message bubble
           <div

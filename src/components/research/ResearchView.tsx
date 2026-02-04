@@ -24,6 +24,7 @@ import { ApeInterface } from './ApeInterface'
 import { ChatMessage } from '../chat/ChatMessage'
 import { SettingsDialog } from '../settings/SettingsDialog'
 import { useTheme } from '../../hooks/useTheme'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { TokenResearch, ResearchNetwork } from '../../types/research'
 
 // Detect network from contract address format
@@ -56,6 +57,7 @@ export function ResearchView() {
   const { theme, themeName } = useTheme()
   const styles = theme.styles.chatInterface
   const isDark = themeName === 'dark' || themeName === 'xipz'
+  const isMobile = useMediaQuery('(max-width: 1024px)')
 
   // Wallpaper settings
   const { chatWallpaper, wallpaperOpacity } = useUIStore()
@@ -248,15 +250,23 @@ export function ResearchView() {
             analysis.
           </p>
 
+          {/* Desktop: Button opens settings dialog */}
           <button
             onClick={() => setShowSettings(true)}
-            className={`inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r ${styles.configButtonGradient} rounded-xl font-medium text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300`}
+            className={`hidden lg:inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r ${styles.configButtonGradient} rounded-xl font-medium text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300`}
           >
             <Settings className="w-4 h-4" />
             Configure OpenClaw
           </button>
+
+          {/* Mobile: Guide to settings tab */}
+          <p className="lg:hidden text-sm text-text-tertiary">
+            Tap the <span className="text-text-primary font-medium">Settings</span> tab below to
+            configure
+          </p>
         </div>
-        <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />
+        {/* Settings dialog - desktop only */}
+        {!isMobile && <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />}
       </div>
     )
   }
@@ -287,7 +297,7 @@ export function ResearchView() {
               {connectionState === 'disconnected' && (
                 <button
                   onClick={handleConnect}
-                  className="px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 rounded-lg text-sm text-cyan-400 transition-colors"
+                  className="px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 rounded-full text-sm text-cyan-400 transition-colors touch-manipulation"
                 >
                   Connect
                 </button>
@@ -295,14 +305,15 @@ export function ResearchView() {
               {connectionState === 'connected' && (
                 <button
                   onClick={disconnect}
-                  className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-lg text-sm text-red-400 transition-colors"
+                  className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-full text-sm text-red-400 transition-colors touch-manipulation"
                 >
                   Disconnect
                 </button>
               )}
+              {/* Settings button - hidden on mobile since it's in the nav bar */}
               <button
                 onClick={() => setShowSettings(true)}
-                className={`${theme.styles.buttonIcon} p-2 rounded-lg`}
+                className={`${theme.styles.buttonIcon} p-2 rounded-lg hidden lg:flex`}
                 title="Settings"
               >
                 <Settings className="w-4 h-4 text-text-secondary" />
@@ -330,10 +341,10 @@ export function ResearchView() {
         </div>
 
         {/* Main content area */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto overscroll-contain">
           <div
-            className="max-w-7xl mx-auto px-4 pt-4"
-            style={{ paddingBottom: `${inputHeight + 100}px` }}
+            className="max-w-7xl mx-auto px-3 sm:px-4 pt-4"
+            style={{ paddingBottom: `${inputHeight + (isMobile ? 100 : 32)}px` }}
           >
             {/* Research results */}
             {researches.length > 0 && (
@@ -423,7 +434,7 @@ export function ResearchView() {
         </div>
 
         {/* Floating input area */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none">
+        <div className="absolute left-0 right-0 bottom-0 p-3 sm:p-4 pointer-events-none">
           <div className="max-w-7xl mx-auto pointer-events-auto">
             <div
               className={`${styles.inputSolidBg} border ${styles.inputBorder} rounded-2xl shadow-lg overflow-hidden`}
@@ -441,13 +452,14 @@ export function ResearchView() {
                   }
                   disabled={connectionState !== 'connected'}
                   rows={1}
-                  className={`w-full px-4 ${hasScroll ? '' : 'pr-14'} bg-transparent text-text-primary placeholder:text-text-tertiary focus:outline-none resize-none disabled:opacity-50`}
+                  className={`w-full px-4 ${hasScroll ? '' : 'pr-14'} bg-transparent text-text-primary placeholder:text-text-tertiary focus:outline-none resize-none disabled:opacity-50 text-base`}
                   style={{
                     height: '48px',
                     maxHeight: `${LINE_HEIGHT * MAX_LINES}px`,
                     lineHeight: `${LINE_HEIGHT}px`,
                     paddingTop: '14px',
                     paddingBottom: '10px',
+                    fontSize: '16px', // Prevents iOS zoom on focus
                   }}
                 />
 
@@ -455,7 +467,7 @@ export function ResearchView() {
                   <button
                     onClick={handleSend}
                     disabled={!input.trim() || connectionState !== 'connected'}
-                    className={`absolute bottom-2 right-2 w-9 h-9 rounded-full bg-gradient-to-r ${styles.sendGradient} flex items-center justify-center text-white shadow-md transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100`}
+                    className={`absolute bottom-2 right-2 w-10 h-10 sm:w-9 sm:h-9 rounded-full bg-gradient-to-r ${styles.sendGradient} flex items-center justify-center text-white shadow-md transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 touch-manipulation`}
                   >
                     <ArrowUp className="w-5 h-5" />
                   </button>
@@ -469,7 +481,7 @@ export function ResearchView() {
                   <button
                     onClick={handleSend}
                     disabled={!input.trim() || connectionState !== 'connected'}
-                    className={`w-9 h-9 rounded-full bg-gradient-to-r ${styles.sendGradient} flex items-center justify-center text-white shadow-md transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100`}
+                    className={`w-10 h-10 sm:w-9 sm:h-9 rounded-full bg-gradient-to-r ${styles.sendGradient} flex items-center justify-center text-white shadow-md transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 touch-manipulation`}
                   >
                     <ArrowUp className="w-5 h-5" />
                   </button>
@@ -479,7 +491,8 @@ export function ResearchView() {
           </div>
         </div>
 
-        <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />
+        {/* Settings dialog - desktop only, mobile uses the settings panel via nav */}
+        {!isMobile && <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />}
       </div>
 
       {/* Ape Interface Modal */}

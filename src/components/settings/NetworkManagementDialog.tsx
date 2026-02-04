@@ -122,7 +122,7 @@ export function NetworkManagementDialog({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="dialog-overlay" />
-        <Dialog.Content className="dialog-content bg-surface-base rounded-lg shadow-2xl border border-border-subtle w-[600px] max-h-[90vh] overflow-hidden flex flex-col">
+        <Dialog.Content className="dialog-content bg-surface-base rounded-none sm:rounded-xl shadow-2xl border-0 sm:border border-border-subtle w-full h-full sm:w-[95vw] sm:max-w-[600px] sm:h-auto sm:max-h-[90vh] overflow-hidden flex flex-col">
           <div className="flex items-center justify-between p-6 border-b border-border-subtle">
             <Dialog.Title className="text-xl font-semibold text-text-primary">
               {network ? 'Edit Network' : 'Add Custom Network'}
@@ -142,7 +142,7 @@ export function NetworkManagementDialog({
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-2">
                   Network Name <span className="text-accent">*</span>
@@ -163,14 +163,16 @@ export function NetworkManagementDialog({
                 </label>
                 <select
                   value={formData.type}
-                  onChange={(e) => setFormData({ 
-                    ...formData, 
-                    type: e.target.value as 'EVM' | 'SVM',
-                    nativeCurrency: {
-                      ...formData.nativeCurrency,
-                      decimals: e.target.value === 'EVM' ? 18 : 9
-                    }
-                  })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      type: e.target.value as 'EVM' | 'SVM',
+                      nativeCurrency: {
+                        ...formData.nativeCurrency,
+                        decimals: e.target.value === 'EVM' ? 18 : 9,
+                      },
+                    })
+                  }
                   className={themeConfig.styles.input}
                   disabled={network && !network.isCustom}
                 >
@@ -180,7 +182,7 @@ export function NetworkManagementDialog({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-2">
                   Chain ID <span className="text-accent">*</span>
@@ -189,7 +191,7 @@ export function NetworkManagementDialog({
                   type={formData.type === 'EVM' ? 'number' : 'text'}
                   value={formData.chainId}
                   onChange={(e) => setFormData({ ...formData, chainId: e.target.value })}
-                  placeholder={formData.type === 'EVM' ? "e.g. 1" : "e.g. mainnet-beta"}
+                  placeholder={formData.type === 'EVM' ? 'e.g. 1' : 'e.g. mainnet-beta'}
                   className={themeConfig.styles.input}
                   disabled={network && !network.isCustom}
                 />
@@ -202,7 +204,9 @@ export function NetworkManagementDialog({
                 <input
                   type="text"
                   value={formData.symbol}
-                  onChange={(e) => setFormData({ ...formData, symbol: e.target.value.toUpperCase() })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, symbol: e.target.value.toUpperCase() })
+                  }
                   placeholder="e.g. ETH"
                   className={themeConfig.styles.input}
                   disabled={network && !network.isCustom}
@@ -246,11 +250,13 @@ export function NetworkManagementDialog({
               <input
                 type="url"
                 value={formData.explorerUrl}
-                onChange={(e) => setFormData({ 
-                  ...formData, 
-                  explorerUrl: e.target.value,
-                  explorer: e.target.value 
-                })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    explorerUrl: e.target.value,
+                    explorer: e.target.value,
+                  })
+                }
                 placeholder="https://..."
                 className={themeConfig.styles.input}
               />
@@ -260,7 +266,7 @@ export function NetworkManagementDialog({
               <h4 className="text-sm font-medium text-text-primary mb-3">
                 Native Currency Details
               </h4>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-text-secondary mb-2">
                     Currency Name
@@ -268,10 +274,12 @@ export function NetworkManagementDialog({
                   <input
                     type="text"
                     value={formData.nativeCurrency.name}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      nativeCurrency: { ...formData.nativeCurrency, name: e.target.value }
-                    })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        nativeCurrency: { ...formData.nativeCurrency, name: e.target.value },
+                      })
+                    }
                     placeholder="e.g. Ethereum"
                     className={themeConfig.styles.input}
                   />
