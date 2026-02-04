@@ -15,7 +15,7 @@
   
   /* Global dialog overlay - ensures proper darkening over all content */
   .dialog-overlay {
-    @apply fixed inset-0 bg-black/50 z-40;
+    @apply fixed inset-0 bg-black/80 z-40;
   }
   
   /* Global dialog content - ensures proper stacking */

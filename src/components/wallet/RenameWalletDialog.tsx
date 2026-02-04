@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { X } from 'lucide-react'
+import { Pencil, X } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import { useTheme } from '../../hooks/useTheme'
 import { Wallet } from '../../types'
@@ -45,8 +45,17 @@ export function RenameWalletDialog({ open, onOpenChange, wallet }: RenameWalletD
         <Dialog.Overlay className="dialog-overlay" />
         <Dialog.Content className={`dialog-content ${theme.styles.dialogContainer} w-[400px]`}>
           <div className="p-6">
+            {/* Header */}
             <div className="flex items-center justify-between mb-6">
-              <Dialog.Title className={theme.styles.heading}>Rename Wallet</Dialog.Title>
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${theme.styles.wallet.titleIconBg}`}>
+                  <Pencil className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <Dialog.Title className={theme.styles.heading}>Rename Wallet</Dialog.Title>
+                  <p className="text-sm text-text-secondary">{wallet?.name}</p>
+                </div>
+              </div>
               <Dialog.Close asChild>
                 <button className={theme.styles.buttonIcon}>
                   <X className={`w-5 h-5 ${theme.styles.iconSecondary}`} />

@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { X, AlertCircle, Users, Edit2, ChevronLeft } from 'lucide-react'
+import { X, AlertCircle, Users, Edit2, ChevronLeft, Download } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
-// import { encryptData } from '../../utils/crypto'
 import { EVMWalletService } from '../../services/blockchain/evmWallet'
 import { SVMWalletService } from '../../services/blockchain/svmWallet'
 import { useTheme } from '../../hooks/useTheme'
@@ -131,37 +130,48 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="dialog-overlay" />
-        <Dialog.Content className={`dialog-content w-[500px] max-h-[85vh] overflow-y-auto ${theme.styles.dialogContainer}`}>
+        <Dialog.Content
+          className={`dialog-content w-[500px] max-h-[85vh] overflow-y-auto ${theme.styles.dialogContainer}`}
+        >
           <div className="p-6">
+            {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                {showNameEditor && (
+                {showNameEditor ? (
                   <button
                     onClick={() => setShowNameEditor(false)}
                     className={theme.styles.buttonIcon}
                   >
                     <ChevronLeft className={`w-5 h-5 ${theme.styles.iconSecondary}`} />
                   </button>
+                ) : (
+                  <div className={`p-2 rounded-lg ${theme.styles.wallet.titleIconBg}`}>
+                    <Download className="w-5 h-5 text-white" />
+                  </div>
                 )}
-                <Dialog.Title className={theme.styles.heading}>
-                  {showNameEditor ? 'Edit Wallet Names' : 'Import Wallet Group'}
-                </Dialog.Title>
+                <div>
+                  <Dialog.Title className={theme.styles.heading}>
+                    {showNameEditor ? 'Edit Wallet Names' : 'Import Wallet Group'}
+                  </Dialog.Title>
+                  {!showNameEditor && (
+                    <p className="text-sm text-text-secondary">Restore from recovery phrase</p>
+                  )}
+                </div>
               </div>
               <Dialog.Close asChild>
-                <button
-                  onClick={handleClose}
-                  className={theme.styles.buttonIcon}
-                >
+                <button onClick={handleClose} className={theme.styles.buttonIcon}>
                   <X className={`w-5 h-5 ${theme.styles.iconSecondary}`} />
                 </button>
               </Dialog.Close>
             </div>
 
+            {/* Info Banner */}
             <div className={theme.styles.info.container}>
               <div className="flex gap-3">
                 <Users className={theme.styles.info.icon} />
                 <div className={theme.styles.info.text}>
-                  <p>Import an existing recovery phrase to restore all wallets associated with it. You can then derive new wallets from this group.</p>
+                  Import an existing recovery phrase to restore all wallets associated with it. You
+                  can then derive new wallets from this group.
                 </div>
               </div>
             </div>
@@ -183,17 +193,16 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
                     </div>
                   ))}
                 </div>
-                <div className="flex gap-2 justify-end pt-4 border-t">
+                <div className="flex gap-3 pt-4 border-t border-border-subtle">
                   <button
                     onClick={() => setShowNameEditor(false)}
-                    className={theme.styles.buttonSecondary}
-                    style={theme.dynamicStyles.buttonSecondary}
+                    className="flex-1 py-2.5 px-4 bg-surface-elevated border border-border-subtle rounded-lg font-medium text-text-secondary hover:bg-surface-hover transition-colors"
                   >
                     Back
                   </button>
                   <button
                     onClick={() => setShowNameEditor(false)}
-                    className={theme.styles.buttonSettings || theme.styles.buttonPrimary}
+                    className={`flex-1 ${theme.styles.buttonSettings || theme.styles.buttonPrimary}`}
                     style={theme.dynamicStyles.buttonSettings || theme.dynamicStyles.buttonPrimary}
                   >
                     Confirm Names
@@ -201,129 +210,148 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
                 </div>
               </div>
             ) : (
-            <form onSubmit={handleImport} className="space-y-4">
-
-              <div>
-                <label className={theme.styles.label}>
-                  Group Name
-                </label>
-                <input
-                  type="text"
-                  value={groupName}
-                  onChange={(e) => setGroupName(e.target.value)}
-                  placeholder="e.g., My Restored Wallets"
-                  className={theme.styles.input}
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label className={theme.styles.label}>
-                  Recovery Phrase
-                </label>
-                <textarea
-                  value={seedPhrase}
-                  onChange={(e) => setSeedPhrase(e.target.value)}
-                  placeholder="Enter your 12 or 24 word recovery phrase..."
-                  rows={4}
-                  className={`${theme.styles.textarea} font-mono text-sm focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent`}
-                />
-              </div>
-
-              <div className="space-y-4">
-                {/* EVM Wallets */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="preGenerateEVM"
-                      checked={preGenerateEVM}
-                      onChange={(e) => setPreGenerateEVM(e.target.checked)}
-                      className={theme.styles.checkbox}
-                    />
-                    <label htmlFor="preGenerateEVM" className={`text-sm font-medium ${theme.styles.textSecondary}`}>
-                      Pre-Generate EVM Wallets
-                    </label>
-                  </div>
-                  <div className={`ml-6 space-y-2 transition-opacity ${preGenerateEVM ? 'opacity-100' : 'opacity-40'}`}>
-                    <label className={`${theme.styles.label} ${!preGenerateEVM ? theme.styles.textTertiary : ''}`}>
-                      Number of EVM Wallets
-                    </label>
-                    <input
-                      type="number"
-                      value={evmWalletCount}
-                      onChange={(e) => setEvmWalletCount(Math.max(1, Math.min(99, parseInt(e.target.value) || 1)))}
-                      min="1"
-                      max="99"
-                      className="w-20 px-3 py-2 text-sm border rounded-lg bg-surface-elevated border-border-subtle text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={!preGenerateEVM}
-                    />
-                  </div>
+              <form onSubmit={handleImport} className="space-y-4">
+                <div>
+                  <label className={theme.styles.label}>Group Name</label>
+                  <input
+                    type="text"
+                    value={groupName}
+                    onChange={(e) => setGroupName(e.target.value)}
+                    placeholder="e.g., My Restored Wallets"
+                    className={theme.styles.input}
+                    autoFocus
+                  />
                 </div>
 
-                {/* SVM Wallets */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="preGenerateSVM"
-                      checked={preGenerateSVM}
-                      onChange={(e) => setPreGenerateSVM(e.target.checked)}
-                      className={theme.styles.checkbox}
-                    />
-                    <label htmlFor="preGenerateSVM" className={`text-sm font-medium ${theme.styles.textSecondary}`}>
-                      Pre-Generate SVM Wallets
-                    </label>
-                  </div>
-                  <div className={`ml-6 space-y-2 transition-opacity ${preGenerateSVM ? 'opacity-100' : 'opacity-40'}`}>
-                    <label className={`${theme.styles.label} ${!preGenerateSVM ? theme.styles.textTertiary : ''}`}>
-                      Number of SVM Wallets
-                    </label>
-                    <input
-                      type="number"
-                      value={svmWalletCount}
-                      onChange={(e) => setSvmWalletCount(Math.max(1, Math.min(99, parseInt(e.target.value) || 1)))}
-                      min="1"
-                      max="99"
-                      className="w-20 px-3 py-2 text-sm border rounded-lg bg-surface-elevated border-border-subtle text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={!preGenerateSVM}
-                    />
-                  </div>
+                <div>
+                  <label className={theme.styles.label}>Recovery Phrase</label>
+                  <textarea
+                    value={seedPhrase}
+                    onChange={(e) => setSeedPhrase(e.target.value)}
+                    placeholder="Enter your 12 or 24 word recovery phrase..."
+                    rows={4}
+                    className={`${theme.styles.textarea} font-mono text-sm focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent`}
+                  />
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleEditNames}
-                  className={`${theme.styles.buttonSecondary} flex items-center gap-1 text-sm ${(!preGenerateEVM && !preGenerateSVM) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  style={theme.dynamicStyles.buttonSecondary}
-                  disabled={!preGenerateEVM && !preGenerateSVM}
-                >
-                  <Edit2 className="w-4 h-4" />
-                  Edit Names
-                </button>
-                <p className={`text-xs ${theme.styles.textTertiary}`}>
-                  {walletNames.length > 0 ? 'Custom names configured' : 'Default names will be used'}
-                </p>
-              </div>
+                <div className="space-y-4">
+                  {/* EVM Wallets */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="preGenerateEVM"
+                        checked={preGenerateEVM}
+                        onChange={(e) => setPreGenerateEVM(e.target.checked)}
+                        className={theme.styles.checkbox}
+                      />
+                      <label
+                        htmlFor="preGenerateEVM"
+                        className={`text-sm font-medium ${theme.styles.textSecondary}`}
+                      >
+                        Pre-Generate EVM Wallets
+                      </label>
+                    </div>
+                    <div
+                      className={`ml-6 space-y-2 transition-opacity ${preGenerateEVM ? 'opacity-100' : 'opacity-40'}`}
+                    >
+                      <label
+                        className={`${theme.styles.label} ${!preGenerateEVM ? theme.styles.textTertiary : ''}`}
+                      >
+                        Number of EVM Wallets
+                      </label>
+                      <input
+                        type="number"
+                        value={evmWalletCount}
+                        onChange={(e) =>
+                          setEvmWalletCount(
+                            Math.max(1, Math.min(99, parseInt(e.target.value) || 1)),
+                          )
+                        }
+                        min="1"
+                        max="99"
+                        className="w-20 px-3 py-2 text-sm border rounded-lg bg-surface-elevated border-border-subtle text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={!preGenerateEVM}
+                      />
+                    </div>
+                  </div>
 
-              {error && (
-                <div className={theme.styles.error.container}>
-                  <AlertCircle className={theme.styles.error.icon} />
-                  <p className={theme.styles.error.text}>{error}</p>
+                  {/* SVM Wallets */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="preGenerateSVM"
+                        checked={preGenerateSVM}
+                        onChange={(e) => setPreGenerateSVM(e.target.checked)}
+                        className={theme.styles.checkbox}
+                      />
+                      <label
+                        htmlFor="preGenerateSVM"
+                        className={`text-sm font-medium ${theme.styles.textSecondary}`}
+                      >
+                        Pre-Generate SVM Wallets
+                      </label>
+                    </div>
+                    <div
+                      className={`ml-6 space-y-2 transition-opacity ${preGenerateSVM ? 'opacity-100' : 'opacity-40'}`}
+                    >
+                      <label
+                        className={`${theme.styles.label} ${!preGenerateSVM ? theme.styles.textTertiary : ''}`}
+                      >
+                        Number of SVM Wallets
+                      </label>
+                      <input
+                        type="number"
+                        value={svmWalletCount}
+                        onChange={(e) =>
+                          setSvmWalletCount(
+                            Math.max(1, Math.min(99, parseInt(e.target.value) || 1)),
+                          )
+                        }
+                        min="1"
+                        max="99"
+                        className="w-20 px-3 py-2 text-sm border rounded-lg bg-surface-elevated border-border-subtle text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={!preGenerateSVM}
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleEditNames}
+                    className={`${theme.styles.buttonSecondary} flex items-center gap-1 text-sm ${!preGenerateEVM && !preGenerateSVM ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    style={theme.dynamicStyles.buttonSecondary}
+                    disabled={!preGenerateEVM && !preGenerateSVM}
+                  >
+                    <Edit2 className="w-4 h-4" />
+                    Edit Names
+                  </button>
+                  <p className={`text-xs ${theme.styles.textTertiary}`}>
+                    {walletNames.length > 0
+                      ? 'Custom names configured'
+                      : 'Default names will be used'}
+                  </p>
                 </div>
-              )}
 
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={!groupName.trim() || !seedPhrase.trim() || isLoading}
-                  className={`${theme.styles.buttonSettings || theme.styles.buttonPrimary} disabled:opacity-50 disabled:cursor-not-allowed`}
-                  style={theme.dynamicStyles.buttonSettings || theme.dynamicStyles.buttonPrimary}
-                >
-                  {isLoading ? 'Importing...' : 'Import Group'}
-                </button>
-              </div>
-            </form>
+                {error && (
+                  <div className={theme.styles.error.container}>
+                    <AlertCircle className={theme.styles.error.icon} />
+                    <p className={theme.styles.error.text}>{error}</p>
+                  </div>
+                )}
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={!groupName.trim() || !seedPhrase.trim() || isLoading}
+                    className={`${theme.styles.buttonSettings || theme.styles.buttonPrimary} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    style={theme.dynamicStyles.buttonSettings || theme.dynamicStyles.buttonPrimary}
+                  >
+                    {isLoading ? 'Importing...' : 'Import Group'}
+                  </button>
+                </div>
+              </form>
             )}
           </div>
         </Dialog.Content>

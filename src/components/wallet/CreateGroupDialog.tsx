@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { X, Users, AlertCircle, Edit2, ChevronLeft } from 'lucide-react'
+import { X, Users, AlertCircle, Edit2, ChevronLeft, Check, Copy } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import { useTheme } from '../../hooks/useTheme'
 
@@ -23,6 +23,7 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
   const [preGenerateSVM, setPreGenerateSVM] = useState(true)
   const [evmWalletCount, setEvmWalletCount] = useState(1)
   const [svmWalletCount, setSvmWalletCount] = useState(1)
+  const [copied, setCopied] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -105,6 +106,8 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
   const copySeedPhrase = () => {
     if (createdGroup) {
       navigator.clipboard.writeText(createdGroup.seed)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
     }
   }
 
@@ -112,27 +115,40 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="dialog-overlay" />
-        <Dialog.Content className={`dialog-content w-[600px] max-h-[85vh] overflow-y-auto ${theme.styles.dialogContainer}`}>
+        <Dialog.Content
+          className={`dialog-content w-[600px] max-h-[85vh] overflow-y-auto ${theme.styles.dialogContainer}`}
+        >
           <div className="p-6">
+            {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                {showNameEditor && !createdGroup && (
+                {showNameEditor && !createdGroup ? (
                   <button
                     onClick={() => setShowNameEditor(false)}
                     className={theme.styles.buttonIcon}
                   >
                     <ChevronLeft className={`w-5 h-5 ${theme.styles.iconSecondary}`} />
                   </button>
+                ) : (
+                  <div className={`p-2 rounded-lg ${theme.styles.wallet.titleIconBg}`}>
+                    <Users className="w-5 h-5 text-white" />
+                  </div>
                 )}
-                <Dialog.Title className={theme.styles.heading}>
-                  {createdGroup ? 'Wallet Group Created' : showNameEditor ? 'Edit Wallet Names' : 'Create Wallet Group'}
-                </Dialog.Title>
+                <div>
+                  <Dialog.Title className={theme.styles.heading}>
+                    {createdGroup
+                      ? 'Wallet Group Created'
+                      : showNameEditor
+                        ? 'Edit Wallet Names'
+                        : 'Create Wallet Group'}
+                  </Dialog.Title>
+                  {!createdGroup && !showNameEditor && (
+                    <p className="text-sm text-text-secondary">Generate a new recovery phrase</p>
+                  )}
+                </div>
               </div>
               <Dialog.Close asChild>
-                <button
-                  onClick={handleClose}
-                  className={theme.styles.buttonIcon}
-                >
+                <button onClick={handleClose} className={theme.styles.buttonIcon}>
                   <X className={`w-5 h-5 ${theme.styles.iconSecondary}`} />
                 </button>
               </Dialog.Close>
@@ -155,18 +171,17 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                     </div>
                   ))}
                 </div>
-                <div className="flex gap-2 justify-end pt-4 border-t border-border-subtle">
+                <div className="flex gap-3 pt-4 border-t border-border-subtle">
                   <button
                     onClick={() => setShowNameEditor(false)}
-                    className={theme.styles.buttonSecondary}
-                    style={theme.dynamicStyles.buttonSecondary}
+                    className="flex-1 py-2.5 px-4 bg-surface-elevated border border-border-subtle rounded-lg font-medium text-text-secondary hover:bg-surface-hover transition-colors"
                   >
                     Back
                   </button>
                   <button
                     onClick={() => setShowNameEditor(false)}
-                    className={theme.styles.buttonPrimary}
-                    style={theme.dynamicStyles.buttonPrimary}
+                    className={`flex-1 ${theme.styles.buttonSettings || theme.styles.buttonPrimary}`}
+                    style={theme.dynamicStyles.buttonSettings || theme.dynamicStyles.buttonPrimary}
                   >
                     Confirm Names
                   </button>
@@ -179,17 +194,18 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                     <Users className={theme.styles.info.icon} />
                     <div className={theme.styles.info.text}>
                       <p className="font-medium mb-1">What is a Wallet Group?</p>
-                      <p>A wallet group shares a single recovery phrase. You can create multiple wallets within a group, and they can all be recovered using the same seed phrase.</p>
+                      <p>
+                        A wallet group shares a single recovery phrase. You can create multiple
+                        wallets within a group, and they can all be recovered using the same seed
+                        phrase.
+                      </p>
                     </div>
                   </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-
                   <div>
-                    <label className={theme.styles.label}>
-                      Group Name
-                    </label>
+                    <label className={theme.styles.label}>Group Name</label>
                     <input
                       type="text"
                       value={groupName}
@@ -211,18 +227,29 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                           onChange={(e) => setPreGenerateEVM(e.target.checked)}
                           className={theme.styles.checkbox}
                         />
-                        <label htmlFor="preGenerateEVM" className={`text-sm font-medium ${theme.styles.textSecondary}`}>
+                        <label
+                          htmlFor="preGenerateEVM"
+                          className={`text-sm font-medium ${theme.styles.textSecondary}`}
+                        >
                           Pre-Generate EVM Wallets
                         </label>
                       </div>
-                      <div className={`ml-6 space-y-2 transition-opacity ${preGenerateEVM ? 'opacity-100' : 'opacity-40'}`}>
-                        <label className={`${theme.styles.label} ${!preGenerateEVM ? theme.styles.textTertiary : ''}`}>
+                      <div
+                        className={`ml-6 space-y-2 transition-opacity ${preGenerateEVM ? 'opacity-100' : 'opacity-40'}`}
+                      >
+                        <label
+                          className={`${theme.styles.label} ${!preGenerateEVM ? theme.styles.textTertiary : ''}`}
+                        >
                           Number of EVM Wallets
                         </label>
                         <input
                           type="number"
                           value={evmWalletCount}
-                          onChange={(e) => setEvmWalletCount(Math.max(1, Math.min(99, parseInt(e.target.value) || 1)))}
+                          onChange={(e) =>
+                            setEvmWalletCount(
+                              Math.max(1, Math.min(99, parseInt(e.target.value) || 1)),
+                            )
+                          }
                           min="1"
                           max="99"
                           className="w-20 px-3 py-2 text-sm border rounded-lg bg-surface-elevated border-border-subtle text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -241,18 +268,29 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                           onChange={(e) => setPreGenerateSVM(e.target.checked)}
                           className={theme.styles.checkbox}
                         />
-                        <label htmlFor="preGenerateSVM" className={`text-sm font-medium ${theme.styles.textSecondary}`}>
+                        <label
+                          htmlFor="preGenerateSVM"
+                          className={`text-sm font-medium ${theme.styles.textSecondary}`}
+                        >
                           Pre-Generate SVM Wallets
                         </label>
                       </div>
-                      <div className={`ml-6 space-y-2 transition-opacity ${preGenerateSVM ? 'opacity-100' : 'opacity-40'}`}>
-                        <label className={`${theme.styles.label} ${!preGenerateSVM ? theme.styles.textTertiary : ''}`}>
+                      <div
+                        className={`ml-6 space-y-2 transition-opacity ${preGenerateSVM ? 'opacity-100' : 'opacity-40'}`}
+                      >
+                        <label
+                          className={`${theme.styles.label} ${!preGenerateSVM ? theme.styles.textTertiary : ''}`}
+                        >
                           Number of SVM Wallets
                         </label>
                         <input
                           type="number"
                           value={svmWalletCount}
-                          onChange={(e) => setSvmWalletCount(Math.max(1, Math.min(99, parseInt(e.target.value) || 1)))}
+                          onChange={(e) =>
+                            setSvmWalletCount(
+                              Math.max(1, Math.min(99, parseInt(e.target.value) || 1)),
+                            )
+                          }
                           min="1"
                           max="99"
                           className="w-20 px-3 py-2 text-sm border rounded-lg bg-surface-elevated border-border-subtle text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -264,7 +302,7 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                     <button
                       type="button"
                       onClick={handleEditNames}
-                      className={`${theme.styles.buttonSecondary} flex items-center gap-1 text-sm ${(!preGenerateEVM && !preGenerateSVM) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`${theme.styles.buttonSecondary} flex items-center gap-1 text-sm ${!preGenerateEVM && !preGenerateSVM ? 'opacity-50 cursor-not-allowed' : ''}`}
                       style={theme.dynamicStyles.buttonSecondary}
                       disabled={!preGenerateEVM && !preGenerateSVM}
                     >
@@ -272,14 +310,16 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                       Edit Names
                     </button>
                     <p className={`text-xs ${theme.styles.textTertiary}`}>
-                      {walletNames.length > 0 ? 'Custom names configured' : 'Default names will be used'}
+                      {walletNames.length > 0
+                        ? 'Custom names configured'
+                        : 'Default names will be used'}
                     </p>
                   </div>
 
                   {error && (
-                    <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                      <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
-                      <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                    <div className={theme.styles.error.container}>
+                      <AlertCircle className={theme.styles.error.icon} />
+                      <p className={theme.styles.error.text}>{error}</p>
                     </div>
                   )}
 
@@ -288,7 +328,9 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                       type="submit"
                       disabled={!groupName.trim() || isLoading}
                       className={`${theme.styles.buttonSettings || theme.styles.buttonPrimary} disabled:opacity-50 disabled:cursor-not-allowed`}
-                      style={theme.dynamicStyles.buttonSettings || theme.dynamicStyles.buttonPrimary}
+                      style={
+                        theme.dynamicStyles.buttonSettings || theme.dynamicStyles.buttonPrimary
+                      }
                     >
                       {isLoading ? 'Creating...' : 'Create Group'}
                     </button>
@@ -296,46 +338,69 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                 </form>
               </>
             ) : (
-              <div className="space-y-6">
-                <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                  <p className="text-green-600 dark:text-green-400 font-medium">
-                    Wallet group "{createdGroup.name}" created successfully!
-                  </p>
+              <div className="space-y-4">
+                {/* Success Banner */}
+                <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Check className="w-5 h-5 text-green-400" />
+                    <p className="font-medium text-green-400">
+                      Wallet group "{createdGroup.name}" created successfully!
+                    </p>
+                  </div>
                 </div>
 
-                <div>
-                  <h3 className={`text-lg font-medium ${theme.styles.textPrimary} mb-2`}>
-                    Recovery Phrase
-                  </h3>
-                  <p className={`text-sm ${theme.styles.textSecondary} mb-4`}>
-                    Write down this recovery phrase and store it securely. You'll need it to recover all wallets in this group.
-                  </p>
-                  
-                  <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg mb-4">
-                    <div className="flex items-start gap-2">
-                      <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
-                      <p className="text-sm text-amber-600 dark:text-amber-400">
-                        <strong>Important:</strong> This is the only time you'll see this recovery phrase. Make sure to save it before closing this dialog.
+                {/* Warning Banner */}
+                <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                  <div className="flex gap-3">
+                    <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-semibold text-amber-400 mb-1">Save Your Recovery Phrase</p>
+                      <p className="text-text-secondary">
+                        This is the only time you'll see this recovery phrase. Write it down and
+                        store it securely. You'll need it to recover all wallets in this group.
                       </p>
                     </div>
                   </div>
+                </div>
 
-                  <div className={`p-4 bg-surface-elevated rounded-lg font-mono text-sm break-all ${theme.styles.textPrimary}`}>
-                    {createdGroup.seed}
+                {/* Seed Phrase Display */}
+                <div>
+                  <label className={`${theme.styles.label} mb-2 block`}>Recovery Phrase</label>
+                  <div className="p-4 bg-surface-elevated border border-border-subtle rounded-lg">
+                    <div className="grid grid-cols-3 gap-2">
+                      {createdGroup.seed.split(' ').map((word, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-2 p-2 rounded-lg bg-surface-sunken border border-border-subtle"
+                        >
+                          <span className="text-xs text-text-tertiary w-5">{index + 1}.</span>
+                          <span className="font-mono text-sm text-text-primary">{word}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   <button
                     onClick={copySeedPhrase}
-                    className={`mt-3 w-full ${theme.styles.buttonSecondary}`}
-                    style={theme.dynamicStyles.buttonSecondary}
+                    className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 bg-surface-elevated border border-border-subtle rounded-lg font-medium text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors"
                   >
-                    Copy to Clipboard
+                    {copied ? (
+                      <>
+                        <Check className="w-4 h-4 text-green-400" />
+                        <span className="text-green-400">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        Copy to Clipboard
+                      </>
+                    )}
                   </button>
                 </div>
 
                 <button
                   onClick={handleClose}
-                  className={`w-full py-2 ${theme.styles.buttonSettings || theme.styles.buttonPrimary}`}
+                  className={`w-full ${theme.styles.buttonSettings || theme.styles.buttonPrimary}`}
                   style={theme.dynamicStyles.buttonSettings || theme.dynamicStyles.buttonPrimary}
                 >
                   Done

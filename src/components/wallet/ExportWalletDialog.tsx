@@ -3,37 +3,37 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { X, AlertTriangle, Copy, Eye, EyeOff, Check, Key } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import { useTheme } from '../../hooks/useTheme'
-import { WalletGroup } from '../../types'
+import { Wallet } from '../../types'
 
-interface ExportGroupDialogProps {
+interface ExportWalletDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  group: WalletGroup | null
+  wallet: Wallet | null
 }
 
-export function ExportGroupDialog({ open, onOpenChange, group }: ExportGroupDialogProps) {
-  const { exportGroupSeed } = useWalletStore()
+export function ExportWalletDialog({ open, onOpenChange, wallet }: ExportWalletDialogProps) {
+  const { getWalletPrivateKey } = useWalletStore()
   const { theme } = useTheme()
   const [password, setPassword] = useState('')
-  const [seedPhrase, setSeedPhrase] = useState('')
+  const [privateKey, setPrivateKey] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [showSeed, setShowSeed] = useState(false)
+  const [showKey, setShowKey] = useState(false)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [copied, setCopied] = useState(false)
 
   const handleExport = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!password || !group) return
+    if (!password || !wallet) return
 
     setIsLoading(true)
     setError('')
 
     try {
-      const seed = await exportGroupSeed(group.id, password)
-      setSeedPhrase(seed)
+      const key = await getWalletPrivateKey(wallet.id, password)
+      setPrivateKey(key)
     } catch (err) {
-      console.error('Failed to export seed:', err)
+      console.error('Failed to export private key:', err)
       setError('Invalid password')
     } finally {
       setIsLoading(false)
@@ -42,16 +42,16 @@ export function ExportGroupDialog({ open, onOpenChange, group }: ExportGroupDial
 
   const handleClose = () => {
     setPassword('')
-    setSeedPhrase('')
+    setPrivateKey('')
     setError('')
     setShowPassword(false)
-    setShowSeed(false)
+    setShowKey(false)
     setCopied(false)
     onOpenChange(false)
   }
 
-  const copySeedPhrase = () => {
-    navigator.clipboard.writeText(seedPhrase)
+  const copyPrivateKey = () => {
+    navigator.clipboard.writeText(privateKey)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -71,10 +71,8 @@ export function ExportGroupDialog({ open, onOpenChange, group }: ExportGroupDial
                   <Key className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <Dialog.Title className={theme.styles.heading}>
-                    Export Recovery Phrase
-                  </Dialog.Title>
-                  <p className="text-sm text-text-secondary">{group?.name}</p>
+                  <Dialog.Title className={theme.styles.heading}>Export Private Key</Dialog.Title>
+                  <p className="text-sm text-text-secondary">{wallet?.name}</p>
                 </div>
               </div>
               <Dialog.Close asChild>
@@ -84,28 +82,29 @@ export function ExportGroupDialog({ open, onOpenChange, group }: ExportGroupDial
               </Dialog.Close>
             </div>
 
-            {!seedPhrase ? (
+            {!privateKey ? (
               <>
                 {/* Warning Banner */}
-                <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
                   <div className="flex gap-3">
-                    <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                    <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
                     <div className="text-sm">
-                      <p className="font-semibold text-amber-400 mb-1">Security Warning</p>
+                      <p className="font-semibold text-red-400 mb-1">Danger Zone</p>
                       <p className="text-text-secondary">
-                        Anyone with access to this recovery phrase can access all wallets in this
-                        group. Keep it secure and never share it online.
+                        Your private key provides full access to this wallet. Never share it with
+                        anyone, never enter it on any website, and store it securely offline.
                       </p>
                     </div>
                   </div>
                 </div>
 
                 <form onSubmit={handleExport} className="space-y-4">
-                  {/* Group Name Display */}
+                  {/* Wallet Info Display */}
                   <div>
-                    <label className={`${theme.styles.label} mb-2 block`}>Group Name</label>
+                    <label className={`${theme.styles.label} mb-2 block`}>Wallet</label>
                     <div className="p-3 bg-surface-elevated rounded-lg border border-border-subtle">
-                      <p className="font-medium text-text-primary">{group?.name}</p>
+                      <p className="font-medium text-text-primary">{wallet?.name}</p>
+                      <p className="text-xs text-text-tertiary font-mono mt-1">{wallet?.address}</p>
                     </div>
                   </div>
 
@@ -153,10 +152,7 @@ export function ExportGroupDialog({ open, onOpenChange, group }: ExportGroupDial
                     <button
                       type="submit"
                       disabled={!password || isLoading}
-                      className={`flex-1 ${theme.styles.buttonSettings || theme.styles.buttonPrimary} disabled:opacity-50 disabled:cursor-not-allowed`}
-                      style={
-                        theme.dynamicStyles.buttonSettings || theme.dynamicStyles.buttonPrimary
-                      }
+                      className="flex-1 py-2.5 px-4 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg font-medium text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                       {isLoading ? 'Exporting...' : 'Export'}
                     </button>
@@ -169,21 +165,19 @@ export function ExportGroupDialog({ open, onOpenChange, group }: ExportGroupDial
                 <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
                   <div className="flex items-center gap-3">
                     <Check className="w-5 h-5 text-green-400" />
-                    <p className="font-medium text-green-400">
-                      Recovery phrase exported successfully!
-                    </p>
+                    <p className="font-medium text-green-400">Private key exported successfully!</p>
                   </div>
                 </div>
 
-                {/* Seed Phrase Display */}
+                {/* Private Key Display */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className={theme.styles.label}>Recovery Phrase</label>
+                    <label className={theme.styles.label}>Private Key</label>
                     <button
-                      onClick={() => setShowSeed(!showSeed)}
+                      onClick={() => setShowKey(!showKey)}
                       className="p-1 rounded hover:bg-surface-hover transition-colors"
                     >
-                      {showSeed ? (
+                      {showKey ? (
                         <EyeOff className="w-4 h-4 text-text-secondary" />
                       ) : (
                         <Eye className="w-4 h-4 text-text-secondary" />
@@ -192,37 +186,13 @@ export function ExportGroupDialog({ open, onOpenChange, group }: ExportGroupDial
                   </div>
 
                   <div className="p-4 bg-surface-elevated border border-border-subtle rounded-lg">
-                    {showSeed ? (
-                      <div className="grid grid-cols-3 gap-2">
-                        {seedPhrase.split(' ').map((word, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center gap-2 p-2 rounded-lg bg-surface-sunken border border-border-subtle"
-                          >
-                            <span className="text-xs text-text-tertiary w-5">{index + 1}.</span>
-                            <span className="font-mono text-sm text-text-primary">{word}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-3 gap-2">
-                        {Array(12)
-                          .fill(0)
-                          .map((_, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center gap-2 p-2 rounded-lg bg-surface-sunken border border-border-subtle"
-                            >
-                              <span className="text-xs text-text-tertiary w-5">{index + 1}.</span>
-                              <span className="font-mono text-sm text-text-tertiary">••••</span>
-                            </div>
-                          ))}
-                      </div>
-                    )}
+                    <p className="font-mono text-sm text-text-primary break-all">
+                      {showKey ? privateKey : '•'.repeat(64)}
+                    </p>
                   </div>
 
                   <button
-                    onClick={copySeedPhrase}
+                    onClick={copyPrivateKey}
                     className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 bg-surface-elevated border border-border-subtle rounded-lg font-medium text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors"
                   >
                     {copied ? (
@@ -237,6 +207,13 @@ export function ExportGroupDialog({ open, onOpenChange, group }: ExportGroupDial
                       </>
                     )}
                   </button>
+                </div>
+
+                {/* Another Warning */}
+                <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                  <p className="text-xs text-amber-400">
+                    Make sure to store this key securely. Clear your clipboard after pasting.
+                  </p>
                 </div>
 
                 <button

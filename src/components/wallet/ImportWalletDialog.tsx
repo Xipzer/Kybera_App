@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Tabs from '@radix-ui/react-tabs'
-import { AlertCircle, X } from 'lucide-react'
+import { AlertCircle, Download, X } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import { EVMWalletService } from '../../services/blockchain/evmWallet'
 import { SVMWalletService } from '../../services/blockchain/svmWallet'
@@ -118,8 +118,17 @@ export function ImportWalletDialog({ open, onOpenChange }: ImportWalletDialogPro
           className={`dialog-content w-[500px] max-h-[85vh] overflow-y-auto ${theme.styles.dialogContainer}`}
         >
           <div className="p-6">
+            {/* Header */}
             <div className="flex items-center justify-between mb-6">
-              <Dialog.Title className={theme.styles.heading}>Import Wallet</Dialog.Title>
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${theme.styles.wallet.titleIconBg}`}>
+                  <Download className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <Dialog.Title className={theme.styles.heading}>Import Wallet</Dialog.Title>
+                  <p className="text-sm text-text-secondary">Import from private key or phrase</p>
+                </div>
+              </div>
               <Dialog.Close asChild>
                 <button onClick={handleClose} className={theme.styles.buttonIcon}>
                   <X className={`w-5 h-5 ${theme.styles.iconSecondary}`} />

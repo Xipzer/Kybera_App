@@ -247,12 +247,18 @@ export function SendDialog({
           className={`dialog-content ${theme.styles.dialogContainer} w-[600px] max-h-[85vh] overflow-y-auto`}
         >
           <div className="p-6">
+            {/* Header */}
             <div className="flex items-center justify-between mb-6">
-              <div>
-                <Dialog.Title className={theme.styles.heading}>Send</Dialog.Title>
-                <Dialog.Description className="sr-only">
-                  Send tokens from your wallet
-                </Dialog.Description>
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${theme.styles.wallet.titleIconBg}`}>
+                  <Send className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <Dialog.Title className={theme.styles.heading}>Send</Dialog.Title>
+                  <Dialog.Description className="text-sm text-text-secondary">
+                    Send tokens from your wallet
+                  </Dialog.Description>
+                </div>
               </div>
               <Dialog.Close asChild>
                 <button className={theme.styles.buttonIcon}>

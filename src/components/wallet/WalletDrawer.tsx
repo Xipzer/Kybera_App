@@ -28,6 +28,7 @@ import { RenameWalletDialog } from './RenameWalletDialog'
 import { CreateGroupDialog } from './CreateGroupDialog'
 import { AddWalletToGroupDialog } from './AddWalletToGroupDialog'
 import { ExportGroupDialog } from './ExportGroupDialog'
+import { ExportWalletDialog } from './ExportWalletDialog'
 import { ImportGroupDialog } from './ImportGroupDialog'
 import { WalletDetailView } from './WalletDetailView'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
@@ -154,6 +155,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
   const [showAddToGroupDialog, setShowAddToGroupDialog] = useState(false)
   const [selectedGroupId, setSelectedGroupId] = useState<string | undefined>()
   const [exportGroup, setExportGroup] = useState<any | null>(null)
+  const [exportWallet, setExportWallet] = useState<(typeof wallets)[0] | null>(null)
   const [showImportGroupDialog, setShowImportGroupDialog] = useState(false)
   const { theme } = useTheme()
 
@@ -221,8 +223,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
   }
 
   const handleExportWallet = (wallet: (typeof wallets)[0]) => {
-    // TODO: Implement wallet export
-    console.log('Export wallet:', wallet)
+    setExportWallet(wallet)
   }
 
   if (collapsed) {
@@ -618,6 +619,11 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
             open={exportGroup !== null}
             onOpenChange={(open) => !open && setExportGroup(null)}
             group={exportGroup}
+          />
+          <ExportWalletDialog
+            open={exportWallet !== null}
+            onOpenChange={(open) => !open && setExportWallet(null)}
+            wallet={exportWallet}
           />
           <ImportGroupDialog open={showImportGroupDialog} onOpenChange={setShowImportGroupDialog} />
         </Panel>
