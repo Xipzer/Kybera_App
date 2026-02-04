@@ -211,6 +211,7 @@ export interface ThemeConfig {
     chatMessage: {
       userBubbleBg: string
       userBubbleShadow: string
+      userBubbleBlur: string
       userTextColor: string
       userTimestamp: string
       userAvatarBg: string
@@ -218,6 +219,7 @@ export interface ThemeConfig {
       assistantBubbleBg: string
       assistantBubbleBorder: string
       assistantBubbleShadow: string
+      assistantBubbleBlur: string
       assistantIconBg: string
       assistantIconShadow: string
       assistantTimestamp: string
@@ -493,6 +495,7 @@ export const themes: Record<string, ThemeConfig> = {
       chatMessage: {
         userBubbleBg: 'bg-gradient-to-br from-cyan-500 via-teal-400 to-cyan-600',
         userBubbleShadow: 'shadow-lg shadow-cyan-500/20',
+        userBubbleBlur: 'backdrop-blur-sm',
         userTextColor: 'text-white',
         userTimestamp: 'text-white/70',
         userAvatarBg: 'bg-gradient-to-br from-slate-600 to-slate-700',
@@ -500,8 +503,9 @@ export const themes: Record<string, ThemeConfig> = {
         assistantBubbleBg: 'bg-white/80',
         assistantBubbleBorder: 'border border-gray-200/50',
         assistantBubbleShadow: 'shadow-lg shadow-gray-200/30',
+        assistantBubbleBlur: 'backdrop-blur-sm',
         assistantIconBg: 'from-cyan-500 via-teal-400 to-cyan-600',
-        assistantIconShadow: 'shadow-lg shadow-cyan-500/20',
+        assistantIconShadow: '',
         assistantTimestamp: 'text-gray-400',
         proseClass: 'prose-gray',
       },
@@ -770,15 +774,17 @@ export const themes: Record<string, ThemeConfig> = {
       chatMessage: {
         userBubbleBg: 'bg-gradient-to-br from-cyan-600 via-cyan-500 to-pink-600',
         userBubbleShadow: 'shadow-lg shadow-cyan-500/20',
+        userBubbleBlur: '',
         userTextColor: 'text-white',
         userTimestamp: 'text-white/60',
         userAvatarBg: 'bg-gradient-to-br from-slate-600 to-slate-700',
         userAvatarRing: 'ring-2 ring-white/10',
-        assistantBubbleBg: 'bg-white/5',
+        assistantBubbleBg: 'bg-surface-elevated',
         assistantBubbleBorder: 'border border-white/10',
         assistantBubbleShadow: 'shadow-lg shadow-black/20',
+        assistantBubbleBlur: '',
         assistantIconBg: 'from-cyan-500 via-cyan-400 to-pink-500',
-        assistantIconShadow: 'shadow-lg shadow-cyan-500/25',
+        assistantIconShadow: '',
         assistantTimestamp: 'text-white/40',
         proseClass: 'prose-invert',
       },
@@ -1049,15 +1055,17 @@ export const themes: Record<string, ThemeConfig> = {
       chatMessage: {
         userBubbleBg: 'bg-gradient-to-br from-red-600 via-red-500 to-red-600',
         userBubbleShadow: 'shadow-lg shadow-red-500/20',
+        userBubbleBlur: '',
         userTextColor: 'text-white',
         userTimestamp: 'text-white/60',
         userAvatarBg: 'bg-gradient-to-br from-slate-600 to-slate-700',
         userAvatarRing: 'ring-2 ring-white/10',
-        assistantBubbleBg: 'bg-primary-900/50',
+        assistantBubbleBg: 'bg-primary-900',
         assistantBubbleBorder: 'border border-primary-800/50',
         assistantBubbleShadow: 'shadow-lg shadow-black/20',
+        assistantBubbleBlur: '',
         assistantIconBg: 'from-red-500 via-red-600 to-red-500',
-        assistantIconShadow: 'shadow-lg shadow-red-500/25',
+        assistantIconShadow: '',
         assistantTimestamp: 'text-primary-400',
         proseClass: 'prose-invert',
       },

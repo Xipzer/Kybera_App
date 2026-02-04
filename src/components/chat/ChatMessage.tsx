@@ -1,9 +1,12 @@
-import { User, Bot } from 'lucide-react'
+import { User } from 'lucide-react'
 import { Message } from '../../types'
 import MarkdownIt from 'markdown-it'
 import { useMemo } from 'react'
 import { useUIStore } from '../../store/uiStore'
 import { useTheme } from '../../hooks/useTheme'
+
+// Kybera app icon for assistant avatar
+const KYBERA_ICON = '/kybera-icon.png'
 
 const md = new MarkdownIt({
   html: false,
@@ -32,13 +35,13 @@ export function ChatMessage({ message }: ChatMessageProps) {
 
   return (
     <div className={`flex gap-3 mb-6 ${isUser ? 'justify-end' : ''}`}>
-      {/* Assistant avatar */}
+      {/* Assistant avatar - Kybera icon */}
       {!isUser && (
         <div className="flex-shrink-0">
           <div
-            className={`w-10 h-10 rounded-xl bg-gradient-to-r ${styles.assistantIconBg} flex items-center justify-center ${styles.assistantIconShadow}`}
+            className={`w-10 h-10 rounded-xl overflow-hidden ${styles.assistantIconShadow}`}
           >
-            <Bot className="w-5 h-5 text-white" />
+            <img src={KYBERA_ICON} alt="Kybera" className="w-full h-full object-cover" />
           </div>
         </div>
       )}
@@ -48,7 +51,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
         {isUser ? (
           // User message bubble
           <div
-            className={`${styles.userBubbleBg} ${styles.userBubbleShadow} rounded-2xl rounded-tr-sm px-4 py-3 backdrop-blur-sm`}
+            className={`${styles.userBubbleBg} ${styles.userBubbleShadow} ${styles.userBubbleBlur} rounded-2xl rounded-tr-sm px-4 py-3`}
           >
             <p className={`${styles.userTextColor} whitespace-pre-wrap leading-relaxed`}>
               {message.content}
@@ -63,7 +66,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
         ) : (
           // Assistant message bubble
           <div
-            className={`${styles.assistantBubbleBg} ${styles.assistantBubbleBorder} ${styles.assistantBubbleShadow} rounded-2xl rounded-tl-sm px-4 py-3 backdrop-blur-sm`}
+            className={`${styles.assistantBubbleBg} ${styles.assistantBubbleBorder} ${styles.assistantBubbleShadow} ${styles.assistantBubbleBlur} rounded-2xl rounded-tl-sm px-4 py-3`}
           >
             <div
               className={`prose prose-sm ${styles.proseClass} max-w-none 
