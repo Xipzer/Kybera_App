@@ -194,6 +194,7 @@ export interface ThemeConfig {
       settingsHover: string
       inputContainerBg: string
       inputBg: string
+      inputSolidBg: string
       inputBorder: string
       inputFocusBorder: string
       inputFocusRing: string
@@ -478,6 +479,7 @@ export const themes: Record<string, ThemeConfig> = {
         settingsHover: 'hover:bg-gray-100/80',
         inputContainerBg: 'bg-white/70',
         inputBg: 'bg-white/90',
+        inputSolidBg: 'bg-white',
         inputBorder: 'border-gray-200/60',
         inputFocusBorder: 'focus:border-cyan-400',
         inputFocusRing: 'focus:ring-cyan-400/20',
@@ -757,6 +759,7 @@ export const themes: Record<string, ThemeConfig> = {
         settingsHover: 'hover:bg-white/10',
         inputContainerBg: 'bg-surface-elevated/50',
         inputBg: 'bg-white/5',
+        inputSolidBg: 'bg-surface-elevated',
         inputBorder: 'border-white/10',
         inputFocusBorder: 'focus:border-cyan-500/50',
         inputFocusRing: 'focus:ring-cyan-500/20',
@@ -1038,6 +1041,7 @@ export const themes: Record<string, ThemeConfig> = {
         settingsHover: 'hover:bg-primary-800/50',
         inputContainerBg: 'bg-primary-900/50',
         inputBg: 'bg-primary-900/50',
+        inputSolidBg: 'bg-primary-900',
         inputBorder: 'border-primary-800/50',
         inputFocusBorder: 'focus:border-red-500/50',
         inputFocusRing: 'focus:ring-red-500/20',

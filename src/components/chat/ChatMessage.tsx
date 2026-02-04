@@ -38,9 +38,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
       {/* Assistant avatar - Kybera icon */}
       {!isUser && (
         <div className="flex-shrink-0">
-          <div
-            className={`w-10 h-10 rounded-xl overflow-hidden ${styles.assistantIconShadow}`}
-          >
+          <div className={`w-10 h-10 rounded-full overflow-hidden ${styles.assistantIconShadow}`}>
             <img src={KYBERA_ICON} alt="Kybera" className="w-full h-full object-cover" />
           </div>
         </div>
@@ -55,12 +53,6 @@ export function ChatMessage({ message }: ChatMessageProps) {
           >
             <p className={`${styles.userTextColor} whitespace-pre-wrap leading-relaxed`}>
               {message.content}
-            </p>
-            <p className={`text-xs ${styles.userTimestamp} mt-1.5 text-right`}>
-              {new Date(message.timestamp).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
             </p>
           </div>
         ) : (
@@ -79,12 +71,6 @@ export function ChatMessage({ message }: ChatMessageProps) {
                 prose-blockquote:border-l-2 prose-blockquote:border-cyan-400 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-text-secondary`}
               dangerouslySetInnerHTML={{ __html: renderedContent }}
             />
-            <p className={`text-xs ${styles.assistantTimestamp} mt-2`}>
-              {new Date(message.timestamp).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </p>
           </div>
         )}
       </div>
@@ -93,12 +79,12 @@ export function ChatMessage({ message }: ChatMessageProps) {
       {isUser && (
         <div className="flex-shrink-0">
           {profilePicture ? (
-            <div className={`w-10 h-10 rounded-xl overflow-hidden ${styles.userAvatarRing}`}>
+            <div className={`w-10 h-10 rounded-full overflow-hidden ${styles.userAvatarRing}`}>
               <img src={profilePicture} alt="User" className="w-full h-full object-cover" />
             </div>
           ) : (
             <div
-              className={`w-10 h-10 rounded-xl ${styles.userAvatarBg} ${styles.userAvatarRing} flex items-center justify-center`}
+              className={`w-10 h-10 rounded-full ${styles.userAvatarBg} ${styles.userAvatarRing} flex items-center justify-center`}
             >
               <User className="w-5 h-5 text-white" />
             </div>

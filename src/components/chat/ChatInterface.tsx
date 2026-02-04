@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import { Send, Settings, AlertCircle, Sparkles, Bot, Zap } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { Settings, AlertCircle, Sparkles, Bot, Zap, ArrowUp } from 'lucide-react'
 import { useChatStore } from '../../store/chatStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useUIStore } from '../../store/uiStore'
@@ -8,6 +8,10 @@ import { ModelSelector } from './ModelSelector'
 import { SettingsDialog } from '../settings/SettingsDialog'
 import { OpenRouterService } from '../../services/ai/openrouter'
 import { useTheme } from '../../hooks/useTheme'
+
+// Line height for textarea (in pixels)
+const LINE_HEIGHT = 24
+const MAX_LINES = 11
 
 
 
@@ -27,8 +31,22 @@ export function ChatInterface() {
   const [input, setInput] = useState('')
   const [showSettings, setShowSettings] = useState(false)
   const [streamingContent, setStreamingContent] = useState('')
-  const [isFocused, setIsFocused] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Auto-resize textarea based on content
+  const adjustTextareaHeight = useCallback(() => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+
+    // Reset height to auto to get the correct scrollHeight
+    textarea.style.height = 'auto'
+    
+    // Calculate the new height (capped at max lines)
+    const maxHeight = LINE_HEIGHT * MAX_LINES
+    const newHeight = Math.min(textarea.scrollHeight, maxHeight)
+    textarea.style.height = `${newHeight}px`
+  }, [])
 
   // Get chat interface theme styles
   const styles = theme.styles.chatInterface
@@ -38,6 +56,11 @@ export function ChatInterface() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [activeConversation?.messages])
+
+  // Adjust height when input changes
+  useEffect(() => {
+    adjustTextareaHeight()
+  }, [input, adjustTextareaHeight])
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return
@@ -206,9 +229,9 @@ export function ChatInterface() {
           </div>
         </div>
 
-        {/* Messages area */}
+        {/* Messages area - with padding at bottom for floating input */}
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl mx-auto p-4">
+          <div className="max-w-3xl mx-auto px-4 pt-4 pb-32">
             {activeConversation?.messages.map((message) => (
               <ChatMessage key={message.id} message={message} />
             ))}
@@ -253,45 +276,36 @@ export function ChatInterface() {
           </div>
         </div>
 
-        {/* Input area - no backdrop-blur */}
-        <div className={`${styles.inputContainerBg} border-t ${styles.headerBorder} p-4`}>
-          <div className="max-w-4xl mx-auto">
-            <div
-              className={`relative flex gap-3 transition-transform duration-200 ${isFocused ? 'scale-[1.01]' : ''}`}
-            >
-              {/* Input glow on focus */}
-              <div
-                className={`absolute -inset-1 bg-gradient-to-r ${styles.sendGradient} rounded-2xl blur-lg transition-opacity duration-300 ${isFocused ? 'opacity-20' : 'opacity-0'}`}
+        {/* Floating input area - ChatGPT style */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none">
+          <div className="max-w-3xl mx-auto pointer-events-auto">
+            <div className={`relative ${styles.inputSolidBg} border ${styles.inputBorder} rounded-2xl shadow-lg`}>
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyPress}
+                placeholder="Ask anything"
+                rows={1}
+                className={`w-full px-4 py-3 pr-14 bg-transparent text-text-primary placeholder:text-text-tertiary focus:outline-none resize-none flex items-center`}
+                style={{ 
+                  minHeight: `${LINE_HEIGHT + 24}px`,
+                  maxHeight: `${LINE_HEIGHT * MAX_LINES}px`,
+                  lineHeight: `${LINE_HEIGHT}px`,
+                  paddingTop: '12px',
+                  paddingBottom: '12px'
+                }}
               />
-
-              <div className="relative flex-1">
-                <textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
-                  placeholder="Type your message..."
-                  rows={1}
-                  className={`w-full px-4 py-3 ${styles.inputBg} border ${styles.inputBorder} rounded-xl text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 ${styles.inputFocusRing} ${styles.inputFocusBorder} transition-all duration-200 resize-none`}
-                  style={{ minHeight: '48px', maxHeight: '200px' }}
-                />
-              </div>
-
-              {/* Send button with gradient */}
+              
+              {/* Circular send button - always visible at bottom right */}
               <button
                 onClick={handleSend}
                 disabled={!input.trim() || isLoading}
-                className={`relative flex-shrink-0 px-4 py-3 bg-gradient-to-r ${styles.sendGradient} rounded-xl font-medium text-white shadow-lg ${styles.sendShadow} ${styles.sendDisabled} transition-all duration-300 hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:hover:scale-100`}
+                className={`absolute bottom-2 right-2 w-9 h-9 rounded-full bg-gradient-to-r ${styles.sendGradient} flex items-center justify-center text-white shadow-md transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100`}
               >
-                <Send className="w-5 h-5" />
+                <ArrowUp className="w-5 h-5" />
               </button>
             </div>
-
-            {/* Subtle hint text */}
-            <p className="text-xs text-text-tertiary mt-2 text-center">
-              Press Enter to send, Shift+Enter for new line
-            </p>
           </div>
         </div>
 
