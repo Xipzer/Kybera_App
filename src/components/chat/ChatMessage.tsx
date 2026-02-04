@@ -68,9 +68,9 @@ export function ChatMessage({ message }: ChatMessageProps) {
                 prose-headings:font-semibold prose-headings:mt-4 prose-headings:mb-2
                 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:bg-black/10 prose-code:dark:bg-white/10 prose-code:text-sm prose-code:before:content-none prose-code:after:content-none
                 prose-pre:bg-black/10 prose-pre:dark:bg-white/5 prose-pre:rounded-xl prose-pre:border prose-pre:border-white/10
-                prose-a:text-cyan-400 prose-a:no-underline hover:prose-a:underline
+                prose-a:text-accent-500 prose-a:no-underline hover:prose-a:underline
                 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5
-                prose-blockquote:border-l-2 prose-blockquote:border-cyan-400 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-text-secondary
+                prose-blockquote:border-l-2 prose-blockquote:border-accent-500 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-text-secondary
                 prose-table:my-4 prose-table:w-full prose-table:border-separate prose-table:border-spacing-0 prose-table:text-sm prose-table:overflow-hidden
                 prose-thead:bg-white/5
                 prose-th:px-4 prose-th:py-2.5 prose-th:text-left prose-th:font-medium prose-th:text-red-400 prose-th:border-b prose-th:border-white/10
@@ -81,7 +81,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
                 [&_tbody_tr]:bg-black/10 [&_tbody_tr:hover]:bg-white/5
                 [&_tbody_tr:last-child_td]:border-b-0
                 [&_td:first-child]:text-text-tertiary [&_td:first-child]:font-medium
-                [&_td_a]:text-cyan-400 [&_td_a:hover]:underline`}
+                [&_td_a]:text-accent-500 [&_td_a:hover]:underline`}
               dangerouslySetInnerHTML={{ __html: renderedContent }}
             />
           </div>

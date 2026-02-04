@@ -458,30 +458,57 @@
   scrollbar-width: thin;
 }
 
-/* Light/Dark Mode - Hot Pink scrollbar */
-.light *, .dark * {
-  scrollbar-color: rgb(255, 0, 153) transparent;  /* Firefox - Hot Pink */
+/* Light Mode - Indigo/Purple scrollbar */
+.light * {
+  scrollbar-color: rgb(99, 102, 241) transparent; /* Firefox - Indigo */
 }
 
-.light *::-webkit-scrollbar, .dark *::-webkit-scrollbar {
+.light *::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 
-.light *::-webkit-scrollbar-track, .dark *::-webkit-scrollbar-track {
+.light *::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.light *::-webkit-scrollbar-thumb, .dark *::-webkit-scrollbar-thumb {
-  background: rgb(255, 0, 153);  /* Hot Pink */
+.light *::-webkit-scrollbar-thumb {
+  background: rgb(99, 102, 241); /* Indigo */
   border-radius: 10px;
 }
 
-.light *::-webkit-scrollbar-thumb:hover, .dark *::-webkit-scrollbar-thumb:hover {
-  background: rgb(219, 39, 119);  /* Darker hot pink */
+.light *::-webkit-scrollbar-thumb:hover {
+  background: rgb(79, 70, 229); /* Darker indigo */
 }
 
-.light *::-webkit-scrollbar-corner, .dark *::-webkit-scrollbar-corner {
+.light *::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Dark Mode - Purple scrollbar */
+.dark * {
+  scrollbar-color: rgb(139, 139, 255) transparent; /* Firefox - Purple */
+}
+
+.dark *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.dark *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dark *::-webkit-scrollbar-thumb {
+  background: rgb(139, 139, 255); /* Purple */
+  border-radius: 10px;
+}
+
+.dark *::-webkit-scrollbar-thumb:hover {
+  background: rgb(167, 139, 250); /* Lighter purple */
+}
+
+.dark *::-webkit-scrollbar-corner {
   background: transparent;
 }
 
@@ -509,6 +536,60 @@
 }
 
 .xipz *::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* OG Dark Mode - Hot Pink scrollbar */
+.ogDark * {
+  scrollbar-color: rgb(255, 0, 153) transparent; /* Firefox - Hot Pink */
+}
+
+.ogDark *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.ogDark *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ogDark *::-webkit-scrollbar-thumb {
+  background: rgb(255, 0, 153); /* Hot Pink */
+  border-radius: 10px;
+}
+
+.ogDark *::-webkit-scrollbar-thumb:hover {
+  background: rgb(219, 39, 119); /* Darker hot pink */
+}
+
+.ogDark *::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* OG Light Mode - Hot Pink scrollbar */
+.ogLight * {
+  scrollbar-color: rgb(255, 0, 153) transparent; /* Firefox - Hot Pink */
+}
+
+.ogLight *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.ogLight *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ogLight *::-webkit-scrollbar-thumb {
+  background: rgb(255, 0, 153); /* Hot Pink */
+  border-radius: 10px;
+}
+
+.ogLight *::-webkit-scrollbar-thumb:hover {
+  background: rgb(219, 39, 119); /* Darker hot pink */
+}
+
+.ogLight *::-webkit-scrollbar-corner {
   background: transparent;
 }
 

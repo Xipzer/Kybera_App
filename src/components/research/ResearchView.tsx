@@ -190,8 +190,8 @@ export function ResearchView() {
       connected: { icon: Wifi, color: 'text-green-400', bg: 'bg-green-500/20', label: 'Connected' },
       connecting: {
         icon: Loader2,
-        color: 'text-cyan-400',
-        bg: 'bg-cyan-500/20',
+        color: theme.styles.iconAccent,
+        bg: 'bg-accent-500/20',
         label: 'Connecting...',
         spin: true,
       },
@@ -297,7 +297,7 @@ export function ResearchView() {
               {connectionState === 'disconnected' && (
                 <button
                   onClick={handleConnect}
-                  className="px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 rounded-full text-sm text-cyan-400 transition-colors touch-manipulation"
+                  className={`px-3 py-1.5 bg-accent-500/20 hover:bg-accent-500/30 border border-accent-500/30 rounded-full text-sm ${theme.styles.iconAccent} transition-colors touch-manipulation`}
                 >
                   Connect
                 </button>
@@ -328,11 +328,11 @@ export function ResearchView() {
                 <span className="text-text-secondary">
                   {currentResearchStep || 'Researching...'}
                 </span>
-                <span className="text-cyan-500">{researchProgress}%</span>
+                <span className={theme.styles.iconAccent}>{researchProgress}%</span>
               </div>
               <div className="h-1 bg-surface-elevated rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-cyan-500 to-teal-500 transition-all duration-300"
+                  className={`h-full bg-gradient-to-r ${styles.sendGradient} transition-all duration-300`}
                   style={{ width: `${researchProgress}%` }}
                 />
               </div>
@@ -407,8 +407,10 @@ export function ResearchView() {
               messages.length === 0 &&
               connectionState === 'connected' && (
                 <div className="text-center py-12">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-teal-500/20 flex items-center justify-center mx-auto mb-4 border border-border-subtle">
-                    <Sparkles className="w-8 h-8 text-cyan-500" />
+                  <div
+                    className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${styles.emptyStateIconBg} flex items-center justify-center mx-auto mb-4 border border-border-subtle`}
+                  >
+                    <Sparkles className={`w-8 h-8 ${theme.styles.iconAccent}`} />
                   </div>
                   <h3 className="text-lg font-medium text-text-primary mb-2">Ready to Research</h3>
                   <p className="text-text-secondary max-w-sm mx-auto">

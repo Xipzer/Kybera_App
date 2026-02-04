@@ -1,10 +1,12 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+type ThemeType = 'light' | 'dark' | 'xipz' | 'ogDark' | 'ogLight'
+
 interface UIState {
   walletDrawerOpen: boolean
   walletDrawerWidth: number
-  theme: 'light' | 'dark' | 'xipz'
+  theme: ThemeType
   chatSidebarOpen: boolean
   profilePicture: string | null
   chatWallpaper: string | null
@@ -18,7 +20,7 @@ interface UIState {
   toggleWalletDrawer: () => void
   setWalletDrawerWidth: (width: number) => void
   toggleTheme: () => void
-  setTheme: (theme: 'light' | 'dark' | 'xipz') => void
+  setTheme: (theme: ThemeType) => void
   toggleChatSidebar: () => void
   setProfilePicture: (dataUrl: string | null) => void
   setChatWallpaper: (dataUrl: string | null) => void
@@ -53,9 +55,12 @@ export const useUIStore = create<UIState>()(
       },
 
       toggleTheme: () => {
-        set((state) => ({ 
-          theme: state.theme === 'light' ? 'dark' : state.theme === 'dark' ? 'xipz' : 'light' 
-        }))
+        const themeOrder: ThemeType[] = ['light', 'dark', 'xipz', 'ogDark', 'ogLight']
+        set((state) => {
+          const currentIndex = themeOrder.indexOf(state.theme)
+          const nextIndex = (currentIndex + 1) % themeOrder.length
+          return { theme: themeOrder[nextIndex] }
+        })
       },
 
       setTheme: (theme) => {

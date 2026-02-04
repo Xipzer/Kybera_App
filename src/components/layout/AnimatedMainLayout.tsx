@@ -26,7 +26,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   useEffect(() => {
     // Remove all theme classes first
-    document.documentElement.classList.remove('light', 'dark', 'xipz')
+    document.documentElement.classList.remove('light', 'dark', 'xipz', 'ogDark', 'ogLight')
     // Add the current theme class
     document.documentElement.classList.add(uiTheme)
   }, [uiTheme])

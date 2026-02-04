@@ -268,3 +268,165 @@
 .candy-red-glow:hover {
   box-shadow: 0 0 30px rgba(239, 68, 68, 0.7);
 }
+
+/* OG Dark Mode - Original cyan/pink neon aesthetic with true grey backgrounds */
+.ogDark {
+  /* Primary Colors - True neutral greys */
+  --color-primary-50: 250 250 250;
+  --color-primary-100: 245 245 245;
+  --color-primary-200: 229 229 229;
+  --color-primary-300: 212 212 212;
+  --color-primary-400: 163 163 163;
+  --color-primary-500: 115 115 115;
+  --color-primary-600: 82 82 82;
+  --color-primary-700: 64 64 64;
+  --color-primary-800: 38 38 38;
+  --color-primary-900: 23 23 23;
+  --color-primary-950: 10 10 10;
+
+  /* Accent Colors - Cyan */
+  --color-accent-50: 236 254 255;
+  --color-accent-100: 207 250 254;
+  --color-accent-200: 165 243 252;
+  --color-accent-300: 103 232 249;
+  --color-accent-400: 34 211 238;
+  --color-accent-500: 0 225 255; /* Main cyan - #00E1FF */
+  --color-accent-600: 0 184 212;
+  --color-accent-700: 0 151 167;
+  --color-accent-800: 0 127 140;
+  --color-accent-900: 0 96 100;
+
+  /* Secondary Accent - Hot Pink */
+  --color-secondary-50: 253 242 248;
+  --color-secondary-100: 252 231 243;
+  --color-secondary-200: 251 207 232;
+  --color-secondary-300: 249 168 212;
+  --color-secondary-400: 244 114 182;
+  --color-secondary-500: 255 0 153; /* Hot pink - #FF0099 */
+  --color-secondary-600: 219 39 119;
+  --color-secondary-700: 190 24 93;
+  --color-secondary-800: 157 23 77;
+  --color-secondary-900: 131 24 67;
+
+  /* Background Colors - True grey tones */
+  --color-bg-base: 18 18 18; /* Main background - #121212 */
+  --color-bg-elevated: 26 26 26; /* Elevated surfaces - #1a1a1a */
+  --color-bg-overlay: 38 38 38; /* Overlays and modals - #262626 */
+  --color-bg-subtle: 13 13 13; /* Header and subtle areas - #0d0d0d */
+
+  /* Surface Colors - True grey tones */
+  --color-surface-base: 26 26 26; /* Base surface - #1a1a1a */
+  --color-surface-elevated: 33 33 33; /* Elevated surface - #212121 */
+  --color-surface-overlay: 46 46 46; /* Overlay surface - #2e2e2e */
+  --color-surface-hover: 29 29 29; /* Hover state - #1d1d1d */
+
+  /* Text Colors */
+  --color-text-primary: 245 245 245;
+  --color-text-secondary: 212 212 212;
+  --color-text-tertiary: 163 163 163;
+  --color-text-inverse: 23 23 23;
+
+  /* Border Colors */
+  --color-border-subtle: 38 38 38; /* Subtle borders */
+  --color-border-default: 38 38 38; /* Default borders */
+  --color-border-strong: 51 51 51; /* Strong borders */
+
+  /* Interactive States */
+  --color-interactive-hover: 0 225 255 / 0.1;
+  --color-interactive-active: 0 225 255 / 0.2;
+  --color-interactive-focus: 0 225 255;
+
+  /* Gradients */
+  --gradient-pearlescent: linear-gradient(
+          135deg,
+          rgb(0, 225, 255) 0%,
+          rgb(255, 0, 153) 100%
+  );
+
+  --gradient-candy-red: linear-gradient(
+          135deg,
+          rgb(255, 0, 153) 0%,
+          rgb(219, 39, 119) 100%
+  );
+}
+
+/* OG Light Mode - Original cyan/pink on light neutral background */
+.ogLight {
+  /* Primary Colors - Light neutrals */
+  --color-primary-50: 255 255 255;
+  --color-primary-100: 250 250 250;
+  --color-primary-200: 245 245 245;
+  --color-primary-300: 229 231 235;
+  --color-primary-400: 209 213 219;
+  --color-primary-500: 156 163 175;
+  --color-primary-600: 107 114 128;
+  --color-primary-700: 75 85 99;
+  --color-primary-800: 55 65 81;
+  --color-primary-900: 31 41 55;
+  --color-primary-950: 17 24 39;
+
+  /* Accent Colors - Cyan */
+  --color-accent-50: 236 254 255;
+  --color-accent-100: 207 250 254;
+  --color-accent-200: 165 243 252;
+  --color-accent-300: 103 232 249;
+  --color-accent-400: 34 211 238;
+  --color-accent-500: 0 225 255; /* Main cyan - #00E1FF */
+  --color-accent-600: 0 184 212;
+  --color-accent-700: 0 151 167;
+  --color-accent-800: 0 127 140;
+  --color-accent-900: 0 96 100;
+
+  /* Secondary Accent - Pink */
+  --color-secondary-50: 253 242 248;
+  --color-secondary-100: 252 231 243;
+  --color-secondary-200: 251 207 232;
+  --color-secondary-300: 249 168 212;
+  --color-secondary-400: 244 114 182;
+  --color-secondary-500: 255 0 153; /* Main pink - #FF0099 */
+  --color-secondary-600: 219 39 119;
+  --color-secondary-700: 190 24 93;
+  --color-secondary-800: 157 23 77;
+  --color-secondary-900: 131 24 67;
+
+  /* Background Colors */
+  --color-bg-base: 255 255 255;
+  --color-bg-elevated: 250 250 250;
+  --color-bg-overlay: 245 245 245;
+  --color-bg-subtle: 252 252 252;
+
+  /* Surface Colors */
+  --color-surface-base: 255 255 255;
+  --color-surface-elevated: 250 250 250;
+  --color-surface-overlay: 245 245 245;
+  --color-surface-hover: 240 240 240;
+
+  /* Text Colors */
+  --color-text-primary: 17 24 39;
+  --color-text-secondary: 75 85 99;
+  --color-text-tertiary: 156 163 175;
+  --color-text-inverse: 255 255 255;
+
+  /* Border Colors */
+  --color-border-subtle: 229 231 235;
+  --color-border-default: 209 213 219;
+  --color-border-strong: 156 163 175;
+
+  /* Interactive States */
+  --color-interactive-hover: 0 225 255 / 0.1;
+  --color-interactive-active: 0 225 255 / 0.2;
+  --color-interactive-focus: 0 225 255;
+
+  /* Gradients */
+  --gradient-pearlescent: linear-gradient(
+          135deg,
+          rgb(0, 225, 255) 0%,
+          rgb(255, 0, 153) 100%
+  );
+
+  --gradient-candy-red: linear-gradient(
+          135deg,
+          rgb(255, 0, 153) 0%,
+          rgb(219, 39, 119) 100%
+  );
+}

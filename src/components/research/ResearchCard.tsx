@@ -30,8 +30,11 @@ interface ResearchCardProps {
 
 export function ResearchCard({ research, onApe, onFade, compact = false }: ResearchCardProps) {
   const [expanded, setExpanded] = useState(!compact)
-  const { themeName } = useTheme()
-  const isDark = themeName === 'dark' || themeName === 'xipz'
+  const { themeName, theme } = useTheme()
+  const isDark = themeName === 'dark' || themeName === 'xipz' || themeName === 'ogDark'
+
+  // Get theme-aware accent color class
+  const iconAccent = theme.styles.iconAccent
 
   const ratingConfig = RISK_RATING_CONFIG[research.rating]
   const isLoading = research.status === 'pending' || research.status === 'researching'
@@ -85,7 +88,7 @@ export function ResearchCard({ research, onApe, onFade, compact = false }: Resea
             <div className={`h-5 w-32 ${isDark ? 'bg-white/10' : 'bg-gray-200'} rounded mb-2`} />
             <div className={`h-4 w-48 ${isDark ? 'bg-white/5' : 'bg-gray-100'} rounded`} />
           </div>
-          <Loader2 className="w-6 h-6 text-cyan-500 animate-spin" />
+          <Loader2 className={`w-6 h-6 ${iconAccent} animate-spin`} />
         </div>
         <div className="mt-4 text-sm text-text-secondary text-center">Researching token...</div>
       </div>
@@ -126,7 +129,7 @@ export function ResearchCard({ research, onApe, onFade, compact = false }: Resea
           <div className="flex items-center gap-3">
             {/* Token icon placeholder */}
             <div
-              className={`w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-teal-500/20 flex items-center justify-center border ${isDark ? 'border-white/10' : 'border-gray-200'}`}
+              className={`w-12 h-12 rounded-xl bg-gradient-to-br from-accent-500/20 to-accent-600/20 flex items-center justify-center border ${isDark ? 'border-white/10' : 'border-gray-200'}`}
             >
               <span className="text-lg font-bold text-text-primary">
                 {research.tokenSymbol.slice(0, 2).toUpperCase()}
@@ -145,7 +148,7 @@ export function ResearchCard({ research, onApe, onFade, compact = false }: Resea
                   href={`https://basescan.org/token/${research.contractAddress}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 hover:text-cyan-500 transition-colors"
+                  className={`flex items-center gap-1 hover:${iconAccent} transition-colors`}
                 >
                   {truncateAddress(research.contractAddress)}
                   <ExternalLink className="w-3 h-3" />
@@ -155,7 +158,7 @@ export function ResearchCard({ research, onApe, onFade, compact = false }: Resea
                   href={getDexScreenerUrl()}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-cyan-500 transition-colors"
+                  className={`hover:${iconAccent} transition-colors`}
                   title="View on DexScreener"
                 >
                   DexScreener
@@ -165,7 +168,7 @@ export function ResearchCard({ research, onApe, onFade, compact = false }: Resea
                   href={getGeckoTerminalUrl()}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-cyan-500 transition-colors"
+                  className={`hover:${iconAccent} transition-colors`}
                   title="View on GeckoTerminal"
                 >
                   GeckoTerminal
@@ -286,7 +289,7 @@ export function ResearchCard({ research, onApe, onFade, compact = false }: Resea
               className={`${isDark ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200'} border rounded-xl p-4`}
             >
               <div className="flex items-center gap-2 mb-3">
-                <Users className="w-5 h-5 text-cyan-500" />
+                <Users className={`w-5 h-5 ${iconAccent}`} />
                 <h4 className="font-medium text-text-primary">Developer</h4>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-sm">
@@ -297,7 +300,7 @@ export function ResearchCard({ research, onApe, onFade, compact = false }: Resea
                       href={`https://twitter.com/${research.developer.twitterHandle}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-cyan-500 hover:text-cyan-600 transition-colors"
+                      className={`${iconAccent} hover:opacity-80 transition-colors`}
                     >
                       @{research.developer.twitterHandle}
                     </a>
@@ -337,7 +340,7 @@ export function ResearchCard({ research, onApe, onFade, compact = false }: Resea
               className={`${isDark ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200'} border rounded-xl p-4`}
             >
               <div className="flex items-center gap-2 mb-3">
-                <Wallet className="w-5 h-5 text-cyan-500" />
+                <Wallet className={`w-5 h-5 ${iconAccent}`} />
                 <h4 className="font-medium text-text-primary">Holder Distribution</h4>
                 {research.holderDistribution.hasBotWarnings && (
                   <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-500 text-xs">

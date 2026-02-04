@@ -59,8 +59,11 @@ const EXPLORER_URLS: Record<ResearchNetwork, string> = {
 }
 
 export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfaceProps) {
-  const { themeName } = useTheme()
-  const isDark = themeName === 'dark' || themeName === 'xipz'
+  const { themeName, theme } = useTheme()
+  const isDark = themeName === 'dark' || themeName === 'xipz' || themeName === 'ogDark'
+
+  // Get theme-aware accent color class
+  const iconAccent = theme.styles.iconAccent
   
   const [amount, setAmount] = useState<string>('0.1')
   const [, setIsExecuting] = useState(false)
@@ -275,7 +278,7 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div
-                  className={`w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-teal-500/20 flex items-center justify-center border ${isDark ? 'border-white/10' : 'border-gray-200'}`}
+                  className={`w-10 h-10 rounded-xl bg-gradient-to-br from-accent-500/20 to-accent-600/20 flex items-center justify-center border ${isDark ? 'border-white/10' : 'border-gray-200'}`}
                 >
                   <span className="text-sm font-bold text-text-primary">
                     {research.tokenSymbol.slice(0, 2).toUpperCase()}
@@ -377,7 +380,7 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
                   <span className="text-text-secondary">You'll receive (estimated)</span>
                   <div className="flex items-center gap-2">
                     {isFetchingQuote ? (
-                      <Loader2 className="w-4 h-4 text-cyan-500 animate-spin" />
+                      <Loader2 className={`w-4 h-4 ${iconAccent} animate-spin`} />
                     ) : (
                       <TrendingUp className="w-4 h-4 text-green-500" />
                     )}
@@ -506,7 +509,7 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
                   href={`${explorerUrl}${txHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`inline-flex items-center gap-2 px-4 py-2 ${isDark ? 'bg-white/5 hover:bg-white/10 border-white/10' : 'bg-gray-100 hover:bg-gray-200 border-gray-200'} border rounded-xl text-sm text-cyan-500 hover:text-cyan-600 transition-colors`}
+                  className={`inline-flex items-center gap-2 px-4 py-2 ${isDark ? 'bg-white/5 hover:bg-white/10 border-white/10' : 'bg-gray-100 hover:bg-gray-200 border-gray-200'} border rounded-xl text-sm ${iconAccent} hover:opacity-80 transition-colors`}
                 >
                   View Transaction
                   <ExternalLink className="w-4 h-4" />

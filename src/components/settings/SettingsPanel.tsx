@@ -270,7 +270,7 @@ export function SettingsPanel() {
                     connectionState === 'connected'
                       ? 'bg-green-500/20 text-green-400'
                       : connectionState === 'connecting' || connectionState === 'reconnecting'
-                        ? 'bg-cyan-500/20 text-cyan-400'
+                        ? 'bg-accent-500/20 text-accent-500'
                         : connectionState === 'error'
                           ? 'bg-red-500/20 text-red-400'
                           : 'bg-white/5 text-text-tertiary'
@@ -353,7 +353,7 @@ export function SettingsPanel() {
                   <button
                     onClick={handleTestConnection}
                     disabled={!gatewayUrl.trim() || isTestingConnection}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 min-h-[44px] bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 rounded-lg text-sm font-medium text-cyan-400 transition-colors disabled:opacity-50 touch-manipulation"
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 min-h-[44px] bg-accent-500/20 hover:bg-accent-500/30 border border-accent-500/30 rounded-lg text-sm font-medium text-accent-500 transition-colors disabled:opacity-50 touch-manipulation"
                   >
                     {isTestingConnection ? (
                       <>
@@ -573,7 +573,9 @@ export function SettingsPanel() {
               <h3 className="text-base font-medium text-text-primary mb-4">Theme</h3>
               <Select.Root
                 value={theme}
-                onValueChange={(value) => setTheme(value as 'light' | 'dark' | 'xipz')}
+                onValueChange={(value) =>
+                  setTheme(value as 'light' | 'dark' | 'xipz' | 'ogDark' | 'ogLight')
+                }
               >
                 <Select.Trigger className="w-full flex items-center justify-between gap-2 px-4 py-3 min-h-[44px] text-sm bg-surface-elevated rounded-lg border border-border-subtle touch-manipulation">
                   <Select.Value>
@@ -582,7 +584,11 @@ export function SettingsPanel() {
                         ? 'Xipz Mode'
                         : theme === 'dark'
                           ? 'Dark Mode'
-                          : 'Light Mode'}
+                          : theme === 'ogDark'
+                            ? 'OG Dark Mode'
+                            : theme === 'ogLight'
+                              ? 'OG Light Mode'
+                              : 'Light Mode'}
                     </span>
                   </Select.Value>
                   <Select.Icon>
@@ -612,6 +618,20 @@ export function SettingsPanel() {
                       >
                         <Select.ItemText>Xipz Mode</Select.ItemText>
                         <Palette className="w-4 h-4" />
+                      </Select.Item>
+                      <Select.Item
+                        value="ogDark"
+                        className="flex items-center justify-between px-4 py-3 min-h-[44px] text-sm rounded cursor-pointer transition-colors text-text-primary hover:bg-surface-hover data-[highlighted]:bg-surface-hover touch-manipulation"
+                      >
+                        <Select.ItemText>OG Dark Mode</Select.ItemText>
+                        <Zap className="w-4 h-4" />
+                      </Select.Item>
+                      <Select.Item
+                        value="ogLight"
+                        className="flex items-center justify-between px-4 py-3 min-h-[44px] text-sm rounded cursor-pointer transition-colors text-text-primary hover:bg-surface-hover data-[highlighted]:bg-surface-hover touch-manipulation"
+                      >
+                        <Select.ItemText>OG Light Mode</Select.ItemText>
+                        <Zap className="w-4 h-4" />
                       </Select.Item>
                     </Select.Viewport>
                   </Select.Content>

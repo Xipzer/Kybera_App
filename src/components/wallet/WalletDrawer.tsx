@@ -803,7 +803,7 @@ function WalletItem({
                 onBlur={handleNameSubmit}
                 onKeyDown={handleNameKeyDown}
                 onClick={(e) => e.stopPropagation()}
-                className={`font-medium px-2 py-1 bg-white/5 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/30 text-text-primary`}
+                className={`font-medium px-2 py-1 bg-white/5 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500/30 text-text-primary`}
                 autoFocus
               />
             ) : (
@@ -1010,7 +1010,7 @@ function WalletGroupItem({
                   onBlur={handleNameSubmit}
                   onKeyDown={handleNameKeyDown}
                   onClick={(e) => e.stopPropagation()}
-                  className={`font-medium px-2 py-1 bg-white/5 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/30 text-text-primary`}
+                  className={`font-medium px-2 py-1 bg-white/5 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500/30 text-text-primary`}
                   autoFocus
                 />
               ) : (
@@ -1194,7 +1194,7 @@ function GroupWalletItem({
               onBlur={handleNameSubmit}
               onKeyDown={handleNameKeyDown}
               onClick={(e) => e.stopPropagation()}
-              className={`text-sm font-medium px-2 py-1 bg-white/5 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500/30 text-text-primary`}
+              className={`text-sm font-medium px-2 py-1 bg-white/5 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500/30 text-text-primary`}
               autoFocus
             />
           ) : (

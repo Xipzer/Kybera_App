@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Lock, Sun, Moon, Palette, Shield, Fingerprint } from 'lucide-react'
+import { Lock, Sun, Moon, Palette, Shield, Fingerprint, Zap } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import { useAuthStore } from '../../store/authStore'
 import { useUIStore } from '../../store/uiStore'
@@ -8,7 +8,7 @@ import { useTheme } from '../../hooks/useTheme'
 
 
 // Animated background particles
-function ParticleField({ color }: { color: string }) {
+function ParticleField({ color, opacityMultiplier = 1 }: { color: string; opacityMultiplier?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   
   useEffect(() => {
@@ -35,7 +35,7 @@ function ParticleField({ color }: { color: string }) {
         vx: (Math.random() - 0.5) * 0.5,
         vy: (Math.random() - 0.5) * 0.5,
         size: Math.random() * 2 + 1,
-        opacity: Math.random() * 0.5 + 0.1
+        opacity: (Math.random() * 0.5 + 0.1) * opacityMultiplier
       })
     }
     
@@ -65,7 +65,7 @@ function ParticleField({ color }: { color: string }) {
             ctx.beginPath()
             ctx.moveTo(p.x, p.y)
             ctx.lineTo(p2.x, p2.y)
-            ctx.strokeStyle = `rgba(${color}, ${0.1 * (1 - dist / 150)})`
+            ctx.strokeStyle = `rgba(${color}, ${0.1 * opacityMultiplier * (1 - dist / 150)})`
             ctx.stroke()
           }
         })
@@ -79,7 +79,7 @@ function ParticleField({ color }: { color: string }) {
       window.removeEventListener('resize', resize)
       cancelAnimationFrame(animationId)
     }
-  }, [color])
+  }, [color, opacityMultiplier])
   
   return <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />
 }
@@ -133,8 +133,8 @@ export function UnlockScreen() {
   const opacity = syncOpacity ? wallpaperOpacity : lockscreenOpacity
 
   const cycleTheme = () => {
-    const themes = ['light', 'dark', 'xipz'] as const
-    const currentIndex = themes.indexOf(uiTheme)
+    const themes = ['light', 'dark', 'xipz', 'ogDark', 'ogLight'] as const
+    const currentIndex = themes.indexOf(uiTheme as typeof themes[number])
     const nextTheme = themes[(currentIndex + 1) % themes.length]
     setUiTheme(nextTheme)
   }
@@ -147,8 +147,19 @@ export function UnlockScreen() {
         return <Moon className="w-5 h-5" />
       case 'xipz':
         return <Palette className="w-5 h-5" />
+      case 'ogDark':
+      case 'ogLight':
+        return <Zap className="w-5 h-5" />
+      default:
+        return <Sun className="w-5 h-5" />
     }
   }
+
+  // Apply theme class to DOM (needed since AnimatedMainLayout isn't rendered on lock screen)
+  useEffect(() => {
+    document.documentElement.classList.remove('light', 'dark', 'xipz', 'ogDark', 'ogLight')
+    document.documentElement.classList.add(uiTheme)
+  }, [uiTheme])
 
   useEffect(() => {
     if (isInitialized) {
@@ -213,7 +224,7 @@ export function UnlockScreen() {
       />
 
       {/* Particle effect */}
-      <ParticleField color={styles.particleColor} />
+      <ParticleField color={styles.particleColor} opacityMultiplier={styles.particleOpacity || 1} />
 
       {/* Custom wallpaper overlay */}
       {wallpaper && (

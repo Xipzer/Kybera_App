@@ -355,7 +355,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                               ? 'bg-green-500/20'
                               : connectionState === 'connecting' ||
                                   connectionState === 'reconnecting'
-                                ? 'bg-cyan-500/20'
+                                ? 'bg-accent-500/20'
                                 : connectionState === 'error'
                                   ? 'bg-red-500/20'
                                   : 'bg-white/5'
@@ -369,8 +369,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                           ) : connectionState === 'connecting' ||
                             connectionState === 'reconnecting' ? (
                             <>
-                              <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
-                              <span className="text-sm text-cyan-400">
+                              <Loader2 className="w-4 h-4 text-accent-500 animate-spin" />
+                              <span className="text-sm text-accent-500">
                                 {connectionState === 'reconnecting'
                                   ? 'Reconnecting...'
                                   : 'Connecting...'}
@@ -449,7 +449,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                           <button
                             onClick={handleTestConnection}
                             disabled={!gatewayUrl.trim() || isTestingConnection}
-                            className={`flex items-center gap-2 px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 rounded-lg text-sm font-medium text-cyan-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+                            className={`flex items-center gap-2 px-4 py-2 bg-accent-500/20 hover:bg-accent-500/30 border border-accent-500/30 rounded-lg text-sm font-medium text-accent-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                           >
                             {isTestingConnection ? (
                               <>
@@ -480,7 +480,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
                       <div className="mt-4 p-4 bg-surface-elevated rounded-lg border border-border-subtle">
                         <div className="flex items-start gap-3">
-                          <Zap className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
+                          <Zap className="w-5 h-5 text-accent-500 flex-shrink-0 mt-0.5" />
                           <div className="text-sm">
                             <p className="text-text-primary font-medium mb-1">What is OpenClaw?</p>
                             <p className="text-text-secondary">
@@ -495,7 +495,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                               href="https://github.com/openclaw/openclaw"
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 mt-2 text-cyan-400 hover:text-cyan-300 transition-colors"
+                              className="inline-flex items-center gap-1 mt-2 text-accent-500 hover:text-accent-400 transition-colors"
                             >
                               Learn more
                               <Globe className="w-3 h-3" />
@@ -856,7 +856,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         </label>
                         <Select.Root
                           value={theme}
-                          onValueChange={(value) => setTheme(value as 'light' | 'dark' | 'xipz')}
+                          onValueChange={(value) =>
+                            setTheme(value as 'light' | 'dark' | 'xipz' | 'ogDark' | 'ogLight')
+                          }
                         >
                           <Select.Trigger className="flex items-center gap-2 px-3 py-1.5 text-sm bg-surface-elevated rounded-lg hover:bg-surface-hover transition-colors">
                             <Select.Value>
@@ -865,7 +867,11 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                   ? 'Xipz Mode'
                                   : theme === 'dark'
                                     ? 'Dark Mode'
-                                    : 'Light Mode'}
+                                    : theme === 'ogDark'
+                                      ? 'OG Dark Mode'
+                                      : theme === 'ogLight'
+                                        ? 'OG Light Mode'
+                                        : 'Light Mode'}
                               </span>
                             </Select.Value>
                             <Select.Icon>
@@ -914,6 +920,32 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                   </Select.ItemText>
                                   <Palette className="w-4 h-4" />
                                 </Select.Item>
+                                <Select.Item
+                                  value="ogDark"
+                                  className={`flex items-center justify-between px-3 py-2 text-sm rounded cursor-pointer transition-colors ${
+                                    theme === 'ogDark'
+                                      ? 'bg-accent/10 text-accent'
+                                      : 'text-text-primary hover:bg-surface-hover'
+                                  }`}
+                                >
+                                  <Select.ItemText>
+                                    <span>OG Dark Mode</span>
+                                  </Select.ItemText>
+                                  <Zap className="w-4 h-4" />
+                                </Select.Item>
+                                <Select.Item
+                                  value="ogLight"
+                                  className={`flex items-center justify-between px-3 py-2 text-sm rounded cursor-pointer transition-colors ${
+                                    theme === 'ogLight'
+                                      ? 'bg-accent/10 text-accent'
+                                      : 'text-text-primary hover:bg-surface-hover'
+                                  }`}
+                                >
+                                  <Select.ItemText>
+                                    <span>OG Light Mode</span>
+                                  </Select.ItemText>
+                                  <Zap className="w-4 h-4" />
+                                </Select.Item>
                               </Select.Viewport>
                             </Select.Content>
                           </Select.Portal>
@@ -941,7 +973,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                               </div>
                             </div>
                           </>
-                        ) : (
+                        ) : theme === 'ogDark' || theme === 'ogLight' ? (
                           <>
                             <p className="text-xs text-text-secondary mb-3">
                               Current theme uses Cyan and Hot Pink accent colors
@@ -960,6 +992,31 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                                   style={{ backgroundColor: 'rgb(255, 0, 153)' }}
                                 />
                                 <span className="text-xs text-text-secondary">Hot Pink</span>
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-xs text-text-secondary mb-3">
+                              Current theme uses Soft Purple with gradient accents
+                            </p>
+                            <div className="flex gap-2">
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="w-6 h-6 rounded"
+                                  style={{ backgroundColor: 'rgb(139, 139, 255)' }}
+                                />
+                                <span className="text-xs text-text-secondary">Soft Purple</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="w-6 h-6 rounded"
+                                  style={{
+                                    background:
+                                      'linear-gradient(135deg, rgb(139, 139, 255) 0%, rgb(100, 130, 255) 100%)',
+                                  }}
+                                />
+                                <span className="text-xs text-text-secondary">Gradient</span>
                               </div>
                             </div>
                           </>
