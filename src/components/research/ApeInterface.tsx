@@ -265,7 +265,7 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
                 </div>
               </div>
               <div className={`px-2 py-1 rounded-full ${ratingConfig.bgColor}`}>
-                <span className={`text-xs font-medium ${ratingConfig.color}`}>
+                <span className={`text-xs font-bold ${ratingConfig.color}`}>
                   {ratingConfig.emoji} {ratingConfig.label}
                 </span>
               </div>

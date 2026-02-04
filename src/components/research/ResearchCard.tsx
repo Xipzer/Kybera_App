@@ -170,9 +170,7 @@ export function ResearchCard({ research, onApe, onFade, compact = false }: Resea
             className={`px-3 py-1.5 rounded-full ${ratingConfig.bgColor} flex items-center gap-2`}
           >
             <span className="text-lg">{ratingConfig.emoji}</span>
-            <span className={`text-sm font-medium ${ratingConfig.color}`}>
-              {ratingConfig.label}
-            </span>
+            <span className={`text-sm font-bold ${ratingConfig.color}`}>{ratingConfig.label}</span>
           </div>
         </div>
 

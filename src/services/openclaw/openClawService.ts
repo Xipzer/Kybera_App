@@ -323,9 +323,18 @@ REQUIRED RESPONSE FORMAT (follow exactly):
 - **Reputation:** [crypto-native reputation, mainstream recognition]
 - **Public acknowledgment:** [Has the dev publicly claimed this token? Yes/No/Unknown]
 
-**Risk Assessment**
+**Conviction Rating**
 
-Risk Level: LOW/MODERATE/HIGH ⚠️
+IMPORTANT: Rate based on INVESTMENT CONVICTION, not market volatility. All memecoins are volatile - that's expected.
+Focus on: Is this dev/team trustworthy? Will they rug? Is the project legitimate?
+
+Rating: SAFE / POTENTIAL / HIGH RISK / AVOID
+
+Use these criteria:
+- SAFE (🟩): Known reputable dev with proven track record, no red flags, legitimate project (e.g., ETH Foundation contributor, known builder with successful projects)
+- POTENTIAL (🟨): Dev is identifiable but less established, or minor concerns exist - close to being safe
+- HIGH RISK (🟧): Unknown dev, unverifiable claims, or significant concerns
+- AVOID (🟥): Clear rug indicators, known scammer, severe red flags, or obvious scam
 
 **Pros** (prioritize: dev reputation > product legitimacy > smart money interest)
 🟩 **Pro title** — detailed explanation
@@ -337,7 +346,7 @@ Risk Level: LOW/MODERATE/HIGH ⚠️
 
 **Summary**
 
-2-3 sentence verdict. Rate conviction level: "Strong conviction" / "Moderate conviction" / "Risky" / "Avoid". Compare to similar launches if relevant.`
+2-3 sentence verdict stating the conviction level and primary reasoning. Compare to similar launches if relevant.`
 
     const request = {
       type: 'req',
@@ -780,7 +789,7 @@ Risk Level: LOW/MODERATE/HIGH ⚠️
     let price = 0
     const pros: string[] = []
     const cons: string[] = []
-    let rating: 'green' | 'yellow' | 'red' = 'yellow'
+    let rating: 'green' | 'yellow' | 'orange' | 'red' = 'yellow'
     
     for (const line of lines) {
       // Only try to extract token name/symbol if we haven't found them yet
@@ -832,13 +841,26 @@ Risk Level: LOW/MODERATE/HIGH ⚠️
         price = parseFloat(priceMatch[1])
       }
       
-      // Look for risk level
-      if (line.toLowerCase().includes('risk level: high') || line.toLowerCase().includes('risk: high') || line.toLowerCase().includes('high risk')) {
-        rating = 'red'
-      } else if (line.toLowerCase().includes('risk level: low') || line.toLowerCase().includes('risk: low') || line.toLowerCase().includes('low risk')) {
+      // Look for rating keywords
+      const lineLower = line.toLowerCase()
+      
+      // Rating keywords (matches prompt format: SAFE / POTENTIAL / HIGH RISK / AVOID)
+      if (lineLower.includes('rating: safe') || lineLower.includes('🟩 safe') || (lineLower.includes('safe') && lineLower.includes('rating'))) {
         rating = 'green'
-      } else if (line.toLowerCase().includes('risk level: medium') || line.toLowerCase().includes('moderate risk')) {
+      } else if (lineLower.includes('rating: potential') || lineLower.includes('🟨 potential') || (lineLower.includes('potential') && lineLower.includes('rating'))) {
         rating = 'yellow'
+      } else if (lineLower.includes('rating: high risk') || lineLower.includes('🟧 high risk') || (lineLower.includes('high risk') && lineLower.includes('rating'))) {
+        rating = 'orange'
+      } else if (lineLower.includes('rating: avoid') || lineLower.includes('🟥 avoid') || (lineLower.includes('avoid') && lineLower.includes('rating'))) {
+        rating = 'red'
+      }
+      // Fallback keywords without "rating:" prefix
+      else if (lineLower.includes('avoid') && !lineLower.includes('to avoid')) {
+        rating = 'red'
+      } else if (lineLower.includes('high risk')) {
+        rating = 'orange'
+      } else if (lineLower.includes('low risk') || lineLower.includes('safe bet')) {
+        rating = 'green'
       }
       
       // Look for red flags as cons (🟥 red square, ❌, 🚨, ⚠️)

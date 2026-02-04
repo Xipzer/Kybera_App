@@ -10,10 +10,20 @@ export const RISK_RATING_CONFIG: Record<
   RiskRating,
   { emoji: string; label: string; color: string; bgColor: string }
 > = {
-  green: { emoji: '🟩', label: 'Low Risk', color: 'text-green-400', bgColor: 'bg-green-500/20' },
-  orange: { emoji: '🟧', label: 'Caution', color: 'text-orange-400', bgColor: 'bg-orange-500/20' },
-  yellow: { emoji: '🟨', label: 'Risky', color: 'text-yellow-400', bgColor: 'bg-yellow-500/20' },
-  red: { emoji: '🟥', label: 'High Risk', color: 'text-red-400', bgColor: 'bg-red-500/20' },
+  green: { emoji: '🟩', label: 'SAFE', color: 'text-green-400', bgColor: 'bg-green-500/20' },
+  yellow: {
+    emoji: '🟨',
+    label: 'POTENTIAL',
+    color: 'text-yellow-400',
+    bgColor: 'bg-yellow-500/20',
+  },
+  orange: {
+    emoji: '🟧',
+    label: 'HIGH RISK',
+    color: 'text-orange-400',
+    bgColor: 'bg-orange-500/20',
+  },
+  red: { emoji: '🟥', label: 'AVOID', color: 'text-red-400', bgColor: 'bg-red-500/20' },
 }
 
 // Supported networks for research
