@@ -85,12 +85,37 @@ class OpenClawServiceClass {
     return new Promise((resolve, reject) => {
       try {
         // Build WebSocket URL with auth token if provided
-        let wsUrl = this.config!.gatewayUrl
-        if (this.config!.authToken) {
-          const url = new URL(wsUrl)
-          url.searchParams.set('token', this.config!.authToken)
-          wsUrl = url.toString()
+        let rawUrl = this.config!.gatewayUrl.trim()
+        
+        // Convert http(s) to ws(s) if needed
+        if (rawUrl.startsWith('http://')) {
+          rawUrl = 'ws://' + rawUrl.slice(7)
+        } else if (rawUrl.startsWith('https://')) {
+          rawUrl = 'wss://' + rawUrl.slice(8)
+        } else if (!rawUrl.startsWith('ws://') && !rawUrl.startsWith('wss://')) {
+          // If no protocol, assume ws://
+          rawUrl = 'ws://' + rawUrl
         }
+        
+        console.log('[OpenClaw] Base URL:', rawUrl)
+        
+        // Parse URL and add token if provided
+        let wsUrl: string
+        try {
+          const url = new URL(rawUrl)
+          if (this.config!.authToken) {
+            url.searchParams.set('token', this.config!.authToken)
+            console.log('[OpenClaw] Added auth token to URL')
+          }
+          wsUrl = url.toString()
+        } catch (urlError) {
+          console.error('[OpenClaw] Invalid URL format:', rawUrl, urlError)
+          this.setConnectionState('error')
+          reject(new Error(`Invalid gateway URL: ${rawUrl}`))
+          return
+        }
+        
+        console.log('[OpenClaw] Connecting to:', wsUrl.replace(/token=[^&]+/, 'token=***'))
 
         this.ws = new WebSocket(wsUrl)
 
@@ -104,16 +129,26 @@ class OpenClawServiceClass {
         }
 
         this.ws.onmessage = (event) => {
+          console.log('[OpenClaw] Received message:', event.data)
           this.handleMessage(event.data)
         }
 
         this.ws.onerror = (error) => {
           console.error('[OpenClaw] WebSocket error:', error)
           this.emit('error', { message: 'WebSocket connection error' })
+          // Reject the promise on error if still connecting
+          if (this.connectionState === 'connecting') {
+            this.setConnectionState('error')
+            reject(new Error('WebSocket connection failed'))
+          }
         }
 
         this.ws.onclose = (event) => {
-          console.log('[OpenClaw] Connection closed:', event.code, event.reason)
+          console.log('[OpenClaw] Connection closed:', {
+            code: event.code,
+            reason: event.reason,
+            wasClean: event.wasClean,
+          })
           this.stopPingInterval()
 
           if (this.connectionState !== 'disconnected') {
@@ -121,6 +156,7 @@ class OpenClawServiceClass {
           }
         }
       } catch (error) {
+        console.error('[OpenClaw] Connection error:', error)
         this.setConnectionState('error')
         reject(error)
       }

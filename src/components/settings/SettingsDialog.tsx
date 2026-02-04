@@ -118,6 +118,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   // Load networks when dialog opens
   useEffect(() => {
     if (open) {
+      console.log('[Settings] Dialog opened - CODE VERSION 2')
       loadNetworks()
     }
   }, [open])
@@ -138,22 +139,32 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   }
 
   const handleTestConnection = async () => {
-    if (!gatewayUrl.trim()) return
+    console.log('[Settings] Test Connection clicked', {
+      gatewayUrl,
+      authToken: authToken ? '***' : 'none',
+    })
+    if (!gatewayUrl.trim()) {
+      console.log('[Settings] No gateway URL, aborting')
+      return
+    }
 
     setIsTestingConnection(true)
     try {
       // Disconnect if already connected
       if (connectionState === 'connected') {
+        console.log('[Settings] Disconnecting existing connection')
         disconnect()
       }
 
       // Save settings first
       await handleSaveOpenClaw()
+      console.log('[Settings] Settings saved, attempting connection...')
 
       // Try to connect
       await connect(gatewayUrl.trim(), authToken.trim() || undefined)
+      console.log('[Settings] Connection successful!')
     } catch (error) {
-      console.error('Connection test failed:', error)
+      console.error('[Settings] Connection test failed:', error)
     } finally {
       setIsTestingConnection(false)
     }
@@ -437,7 +448,15 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
                         <div className="flex items-center gap-3 pt-2">
                           <button
-                            onClick={handleTestConnection}
+                            onClick={() => {
+                              console.log(
+                                '[Settings] Button clicked! gatewayUrl:',
+                                gatewayUrl,
+                                'isTestingConnection:',
+                                isTestingConnection,
+                              )
+                              handleTestConnection()
+                            }}
                             disabled={!gatewayUrl.trim() || isTestingConnection}
                             className={`flex items-center gap-2 px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 rounded-lg text-sm font-medium text-cyan-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                           >
