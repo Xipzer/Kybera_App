@@ -31,13 +31,11 @@ export function MobileNav({ onOpenChat, onOpenWallet, onOpenSettings }: MobileNa
         <div className="flex items-center justify-between h-full px-4">
           {/* Logo and title */}
           <div className="flex items-center gap-2.5">
-            <div className={`p-1.5 rounded-lg bg-gradient-to-r ${styles.logoGradient} shadow-lg`}>
-              <Wallet className="w-5 h-5 text-white" />
-            </div>
+            <img src="/kybera-icon.png" alt="Kybera" className="w-8 h-8 rounded-lg shadow-lg" />
             <h1
               className={`text-lg font-bold bg-gradient-to-r ${styles.titleGradient} bg-clip-text text-transparent`}
             >
-              OpenWallet
+              Kybera
             </h1>
           </div>
 

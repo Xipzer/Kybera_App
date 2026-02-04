@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Lock, Wallet, Sun, Moon, Palette, Shield, Fingerprint } from 'lucide-react'
+import { Lock, Sun, Moon, Palette, Shield, Fingerprint } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import { useAuthStore } from '../../store/authStore'
 import { useUIStore } from '../../store/uiStore'
@@ -248,31 +248,21 @@ export function UnlockScreen() {
 
             {/* Header section */}
             <div className="flex flex-col items-center mb-8 relative">
-              {profilePicture ? (
-                <GlowRing gradient={styles.accentGradient}>
-                  <div className="w-24 h-24 rounded-full overflow-hidden ring-2 ring-white/20">
-                    <img
-                      src={profilePicture}
-                      alt="Profile"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </GlowRing>
-              ) : (
-                <GlowRing gradient={styles.accentGradient}>
-                  <div
-                    className={`w-24 h-24 rounded-full flex items-center justify-center bg-gradient-to-br ${styles.accentGradient} shadow-lg ${styles.buttonShadow}`}
-                  >
-                    <Wallet className="w-10 h-10 text-white drop-shadow-lg" />
-                  </div>
-                </GlowRing>
-              )}
+              <GlowRing gradient={styles.accentGradient}>
+                <div className="w-24 h-24 rounded-full overflow-hidden ring-2 ring-white/20">
+                  <img
+                    src={profilePicture || '/kybera-icon.png'}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </GlowRing>
 
               <div className="mt-6 text-center">
                 <h1
                   className={`text-3xl font-bold bg-gradient-to-r ${styles.accentGradient} bg-clip-text text-transparent`}
                 >
-                  OpenWallet
+                  Kybera
                 </h1>
                 <div className="flex items-center justify-center gap-2 mt-2">
                   <Shield className="w-4 h-4 text-emerald-400" />
