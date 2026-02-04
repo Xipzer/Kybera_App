@@ -244,10 +244,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
           className={`p-4 flex-shrink-0 ${theme.styles.panelHeader} border-b border-border-subtle`}
         >
           <div className="flex items-center justify-between">
-            <button
-              onClick={() => setIsWalletListCollapsed(false)}
-              className="flex items-center gap-2 touch-manipulation hover:opacity-80 transition-opacity"
-            >
+            <div className="flex items-center gap-2">
               <div className={`p-1.5 rounded-lg ${walletStyles.titleIconBg}`}>
                 <WalletIcon className="w-4 h-4 text-white" />
               </div>
@@ -256,11 +253,18 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
               >
                 Wallets
               </h2>
-              <ChevronDown className="w-4 h-4 text-text-secondary" />
-            </button>
+              {/* Expand button */}
+              <button
+                onClick={() => setIsWalletListCollapsed(false)}
+                className={`${theme.styles.buttonIcon} p-2 rounded-lg touch-manipulation`}
+                title="Expand wallets"
+              >
+                <ChevronDown className="w-4 h-4 text-text-secondary" />
+              </button>
+            </div>
             <button
               onClick={lock}
-              className={`${theme.styles.buttonIcon} p-2 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation`}
+              className={`${theme.styles.buttonIcon} p-2 rounded-lg touch-manipulation`}
               title="Lock wallet"
             >
               <Lock className="w-4 h-4 text-text-secondary" />
@@ -309,12 +313,9 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
         <Panel defaultSize={50} minSize={30} maxSize={70} className="flex flex-col overflow-hidden">
           {/* Header */}
           <div className={`p-4 flex-shrink-0 ${theme.styles.panelHeader}`}>
-            {/* Title with icon and lock button - clickable to collapse on both mobile and desktop */}
+            {/* Title with icon and lock button */}
             <div className="flex items-center justify-between mb-4">
-              <button
-                onClick={() => setIsWalletListCollapsed(true)}
-                className="flex items-center gap-2 touch-manipulation hover:opacity-80 transition-opacity"
-              >
+              <div className="flex items-center gap-2">
                 <div className={`p-1.5 rounded-lg ${walletStyles.titleIconBg}`}>
                   <WalletIcon className="w-4 h-4 text-white" />
                 </div>
@@ -323,11 +324,18 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
                 >
                   Wallets
                 </h2>
-                <ChevronDown className="w-4 h-4 text-text-secondary rotate-180" />
-              </button>
+                {/* Collapse button */}
+                <button
+                  onClick={() => setIsWalletListCollapsed(true)}
+                  className={`${theme.styles.buttonIcon} p-2 rounded-lg touch-manipulation`}
+                  title="Collapse wallets"
+                >
+                  <ChevronDown className="w-4 h-4 text-text-secondary rotate-180" />
+                </button>
+              </div>
               <button
                 onClick={lock}
-                className={`${theme.styles.buttonIcon} p-2 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation`}
+                className={`${theme.styles.buttonIcon} p-2 rounded-lg touch-manipulation`}
                 title="Lock wallet"
               >
                 <Lock className="w-4 h-4 text-text-secondary" />

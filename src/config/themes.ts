@@ -820,7 +820,7 @@ export const themes: Record<string, ThemeConfig> = {
       unlockScreen: {
         bg: 'from-slate-900 via-slate-800 to-slate-900',
         meshGradient1: 'from-cyan-900/40',
-        meshGradient2: 'from-teal-900/30',
+        meshGradient2: 'from-pink-900/30',
         particleColor: '0, 225, 255',
         cardBg: 'bg-black/30',
         cardBorder: 'border-white/10',
@@ -831,16 +831,16 @@ export const themes: Record<string, ThemeConfig> = {
         inputBg: 'bg-white/5',
         inputBorder: 'border-white/10',
         inputFocusBorder: 'focus:border-cyan-500/50',
-        accentGradient: 'from-cyan-400 via-teal-300 to-cyan-400',
+        accentGradient: 'from-cyan-400 via-cyan-500 to-pink-400',
         glowColor: 'cyan',
-        buttonGradient: 'from-cyan-500 via-teal-400 to-cyan-600',
+        buttonGradient: 'from-cyan-500 via-teal-400 to-pink-500',
         buttonShadow: 'shadow-cyan-500/25 hover:shadow-cyan-500/40',
       },
     },
     dynamicStyles: {
       buttonPrimary: {
-        background: 'linear-gradient(135deg, rgb(6, 182, 212) 0%, rgb(20, 184, 166) 100%)',
-        hoverShadow: '0 0 20px rgba(6, 182, 212, 0.5), 0 0 30px rgba(20, 184, 166, 0.3)',
+        background: 'linear-gradient(135deg, rgb(0, 225, 255) 0%, rgb(255, 0, 153) 100%)',
+        hoverShadow: '0 0 20px rgba(0, 225, 255, 0.5), 0 0 30px rgba(255, 0, 153, 0.3)',
       },
       buttonSecondary: {
         background: 'transparent',
@@ -848,8 +848,8 @@ export const themes: Record<string, ThemeConfig> = {
         color: 'rgb(255, 0, 153)',
       },
       buttonSettings: {
-        background: 'linear-gradient(135deg, rgb(6, 182, 212) 0%, rgb(20, 184, 166) 100%)',
-        hoverShadow: '0 0 20px rgba(6, 182, 212, 0.5)',
+        background: 'linear-gradient(135deg, rgb(0, 225, 255) 0%, rgb(255, 0, 153) 100%)',
+        hoverShadow: '0 0 20px rgba(0, 225, 255, 0.5), 0 0 30px rgba(255, 0, 153, 0.3)',
       },
     },
   },

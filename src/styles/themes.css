@@ -74,78 +74,79 @@
   );
 }
 
-/* Light Mode Theme - Cyan & Pink */
+/* Light Mode Theme - Inspired by Kybera Landing Page */
 .light {
-  /* Primary Colors - Light neutrals */
-  --color-primary-50: 255 255 255;
-  --color-primary-100: 250 250 250;
-  --color-primary-200: 245 245 245;
-  --color-primary-300: 229 231 235;
-  --color-primary-400: 209 213 219;
-  --color-primary-500: 156 163 175;
-  --color-primary-600: 107 114 128;
-  --color-primary-700: 75 85 99;
-  --color-primary-800: 55 65 81;
-  --color-primary-900: 31 41 55;
-  --color-primary-950: 17 24 39;
+    /* Primary Colors - Soft cool grays with slight blue tint */
+    --color-primary-50: 250 250 255;
+    --color-primary-100: 245 245 252;
+    --color-primary-200: 235 235 245;
+    --color-primary-300: 220 222 232;
+    --color-primary-400: 180 184 200;
+    --color-primary-500: 140 144 170;
+    --color-primary-600: 100 104 140;
+    --color-primary-700: 70 75 110;
+    --color-primary-800: 45 50 85;
+    --color-primary-900: 25 28 55;
+    --color-primary-950: 12 14 30;
 
-  /* Accent Colors - Cyan (primary accent) */
-  --color-accent-50: 236 254 255;
-  --color-accent-100: 207 250 254;
-  --color-accent-200: 165 243 252;
-  --color-accent-300: 103 232 249;
-  --color-accent-400: 34 211 238;
-  --color-accent-500: 0 225 255;     /* Main cyan */
-  --color-accent-600: 0 184 212;
-  --color-accent-700: 0 151 167;
-  --color-accent-800: 0 127 140;
-  --color-accent-900: 0 96 100;
+    /* Accent Colors - Soft Purple (matching landing page) */
+    --color-accent-50: 245 245 255;
+    --color-accent-100: 235 235 255;
+    --color-accent-200: 210 210 255;
+    --color-accent-300: 180 180 255;
+    --color-accent-400: 155 155 255;
+    --color-accent-500: 139 139 255; /* Main accent - #8b8bff */
+    --color-accent-600: 120 120 230;
+    --color-accent-700: 100 100 200;
+    --color-accent-800: 80 80 170;
+    --color-accent-900: 60 60 140;
 
-  /* Secondary Accent - Pink */
-  --color-secondary-50: 253 242 248;
-  --color-secondary-100: 252 231 243;
-  --color-secondary-200: 251 207 232;
-  --color-secondary-300: 249 168 212;
-  --color-secondary-400: 244 114 182;
-  --color-secondary-500: 255 0 153;     /* Main pink */
-  --color-secondary-600: 219 39 119;
-  --color-secondary-700: 190 24 93;
-  --color-secondary-800: 157 23 77;
-  --color-secondary-900: 131 24 67;
+    /* Secondary Accent - Subtle blue */
+    --color-secondary-50: 240 245 255;
+    --color-secondary-100: 225 235 255;
+    --color-secondary-200: 200 215 255;
+    --color-secondary-300: 170 190 255;
+    --color-secondary-400: 140 165 255;
+    --color-secondary-500: 100 130 255;
+    --color-secondary-600: 80 110 230;
+    --color-secondary-700: 60 90 200;
+    --color-secondary-800: 45 70 170;
+    --color-secondary-900: 30 50 140;
 
-  /* Background Colors */
-  --color-bg-base: 255 255 255;
-  --color-bg-elevated: 250 250 250;
-  --color-bg-overlay: 245 245 245;
-  --color-bg-subtle: 252 252 252;
+    /* Background Colors - Clean whites with subtle warmth */
+    --color-bg-base: 252 252 255;
+    --color-bg-elevated: 255 255 255;
+    --color-bg-overlay: 248 248 252;
+    --color-bg-subtle: 245 245 250;
 
   /* Surface Colors */
   --color-surface-base: 255 255 255;
-  --color-surface-elevated: 250 250 250;
-  --color-surface-overlay: 245 245 245;
-  --color-surface-hover: 240 240 240;
+    --color-surface-elevated: 252 252 255;
+    --color-surface-overlay: 248 248 252;
+    --color-surface-hover: 245 245 252;
 
   /* Text Colors */
-  --color-text-primary: 17 24 39;
-  --color-text-secondary: 75 85 99;
-  --color-text-tertiary: 156 163 175;
-  --color-text-inverse: 255 255 255;
+    --color-text-primary: 20 20 40;
+    --color-text-secondary: 80 85 110;
+    --color-text-tertiary: 140 145 175;
+    --color-text-inverse: 250 250 255;
 
   /* Border Colors */
-  --color-border-subtle: 229 231 235;
-  --color-border-default: 209 213 219;
-  --color-border-strong: 156 163 175;
+    --color-border-subtle: 230 232 242;
+    --color-border-default: 210 215 230;
+    --color-border-strong: 180 185 210;
 
   /* Interactive States */
-  --color-interactive-hover: 0 225 255 / 0.1;
-  --color-interactive-active: 0 225 255 / 0.2;
-  --color-interactive-focus: 0 225 255;
+    --color-interactive-hover: 139 139 255 / 0.1;
+    --color-interactive-active: 139 139 255 / 0.2;
+    --color-interactive-focus: 139 139 255;
 
   /* Gradients */
   --gradient-pearlescent: linear-gradient(
     135deg,
-    rgb(var(--color-accent-500)) 0%,
-    rgb(var(--color-secondary-500)) 100%
+    rgb(255, 255, 255) 0%,
+    rgb(139, 139, 255) 50%,
+    rgb(255, 255, 255) 100%
   );
 
   --gradient-candy-red: linear-gradient(
