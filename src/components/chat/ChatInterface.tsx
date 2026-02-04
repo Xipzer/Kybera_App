@@ -12,8 +12,7 @@ import { useTheme } from '../../hooks/useTheme'
 // Line height for textarea (in pixels)
 const LINE_HEIGHT = 24
 const MAX_LINES = 11
-
-
+const BASE_INPUT_PADDING = 80 // Base padding for input area (container + margins)
 
 export function ChatInterface() {
   const {
@@ -33,19 +32,37 @@ export function ChatInterface() {
   const [streamingContent, setStreamingContent] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [inputHeight, setInputHeight] = useState(48) // Default single line height
+  const [hasScroll, setHasScroll] = useState(false) // Track if textarea needs scrolling
 
   // Auto-resize textarea based on content
   const adjustTextareaHeight = useCallback(() => {
     const textarea = textareaRef.current
     if (!textarea) return
 
-    // Reset height to auto to get the correct scrollHeight
-    textarea.style.height = 'auto'
+    // If empty, reset to default size
+    if (!textarea.value) {
+      textarea.style.height = '48px'
+      setHasScroll(false)
+      setInputHeight(48)
+      return
+    }
+
+    // Reset height to get the correct scrollHeight
+    textarea.style.height = '48px'
     
     // Calculate the new height (capped at max lines)
     const maxHeight = LINE_HEIGHT * MAX_LINES
-    const newHeight = Math.min(textarea.scrollHeight, maxHeight)
+    const scrollHeight = textarea.scrollHeight
+    const newHeight = Math.min(scrollHeight, maxHeight)
     textarea.style.height = `${newHeight}px`
+    
+    // Check if content exceeds max height (needs scrolling)
+    const needsScroll = scrollHeight > maxHeight
+    setHasScroll(needsScroll)
+    
+    // Update input height for dynamic padding (add extra for button row if scrolling)
+    setInputHeight(needsScroll ? newHeight + 48 : newHeight)
   }, [])
 
   // Get chat interface theme styles
@@ -229,9 +246,12 @@ export function ChatInterface() {
           </div>
         </div>
 
-        {/* Messages area - with padding at bottom for floating input */}
+        {/* Messages area - with dynamic padding at bottom for floating input */}
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-3xl mx-auto px-4 pt-4 pb-32">
+          <div 
+            className="max-w-3xl mx-auto px-4 pt-4"
+            style={{ paddingBottom: `${inputHeight + BASE_INPUT_PADDING}px` }}
+          >
             {activeConversation?.messages.map((message) => (
               <ChatMessage key={message.id} message={message} />
             ))}
@@ -279,32 +299,51 @@ export function ChatInterface() {
         {/* Floating input area - ChatGPT style */}
         <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none">
           <div className="max-w-3xl mx-auto pointer-events-auto">
-            <div className={`relative ${styles.inputSolidBg} border ${styles.inputBorder} rounded-2xl shadow-lg`}>
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyPress}
-                placeholder="Ask anything"
-                rows={1}
-                className={`w-full px-4 py-3 pr-14 bg-transparent text-text-primary placeholder:text-text-tertiary focus:outline-none resize-none flex items-center`}
-                style={{ 
-                  minHeight: `${LINE_HEIGHT + 24}px`,
-                  maxHeight: `${LINE_HEIGHT * MAX_LINES}px`,
-                  lineHeight: `${LINE_HEIGHT}px`,
-                  paddingTop: '12px',
-                  paddingBottom: '12px'
-                }}
-              />
-              
-              {/* Circular send button - always visible at bottom right */}
-              <button
-                onClick={handleSend}
-                disabled={!input.trim() || isLoading}
-                className={`absolute bottom-2 right-2 w-9 h-9 rounded-full bg-gradient-to-r ${styles.sendGradient} flex items-center justify-center text-white shadow-md transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100`}
-              >
-                <ArrowUp className="w-5 h-5" />
-              </button>
+            <div
+              className={`${styles.inputSolidBg} border ${styles.inputBorder} rounded-2xl shadow-lg overflow-hidden`}
+            >
+              <div className="relative">
+                <textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyPress}
+                  placeholder="Ask anything"
+                  rows={1}
+                  className={`w-full px-4 ${hasScroll ? '' : 'pr-14'} bg-transparent text-text-primary placeholder:text-text-tertiary focus:outline-none resize-none`}
+                  style={{
+                    height: '48px',
+                    maxHeight: `${LINE_HEIGHT * MAX_LINES}px`,
+                    lineHeight: `${LINE_HEIGHT}px`,
+                    paddingTop: '14px',
+                    paddingBottom: '10px',
+                  }}
+                />
+
+                {/* Circular send button - inline when no scroll */}
+                {!hasScroll && (
+                  <button
+                    onClick={handleSend}
+                    disabled={!input.trim() || isLoading}
+                    className={`absolute bottom-2 right-2 w-9 h-9 rounded-full bg-gradient-to-r ${styles.sendGradient} flex items-center justify-center text-white shadow-md transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100`}
+                  >
+                    <ArrowUp className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Send button row - separate when scrolling */}
+              {hasScroll && (
+                <div className="flex justify-end px-3 py-2 border-t border-white/5">
+                  <button
+                    onClick={handleSend}
+                    disabled={!input.trim() || isLoading}
+                    className={`w-9 h-9 rounded-full bg-gradient-to-r ${styles.sendGradient} flex items-center justify-center text-white shadow-md transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100`}
+                  >
+                    <ArrowUp className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
