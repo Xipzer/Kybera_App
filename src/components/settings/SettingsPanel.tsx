@@ -18,15 +18,10 @@ import {
   AlertCircle,
   Check,
   ChevronDown,
-  Plus,
-  Edit2,
-  Trash2,
-  Globe,
   Wifi,
   WifiOff,
   Loader2,
   Zap,
-  Settings,
 } from 'lucide-react'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useUIStore } from '../../store/uiStore'
@@ -35,9 +30,8 @@ import { useWalletStore } from '../../store/walletStore'
 import { useResearchStore } from '../../store/researchStore'
 import { ImageUpload } from '../common/ImageUpload'
 import { useTheme } from '../../hooks/useTheme'
-import { networkService, NetworkWithVisibility } from '../../services/network/networkService'
+import { networkService } from '../../services/network/networkService'
 import { NetworkManagementDialog } from './NetworkManagementDialog'
-import { Network } from '../../types'
 
 export function SettingsPanel() {
   const {
@@ -65,14 +59,10 @@ export function SettingsPanel() {
     setChatWallpaper,
     wallpaperOpacity,
     setWallpaperOpacity,
-    lockscreenWallpaper,
     setLockscreenWallpaper,
-    lockscreenOpacity,
     setLockscreenOpacity,
     syncWallpaper,
-    setSyncWallpaper,
     syncOpacity,
-    setSyncOpacity,
   } = useUIStore()
   const { changePassword } = useAuthStore()
   const { password: currentSessionPassword } = useWalletStore()
@@ -98,10 +88,10 @@ export function SettingsPanel() {
   const [isChangingPassword, setIsChangingPassword] = useState(false)
 
   // Network management state
-  const [networks, setNetworks] = useState<NetworkWithVisibility[]>([])
+  const [_networks, setNetworks] = useState<unknown[]>([])
   const [networkDialogOpen, setNetworkDialogOpen] = useState(false)
-  const [editingNetwork, setEditingNetwork] = useState<NetworkWithVisibility | undefined>()
-  const [networkError, setNetworkError] = useState('')
+  const [editingNetwork, setEditingNetwork] = useState<unknown | undefined>()
+  const [_networkError, setNetworkError] = useState('')
 
   const [activeTab, setActiveTab] = useState('ai')
 

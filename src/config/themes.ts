@@ -246,6 +246,7 @@ export interface ThemeConfig {
       bottomBarBg: string
       bottomBarBorder: string
       bottomItemHover: string
+      bottomItemActive: string
     }
 
     // Unlock screen specific
@@ -531,6 +532,7 @@ export const themes: Record<string, ThemeConfig> = {
         bottomBarBg: 'bg-white/90',
         bottomBarBorder: 'border-gray-200/50',
         bottomItemHover: 'hover:bg-gray-100/80',
+        bottomItemActive: 'bg-cyan-50',
       },
 
       // Unlock screen
@@ -811,6 +813,7 @@ export const themes: Record<string, ThemeConfig> = {
         bottomBarBg: 'bg-slate-900/90',
         bottomBarBorder: 'border-white/5',
         bottomItemHover: 'hover:bg-white/5',
+        bottomItemActive: 'bg-cyan-500/10',
       },
 
       // Unlock screen
@@ -1093,6 +1096,7 @@ export const themes: Record<string, ThemeConfig> = {
         bottomBarBg: 'bg-primary-900/90',
         bottomBarBorder: 'border-primary-800/50',
         bottomItemHover: 'hover:bg-primary-800/50',
+        bottomItemActive: 'bg-red-500/10',
       },
 
       // Unlock screen

@@ -127,8 +127,7 @@ function SortableWallet(props: WalletItemProps & { id: string }) {
   )
 }
 
-export function WalletDrawer({ collapsed, isMobilePanel, onCollapse }: WalletDrawerProps) {
-  const isMobile = useMediaQuery('(max-width: 1024px)')
+export function WalletDrawer({ collapsed }: WalletDrawerProps) {
   const [isWalletListCollapsed, setIsWalletListCollapsed] = useState(false)
   const {
     wallets,

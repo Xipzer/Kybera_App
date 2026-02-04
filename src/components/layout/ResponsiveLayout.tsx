@@ -5,7 +5,6 @@ import { MobileNav } from './MobileNav'
 import { AnimatedPanel, MobileOverlay } from '../common/AnimatedPanel'
 import { WalletDrawer } from '../wallet/WalletDrawer'
 import { SettingsPanel } from '../settings/SettingsPanel'
-import { SettingsDialog } from '../settings/SettingsDialog'
 
 interface ResponsiveLayoutProps {
   children: ReactNode
@@ -66,7 +65,7 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
           className="pb-[72px]"
         >
           <div className="h-full overflow-y-auto overscroll-contain">
-            <WalletDrawer isMobilePanel onCollapse={closePanel} />
+            <WalletDrawer />
           </div>
         </AnimatedPanel>
 
