@@ -230,9 +230,9 @@ export function ResearchCard({ research, onApe, onFade }: ResearchCardProps) {
                 <h3 className="font-semibold text-text-primary text-lg">{research.tokenName}</h3>
                 <span className="text-text-secondary">${research.tokenSymbol}</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-text-tertiary">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-text-tertiary">
                 <span className="uppercase">{research.network}</span>
-                <span className="opacity-50">|</span>
+                <span className="opacity-50 hidden sm:inline">|</span>
                 <a
                   href={`https://basescan.org/token/${research.contractAddress}`}
                   target="_blank"
@@ -242,7 +242,7 @@ export function ResearchCard({ research, onApe, onFade }: ResearchCardProps) {
                   {truncateAddress(research.contractAddress)}
                   <ExternalLink className="w-3 h-3" />
                 </a>
-                <span className="opacity-50">|</span>
+                <span className="opacity-50 hidden sm:inline">|</span>
                 <a
                   href={getDexScreenerUrl()}
                   target="_blank"
@@ -252,7 +252,7 @@ export function ResearchCard({ research, onApe, onFade }: ResearchCardProps) {
                 >
                   DexScreener
                 </a>
-                <span className="opacity-50">|</span>
+                <span className="opacity-50 hidden sm:inline">|</span>
                 <a
                   href={getGeckoTerminalUrl()}
                   target="_blank"
