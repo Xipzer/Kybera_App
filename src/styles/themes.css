@@ -156,84 +156,84 @@
   );
 }
 
-/* Dark Mode Theme - Cyan & Pink */
+/* Dark Mode Theme - Inspired by Kybera Landing Page (Space aesthetic) */
 .dark {
-  /* Primary Colors - True neutral greys */
-  --color-primary-50: 250 250 250;
-  --color-primary-100: 245 245 245;
-  --color-primary-200: 229 229 229;
-  --color-primary-300: 212 212 212;
-  --color-primary-400: 163 163 163;
-  --color-primary-500: 115 115 115;
-  --color-primary-600: 82 82 82;
-  --color-primary-700: 64 64 64;
-  --color-primary-800: 38 38 38;
-  --color-primary-900: 23 23 23;
-  --color-primary-950: 10 10 10;
+  /* Primary Colors - Deep space blues with subtle purple tint */
+  --color-primary-50: 240 242 255;
+  --color-primary-100: 225 228 250;
+  --color-primary-200: 200 205 240;
+  --color-primary-300: 170 175 220;
+  --color-primary-400: 130 135 190;
+  --color-primary-500: 100 105 160;
+  --color-primary-600: 75 80 130;
+  --color-primary-700: 50 55 100;
+  --color-primary-800: 30 32 60;
+  --color-primary-900: 18 18 31; /* Card backgrounds - #12121f */
+  --color-primary-950: 3 3 8; /* Deep space black - #030308 */
 
-  /* Accent Colors - Cyan (primary accent) */
-  --color-accent-50: 236 254 255;
-  --color-accent-100: 207 250 254;
-  --color-accent-200: 165 243 252;
-  --color-accent-300: 103 232 249;
-  --color-accent-400: 34 211 238;
-  --color-accent-500: 0 225 255;     /* Main cyan */
-  --color-accent-600: 0 184 212;
-  --color-accent-700: 0 151 167;
-  --color-accent-800: 0 127 140;
-  --color-accent-900: 0 96 100;
+  /* Accent Colors - Soft Purple (matching landing page #8b8bff) */
+  --color-accent-50: 245 245 255;
+  --color-accent-100: 235 235 255;
+  --color-accent-200: 210 210 255;
+  --color-accent-300: 180 180 255;
+  --color-accent-400: 155 155 255;
+  --color-accent-500: 139 139 255; /* Main accent - #8b8bff */
+  --color-accent-600: 120 120 230;
+  --color-accent-700: 100 100 200;
+  --color-accent-800: 80 80 170;
+  --color-accent-900: 60 60 140;
 
-  /* Secondary Accent - Pink */
-  --color-secondary-50: 253 242 248;
-  --color-secondary-100: 252 231 243;
-  --color-secondary-200: 251 207 232;
-  --color-secondary-300: 249 168 212;
-  --color-secondary-400: 244 114 182;
-  --color-secondary-500: 255 0 153;     /* Main pink */
-  --color-secondary-600: 219 39 119;
-  --color-secondary-700: 190 24 93;
-  --color-secondary-800: 157 23 77;
-  --color-secondary-900: 131 24 67;
+  /* Secondary Accent - Deeper purple/blue */
+  --color-secondary-50: 240 240 255;
+  --color-secondary-100: 220 220 255;
+  --color-secondary-200: 190 190 255;
+  --color-secondary-300: 160 160 255;
+  --color-secondary-400: 130 130 255;
+  --color-secondary-500: 100 100 255;
+  --color-secondary-600: 84 84 255; /* #5454ff */
+  --color-secondary-700: 70 70 220;
+  --color-secondary-800: 55 55 180;
+  --color-secondary-900: 40 40 140;
 
-  /* Background Colors */
-  --color-bg-base: 18 18 18;      /* Main background - slightly lighter than header */
-  --color-bg-elevated: 26 26 26;   /* Elevated surfaces */
-  --color-bg-overlay: 38 38 38;    /* Overlays and modals */
-  --color-bg-subtle: 13 13 13;     /* Header and subtle areas - darkest */
+  /* Background Colors - Deep space inspired */
+  --color-bg-base: 3 3 8; /* Deepest - #030308 */
+  --color-bg-elevated: 10 10 18; /* Elevated - #0a0a12 */
+  --color-bg-overlay: 18 18 31; /* Overlay - #12121f */
+  --color-bg-subtle: 6 6 12; /* Subtle variation */
 
-  /* Surface Colors */
-  --color-surface-base: 26 26 26;     /* Base surface */
-  --color-surface-elevated: 33 33 33; /* Elevated surface */
-  --color-surface-overlay: 46 46 46;  /* Overlay surface */
-  --color-surface-hover: 29 29 29;    /* Hover state - subtly lighter than base */
+  /* Surface Colors - Glassmorphism-friendly */
+  --color-surface-base: 10 10 18; /* Base surface */
+  --color-surface-elevated: 18 18 31; /* Elevated surface */
+  --color-surface-overlay: 25 25 42; /* Overlay surface */
+  --color-surface-hover: 22 22 36; /* Hover state */
 
-  /* Text Colors */
-  --color-text-primary: 245 245 245;
-  --color-text-secondary: 212 212 212;
-  --color-text-tertiary: 163 163 163;
-  --color-text-inverse: 23 23 23;
+  /* Text Colors - Clean whites */
+  --color-text-primary: 240 242 255; /* #f0f2ff */
+  --color-text-secondary: 160 164 192; /* #a0a4c0 */
+  --color-text-tertiary: 90 94 128; /* #5a5e80 */
+  --color-text-inverse: 3 3 8;
 
-  /* Border Colors */
-  --color-border-subtle: 38 38 38;    /* Subtle borders */
-  --color-border-default: 38 38 38;   /* Default borders - made more subtle */
-  --color-border-strong: 51 51 51;    /* Strong borders */
+  /* Border Colors - Subtle glows */
+  --color-border-subtle: 255 255 255 / 0.08;
+  --color-border-default: 255 255 255 / 0.1;
+  --color-border-strong: 139 139 255 / 0.3;
 
   /* Interactive States */
-  --color-interactive-hover: 0 225 255 / 0.1;
-  --color-interactive-active: 0 225 255 / 0.2;
-  --color-interactive-focus: 0 225 255;
+  --color-interactive-hover: 139 139 255 / 0.1;
+  --color-interactive-active: 139 139 255 / 0.2;
+  --color-interactive-focus: 139 139 255;
 
   /* Gradients */
   --gradient-pearlescent: linear-gradient(
     135deg,
-    rgb(var(--color-accent-500)) 0%,
-    rgb(var(--color-secondary-500)) 100%
+    rgb(139, 139, 255) 0%,
+    rgb(84, 84, 255) 100%
   );
 
   --gradient-candy-red: linear-gradient(
     135deg,
-    rgb(var(--color-secondary-500)) 0%,
-    rgb(var(--color-accent-500)) 100%
+    rgb(139, 139, 255) 0%,
+    rgb(100, 100, 255) 100%
   );
 }
 

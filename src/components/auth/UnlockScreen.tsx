@@ -201,6 +201,17 @@ export function UnlockScreen() {
         className={`absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] ${styles.meshGradient2} via-transparent to-transparent`}
       />
 
+      {/* Subtle square grid pattern */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: `linear-gradient(rgba(139, 139, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(139, 139, 255, 0.03) 1px, transparent 1px)`,
+          backgroundSize: '60px 60px',
+          maskImage: 'radial-gradient(ellipse at center, black 20%, transparent 70%)',
+          WebkitMaskImage: 'radial-gradient(ellipse at center, black 20%, transparent 70%)',
+        }}
+      />
+
       {/* Particle effect */}
       <ParticleField color={styles.particleColor} />
 
