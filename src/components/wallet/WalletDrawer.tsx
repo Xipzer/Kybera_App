@@ -33,7 +33,6 @@ import { ImportGroupDialog } from './ImportGroupDialog'
 import { WalletDetailView } from './WalletDetailView'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { useTheme } from '../../hooks/useTheme'
-import { useMediaQuery } from '../../hooks/useMediaQuery'
 
 
 import {

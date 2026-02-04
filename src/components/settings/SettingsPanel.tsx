@@ -32,6 +32,7 @@ import { ImageUpload } from '../common/ImageUpload'
 import { useTheme } from '../../hooks/useTheme'
 import { networkService } from '../../services/network/networkService'
 import { NetworkManagementDialog } from './NetworkManagementDialog'
+import { Network } from '../../types'
 
 export function SettingsPanel() {
   const {
@@ -87,11 +88,13 @@ export function SettingsPanel() {
   const [passwordSuccess, setPasswordSuccess] = useState(false)
   const [isChangingPassword, setIsChangingPassword] = useState(false)
 
-  // Network management state
-  const [_networks, setNetworks] = useState<unknown[]>([])
+  // Network management state (not fully used in mobile panel yet)
+  const [, setNetworks] = useState<unknown[]>([])
   const [networkDialogOpen, setNetworkDialogOpen] = useState(false)
-  const [editingNetwork, setEditingNetwork] = useState<unknown | undefined>()
-  const [_networkError, setNetworkError] = useState('')
+  const [editingNetwork, setEditingNetwork] = useState<
+    (Network & { isCustom?: boolean }) | undefined
+  >()
+  const [, setNetworkError] = useState('')
 
   const [activeTab, setActiveTab] = useState('ai')
 
@@ -220,27 +223,6 @@ export function SettingsPanel() {
       setNetworkError('')
     } catch (error: any) {
       throw error
-    }
-  }
-
-  const handleRemoveNetwork = async (id: string) => {
-    if (confirm('Are you sure you want to remove this network?')) {
-      try {
-        await networkService.removeCustomNetwork(id)
-        await loadNetworks()
-        setNetworkError('')
-      } catch (error: any) {
-        setNetworkError(error.message || 'Failed to remove network')
-      }
-    }
-  }
-
-  const handleToggleNetworkVisibility = async (networkId: string) => {
-    try {
-      await networkService.toggleNetworkVisibility(networkId)
-      await loadNetworks()
-    } catch (error) {
-      console.error('Failed to toggle network visibility:', error)
     }
   }
 
