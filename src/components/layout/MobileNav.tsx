@@ -1,23 +1,21 @@
 import { useState } from 'react'
-import { Wallet, MessageSquare, Settings, Menu, X, Sparkles } from 'lucide-react'
+import { Wallet, Settings, Menu, X, Sparkles } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTheme } from '../../hooks/useTheme'
 
 
 
 interface MobileNavProps {
-  onOpenChat: () => void
   onOpenWallet: () => void
   onOpenSettings: () => void
 }
 
-export function MobileNav({ onOpenChat, onOpenWallet, onOpenSettings }: MobileNavProps) {
+export function MobileNav({ onOpenWallet, onOpenSettings }: MobileNavProps) {
   const [isOpen, setIsOpen] = useState(false)
   const { theme } = useTheme()
   const styles = theme.styles.mobileNav
 
   const menuItems = [
-    { icon: MessageSquare, label: 'Chats', onClick: onOpenChat },
     { icon: Wallet, label: 'Wallets', onClick: onOpenWallet },
     { icon: Settings, label: 'Settings', onClick: onOpenSettings },
   ]

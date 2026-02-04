@@ -167,6 +167,9 @@ export interface ResearchChatMessage {
   content: string
   timestamp: Date
 
+  // Streaming state
+  isStreaming?: boolean
+
   // Research context
   researchId?: string
   researchSummary?: {

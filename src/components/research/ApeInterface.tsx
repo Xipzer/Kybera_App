@@ -14,6 +14,7 @@ import {
   ExternalLink,
   Zap,
   Wallet,
+  Copy,
 } from 'lucide-react'
 import { TokenResearch, RISK_RATING_CONFIG, ResearchNetwork } from '../../types/research'
 import { useWalletStore } from '../../store/walletStore'
@@ -65,6 +66,7 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
   const [step, setStep] = useState<'input' | 'confirm' | 'executing' | 'success' | 'error'>('input')
   const [quote, setQuote] = useState<SwapQuote | null>(null)
   const [slippage] = useState(1.0) // 1% default slippage
+  const [copied, setCopied] = useState(false)
 
   // Get active wallet
   const activeWalletId = useWalletStore((state) => state.activeWalletId)
@@ -75,8 +77,20 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
   const activeWallet = wallets.find((w) => w.id === activeWalletId)
   const ratingConfig = RISK_RATING_CONFIG[research.rating]
 
-  // Calculate estimated tokens (simple calculation when no quote)
-  const estimatedTokens = research.price > 0 ? parseFloat(amount || '0') / research.price : 0
+  // Approximate native token prices in USD for fallback estimation
+  const NATIVE_PRICES: Record<ResearchNetwork, number> = {
+    base: 2300, // ETH price
+    ethereum: 2300,
+    arbitrum: 2300,
+    optimism: 2300,
+    solana: 150, // SOL price
+  }
+
+  // Calculate estimated tokens (converts native amount to USD, then divides by token price)
+  const estimatedTokens =
+    research.price > 0
+      ? (parseFloat(amount || '0') * NATIVE_PRICES[research.network]) / research.price
+      : 0
 
   // Format numbers
   const formatNumber = (num: number): string => {
@@ -238,7 +252,7 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
 
           {/* Token info */}
           <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-pink-500/20 flex items-center justify-center border border-white/10">
                   <span className="text-sm font-bold text-white">
@@ -255,6 +269,27 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
                   {ratingConfig.emoji} {ratingConfig.label}
                 </span>
               </div>
+            </div>
+            {/* Contract address */}
+            <div className="pt-3 border-t border-white/10">
+              <div className="text-xs text-text-tertiary mb-1">Contract Address</div>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(research.contractAddress)
+                  setCopied(true)
+                  setTimeout(() => setCopied(false), 2000)
+                }}
+                className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors group"
+              >
+                <span className="text-sm text-text-secondary font-mono truncate">
+                  {research.contractAddress}
+                </span>
+                {copied ? (
+                  <Check className="w-4 h-4 text-green-400 flex-shrink-0" />
+                ) : (
+                  <Copy className="w-4 h-4 text-text-tertiary group-hover:text-white flex-shrink-0 transition-colors" />
+                )}
+              </button>
             </div>
           </div>
 

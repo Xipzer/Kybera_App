@@ -28,7 +28,9 @@ export function ChatMessage({ message }: ChatMessageProps) {
   const styles = theme.styles.chatMessage
 
   const renderedContent = useMemo(() => {
-    return message.role === 'assistant' ? md.render(message.content) : message.content
+    // Defensive: ensure content is a string before rendering
+    const content = typeof message.content === 'string' ? message.content : ''
+    return message.role === 'assistant' ? md.render(content) : content
   }, [message.content, message.role])
 
   const isUser = message.role === 'user'
@@ -68,7 +70,18 @@ export function ChatMessage({ message }: ChatMessageProps) {
                 prose-pre:bg-black/10 prose-pre:dark:bg-white/5 prose-pre:rounded-xl prose-pre:border prose-pre:border-white/10
                 prose-a:text-cyan-400 prose-a:no-underline hover:prose-a:underline
                 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5
-                prose-blockquote:border-l-2 prose-blockquote:border-cyan-400 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-text-secondary`}
+                prose-blockquote:border-l-2 prose-blockquote:border-cyan-400 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-text-secondary
+                prose-table:my-4 prose-table:w-full prose-table:border-separate prose-table:border-spacing-0 prose-table:text-sm prose-table:overflow-hidden
+                prose-thead:bg-white/5
+                prose-th:px-4 prose-th:py-2.5 prose-th:text-left prose-th:font-medium prose-th:text-red-400 prose-th:border-b prose-th:border-white/10
+                prose-td:px-4 prose-td:py-2.5 prose-td:border-b prose-td:border-white/10 prose-td:text-text-secondary
+                prose-tr:transition-colors
+                [&_table]:rounded-lg [&_table]:border [&_table]:border-white/10 [&_table]:overflow-hidden [&_table]:bg-black/20
+                [&_thead_tr]:bg-transparent
+                [&_tbody_tr]:bg-black/10 [&_tbody_tr:hover]:bg-white/5
+                [&_tbody_tr:last-child_td]:border-b-0
+                [&_td:first-child]:text-text-tertiary [&_td:first-child]:font-medium
+                [&_td_a]:text-cyan-400 [&_td_a:hover]:underline`}
               dangerouslySetInnerHTML={{ __html: renderedContent }}
             />
           </div>

@@ -4,7 +4,6 @@ import { MainLayout } from './AnimatedMainLayout'
 import { MobileNav } from './MobileNav'
 import { AnimatedPanel, MobileOverlay } from '../common/AnimatedPanel'
 import { WalletDrawer } from '../wallet/WalletDrawer'
-import { ChatSidebar } from '../chat/ChatSidebar'
 import { SettingsDialog } from '../settings/SettingsDialog'
 
 interface ResponsiveLayoutProps {
@@ -13,7 +12,7 @@ interface ResponsiveLayoutProps {
 
 export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
   const isMobile = useMediaQuery('(max-width: 1024px)')
-  const [mobilePanel, setMobilePanel] = useState<'chat' | 'wallet' | 'settings' | null>(null)
+  const [mobilePanel, setMobilePanel] = useState<'wallet' | 'settings' | null>(null)
   const [showSettings, setShowSettings] = useState(false)
 
   // Close mobile panels when switching to desktop
@@ -33,7 +32,6 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
         </div>
 
         <MobileNav
-          onOpenChat={() => setMobilePanel('chat')}
           onOpenWallet={() => setMobilePanel('wallet')}
           onOpenSettings={() => setShowSettings(true)}
         />
@@ -42,14 +40,6 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
           isOpen={mobilePanel !== null} 
           onClick={() => setMobilePanel(null)} 
         />
-
-        <AnimatedPanel
-          isOpen={mobilePanel === 'chat'}
-          direction="left"
-          className="pt-14"
-        >
-          <ChatSidebar />
-        </AnimatedPanel>
 
         <AnimatedPanel
           isOpen={mobilePanel === 'wallet'}

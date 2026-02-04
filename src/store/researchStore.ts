@@ -81,6 +81,7 @@ export const useResearchStore = create<ResearchState>()(
           
           await OpenClawService.connect()
         } catch (error) {
+          console.error('[ResearchStore] Connection failed:', error)
           set({
             connectionState: 'error',
             connectionError: error instanceof Error ? error.message : 'Failed to connect',
@@ -204,9 +205,24 @@ export const useResearchStore = create<ResearchState>()(
       },
 
       _addChatMessage: (message) => {
-        set((state) => ({
-          messages: [...state.messages, message],
-        }))
+        set((state) => {
+          // Check if this is an update to an existing message (streaming delta)
+          const existingIndex = state.messages.findIndex((m) => m.id === message.id)
+
+          if (existingIndex >= 0) {
+            // Update existing message content (streaming)
+            const updatedMessages = [...state.messages]
+            updatedMessages[existingIndex] = {
+              ...updatedMessages[existingIndex],
+              content: message.content,
+              isStreaming: message.isStreaming,
+            }
+            return { messages: updatedMessages }
+          }
+
+          // Add new message
+          return { messages: [...state.messages, message] }
+        })
       },
 
       _setResearching: (isResearching, step = null, progress = 0) => {

@@ -5,7 +5,6 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import {
-  Search,
   Wifi,
   WifiOff,
   Settings,
@@ -19,6 +18,7 @@ import {
 } from 'lucide-react'
 import { useResearchStore } from '../../store/researchStore'
 import { useSettingsStore } from '../../store/settingsStore'
+import { useUIStore } from '../../store/uiStore'
 import { ResearchCard } from './ResearchCard'
 import { ApeInterface } from './ApeInterface'
 import { ChatMessage } from '../chat/ChatMessage'
@@ -55,6 +55,9 @@ const MAX_LINES = 6
 export function ResearchView() {
   const { theme } = useTheme()
   const styles = theme.styles.chatInterface
+
+  // Wallpaper settings
+  const { chatWallpaper, wallpaperOpacity } = useUIStore()
 
   // Store state - use individual selectors to prevent unnecessary re-renders
   const connectionState = useResearchStore((state) => state.connectionState)
@@ -257,19 +260,23 @@ export function ResearchView() {
 
   return (
     <div className="h-full flex flex-col bg-surface-base relative overflow-hidden">
+      {/* Wallpaper overlay */}
+      {chatWallpaper && (
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url(${chatWallpaper})`,
+            opacity: wallpaperOpacity,
+          }}
+        />
+      )}
+
       <div className="relative z-10 h-full flex flex-col">
         {/* Header */}
         <div className={`${styles.headerBg} border-b ${styles.headerBorder} p-4`}>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className={`p-2 rounded-xl bg-gradient-to-r ${styles.sendGradient} shadow-lg`}>
-                <Search className="w-4 h-4 text-white" />
-              </div>
-              <h2
-                className={`text-lg font-semibold bg-gradient-to-r ${styles.titleGradient} bg-clip-text text-transparent`}
-              >
-                Token Research
-              </h2>
+            <div className="flex items-center gap-3">
+              <img src="/kybera-icon.png" alt="Kybera" className="w-8 h-8 rounded-lg shadow-lg" />
               <ConnectionStatus />
             </div>
 
@@ -285,16 +292,17 @@ export function ResearchView() {
               {connectionState === 'connected' && (
                 <button
                   onClick={disconnect}
-                  className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm text-text-secondary transition-colors"
+                  className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-lg text-sm text-red-400 transition-colors"
                 >
                   Disconnect
                 </button>
               )}
               <button
                 onClick={() => setShowSettings(true)}
-                className={`p-2.5 rounded-xl ${styles.settingsHover} border border-transparent hover:border-white/10 transition-all duration-200 hover:scale-105`}
+                className={`${theme.styles.buttonIcon} p-2 rounded-lg`}
+                title="Settings"
               >
-                <Settings className="w-5 h-5 text-text-secondary" />
+                <Settings className="w-4 h-4 text-text-secondary" />
               </button>
             </div>
           </div>
@@ -321,7 +329,7 @@ export function ResearchView() {
         {/* Main content area */}
         <div className="flex-1 overflow-y-auto">
           <div
-            className="max-w-5xl mx-auto px-4 pt-4"
+            className="max-w-7xl mx-auto px-4 pt-4"
             style={{ paddingBottom: `${inputHeight + 100}px` }}
           >
             {/* Research results */}
@@ -413,7 +421,7 @@ export function ResearchView() {
 
         {/* Floating input area */}
         <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none">
-          <div className="max-w-5xl mx-auto pointer-events-auto">
+          <div className="max-w-7xl mx-auto pointer-events-auto">
             <div
               className={`${styles.inputSolidBg} border ${styles.inputBorder} rounded-2xl shadow-lg overflow-hidden`}
             >

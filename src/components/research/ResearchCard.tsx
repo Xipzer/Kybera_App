@@ -42,16 +42,32 @@ export function ResearchCard({ research, onApe, onFade, compact = false }: Resea
     return `$${num.toFixed(2)}`
   }
 
-  // Format price with appropriate decimals
+  // Format price with appropriate decimals (always decimal, never scientific)
   const formatPrice = (price: number): string => {
-    if (price < 0.00001) return `$${price.toExponential(2)}`
+    if (price === 0) return '$0.00'
+    if (price < 0.00000001) return `$${price.toFixed(12)}`
+    if (price < 0.000001) return `$${price.toFixed(10)}`
+    if (price < 0.0001) return `$${price.toFixed(8)}`
     if (price < 0.01) return `$${price.toFixed(6)}`
     if (price < 1) return `$${price.toFixed(4)}`
     return `$${price.toFixed(2)}`
   }
 
-  // Truncate address
-  const truncateAddress = (address: string): string => {
+  // Get DexScreener URL for the token
+  const getDexScreenerUrl = (): string => {
+    const chain = research.network.toLowerCase()
+    return `https://dexscreener.com/${chain}/${research.contractAddress}`
+  }
+
+  // Get GeckoTerminal URL for the token
+  const getGeckoTerminalUrl = (): string => {
+    const chain = research.network.toLowerCase()
+    return `https://www.geckoterminal.com/${chain}/pools/${research.contractAddress}`
+  }
+
+  // Truncate address (with safety check)
+  const truncateAddress = (address: string | undefined): string => {
+    if (!address) return '...'
     return `${address.slice(0, 6)}...${address.slice(-4)}`
   }
 
@@ -124,6 +140,26 @@ export function ResearchCard({ research, onApe, onFade, compact = false }: Resea
                 >
                   {truncateAddress(research.contractAddress)}
                   <ExternalLink className="w-3 h-3" />
+                </a>
+                <span className="opacity-50">|</span>
+                <a
+                  href={getDexScreenerUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-cyan-400 transition-colors"
+                  title="View on DexScreener"
+                >
+                  DexScreener
+                </a>
+                <span className="opacity-50">|</span>
+                <a
+                  href={getGeckoTerminalUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-cyan-400 transition-colors"
+                  title="View on GeckoTerminal"
+                >
+                  GeckoTerminal
                 </a>
               </div>
             </div>
