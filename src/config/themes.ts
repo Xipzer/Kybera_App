@@ -841,8 +841,8 @@ export const themes: Record<string, ThemeConfig> = {
       },
       buttonSecondary: {
         background: 'transparent',
-        borderColor: 'rgb(6, 182, 212)',
-        color: 'rgb(6, 182, 212)',
+        borderColor: 'rgb(255, 0, 153)',
+        color: 'rgb(255, 0, 153)',
       },
       buttonSettings: {
         background: 'linear-gradient(135deg, rgb(6, 182, 212) 0%, rgb(20, 184, 166) 100%)',

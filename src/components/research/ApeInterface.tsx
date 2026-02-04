@@ -222,14 +222,23 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div className={`absolute inset-0 ${isDark ? 'bg-black/60' : 'bg-black/40'} backdrop-blur-sm`} onClick={onClose} />
+      <div
+        className={`absolute inset-0 ${isDark ? 'bg-black/60' : 'bg-black/40'} backdrop-blur-sm`}
+        onClick={onClose}
+      />
 
       {/* Modal */}
-      <div className={`relative w-full max-w-md bg-surface-elevated border ${isDark ? 'border-white/10' : 'border-gray-200'} rounded-2xl shadow-2xl overflow-hidden`}>
+      <div
+        className={`relative w-full max-w-md bg-surface-elevated border ${isDark ? 'border-white/10' : 'border-gray-200'} rounded-2xl shadow-2xl overflow-hidden`}
+      >
         {/* Header */}
-        <div className={`p-4 border-b ${isDark ? 'border-white/10' : 'border-gray-200'} flex items-center justify-between`}>
+        <div
+          className={`p-4 border-b ${isDark ? 'border-white/10' : 'border-gray-200'} flex items-center justify-between`}
+        >
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center border ${isDark ? 'border-green-500/30' : 'border-green-300'}`}>
+            <div
+              className={`w-10 h-10 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center border ${isDark ? 'border-green-500/30' : 'border-green-300'}`}
+            >
               <Zap className="w-5 h-5 text-green-500" />
             </div>
             <div>
@@ -237,7 +246,10 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
               <p className="text-sm text-text-secondary">Buy ${research.tokenSymbol}</p>
             </div>
           </div>
-          <button onClick={onClose} className={`p-2 ${isDark ? 'hover:bg-white/10' : 'hover:bg-gray-100'} rounded-lg transition-colors`}>
+          <button
+            onClick={onClose}
+            className={`p-2 ${isDark ? 'hover:bg-white/10' : 'hover:bg-gray-100'} rounded-lg transition-colors`}
+          >
             <X className="w-5 h-5 text-text-secondary" />
           </button>
         </div>
@@ -246,25 +258,31 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
         <div className="p-4">
           {/* No wallet warning */}
           {!activeWallet && (
-            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3 mb-4 flex items-start gap-3">
-              <Wallet className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-yellow-300">
+            <div
+              className={`${isDark ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-yellow-50 border-yellow-200'} border rounded-xl p-3 mb-4 flex items-start gap-3`}
+            >
+              <Wallet className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+              <div className={`text-sm ${isDark ? 'text-yellow-300' : 'text-yellow-700'}`}>
                 Please select a wallet from the sidebar to execute trades.
               </div>
             </div>
           )}
 
           {/* Token info */}
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4">
+          <div
+            className={`${isDark ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200'} border rounded-xl p-4 mb-4`}
+          >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-pink-500/20 flex items-center justify-center border border-white/10">
-                  <span className="text-sm font-bold text-white">
+                <div
+                  className={`w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-teal-500/20 flex items-center justify-center border ${isDark ? 'border-white/10' : 'border-gray-200'}`}
+                >
+                  <span className="text-sm font-bold text-text-primary">
                     {research.tokenSymbol.slice(0, 2).toUpperCase()}
                   </span>
                 </div>
                 <div>
-                  <div className="font-medium text-white">{research.tokenName}</div>
+                  <div className="font-medium text-text-primary">{research.tokenName}</div>
                   <div className="text-sm text-text-secondary">${research.tokenSymbol}</div>
                 </div>
               </div>
@@ -275,7 +293,7 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
               </div>
             </div>
             {/* Contract address */}
-            <div className="pt-3 border-t border-white/10">
+            <div className={`pt-3 border-t ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
               <div className="text-xs text-text-tertiary mb-1">Contract Address</div>
               <button
                 onClick={() => {
@@ -283,15 +301,15 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
                   setCopied(true)
                   setTimeout(() => setCopied(false), 2000)
                 }}
-                className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors group"
+                className={`w-full flex items-center justify-between gap-2 px-3 py-2 ${isDark ? 'bg-white/5 hover:bg-white/10 border-white/10' : 'bg-gray-100 hover:bg-gray-200 border-gray-200'} border rounded-lg transition-colors group`}
               >
                 <span className="text-sm text-text-secondary font-mono truncate">
                   {research.contractAddress}
                 </span>
                 {copied ? (
-                  <Check className="w-4 h-4 text-green-400 flex-shrink-0" />
+                  <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
                 ) : (
-                  <Copy className="w-4 h-4 text-text-tertiary group-hover:text-white flex-shrink-0 transition-colors" />
+                  <Copy className="w-4 h-4 text-text-tertiary group-hover:text-text-primary flex-shrink-0 transition-colors" />
                 )}
               </button>
             </div>
@@ -299,9 +317,11 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
 
           {/* Risk warning for high-risk tokens */}
           {(research.rating === 'red' || research.rating === 'yellow') && step === 'input' && (
-            <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-3 mb-4 flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-orange-300">
+            <div
+              className={`${isDark ? 'bg-orange-500/10 border-orange-500/30' : 'bg-orange-50 border-orange-200'} border rounded-xl p-3 mb-4 flex items-start gap-3`}
+            >
+              <AlertTriangle className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
+              <div className={`text-sm ${isDark ? 'text-orange-300' : 'text-orange-700'}`}>
                 This token has a <span className="font-medium">{ratingConfig.label}</span> rating.
                 Trade with caution and only risk what you can afford to lose.
               </div>
@@ -321,7 +341,7 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
                     type="text"
                     value={amount}
                     onChange={(e) => handleAmountChange(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white text-lg font-medium focus:outline-none focus:border-green-500/50 focus:ring-1 focus:ring-green-500/20 transition-all"
+                    className={`w-full px-4 py-3 ${isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'} border rounded-xl text-text-primary text-lg font-medium focus:outline-none focus:border-green-500/50 focus:ring-1 focus:ring-green-500/20 transition-all`}
                     placeholder="0.0"
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary">
@@ -338,8 +358,10 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
                     onClick={() => handlePresetClick(preset)}
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                       amount === preset.toString()
-                        ? 'bg-green-500/20 border-green-500/50 text-green-400'
-                        : 'bg-white/5 border-white/10 text-text-secondary hover:bg-white/10 hover:text-white'
+                        ? 'bg-green-500/20 border-green-500/50 text-green-600 dark:text-green-400'
+                        : isDark
+                          ? 'bg-white/5 border-white/10 text-text-secondary hover:bg-white/10 hover:text-white'
+                          : 'bg-gray-100 border-gray-200 text-text-secondary hover:bg-gray-200 hover:text-gray-900'
                     } border`}
                   >
                     {preset} {research.network === 'solana' ? 'SOL' : 'ETH'}
@@ -348,30 +370,36 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
               </div>
 
               {/* Estimated output */}
-              <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4">
+              <div
+                className={`${isDark ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200'} border rounded-xl p-4 mb-4`}
+              >
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-text-secondary">You'll receive (estimated)</span>
                   <div className="flex items-center gap-2">
                     {isFetchingQuote ? (
-                      <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
+                      <Loader2 className="w-4 h-4 text-cyan-500 animate-spin" />
                     ) : (
-                      <TrendingUp className="w-4 h-4 text-green-400" />
+                      <TrendingUp className="w-4 h-4 text-green-500" />
                     )}
-                    <span className="text-white font-medium">
+                    <span className="text-text-primary font-medium">
                       ~{formatNumber(quote ? parseFloat(quote.toAmount) : estimatedTokens)} $
                       {research.tokenSymbol}
                     </span>
                   </div>
                 </div>
                 {quote && (
-                  <div className="mt-2 pt-2 border-t border-white/5 text-xs text-text-tertiary">
+                  <div
+                    className={`mt-2 pt-2 border-t ${isDark ? 'border-white/5' : 'border-gray-200'} text-xs text-text-tertiary`}
+                  >
                     Price impact: {quote.priceImpact.toFixed(2)}% | Route: {quote.route.join(' → ')}
                   </div>
                 )}
               </div>
 
               {error && (
-                <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 mb-4 text-sm text-red-400">
+                <div
+                  className={`${isDark ? 'bg-red-500/10 border-red-500/30' : 'bg-red-50 border-red-200'} border rounded-xl p-3 mb-4 text-sm text-red-500`}
+                >
                   {error}
                 </div>
               )}
@@ -390,9 +418,11 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
           {/* Step: Confirm */}
           {step === 'confirm' && (
             <>
-              <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4">
+              <div
+                className={`${isDark ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200'} border rounded-xl p-4 mb-4`}
+              >
                 <div className="text-center mb-4">
-                  <div className="text-3xl font-bold text-white mb-1">
+                  <div className="text-3xl font-bold text-text-primary mb-1">
                     {amount} {research.network === 'solana' ? 'SOL' : 'ETH'}
                   </div>
                   <div className="flex items-center justify-center gap-2 text-text-secondary">
@@ -404,25 +434,27 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
                   </div>
                 </div>
 
-                <div className="border-t border-white/10 pt-4 space-y-2 text-sm">
+                <div
+                  className={`border-t ${isDark ? 'border-white/10' : 'border-gray-200'} pt-4 space-y-2 text-sm`}
+                >
                   <div className="flex justify-between">
                     <span className="text-text-secondary">Network</span>
-                    <span className="text-white uppercase">{research.network}</span>
+                    <span className="text-text-primary uppercase">{research.network}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-text-secondary">Wallet</span>
-                    <span className="text-white font-mono text-xs">
+                    <span className="text-text-primary font-mono text-xs">
                       {activeWallet?.address.slice(0, 6)}...{activeWallet?.address.slice(-4)}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-text-secondary">Slippage</span>
-                    <span className="text-white">{slippage}%</span>
+                    <span className="text-text-primary">{slippage}%</span>
                   </div>
                   {quote?.estimatedGas && (
                     <div className="flex justify-between">
                       <span className="text-text-secondary">Est. Gas</span>
-                      <span className="text-white">{quote.estimatedGas}</span>
+                      <span className="text-text-primary">{quote.estimatedGas}</span>
                     </div>
                   )}
                 </div>
@@ -431,7 +463,7 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
               <div className="flex gap-3">
                 <button
                   onClick={handleBack}
-                  className="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-medium text-white transition-all"
+                  className={`flex-1 py-3 ${isDark ? 'bg-white/5 hover:bg-white/10 border-white/10' : 'bg-gray-100 hover:bg-gray-200 border-gray-200'} border rounded-xl font-medium text-text-primary transition-all`}
                 >
                   Back
                 </button>
@@ -448,8 +480,8 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
           {/* Step: Executing */}
           {step === 'executing' && (
             <div className="py-8 text-center">
-              <Loader2 className="w-12 h-12 text-green-400 animate-spin mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">Executing Trade</h3>
+              <Loader2 className="w-12 h-12 text-green-500 animate-spin mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-text-primary mb-2">Executing Trade</h3>
               <p className="text-text-secondary">
                 Swapping {amount} {research.network === 'solana' ? 'SOL' : 'ETH'} for $
                 {research.tokenSymbol}...
@@ -461,9 +493,9 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
           {step === 'success' && (
             <div className="py-8 text-center">
               <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
-                <Check className="w-8 h-8 text-green-400" />
+                <Check className="w-8 h-8 text-green-500" />
               </div>
-              <h3 className="text-lg font-medium text-white mb-2">Ape Successful!</h3>
+              <h3 className="text-lg font-medium text-text-primary mb-2">Ape Successful!</h3>
               <p className="text-text-secondary mb-4">
                 You bought ~{formatNumber(quote ? parseFloat(quote.toAmount) : estimatedTokens)} $
                 {research.tokenSymbol}
@@ -474,7 +506,7 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
                   href={`${explorerUrl}${txHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+                  className={`inline-flex items-center gap-2 px-4 py-2 ${isDark ? 'bg-white/5 hover:bg-white/10 border-white/10' : 'bg-gray-100 hover:bg-gray-200 border-gray-200'} border rounded-xl text-sm text-cyan-500 hover:text-cyan-600 transition-colors`}
                 >
                   View Transaction
                   <ExternalLink className="w-4 h-4" />
@@ -483,7 +515,7 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
 
               <button
                 onClick={onClose}
-                className="w-full mt-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-medium text-white transition-all"
+                className={`w-full mt-6 py-3 ${isDark ? 'bg-white/5 hover:bg-white/10 border-white/10' : 'bg-gray-100 hover:bg-gray-200 border-gray-200'} border rounded-xl font-medium text-text-primary transition-all`}
               >
                 Close
               </button>
@@ -494,21 +526,21 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
           {step === 'error' && (
             <div className="py-8 text-center">
               <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
-                <X className="w-8 h-8 text-red-400" />
+                <X className="w-8 h-8 text-red-500" />
               </div>
-              <h3 className="text-lg font-medium text-white mb-2">Trade Failed</h3>
-              <p className="text-red-400 mb-4">{error}</p>
+              <h3 className="text-lg font-medium text-text-primary mb-2">Trade Failed</h3>
+              <p className="text-red-500 mb-4">{error}</p>
 
               <div className="flex gap-3">
                 <button
                   onClick={handleBack}
-                  className="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-medium text-white transition-all"
+                  className={`flex-1 py-3 ${isDark ? 'bg-white/5 hover:bg-white/10 border-white/10' : 'bg-gray-100 hover:bg-gray-200 border-gray-200'} border rounded-xl font-medium text-text-primary transition-all`}
                 >
                   Try Again
                 </button>
                 <button
                   onClick={onClose}
-                  className="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-medium text-text-secondary transition-all"
+                  className={`flex-1 py-3 ${isDark ? 'bg-white/5 hover:bg-white/10 border-white/10' : 'bg-gray-100 hover:bg-gray-200 border-gray-200'} border rounded-xl font-medium text-text-secondary transition-all`}
                 >
                   Close
                 </button>

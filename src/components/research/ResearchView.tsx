@@ -53,8 +53,9 @@ const LINE_HEIGHT = 24
 const MAX_LINES = 6
 
 export function ResearchView() {
-  const { theme } = useTheme()
+  const { theme, themeName } = useTheme()
   const styles = theme.styles.chatInterface
+  const isDark = themeName === 'dark' || themeName === 'xipz'
 
   // Wallpaper settings
   const { chatWallpaper, wallpaperOpacity } = useUIStore()
@@ -228,9 +229,11 @@ export function ResearchView() {
         >
           <div className="relative inline-flex mb-6">
             <div
-              className={`absolute inset-0 bg-gradient-to-br from-cyan-500 to-pink-500 rounded-full blur-xl opacity-30 animate-pulse`}
+              className={`absolute inset-0 bg-gradient-to-br ${styles.sendGradient} rounded-full blur-xl opacity-30 animate-pulse`}
             />
-            <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-cyan-500 to-pink-500 flex items-center justify-center shadow-lg">
+            <div
+              className={`relative w-16 h-16 rounded-full bg-gradient-to-br ${styles.sendGradient} flex items-center justify-center shadow-lg`}
+            >
               <Zap className="w-8 h-8 text-white" />
             </div>
           </div>
@@ -314,11 +317,11 @@ export function ResearchView() {
                 <span className="text-text-secondary">
                   {currentResearchStep || 'Researching...'}
                 </span>
-                <span className="text-cyan-400">{researchProgress}%</span>
+                <span className="text-cyan-500">{researchProgress}%</span>
               </div>
-              <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-1 bg-surface-elevated rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-cyan-500 to-pink-500 transition-all duration-300"
+                  className="h-full bg-gradient-to-r from-cyan-500 to-teal-500 transition-all duration-300"
                   style={{ width: `${researchProgress}%` }}
                 />
               </div>
@@ -393,10 +396,10 @@ export function ResearchView() {
               messages.length === 0 &&
               connectionState === 'connected' && (
                 <div className="text-center py-12">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-pink-500/20 flex items-center justify-center mx-auto mb-4 border border-white/10">
-                    <Sparkles className="w-8 h-8 text-cyan-400" />
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-teal-500/20 flex items-center justify-center mx-auto mb-4 border border-border-subtle">
+                    <Sparkles className="w-8 h-8 text-cyan-500" />
                   </div>
-                  <h3 className="text-lg font-medium text-white mb-2">Ready to Research</h3>
+                  <h3 className="text-lg font-medium text-text-primary mb-2">Ready to Research</h3>
                   <p className="text-text-secondary max-w-sm mx-auto">
                     Paste a contract address to start AI-powered OSINT research, or ask questions
                     about tokens.
@@ -460,7 +463,9 @@ export function ResearchView() {
               </div>
 
               {hasScroll && (
-                <div className="flex justify-end px-3 py-2 border-t border-white/5">
+                <div
+                  className={`flex justify-end px-3 py-2 border-t ${isDark ? 'border-white/5' : 'border-gray-200'}`}
+                >
                   <button
                     onClick={handleSend}
                     disabled={!input.trim() || connectionState !== 'connected'}
