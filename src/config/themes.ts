@@ -1041,7 +1041,7 @@ export const themes: Record<string, ThemeConfig> = {
 
       // Chat interface
       chatInterface: {
-        headerBg: 'bg-primary-900',
+        headerBg: 'bg-gradient-to-br from-primary-950 via-primary-900 to-primary-950',
         headerBorder: 'border-primary-800/50',
         titleGradient: 'from-red-400 via-red-500 to-red-400',
         settingsHover: 'hover:bg-primary-800/50',
