@@ -3,43 +3,57 @@ import { persist } from 'zustand/middleware'
 import { db } from '../services/storage/database'
 
 interface SettingsState {
-  openRouterApiKey: string | null
+  // OpenClaw Gateway settings
+  openClawGatewayUrl: string | null
+  openClawAuthToken: string | null
+  openClawAutoConnect: boolean
+
+  // API keys for external services
   coinGeckoApiKey: string | null
-  selectedModel: string
+
+  // General settings
   autoLockTimeout: number
   defaultNetwork: string
 
   // Actions
-  setOpenRouterApiKey: (key: string | null) => Promise<void>
+  setOpenClawGatewayUrl: (url: string | null) => Promise<void>
+  setOpenClawAuthToken: (token: string | null) => Promise<void>
+  setOpenClawAutoConnect: (autoConnect: boolean) => Promise<void>
   setCoinGeckoApiKey: (key: string | null) => Promise<void>
-  setSelectedModel: (model: string) => Promise<void>
   setAutoLockTimeout: (timeout: number) => Promise<void>
   setDefaultNetwork: (networkId: string) => Promise<void>
+
   loadSettings: () => Promise<void>
 }
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
-      openRouterApiKey: null,
+      openClawGatewayUrl: null,
+      openClawAuthToken: null,
+      openClawAutoConnect: true,
       coinGeckoApiKey: null,
-      selectedModel: 'openai/gpt-4-turbo-preview',
       autoLockTimeout: 15, // minutes (0 means disabled)
-      defaultNetwork: 'ethereum',
+      defaultNetwork: 'base', // Default to Base for research
 
-      setOpenRouterApiKey: async (key) => {
-        await db.settings.put({ key: 'openRouterApiKey', value: key })
-        set({ openRouterApiKey: key })
+      setOpenClawGatewayUrl: async (url) => {
+        await db.settings.put({ key: 'openClawGatewayUrl', value: url })
+        set({ openClawGatewayUrl: url })
+      },
+
+      setOpenClawAuthToken: async (token) => {
+        await db.settings.put({ key: 'openClawAuthToken', value: token })
+        set({ openClawAuthToken: token })
+      },
+
+      setOpenClawAutoConnect: async (autoConnect) => {
+        await db.settings.put({ key: 'openClawAutoConnect', value: autoConnect })
+        set({ openClawAutoConnect: autoConnect })
       },
 
       setCoinGeckoApiKey: async (key) => {
         await db.settings.put({ key: 'coinGeckoApiKey', value: key })
         set({ coinGeckoApiKey: key })
-      },
-
-      setSelectedModel: async (model) => {
-        await db.settings.put({ key: 'selectedModel', value: model })
-        set({ selectedModel: model })
       },
 
       setAutoLockTimeout: async (timeout) => {
@@ -54,26 +68,30 @@ export const useSettingsStore = create<SettingsState>()(
 
       loadSettings: async () => {
         const settings = await db.settings.toArray()
-        const settingsMap = settings.reduce((acc, { key, value }) => {
-          acc[key] = value
-          return acc
-        }, {} as Record<string, any>)
+        const settingsMap = settings.reduce(
+          (acc, { key, value }) => {
+            acc[key] = value
+            return acc
+          },
+          {} as Record<string, any>,
+        )
 
         set({
-          openRouterApiKey: settingsMap.openRouterApiKey || null,
+          openClawGatewayUrl: settingsMap.openClawGatewayUrl || null,
+          openClawAuthToken: settingsMap.openClawAuthToken || null,
+          openClawAutoConnect: settingsMap.openClawAutoConnect ?? true,
           coinGeckoApiKey: settingsMap.coinGeckoApiKey || null,
-          selectedModel: settingsMap.selectedModel || 'openai/gpt-4-turbo-preview',
           autoLockTimeout: settingsMap.autoLockTimeout || 15,
-          defaultNetwork: settingsMap.defaultNetwork || 'ethereum',
+          defaultNetwork: settingsMap.defaultNetwork || 'base',
         })
       },
     }),
     {
       name: 'settings-store',
       partialize: (state) => ({
-        selectedModel: state.selectedModel,
         autoLockTimeout: state.autoLockTimeout,
         defaultNetwork: state.defaultNetwork,
+        openClawAutoConnect: state.openClawAutoConnect,
       }),
     },
   ),
