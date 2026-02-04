@@ -534,7 +534,7 @@ export const themes: Record<string, ThemeConfig> = {
         bottomBarBg: 'bg-white/90',
         bottomBarBorder: 'border-indigo-200/40',
         bottomItemHover: 'hover:bg-indigo-50/80',
-        bottomItemActive: 'bg-indigo-100/80',
+        bottomItemActive: '',
       },
 
       // Unlock screen - Kybera Landing inspired (Light)
@@ -815,7 +815,7 @@ export const themes: Record<string, ThemeConfig> = {
         bottomBarBg: 'bg-[#030308]/90',
         bottomBarBorder: 'border-[#8b8bff]/10',
         bottomItemHover: 'hover:bg-[#8b8bff]/5',
-        bottomItemActive: 'bg-[#8b8bff]/10',
+        bottomItemActive: '',
       },
 
       // Unlock screen - Kybera Landing inspired (Dark)
@@ -1099,7 +1099,7 @@ export const themes: Record<string, ThemeConfig> = {
         bottomBarBg: 'bg-primary-900/90',
         bottomBarBorder: 'border-primary-800/50',
         bottomItemHover: 'hover:bg-primary-800/50',
-        bottomItemActive: 'bg-red-500/10',
+        bottomItemActive: '',
       },
 
       // Unlock screen
@@ -1358,26 +1358,26 @@ export const themes: Record<string, ThemeConfig> = {
         proseClass: 'prose-invert',
       },
 
-      // Mobile navigation
+      // Mobile navigation - True grey tones
       mobileNav: {
-        headerBg: 'bg-slate-900/80',
+        headerBg: 'bg-[#121212]/90',
         headerBorder: 'border-white/5',
         logoGradient: 'from-cyan-500 via-cyan-400 to-pink-500',
         titleGradient: 'from-cyan-400 via-cyan-300 to-pink-400',
         menuButtonBg: 'bg-white/5',
         menuButtonHover: 'hover:bg-white/10',
         overlayBg: 'bg-black/60',
-        panelBg: 'bg-slate-900/95',
+        panelBg: 'bg-[#121212]/95',
         panelBorder: 'border-white/10',
         navItemHover: 'hover:bg-white/5',
         navItemActive: 'bg-cyan-500/10',
         navIconColor: 'text-white/50',
         navIconActive: 'text-cyan-400',
         navTextColor: 'text-white/80',
-        bottomBarBg: 'bg-slate-900/90',
+        bottomBarBg: 'bg-[#1a1a1a]',
         bottomBarBorder: 'border-white/5',
         bottomItemHover: 'hover:bg-white/5',
-        bottomItemActive: 'bg-cyan-500/10',
+        bottomItemActive: '',
       },
 
       // Unlock screen
@@ -1657,7 +1657,7 @@ export const themes: Record<string, ThemeConfig> = {
         bottomBarBg: 'bg-white/90',
         bottomBarBorder: 'border-gray-200/50',
         bottomItemHover: 'hover:bg-gray-100/80',
-        bottomItemActive: 'bg-cyan-50',
+        bottomItemActive: '',
       },
 
       // Unlock screen
