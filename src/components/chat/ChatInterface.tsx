@@ -50,17 +50,17 @@ export function ChatInterface() {
 
     // Reset height to get the correct scrollHeight
     textarea.style.height = '48px'
-    
+
     // Calculate the new height (capped at max lines)
     const maxHeight = LINE_HEIGHT * MAX_LINES
     const scrollHeight = textarea.scrollHeight
     const newHeight = Math.min(scrollHeight, maxHeight)
     textarea.style.height = `${newHeight}px`
-    
+
     // Check if content exceeds max height (needs scrolling)
     const needsScroll = scrollHeight > maxHeight
     setHasScroll(needsScroll)
-    
+
     // Update input height for dynamic padding (add extra for button row if scrolling)
     setInputHeight(needsScroll ? newHeight + 48 : newHeight)
   }, [])
@@ -248,8 +248,8 @@ export function ChatInterface() {
 
         {/* Messages area - with dynamic padding at bottom for floating input */}
         <div className="flex-1 overflow-y-auto">
-          <div 
-            className="max-w-3xl mx-auto px-4 pt-4"
+          <div
+            className="max-w-5xl mx-auto px-4 pt-4"
             style={{ paddingBottom: `${inputHeight + BASE_INPUT_PADDING}px` }}
           >
             {activeConversation?.messages.map((message) => (
@@ -298,7 +298,7 @@ export function ChatInterface() {
 
         {/* Floating input area - ChatGPT style */}
         <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none">
-          <div className="max-w-3xl mx-auto pointer-events-auto">
+          <div className="max-w-5xl mx-auto pointer-events-auto">
             <div
               className={`${styles.inputSolidBg} border ${styles.inputBorder} rounded-2xl shadow-lg overflow-hidden`}
             >
