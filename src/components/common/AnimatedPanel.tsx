@@ -9,16 +9,16 @@ interface AnimatedPanelProps {
   width?: string
 }
 
-export function AnimatedPanel({ 
-  isOpen, 
-  direction, 
-  children, 
+export function AnimatedPanel({
+  isOpen,
+  direction,
+  children,
   className = '',
-  width = 'w-80'
+  width = 'w-full sm:w-[85vw] sm:max-w-[400px]',
 }: AnimatedPanelProps) {
   const variants = {
     open: { x: 0 },
-    closed: { x: direction === 'left' ? '-100%' : '100%' }
+    closed: { x: direction === 'left' ? '-100%' : '100%' },
   }
 
   return (
@@ -31,10 +31,15 @@ export function AnimatedPanel({
           variants={variants}
           transition={{
             type: 'spring',
-            stiffness: 300,
+            stiffness: 350,
             damping: 30,
           }}
-          className={`fixed top-0 ${direction}-0 h-full ${width} bg-white dark:bg-gray-900 border-${direction === 'left' ? 'r' : 'l'} border-gray-200 dark:border-gray-800 z-40 ${className}`}
+          className={`fixed top-0 ${direction}-0 h-[100dvh] ${width} bg-surface-base border-${direction === 'left' ? 'r' : 'l'} border-border-subtle z-40 shadow-2xl ${className}`}
+          style={{
+            // Ensure proper rendering on mobile
+            willChange: 'transform',
+            backfaceVisibility: 'hidden',
+          }}
         >
           {children}
         </motion.div>
@@ -43,7 +48,7 @@ export function AnimatedPanel({
   )
 }
 
-// Overlay component for mobile
+// Overlay component for mobile with improved touch handling
 export function MobileOverlay({ isOpen, onClick }: { isOpen: boolean; onClick: () => void }) {
   return (
     <AnimatePresence>
@@ -53,8 +58,10 @@ export function MobileOverlay({ isOpen, onClick }: { isOpen: boolean; onClick: (
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 lg:hidden touch-manipulation"
           onClick={onClick}
+          // Prevent scroll-through
+          onTouchMove={(e) => e.preventDefault()}
         />
       )}
     </AnimatePresence>
