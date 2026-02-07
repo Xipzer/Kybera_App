@@ -66,6 +66,17 @@ For tokens launched via Clanker, Bankr, Virtuals, pump.fun, or similar launchpad
 - Research the PERSON behind the ENS/identity, not just the launcher account
 - Verify Twitter/X, Farcaster, and other socials - find the REAL person's main accounts
 
+## Cross-Platform Identity Verification (Critical)
+
+NEVER assume usernames are the same across platforms. Similar usernames on different platforms frequently belong to DIFFERENT people.
+
+- On X/Twitter: check the bio and pinned links for GitHub, website, or other social links. The connected accounts shown on the profile are the ONLY reliable source.
+- On Farcaster/Warpcast: check the "connected accounts" or "verified accounts" section of the profile - these are cryptographically verified. Do NOT guess GitHub or other handles from the Farcaster username.
+- On GitHub: check the profile bio, website link, and social links listed on the profile page.
+- ALWAYS cross-verify: if you find a GitHub from an X profile, confirm the GitHub profile links back to the same X account. Bidirectional verification is required.
+- If you cannot find a verified/linked account, explicitly state "GitHub not verified" or "could not confirm linked account" rather than guessing based on username similarity.
+- Common pitfall: username "xipz" on Farcaster does NOT mean github.com/xipz is correct. The actual GitHub could be github.com/xipzer or any other handle. You MUST check the linked accounts to find the real one.
+
 ## Deep Research Required
 
 - What is this person known for in the ecosystem?
