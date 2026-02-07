@@ -1,6 +1,6 @@
 ---
 name: kybera
-version: 1.0.1
+version: 1.0.2
 description: Kybera wallet control and token research assistant
 homepage: https://app.kybera.xyz
 ---
@@ -70,12 +70,34 @@ For tokens launched via Clanker, Bankr, Virtuals, pump.fun, or similar launchpad
 
 NEVER assume usernames are the same across platforms. Similar usernames on different platforms frequently belong to DIFFERENT people.
 
-- On X/Twitter: check the bio and pinned links for GitHub, website, or other social links. The connected accounts shown on the profile are the ONLY reliable source.
-- On Farcaster/Warpcast: check the "connected accounts" or "verified accounts" section of the profile - these are cryptographically verified. Do NOT guess GitHub or other handles from the Farcaster username.
+### Step 1: Collect all known aliases
+
+Gather EVERY username and display name the person uses across all platforms you find them on (X, Farcaster, ENS, Warpcast, etc.). These are all candidate aliases to search with. For example, someone might be "xipz" on Farcaster but "Xipzer" on X — both are valid aliases to try.
+
+### Step 2: Check linked accounts on every platform
+
+- On X/Twitter: check the bio, pinned tweet, and website field for GitHub links or other social links.
+- On Farcaster/Warpcast: check BOTH the "connected accounts" / "verified accounts" section AND the "website" field. A GitHub link in the website field is just as valid as a connected account.
 - On GitHub: check the profile bio, website link, and social links listed on the profile page.
-- ALWAYS cross-verify: if you find a GitHub from an X profile, confirm the GitHub profile links back to the same X account. Bidirectional verification is required.
-- If you cannot find a verified/linked account, explicitly state "GitHub not verified" or "could not confirm linked account" rather than guessing based on username similarity.
-- Common pitfall: username "xipz" on Farcaster does NOT mean github.com/xipz is correct. The actual GitHub could be github.com/xipzer or any other handle. You MUST check the linked accounts to find the real one.
+
+### Step 3: Try ALL aliases against GitHub
+
+Do NOT stop after trying one alias. If the Farcaster username doesn't match a GitHub, try:
+1. Their X/Twitter handle
+2. Their display name variations
+3. Any other aliases found in Step 1
+
+For example: if Farcaster is "xipz" and X is "Xipzer", try BOTH github.com/xipz AND github.com/Xipzer before concluding there's no GitHub.
+
+### Step 4: Verify backwards
+
+When you find a GitHub profile, check that it links BACK to one of the person's known accounts (X, Farcaster, website, etc.). This bidirectional verification confirms ownership. A GitHub profile that lists the same X handle in its social links is confirmed.
+
+### Step 5: Report accurately
+
+- If verified via linked accounts or bidirectional links: report as confirmed
+- If found via alias search but no backwards link exists: report as "likely match — same alias, not bidirectionally verified"
+- Only report "not verified" if ALL aliases have been exhausted and no GitHub was found through any method
 
 ## Deep Research Required
 
