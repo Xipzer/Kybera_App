@@ -20,4 +20,3 @@ export {
   type GoPlusSecurityReport,
 } from './goPlusService'
 export { polymarketService } from './polymarketService'
-export type { PredictionMarket, PredictionOutcome, PredictionMarketSentiment } from '../../types/predictions'
