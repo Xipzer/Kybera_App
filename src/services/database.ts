@@ -151,6 +151,34 @@ export interface StoredAIActionHistory {
   error?: string
 }
 
+export interface StoredTradeRecord {
+  id: string
+  walletAddress: string
+  networkId: string
+  tokenInAddress: string
+  tokenInSymbol: string
+  tokenInAmount: string
+  tokenOutAddress: string
+  tokenOutSymbol: string
+  tokenOutAmount: string
+  tokenInPriceUsd: number
+  tokenOutPriceUsd: number
+  totalValueUsd: number
+  txHash: string
+  timestamp: number
+  source: string
+  researchId?: string
+}
+
+export interface StoredPortfolioSnapshot {
+  id: string
+  walletAddress: string
+  timestamp: number
+  totalValueUsd: number
+  networkBreakdown: string // JSON serialized
+  tokenBreakdown: string // JSON serialized
+}
+
 export class SmartWalletDB extends Dexie {
   wallets!: Table<StoredWallet>
   walletGroups!: Table<StoredWalletGroup>
@@ -168,6 +196,8 @@ export class SmartWalletDB extends Dexie {
   customNetworks!: Table<StoredCustomNetwork>
   networkVisibility!: Table<StoredNetworkVisibility>
   aiActionHistory!: Table<StoredAIActionHistory>
+  tradeRecords!: Table<StoredTradeRecord>
+  portfolioSnapshots!: Table<StoredPortfolioSnapshot>
 
   constructor() {
     super('SmartWalletDB')
@@ -189,6 +219,11 @@ export class SmartWalletDB extends Dexie {
       customNetworks: 'id, type, chainId, addedAt',
       networkVisibility: 'networkId, updatedAt',
       aiActionHistory: 'id, actionName, executedAt, walletId, conversationId',
+    })
+
+    this.version(2).stores({
+      tradeRecords: 'id, walletAddress, networkId, timestamp, txHash, source',
+      portfolioSnapshots: 'id, walletAddress, timestamp',
     })
   }
 }
