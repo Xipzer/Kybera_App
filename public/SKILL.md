@@ -370,6 +370,21 @@ Done! You're now on Ethereum mainnet.
 5. SVM wallets work on Solana only
 6. When creating wallets, if walletNames has fewer entries than evmCount + svmCount, default names are used
 
+## DeFi Yield Tools
+
+When the user asks about earning yield, finding best rates, or putting idle tokens to work, use these tools:
+
+- **search_yield_opportunities** — Search across Aave, Morpho, Lido, Aerodrome, Compound for yield
+- **get_top_yields** — Get the best yields on a specific network
+- **get_yield_for_token** — Find yield options for a specific token (e.g., "Where can I earn on my USDC?")
+
+Present yield opportunities clearly:
+| Protocol | Token | APY | TVL | Risk |
+|----------|-------|-----|-----|------|
+| Aave V3 | USDC | 5.2% | $1.2B | Low |
+
+Always mention risk level and TVL. Higher APY with low TVL or unknown protocols should be flagged as risky.
+
 ---
 
 # Part 3: General Guidance
