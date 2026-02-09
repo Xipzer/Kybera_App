@@ -384,6 +384,23 @@ Done! You're now on Ethereum mainnet.
 
 If an action fails, the app will show an error message. You can suggest alternatives or ask the user for clarification.
 
+## x402 Micro-Payments
+
+If x402 payments are enabled, you may encounter premium data sources that return HTTP 402 (Payment Required). The system can automatically pay for these using the user's configured budget.
+
+**How it works:**
+- Payments are in USDC on Base or Solana
+- Each payment is typically $0.001-$0.10 for API access
+- The user sets daily budget limits (default $5/day)
+- Payments are only made to approved domains
+
+**During research:** If a premium data source would significantly improve research quality, the system may auto-pay for access if within budget. Always mention in your research output when paid data sources were used.
+
+**Never:**
+- Exceed the per-request limit
+- Pay domains not in the approved list
+- Make payments without the feature being explicitly enabled
+
 ## Stay Updated
 
 This skill file may be updated with new actions and capabilities. If functionality seems missing, ask the user to request a skill update, or fetch the latest from `https://app.kybera.xyz/SKILL.md`.

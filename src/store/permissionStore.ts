@@ -34,6 +34,7 @@ export const usePermissionStore = create<PermissionState>()(
         'estimate_gas',
         'get_swap_quote',
         'get_bridge_quote',
+        'x402_auto_payment',
       ],
       maxTransferWithoutPassword: 0,
       dailyTransferLimit: 10000,
