@@ -13,3 +13,4 @@ export {
   type TokenInfo,
   type ContractInfo,
 } from './basescanService'
+export { polymarketService } from './polymarketService'

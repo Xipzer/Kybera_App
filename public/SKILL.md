@@ -370,6 +370,21 @@ Done! You're now on Ethereum mainnet.
 5. SVM wallets work on Solana only
 6. When creating wallets, if walletNames has fewer entries than evmCount + svmCount, default names are used
 
+## Prediction Market Data
+
+When the user asks about prediction markets, event outcomes, or market sentiment, use these tools:
+
+- **search_prediction_markets** — Search Polymarket for prediction markets by keyword (e.g., "ETH price", "Bitcoin halving", "election")
+- **get_prediction_market** — Get detailed info on a specific prediction market by ID
+- **get_crypto_sentiment** — Get aggregated crypto market sentiment from active prediction markets
+
+Present prediction market data clearly:
+| Market | Yes Price | Volume | Liquidity | Ends |
+|--------|-----------|--------|-----------|------|
+| Will ETH hit $5k by June? | $0.35 (35%) | $2.1M | $500K | Jun 30 |
+
+Always note that prediction market prices represent implied probabilities, NOT financial advice. A "Yes" price of $0.35 means the market implies a 35% chance of the event occurring.
+
 ---
 
 # Part 3: General Guidance

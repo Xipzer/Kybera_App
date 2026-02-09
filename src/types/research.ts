@@ -76,6 +76,7 @@ export interface DataSource {
     | 'moni'
     | 'twitter'
     | 'linkedin'
+    | 'polymarket'
     | 'other'
   url: string
   label: string
