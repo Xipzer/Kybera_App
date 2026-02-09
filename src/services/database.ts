@@ -153,7 +153,7 @@ export interface StoredAIActionHistory {
 
 export interface StoredAlert {
   id: string
-  config: any // AlertConfig serialized
+  config: any
   enabled: boolean
   createdAt: number
   lastTriggeredAt?: number
@@ -175,6 +175,34 @@ export interface StoredNotification {
   actionPayload?: Record<string, string>
 }
 
+export interface StoredTradeRecord {
+  id: string
+  walletAddress: string
+  networkId: string
+  tokenInAddress: string
+  tokenInSymbol: string
+  tokenInAmount: string
+  tokenOutAddress: string
+  tokenOutSymbol: string
+  tokenOutAmount: string
+  tokenInPriceUsd: number
+  tokenOutPriceUsd: number
+  totalValueUsd: number
+  txHash: string
+  timestamp: number
+  source: string
+  researchId?: string
+}
+
+export interface StoredPortfolioSnapshot {
+  id: string
+  walletAddress: string
+  timestamp: number
+  totalValueUsd: number
+  networkBreakdown: string
+  tokenBreakdown: string
+}
+
 export class SmartWalletDB extends Dexie {
   wallets!: Table<StoredWallet>
   walletGroups!: Table<StoredWalletGroup>
@@ -194,6 +222,8 @@ export class SmartWalletDB extends Dexie {
   aiActionHistory!: Table<StoredAIActionHistory>
   alerts!: Table<StoredAlert>
   notifications!: Table<StoredNotification>
+  tradeRecords!: Table<StoredTradeRecord>
+  portfolioSnapshots!: Table<StoredPortfolioSnapshot>
 
   constructor() {
     super('SmartWalletDB')
@@ -220,6 +250,11 @@ export class SmartWalletDB extends Dexie {
     this.version(2).stores({
       alerts: 'id, enabled, createdAt',
       notifications: 'id, alertId, type, status, createdAt',
+    })
+
+    this.version(3).stores({
+      tradeRecords: 'id, walletAddress, networkId, timestamp, txHash, source',
+      portfolioSnapshots: 'id, walletAddress, timestamp',
     })
   }
 }
