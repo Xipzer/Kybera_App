@@ -203,6 +203,21 @@ export interface StoredPortfolioSnapshot {
   tokenBreakdown: string
 }
 
+export interface StoredWalletActivity {
+  id: string
+  watchedWalletId: string
+  walletAddress: string
+  networkId: string
+  txHash: string
+  blockNumber: number
+  timestamp: number
+  activityType: string
+  tokenInSymbol?: string
+  tokenOutSymbol?: string
+  estimatedValueUsd?: number
+  raw: string
+}
+
 export class SmartWalletDB extends Dexie {
   wallets!: Table<StoredWallet>
   walletGroups!: Table<StoredWalletGroup>
@@ -224,6 +239,7 @@ export class SmartWalletDB extends Dexie {
   notifications!: Table<StoredNotification>
   tradeRecords!: Table<StoredTradeRecord>
   portfolioSnapshots!: Table<StoredPortfolioSnapshot>
+  walletActivities!: Table<StoredWalletActivity>
 
   constructor() {
     super('SmartWalletDB')
@@ -255,6 +271,10 @@ export class SmartWalletDB extends Dexie {
     this.version(3).stores({
       tradeRecords: 'id, walletAddress, networkId, timestamp, txHash, source',
       portfolioSnapshots: 'id, walletAddress, timestamp',
+    })
+
+    this.version(4).stores({
+      walletActivities: 'id, watchedWalletId, walletAddress, networkId, timestamp, txHash',
     })
   }
 }
