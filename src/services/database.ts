@@ -151,6 +151,30 @@ export interface StoredAIActionHistory {
   error?: string
 }
 
+export interface StoredAlert {
+  id: string
+  config: any // AlertConfig serialized
+  enabled: boolean
+  createdAt: number
+  lastTriggeredAt?: number
+  triggerCount: number
+  oneShot: boolean
+}
+
+export interface StoredNotification {
+  id: string
+  alertId?: string
+  type: string
+  priority: string
+  title: string
+  message: string
+  status: string
+  createdAt: number
+  readAt?: number
+  actionType?: string
+  actionPayload?: Record<string, string>
+}
+
 export class SmartWalletDB extends Dexie {
   wallets!: Table<StoredWallet>
   walletGroups!: Table<StoredWalletGroup>
@@ -168,6 +192,8 @@ export class SmartWalletDB extends Dexie {
   customNetworks!: Table<StoredCustomNetwork>
   networkVisibility!: Table<StoredNetworkVisibility>
   aiActionHistory!: Table<StoredAIActionHistory>
+  alerts!: Table<StoredAlert>
+  notifications!: Table<StoredNotification>
 
   constructor() {
     super('SmartWalletDB')
@@ -189,6 +215,11 @@ export class SmartWalletDB extends Dexie {
       customNetworks: 'id, type, chainId, addedAt',
       networkVisibility: 'networkId, updatedAt',
       aiActionHistory: 'id, actionName, executedAt, walletId, conversationId',
+    })
+
+    this.version(2).stores({
+      alerts: 'id, enabled, createdAt',
+      notifications: 'id, alertId, type, status, createdAt',
     })
   }
 }
