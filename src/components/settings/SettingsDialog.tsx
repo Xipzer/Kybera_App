@@ -68,7 +68,6 @@ export function SettingsDialog({ open, onOpenChange, maximized = false }: Settin
 
   const handleMaximize = () => {
     setSettingsMaximized(true)
-    if (!maximized) onOpenChange(false)
   }
 
   const handleMinimize = () => {
