@@ -19,11 +19,14 @@ import {
   Zap,
   Import,
   CreditCard,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react'
 import { SiBasicattentiontoken } from 'react-icons/si'
 import { ImageUpload } from '../common/ImageUpload'
 import { useTheme } from '../../hooks/useTheme'
 import { useSettingsState } from '../../hooks/useSettingsState'
+import { useUIStore } from '../../store/uiStore'
 import { NetworkManagementDialog } from './NetworkManagementDialog'
 import { ModernToggle, ModernButton, ModernAlert } from '../ModernDialog'
 import { ConnectionBadge, SecretInput, ThemeSelector, OpacitySlider } from './SettingsPanel'
@@ -32,9 +35,10 @@ import { X402Settings } from './X402Settings'
 interface SettingsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  maximized?: boolean
 }
 
-export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
+export function SettingsDialog({ open, onOpenChange, maximized = false }: SettingsDialogProps) {
   const s = useSettingsState({ isOpen: open })
   const { theme: themeConfig } = useTheme()
   const {
@@ -60,59 +64,51 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     setParticlesApp,
   } = s.uiStore
 
-  return (
-    <>
-      <Dialog.Root open={open} onOpenChange={onOpenChange}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="dialog-overlay" />
-          <Dialog.Content className="dialog-content bg-surface-base rounded-none sm:rounded-xl shadow-2xl border-0 sm:border border-border-subtle w-full h-full sm:w-[95vw] sm:max-w-[800px] sm:h-[85vh] sm:max-h-[600px] flex overflow-hidden">
-            <div className="absolute top-4 right-4 z-10">
-              <Dialog.Close asChild>
-                <button className="p-2 rounded-lg hover:bg-surface-hover transition-colors">
-                  <X className="w-5 h-5 text-text-secondary" />
-                </button>
-              </Dialog.Close>
-            </div>
+  const setSettingsMaximized = useUIStore((st) => st.setSettingsMaximized)
 
-            <Tabs.Root
-              value={s.activeTab}
-              onValueChange={s.setActiveTab}
-              className="flex-1 flex flex-col sm:flex-row min-h-0"
-            >
-              <div className="sm:w-48 bg-surface-elevated border-b sm:border-b-0 sm:border-r border-border-subtle flex-shrink-0">
-                <div className="hidden sm:block p-4 border-b border-border-subtle">
-                  <h2 className="text-lg font-semibold text-text-primary">Settings</h2>
-                </div>
-                <div className="flex sm:hidden items-center justify-between p-4 border-b border-border-subtle">
-                  <h2 className="text-lg font-semibold text-text-primary">Settings</h2>
-                </div>
-                <Tabs.List className="flex sm:flex-col gap-1 sm:space-y-1 p-2 overflow-x-auto sm:overflow-x-visible">
-                  <Tabs.Trigger
-                    value="ai"
-                    className="flex items-center gap-2 sm:gap-3 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent-500 data-[state=active]:bg-accent-500/10 transition-colors sm:w-full text-left whitespace-nowrap touch-manipulation min-h-[44px]"
-                  >
+  const handleMaximize = () => {
+    setSettingsMaximized(true)
+    if (!maximized) onOpenChange(false)
+  }
+
+  const handleMinimize = () => {
+    setSettingsMaximized(false)
+  }
+
+  const tabTriggerClass = "flex items-center gap-2 sm:gap-3 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent-500 data-[state=active]:bg-accent-500/10 transition-colors sm:w-full text-left whitespace-nowrap touch-manipulation min-h-[44px]"
+
+  const settingsContent = (
+    <Tabs.Root
+      value={s.activeTab}
+      onValueChange={s.setActiveTab}
+      className="flex-1 flex flex-col sm:flex-row min-h-0"
+    >
+      <div className={`${maximized ? 'sm:w-56' : 'sm:w-48'} bg-surface-elevated border-b sm:border-b-0 sm:border-r border-border-subtle flex-shrink-0`}>
+        {!maximized && (
+          <>
+            <div className="hidden sm:block p-4 border-b border-border-subtle">
+              <h2 className="text-lg font-semibold text-text-primary">Settings</h2>
+            </div>
+            <div className="flex sm:hidden items-center justify-between p-4 border-b border-border-subtle">
+              <h2 className="text-lg font-semibold text-text-primary">Settings</h2>
+            </div>
+          </>
+        )}
+        <Tabs.List className="flex sm:flex-col gap-1 sm:space-y-1 p-2 overflow-x-auto sm:overflow-x-visible">
+                  <Tabs.Trigger value="ai" className={tabTriggerClass}>
                     <SiBasicattentiontoken className="w-4 h-4" />
                     <span className="hidden sm:inline">Configuration</span>
                     <span className="sm:hidden">Config</span>
                   </Tabs.Trigger>
-                  <Tabs.Trigger
-                    value="payments"
-                    className="flex items-center gap-2 sm:gap-3 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent-500 data-[state=active]:bg-accent-500/10 transition-colors sm:w-full text-left whitespace-nowrap touch-manipulation min-h-[44px]"
-                  >
+                  <Tabs.Trigger value="payments" className={tabTriggerClass}>
                     <CreditCard className="w-4 h-4" />
                     x402
                   </Tabs.Trigger>
-                  <Tabs.Trigger
-                    value="security"
-                    className="flex items-center gap-2 sm:gap-3 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent-500 data-[state=active]:bg-accent-500/10 transition-colors sm:w-full text-left whitespace-nowrap touch-manipulation min-h-[44px]"
-                  >
+                  <Tabs.Trigger value="security" className={tabTriggerClass}>
                     <Shield className="w-4 h-4" />
                     Security
                   </Tabs.Trigger>
-                  <Tabs.Trigger
-                    value="appearance"
-                    className="flex items-center gap-2 sm:gap-3 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent-500 data-[state=active]:bg-accent-500/10 transition-colors sm:w-full text-left whitespace-nowrap touch-manipulation min-h-[44px]"
-                  >
+                  <Tabs.Trigger value="appearance" className={tabTriggerClass}>
                     <Palette className="w-4 h-4" />
                     <span className="hidden sm:inline">Appearance</span>
                     <span className="sm:hidden">Theme</span>
@@ -121,7 +117,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               </div>
 
               <div className="flex-1 overflow-hidden relative min-h-0">
-                <div className="absolute inset-0 sm:top-[60px] overflow-hidden">
+                <div className={`absolute inset-0 ${maximized ? '' : 'sm:top-[60px]'} overflow-hidden`}>
                   <Tabs.Content
                     value="ai"
                     className="h-full overflow-y-auto px-4 sm:px-6 py-4 sm:py-6 space-y-6 settings-scroll"
@@ -715,6 +711,69 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 </div>
               </div>
             </Tabs.Root>
+  )
+
+  if (maximized) {
+    return (
+      <>
+        <div className="h-full flex flex-col bg-surface-base overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle bg-surface-elevated flex-shrink-0">
+            <h2 className="text-lg font-semibold text-text-primary">Settings</h2>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleMinimize}
+                className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
+                title="Pop out to dialog"
+              >
+                <Minimize2 className="w-4 h-4 text-text-secondary" />
+              </button>
+              <button
+                onClick={() => onOpenChange(false)}
+                className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
+                title="Close settings"
+              >
+                <X className="w-5 h-5 text-text-secondary" />
+              </button>
+            </div>
+          </div>
+          <div className="flex-1 flex min-h-0">
+            {settingsContent}
+          </div>
+        </div>
+
+        <NetworkManagementDialog
+          open={s.networkDialogOpen}
+          onOpenChange={s.setNetworkDialogOpen}
+          network={s.editingNetwork}
+          onSave={s.handleAddNetwork}
+          onUpdate={s.handleUpdateNetwork}
+        />
+      </>
+    )
+  }
+
+  return (
+    <>
+      <Dialog.Root open={open} onOpenChange={onOpenChange}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="dialog-overlay" />
+          <Dialog.Content className="dialog-content bg-surface-base rounded-none sm:rounded-xl shadow-2xl border-0 sm:border border-border-subtle w-full h-full sm:w-[95vw] sm:max-w-[800px] sm:h-[85vh] sm:max-h-[600px] flex overflow-hidden">
+            <div className="absolute top-4 right-4 z-10 flex items-center gap-1">
+              <button
+                onClick={handleMaximize}
+                className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
+                title="Maximize settings"
+              >
+                <Maximize2 className="w-4 h-4 text-text-secondary" />
+              </button>
+              <Dialog.Close asChild>
+                <button className="p-2 rounded-lg hover:bg-surface-hover transition-colors">
+                  <X className="w-5 h-5 text-text-secondary" />
+                </button>
+              </Dialog.Close>
+            </div>
+
+            {settingsContent}
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>

@@ -165,6 +165,8 @@ export function ResearchView() {
 
   const { openClawGatewayUrl, openClawAuthToken, openClawAutoConnect } = useSettingsStore()
 
+  const settingsMaximized = useUIStore((s) => s.settingsMaximized)
+
   const [activeTab, setActiveTab] = useState('research')
   const [input, setInput] = useState('')
   const [showSettings, setShowSettings] = useState(false)
@@ -664,7 +666,13 @@ export function ResearchView() {
           <YieldView />
         </Tabs.Content>
 
-        {!isMobile && <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />}
+        {!isMobile && settingsMaximized && showSettings ? (
+          <div className="absolute inset-0 z-30 flex flex-col" style={{ top: 0 }}>
+            <SettingsDialog open={showSettings} onOpenChange={setShowSettings} maximized />
+          </div>
+        ) : (
+          !isMobile && <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />
+        )}
       </div>
 
       {showApeInterface && selectedResearch && (

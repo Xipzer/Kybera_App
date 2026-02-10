@@ -15,7 +15,6 @@ import {
   TrendingUp,
   Clock,
   CheckCircle2,
-  Wallet,
   ArrowUpRight,
   ArrowDownLeft,
 } from 'lucide-react'
@@ -122,16 +121,11 @@ export function WalletDetailView() {
         className={`p-4 sm:p-6 ${styles.headerBg} backdrop-blur-sm border-b ${styles.headerBorder}`}
       >
         <div className="mb-4 sm:mb-5">
-          <div className="flex items-center gap-2 sm:gap-3 mb-2">
-            <div className={`p-1.5 sm:p-2 rounded-lg ${styles.walletIconBg} shadow-lg`}>
-              <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-            </div>
-            <h2
-              className={`text-xl sm:text-2xl font-bold bg-gradient-to-r ${styles.titleGradient} bg-clip-text text-transparent`}
-            >
-              {activeWallet.name}
-            </h2>
-          </div>
+          <h2
+            className={`text-xl sm:text-2xl font-bold bg-gradient-to-r ${styles.titleGradient} bg-clip-text text-transparent mb-2`}
+          >
+            {activeWallet.name}
+          </h2>
 
           <div
             className={`inline-flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg ${styles.addressBg}`}

@@ -23,6 +23,7 @@ interface UIState {
   syncOpacity: boolean
   particlesLockscreen: boolean
   particlesApp: boolean
+  settingsMaximized: boolean
 
   toggleWalletDrawer: () => void
   setWalletDrawerWidth: (width: number) => void
@@ -39,6 +40,7 @@ interface UIState {
   setSyncOpacity: (sync: boolean) => void
   setParticlesLockscreen: (enabled: boolean) => void
   setParticlesApp: (enabled: boolean) => void
+  setSettingsMaximized: (maximized: boolean) => void
 }
 
 export const useUIStore = create<UIState>()(
@@ -58,6 +60,7 @@ export const useUIStore = create<UIState>()(
       syncOpacity: false,
       particlesLockscreen: true,
       particlesApp: true,
+      settingsMaximized: false,
 
       toggleWalletDrawer: () => {
         set((state) => ({ walletDrawerOpen: !state.walletDrawerOpen }))
@@ -120,6 +123,10 @@ export const useUIStore = create<UIState>()(
 
       setParticlesApp: (enabled) => {
         set({ particlesApp: enabled })
+      },
+
+      setSettingsMaximized: (maximized) => {
+        set({ settingsMaximized: maximized })
       },
     }),
     {
