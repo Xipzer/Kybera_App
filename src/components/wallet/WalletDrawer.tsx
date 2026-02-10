@@ -2,7 +2,7 @@
  * Code by Xipzer
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ChevronDown,
   Copy,
@@ -34,7 +34,7 @@ import { ExportWalletDialog } from './ExportWalletDialog'
 import { ImportGroupDialog } from './ImportGroupDialog'
 import { WalletDetailView } from './WalletDetailView'
 
-import { Panel, PanelGroup, PanelResizeHandle, ImperativePanelHandle } from 'react-resizable-panels'
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { useTheme } from '../../hooks/useTheme'
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard'
 import { useUIStore } from '../../store/uiStore'
@@ -775,25 +775,11 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
     </Tabs.Root>
   )
 
-  const walletListPanelRef = useRef<ImperativePanelHandle>(null)
-
-  const handleListCollapse = useCallback(() => {
-    if (isWalletListCollapsed) {
-      walletListPanelRef.current?.collapse()
-    } else {
-      walletListPanelRef.current?.expand()
-    }
-  }, [isWalletListCollapsed])
-
-  useEffect(() => {
-    handleListCollapse()
-  }, [handleListCollapse])
-
   return (
     <div
       className={`h-full ${theme.styles.drawerContainer} panel-content-fade-right relative overflow-hidden`}
     >
-      {particlesApp && !isWalletListCollapsed && (
+      {particlesApp && (
         <>
           <CollapsedParticles
             color={theme.styles.unlockScreen.particleColor}
@@ -807,30 +793,30 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
           />
         </>
       )}
-      <div className="h-full flex flex-col relative z-10">
-        {walletListHeader}
-        <PanelGroup direction="vertical" className="flex-1 min-h-0">
-          <Panel
-            ref={walletListPanelRef}
-            defaultSize={50}
-            minSize={0}
-            collapsible
-            collapsedSize={0}
-            className="overflow-hidden"
-          >
-            {walletListContent}
-          </Panel>
+      <PanelGroup direction="vertical" className="h-full relative z-10">
+        <Panel
+          defaultSize={50}
+          minSize={activeWalletId ? (isWalletListCollapsed ? 10 : 30) : 100}
+          maxSize={activeWalletId ? (isWalletListCollapsed ? 10 : 70) : 100}
+          className="flex flex-col overflow-hidden"
+        >
+          {walletListHeader}
+          {!isWalletListCollapsed && walletListContent}
+          {dialogs}
+        </Panel>
 
-          <PanelResizeHandle
-            className={`h-px transition-colors ${activeWalletId ? theme.styles.resizeHandle : ''} ${activeWalletId ? theme.styles.resizeHandleHover : ''}`}
-            disabled={!activeWalletId}
-          />
-          <Panel minSize={activeWalletId ? 20 : 0} className="overflow-hidden">
-            {activeWalletId && <WalletDetailView />}
-          </Panel>
-        </PanelGroup>
-        {dialogs}
-      </div>
+        {activeWalletId && (
+          <>
+            <PanelResizeHandle
+              className={`h-px transition-colors ${theme.styles.resizeHandle} ${theme.styles.resizeHandleHover}`}
+              disabled={isWalletListCollapsed}
+            />
+            <Panel minSize={20}>
+              <WalletDetailView />
+            </Panel>
+          </>
+        )}
+      </PanelGroup>
     </div>
   )
 }
