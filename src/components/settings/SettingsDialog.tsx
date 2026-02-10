@@ -101,7 +101,7 @@ export function SettingsDialog({ open, onOpenChange, maximized = false }: Settin
                   </Tabs.Trigger>
                   <Tabs.Trigger value="payments" className={tabTriggerClass}>
                     <CreditCard className="w-4 h-4" />
-                    x402
+                    x402 Payments
                   </Tabs.Trigger>
                   <Tabs.Trigger value="security" className={tabTriggerClass}>
                     <Shield className="w-4 h-4" />

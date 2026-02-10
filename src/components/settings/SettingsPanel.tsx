@@ -81,7 +81,7 @@ export function SettingsPanel() {
               className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent data-[state=active]:bg-accent/10 transition-colors whitespace-nowrap touch-manipulation min-h-[44px]"
             >
               <CreditCard className="w-4 h-4" />
-              Payments
+              x402 Payments
             </Tabs.Trigger>
           </Tabs.List>
 
