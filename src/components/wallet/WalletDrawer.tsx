@@ -397,8 +397,8 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
       if (panelGroupHeight <= 0) return
 
       const fixedHeight = headerEl.offsetHeight + (tabBarEl?.offsetHeight || 0)
-      const pct = Math.ceil((fixedHeight / panelGroupHeight) * 100) + 1
-      setListMinSize(Math.max(10, Math.min(pct, 60)))
+      const pct = (fixedHeight / panelGroupHeight) * 100
+      setListMinSize(Math.max(5, Math.min(Math.round(pct), 60)))
     }
 
     update()
