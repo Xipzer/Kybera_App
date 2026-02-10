@@ -321,6 +321,38 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
     setExportWallet(wallet)
   }
 
+  const panelGroupRef = useRef<HTMLDivElement>(null)
+  const tabBarRef = useRef<HTMLDivElement>(null)
+  const [listMinPct, setListMinPct] = useState(15)
+  const listPanelRef = useRef<any>(null)
+
+  useEffect(() => {
+    if (isWalletListCollapsed) {
+      listPanelRef.current?.collapse()
+    } else {
+      listPanelRef.current?.expand()
+    }
+  }, [isWalletListCollapsed])
+
+  useEffect(() => {
+    const update = () => {
+      const panelGroupEl = panelGroupRef.current
+      const tabBarEl = tabBarRef.current
+      if (!panelGroupEl || !tabBarEl) return
+
+      const panelGroupHeight = panelGroupEl.offsetHeight
+      if (panelGroupHeight <= 0) return
+
+      const pct = (tabBarEl.offsetHeight / panelGroupHeight) * 100
+      setListMinPct(Math.max(5, Math.min(Math.ceil(pct), 60)))
+    }
+
+    update()
+    const observer = new ResizeObserver(update)
+    if (panelGroupRef.current) observer.observe(panelGroupRef.current)
+    return () => observer.disconnect()
+  }, [])
+
   if (collapsed) {
     const unlockStyles = theme.styles.unlockScreen
     return (
@@ -380,38 +412,6 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
       <ImportGroupDialog open={showImportGroupDialog} onOpenChange={setShowImportGroupDialog} />
     </>
   )
-
-  const panelGroupRef = useRef<HTMLDivElement>(null)
-  const tabBarRef = useRef<HTMLDivElement>(null)
-  const [listMinPct, setListMinPct] = useState(15)
-  const listPanelRef = useRef<any>(null)
-
-  useEffect(() => {
-    if (isWalletListCollapsed) {
-      listPanelRef.current?.collapse()
-    } else {
-      listPanelRef.current?.expand()
-    }
-  }, [isWalletListCollapsed])
-
-  useEffect(() => {
-    const update = () => {
-      const panelGroupEl = panelGroupRef.current
-      const tabBarEl = tabBarRef.current
-      if (!panelGroupEl || !tabBarEl) return
-
-      const panelGroupHeight = panelGroupEl.offsetHeight
-      if (panelGroupHeight <= 0) return
-
-      const pct = (tabBarEl.offsetHeight / panelGroupHeight) * 100
-      setListMinPct(Math.max(5, Math.min(Math.ceil(pct), 60)))
-    }
-
-    update()
-    const observer = new ResizeObserver(update)
-    if (panelGroupRef.current) observer.observe(panelGroupRef.current)
-    return () => observer.disconnect()
-  }, [])
 
   const walletListHeader = (
     <div
