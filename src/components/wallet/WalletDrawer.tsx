@@ -337,9 +337,11 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
 
   useEffect(() => {
     if (activeWalletId) {
+      listPanelRef.current?.resize(50)
       detailPanelRef.current?.expand()
     } else {
       detailPanelRef.current?.collapse()
+      listPanelRef.current?.resize(100)
     }
   }, [activeWalletId])
 
@@ -842,9 +844,9 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
           <PanelGroup direction="vertical" className="h-full">
             <Panel
               ref={listPanelRef}
+              id="wallet-list"
               defaultSize={activeWalletId ? 50 : 100}
-              minSize={activeWalletId ? listMinPct : 100}
-              maxSize={activeWalletId ? 80 : 100}
+              minSize={listMinPct}
               collapsible
               collapsedSize={0}
               className="overflow-hidden"
@@ -859,11 +861,11 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
             />
             <Panel
               ref={detailPanelRef}
+              id="wallet-detail"
               defaultSize={activeWalletId ? 50 : 0}
-              minSize={0}
+              minSize={20}
               collapsible
               collapsedSize={0}
-              className="overflow-hidden"
             >
               <WalletDetailView />
             </Panel>
