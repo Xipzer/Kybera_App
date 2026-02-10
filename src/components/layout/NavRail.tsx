@@ -3,12 +3,9 @@
  */
 
 import { useEffect, useRef } from 'react'
-import * as Popover from '@radix-ui/react-popover'
 import { LuBrain } from 'react-icons/lu'
-import { BarChart3, Eye, TrendingUp, Sprout, Bell } from 'lucide-react'
+import { BarChart3, Eye, TrendingUp, Sprout } from 'lucide-react'
 import { useUIStore, type NavItem } from '../../store/uiStore'
-import { useNotificationStore } from '../../store/notificationStore'
-import { NotificationPanel } from '../notifications/NotificationPanel'
 import { useTheme } from '../../hooks/useTheme'
 
 export const NAV_RAIL_COLLAPSED = 'calc(4vw / 1.04)'
@@ -102,7 +99,6 @@ function NavParticles({ color, opacity = 0.6 }: { color: string; opacity?: numbe
 
 export function NavRail() {
   const { activeNavItem, setActiveNavItem, particlesApp } = useUIStore()
-  const unreadCount = useNotificationStore((s) => s.unreadCount)
   const { theme } = useTheme()
   const unlockStyles = theme.styles.unlockScreen
 
@@ -135,7 +131,7 @@ export function NavRail() {
             onClick={() => setActiveNavItem(item.id)}
             className={`flex items-center gap-0 group-hover/rail:gap-3 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-300 w-full ${
               activeNavItem === item.id
-                ? `${theme.styles.iconAccent} bg-accent/10 font-semibold`
+                ? `${theme.styles.iconAccent} font-semibold`
                 : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'
             }`}
             style={{
@@ -152,45 +148,7 @@ export function NavRail() {
         ))}
       </nav>
 
-      <div className="h-px bg-border-subtle mx-2 my-1 flex-shrink-0 relative z-10" />
 
-      <div className="px-1 pb-1 relative z-10">
-        <Popover.Root>
-          <Popover.Trigger asChild>
-            <button
-              className="relative flex items-center gap-0 group-hover/rail:gap-3 rounded-lg text-sm font-medium whitespace-nowrap text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-all duration-300 w-full"
-              style={{
-                height: ICON_ZONE,
-                paddingLeft: `calc((${ICON_ZONE} - 18px) / 2)`,
-                paddingRight: `calc((${ICON_ZONE} - 18px) / 2)`,
-              }}
-            >
-              <div className="relative flex-shrink-0">
-                <Bell className="w-[18px] h-[18px]" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] px-0.5 flex items-center justify-center rounded-full bg-red-500 text-white text-[8px] font-bold leading-none shadow-lg">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
-              </div>
-              <span className="opacity-0 group-hover/rail:opacity-100 transition-opacity duration-200 delay-[50ms] overflow-hidden">
-                Notifications
-              </span>
-            </button>
-          </Popover.Trigger>
-          <Popover.Portal>
-            <Popover.Content
-              className="w-[380px] max-h-[520px] bg-surface-base border border-border-subtle rounded-xl shadow-2xl z-[120] overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
-              side="right"
-              sideOffset={8}
-              align="end"
-            >
-              <NotificationPanel compact />
-              <Popover.Arrow className="fill-surface-base" />
-            </Popover.Content>
-          </Popover.Portal>
-        </Popover.Root>
-      </div>
     </aside>
   )
 }
