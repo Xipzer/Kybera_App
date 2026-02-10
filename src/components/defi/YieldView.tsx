@@ -63,6 +63,7 @@ export function YieldView() {
   const styles = theme.styles.chatInterface
   const [opportunities, setOpportunities] = useState<YieldOpportunity[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [tokenFilter, setTokenFilter] = useState('')
   const [networkFilter, setNetworkFilter] = useState('')
   const [riskFilter, setRiskFilter] = useState('')
@@ -71,6 +72,7 @@ export function YieldView() {
 
   const fetchYields = useCallback(async () => {
     setIsLoading(true)
+    setError(null)
     try {
       const params: YieldSearchParams = { sortBy, limit: 50 }
       if (networkFilter) params.networkId = networkFilter
@@ -79,7 +81,7 @@ export function YieldView() {
       if (riskFilter) params.maxRisk = riskFilter as 'low' | 'medium' | 'high'
       setOpportunities(await yieldService.getYieldOpportunities(params))
     } catch (err) {
-      console.error('Failed to fetch yields:', err)
+      setError(err instanceof Error ? err.message : 'Failed to fetch yield data')
     } finally {
       setIsLoading(false)
     }
@@ -170,6 +172,16 @@ export function YieldView() {
         <div className="flex flex-col items-center justify-center py-16 gap-3">
           <Loader2 className="w-6 h-6 text-accent-500 animate-spin" />
           <span className="text-xs text-text-tertiary">Scanning protocols...</span>
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center py-16 gap-3">
+          <div className="text-sm text-red-400 text-center max-w-sm">{error}</div>
+          <button
+            onClick={fetchYields}
+            className={`px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r ${styles.sendGradient} text-white shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]`}
+          >
+            Retry
+          </button>
         </div>
       ) : opportunities.length === 0 ? (
         <EmptyState
