@@ -382,40 +382,39 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
   )
 
   const panelGroupRef = useRef<HTMLDivElement>(null)
-  const headerRef = useRef<HTMLDivElement>(null)
   const tabBarRef = useRef<HTMLDivElement>(null)
-  const [listMinPct, setListMinPct] = useState(35)
+  const [listMinPct, setListMinPct] = useState(15)
   const listPanelRef = useRef<any>(null)
+
+  useEffect(() => {
+    if (isWalletListCollapsed) {
+      listPanelRef.current?.collapse()
+    } else {
+      listPanelRef.current?.expand()
+    }
+  }, [isWalletListCollapsed])
 
   useEffect(() => {
     const update = () => {
       const panelGroupEl = panelGroupRef.current
-      const headerEl = headerRef.current
       const tabBarEl = tabBarRef.current
-      if (!panelGroupEl || !headerEl) return
+      if (!panelGroupEl || !tabBarEl) return
 
       const panelGroupHeight = panelGroupEl.offsetHeight
       if (panelGroupHeight <= 0) return
 
-      const fixedHeight = headerEl.offsetHeight + (tabBarEl?.offsetHeight || 0)
-      const pct = (fixedHeight / panelGroupHeight) * 100
+      const pct = (tabBarEl.offsetHeight / panelGroupHeight) * 100
       setListMinPct(Math.max(5, Math.min(Math.ceil(pct), 60)))
-
-      if (isWalletListCollapsed && listPanelRef.current) {
-        listPanelRef.current.resize(pct)
-      }
     }
 
     update()
     const observer = new ResizeObserver(update)
     if (panelGroupRef.current) observer.observe(panelGroupRef.current)
-    if (headerRef.current) observer.observe(headerRef.current)
     return () => observer.disconnect()
-  }, [isWalletListCollapsed])
+  }, [])
 
   const walletListHeader = (
     <div
-      ref={headerRef}
       className={`p-4 flex-shrink-0 ${theme.styles.panelHeader} ${isWalletListCollapsed ? `border-b border-border-subtle` : ''}`}
     >
       <div className={`flex items-center justify-between ${isWalletListCollapsed ? '' : 'mb-4'}`}>
@@ -826,32 +825,38 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
           />
         </>
       )}
-      <div ref={panelGroupRef} className="h-full relative z-10">
-      <PanelGroup direction="vertical" className="h-full">
-        <Panel
-          ref={listPanelRef}
-          defaultSize={50}
-          minSize={activeWalletId ? listMinPct : 100}
-          maxSize={activeWalletId && isWalletListCollapsed ? listMinPct : (activeWalletId ? 80 : 100)}
-          className="flex flex-col overflow-hidden"
-        >
+      <div className="h-full flex flex-col relative z-10">
+        <div className="flex-shrink-0">
           {walletListHeader}
-          {!isWalletListCollapsed && walletListContent}
-          {dialogs}
-        </Panel>
-
-        {activeWalletId && (
-          <>
-            <PanelResizeHandle
-              className={`h-px transition-colors ${theme.styles.resizeHandle} ${theme.styles.resizeHandleHover}`}
-              disabled={isWalletListCollapsed}
-            />
-            <Panel minSize={20}>
-              <WalletDetailView />
+        </div>
+        <div ref={panelGroupRef} className="flex-1 min-h-0">
+          <PanelGroup direction="vertical" className="h-full">
+            <Panel
+              ref={listPanelRef}
+              defaultSize={50}
+              minSize={activeWalletId ? listMinPct : 100}
+              maxSize={activeWalletId ? 80 : 100}
+              collapsible
+              collapsedSize={0}
+              className="overflow-hidden"
+            >
+              {walletListContent}
+              {dialogs}
             </Panel>
-          </>
-        )}
-      </PanelGroup>
+
+            {activeWalletId && (
+              <>
+                <PanelResizeHandle
+                  className={`h-px transition-colors ${theme.styles.resizeHandle} ${theme.styles.resizeHandleHover}`}
+                  disabled={isWalletListCollapsed}
+                />
+                <Panel minSize={20}>
+                  <WalletDetailView />
+                </Panel>
+              </>
+            )}
+          </PanelGroup>
+        </div>
       </div>
     </div>
   )
