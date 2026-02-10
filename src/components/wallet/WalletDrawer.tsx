@@ -325,6 +325,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
   const tabBarRef = useRef<HTMLDivElement>(null)
   const [listMinPct, setListMinPct] = useState(15)
   const listPanelRef = useRef<any>(null)
+  const detailPanelRef = useRef<any>(null)
 
   useEffect(() => {
     if (isWalletListCollapsed) {
@@ -333,6 +334,14 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
       listPanelRef.current?.expand()
     }
   }, [isWalletListCollapsed])
+
+  useEffect(() => {
+    if (activeWalletId) {
+      detailPanelRef.current?.expand()
+    } else {
+      detailPanelRef.current?.collapse()
+    }
+  }, [activeWalletId])
 
   useEffect(() => {
     const update = () => {
@@ -833,7 +842,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
           <PanelGroup direction="vertical" className="h-full">
             <Panel
               ref={listPanelRef}
-              defaultSize={50}
+              defaultSize={activeWalletId ? 50 : 100}
               minSize={activeWalletId ? listMinPct : 100}
               maxSize={activeWalletId ? 80 : 100}
               collapsible
@@ -844,17 +853,20 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
               {dialogs}
             </Panel>
 
-            {activeWalletId && (
-              <>
-                <PanelResizeHandle
-                  className={`h-px transition-colors ${theme.styles.resizeHandle} ${theme.styles.resizeHandleHover}`}
-                  disabled={isWalletListCollapsed}
-                />
-                <Panel minSize={20}>
-                  <WalletDetailView />
-                </Panel>
-              </>
-            )}
+            <PanelResizeHandle
+              className={`h-px transition-colors ${theme.styles.resizeHandle} ${theme.styles.resizeHandleHover}`}
+              disabled={isWalletListCollapsed || !activeWalletId}
+            />
+            <Panel
+              ref={detailPanelRef}
+              defaultSize={activeWalletId ? 50 : 0}
+              minSize={0}
+              collapsible
+              collapsedSize={0}
+              className="overflow-hidden"
+            >
+              <WalletDetailView />
+            </Panel>
           </PanelGroup>
         </div>
       </div>
