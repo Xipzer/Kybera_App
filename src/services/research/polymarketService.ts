@@ -26,7 +26,7 @@ interface CacheEntry<T> {
 }
 
 class PolymarketService {
-  private readonly API_URL = 'https://gamma-api.polymarket.com'
+  private readonly API_URL = '/api/polymarket'
   private readonly MARKET_LIST_TTL = 5 * 60 * 1000 // 5 minutes
   private readonly SINGLE_MARKET_TTL = 1 * 60 * 1000 // 1 minute
 
