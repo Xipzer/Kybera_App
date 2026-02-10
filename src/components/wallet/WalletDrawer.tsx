@@ -37,7 +37,8 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { useTheme } from '../../hooks/useTheme'
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard'
 import { useUIStore } from '../../store/uiStore'
-import { formatAddress } from '../../utils/formatters'
+import { formatAddress, formatUSD } from '../../utils/formatters'
+import { useWalletListBalances } from '../../hooks/useWalletListBalances'
 
 import {
   closestCenter,
@@ -259,6 +260,23 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
   }, [wallets])
 
   const walletsByType = sortedWallets
+  const walletBalances = useWalletListBalances(wallets)
+
+  const groupTotals = useMemo(() => {
+    const totals = new Map<string, number>()
+    for (const group of actualGroups) {
+      const groupWallets = wallets.filter((w) => w.groupId === group.id)
+      totals.set(group.id, groupWallets.reduce((sum, w) => sum + (walletBalances.get(w.id) || 0), 0))
+    }
+    return totals
+  }, [actualGroups, wallets, walletBalances])
+
+  const tabTotals = useMemo(() => ({
+    groups: actualGroups.reduce((sum, g) => sum + (groupTotals.get(g.id) || 0), 0),
+    evm: walletsByType.EVM.reduce((sum, w) => sum + (walletBalances.get(w.id) || 0), 0),
+    svm: walletsByType.SVM.reduce((sum, w) => sum + (walletBalances.get(w.id) || 0), 0),
+    all: wallets.reduce((sum, w) => sum + (walletBalances.get(w.id) || 0), 0),
+  }), [actualGroups, groupTotals, walletsByType, walletBalances, wallets])
 
   const handleGroupDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
@@ -456,16 +474,20 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
     <Tabs.Root defaultValue="groups" className="flex-1 flex flex-col min-h-0">
       <Tabs.List className={`${theme.styles.tabs.list} flex-shrink-0`}>
         <Tabs.Trigger value="groups" className={theme.styles.tabs.trigger}>
-          Groups ({actualGroups.length})
+          <span>Groups ({actualGroups.length})</span>
+          {tabTotals.groups > 0 && <span className="text-xs text-text-tertiary ml-1">• {formatUSD(tabTotals.groups)}</span>}
         </Tabs.Trigger>
         <Tabs.Trigger value="evm" className={theme.styles.tabs.trigger}>
-          EVM ({walletsByType.EVM.length})
+          <span>EVM ({walletsByType.EVM.length})</span>
+          {tabTotals.evm > 0 && <span className="text-xs text-text-tertiary ml-1">• {formatUSD(tabTotals.evm)}</span>}
         </Tabs.Trigger>
         <Tabs.Trigger value="svm" className={theme.styles.tabs.trigger}>
-          SVM ({walletsByType.SVM.length})
+          <span>SVM ({walletsByType.SVM.length})</span>
+          {tabTotals.svm > 0 && <span className="text-xs text-text-tertiary ml-1">• {formatUSD(tabTotals.svm)}</span>}
         </Tabs.Trigger>
         <Tabs.Trigger value="all" className={theme.styles.tabs.trigger}>
-          All ({wallets.length})
+          <span>All ({wallets.length})</span>
+          {tabTotals.all > 0 && <span className="text-xs text-text-tertiary ml-1">• {formatUSD(tabTotals.all)}</span>}
         </Tabs.Trigger>
       </Tabs.List>
 
@@ -519,6 +541,8 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
                         onRenameWallet={(wallet) => setRenameWallet(wallet)}
                         onDeleteWallet={(walletId) => removeWallet(walletId)}
                         onCopyAddress={(address) => copyAddress(address)}
+                        groupTotalUSD={groupTotals.get(group.id)}
+                        walletBalances={walletBalances}
                       />
                     ))}
                   </SortableContext>
@@ -549,6 +573,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
                             onExport={() => handleExportWallet(wallet)}
                             onDelete={() => removeWallet(wallet.id)}
                             network={activeNetwork}
+                            totalUSD={walletBalances.get(wallet.id)}
                           />
                         ))}
                     </div>
@@ -600,6 +625,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
                         onExport={() => handleExportWallet(wallet)}
                         onDelete={() => removeWallet(wallet.id)}
                         network={activeNetwork}
+                        totalUSD={walletBalances.get(wallet.id)}
                       />
                     ))}
                   </SortableContext>
@@ -650,6 +676,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
                         onExport={() => handleExportWallet(wallet)}
                         onDelete={() => removeWallet(wallet.id)}
                         network={activeNetwork}
+                        totalUSD={walletBalances.get(wallet.id)}
                       />
                     ))}
                   </SortableContext>
@@ -693,6 +720,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
                           onExport={() => handleExportWallet(wallet)}
                           onDelete={() => removeWallet(wallet.id)}
                           network={activeNetwork}
+                          totalUSD={walletBalances.get(wallet.id)}
                         />
                       ))}
                     </SortableContext>
@@ -729,6 +757,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
                           onExport={() => handleExportWallet(wallet)}
                           onDelete={() => removeWallet(wallet.id)}
                           network={activeNetwork}
+                          totalUSD={walletBalances.get(wallet.id)}
                         />
                       ))}
                     </SortableContext>
@@ -809,6 +838,7 @@ interface WalletItemProps {
   onExport: () => void
   onDelete: () => void
   network?: any
+  totalUSD?: number
 }
 
 function WalletItem({
@@ -820,6 +850,7 @@ function WalletItem({
   onExport,
   onDelete,
   network,
+  totalUSD,
 }: WalletItemProps) {
   const { theme } = useTheme()
   const walletStyles = theme.styles.wallet
@@ -881,6 +912,9 @@ function WalletItem({
               <h4 className={`font-medium text-text-primary`} onDoubleClick={handleDoubleClick}>
                 {wallet.name}
               </h4>
+            )}
+            {totalUSD !== undefined && totalUSD > 0 && (
+              <span className="text-xs text-text-tertiary">• {formatUSD(totalUSD)}</span>
             )}
             {wallet.isImported && (
               <span
@@ -1001,6 +1035,8 @@ interface WalletGroupItemProps {
   onDeleteWallet: (walletId: string) => void
   onCopyAddress: (address: string) => void
   dragHandleProps?: any
+  groupTotalUSD?: number
+  walletBalances?: Map<string, number>
 }
 
 function WalletGroupItem({
@@ -1014,6 +1050,8 @@ function WalletGroupItem({
   onDeleteWallet,
   onCopyAddress,
   dragHandleProps,
+  groupTotalUSD,
+  walletBalances,
 }: WalletGroupItemProps) {
   const { removeWalletGroup, updateWalletGroup, activeNetwork } = useWalletStore()
   const { theme } = useTheme()
@@ -1099,14 +1137,15 @@ function WalletGroupItem({
                 {(() => {
                   const evmCount = group.evmWalletCount || 0
                   const svmCount = group.svmWalletCount || 0
+                  const usdSuffix = groupTotalUSD && groupTotalUSD > 0 ? ` • ${formatUSD(groupTotalUSD)}` : ''
 
                   if (evmCount > 0 && svmCount > 0) {
                     const totalCount = evmCount + svmCount
-                    return `Mixed • ${totalCount} Wallet${totalCount !== 1 ? 's' : ''} • ${evmCount} EVM / ${svmCount} SVM`
+                    return `Mixed • ${totalCount} Wallet${totalCount !== 1 ? 's' : ''} • ${evmCount} EVM / ${svmCount} SVM${usdSuffix}`
                   } else if (evmCount > 0) {
-                    return `EVM • ${evmCount} Wallet${evmCount !== 1 ? 's' : ''}`
+                    return `EVM • ${evmCount} Wallet${evmCount !== 1 ? 's' : ''}${usdSuffix}`
                   } else if (svmCount > 0) {
-                    return `SVM • ${svmCount} Wallet${svmCount !== 1 ? 's' : ''}`
+                    return `SVM • ${svmCount} Wallet${svmCount !== 1 ? 's' : ''}${usdSuffix}`
                   } else {
                     return `No wallets`
                   }
@@ -1189,6 +1228,7 @@ function WalletGroupItem({
                 onRenameWallet={onRenameWallet}
                 onDeleteWallet={onDeleteWallet}
                 network={activeNetwork}
+                totalUSD={walletBalances?.get(wallet.id)}
               />
             ))
           )}
@@ -1206,6 +1246,7 @@ interface GroupWalletItemProps {
   onRenameWallet: (wallet: any) => void
   onDeleteWallet: (walletId: string) => void
   network?: any
+  totalUSD?: number
 }
 
 function GroupWalletItem({
@@ -1216,6 +1257,7 @@ function GroupWalletItem({
   onRenameWallet,
   onDeleteWallet,
   network,
+  totalUSD,
 }: GroupWalletItemProps) {
   const { theme } = useTheme()
   const walletStyles = theme.styles.wallet
@@ -1275,12 +1317,17 @@ function GroupWalletItem({
               autoFocus
             />
           ) : (
-            <p
-              className={`text-sm font-medium text-text-primary`}
-              onDoubleClick={handleDoubleClick}
-            >
-              {wallet.name}
-            </p>
+            <div className="flex items-center gap-2">
+              <p
+                className={`text-sm font-medium text-text-primary`}
+                onDoubleClick={handleDoubleClick}
+              >
+                {wallet.name}
+              </p>
+              {totalUSD !== undefined && totalUSD > 0 && (
+                <span className="text-xs text-text-tertiary">• {formatUSD(totalUSD)}</span>
+              )}
+            </div>
           )}
           <div className="flex items-center gap-2 mt-0.5">
             <p className={`text-xs text-text-secondary font-mono`}>
