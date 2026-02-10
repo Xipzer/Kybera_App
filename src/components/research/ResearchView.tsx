@@ -479,7 +479,7 @@ export function ResearchView() {
           </Tabs.List>
         )}
 
-        <Tabs.Content value="research" className="flex-1 flex flex-col min-h-0">
+        <Tabs.Content value="research" className="flex-1 flex flex-col min-h-0 data-[state=inactive]:!hidden">
           {!openClawGatewayUrl ? (
             notConfiguredContent
           ) : (
@@ -648,19 +648,19 @@ export function ResearchView() {
           </div>
         </Tabs.Content>
 
-        <Tabs.Content value="portfolio" className="flex-1 min-h-0 overflow-hidden">
+        <Tabs.Content value="portfolio" className="flex-1 min-h-0 overflow-hidden data-[state=inactive]:!hidden">
           <PortfolioView />
         </Tabs.Content>
 
-        <Tabs.Content value="watchlist" className="flex-1 min-h-0 overflow-hidden">
+        <Tabs.Content value="watchlist" className="flex-1 min-h-0 overflow-hidden data-[state=inactive]:!hidden">
           <WatchlistView />
         </Tabs.Content>
 
-        <Tabs.Content value="markets" className="flex-1 min-h-0 overflow-hidden">
+        <Tabs.Content value="markets" className="flex-1 min-h-0 overflow-hidden data-[state=inactive]:!hidden">
           <PredictionMarketsView />
         </Tabs.Content>
 
-        <Tabs.Content value="yield" className="flex-1 min-h-0 overflow-hidden">
+        <Tabs.Content value="yield" className="flex-1 min-h-0 overflow-hidden data-[state=inactive]:!hidden">
           <YieldView />
         </Tabs.Content>
 
