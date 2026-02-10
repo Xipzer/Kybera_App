@@ -129,10 +129,10 @@ export function NavRail() {
           <button
             key={item.id}
             onClick={() => setActiveNavItem(item.id)}
-            className={`flex items-center gap-0 group-hover/rail:gap-3 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-300 w-full ${
+            className={`${theme.styles.buttonIcon} flex items-center gap-0 group-hover/rail:gap-3 rounded-lg text-sm font-medium whitespace-nowrap w-full ${
               activeNavItem === item.id
                 ? `${theme.styles.iconAccent} font-semibold`
-                : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'
+                : 'text-text-secondary hover:text-text-primary'
             }`}
             style={{
               height: ICON_ZONE,

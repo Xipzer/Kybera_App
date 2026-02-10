@@ -27,7 +27,7 @@ export function ExecutionNetworkSelector({ collapsed = false }: { collapsed?: bo
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild>
           <button
-            className="p-2 rounded-xl hover:bg-white/10 transition-colors group"
+            className={`${theme.styles.buttonIcon} p-2 rounded-lg`}
             title={`Execute on: ${activeNetwork.name}`}
           >
             <NetworkIcon

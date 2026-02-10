@@ -385,10 +385,10 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
         <div className="relative z-10 flex flex-col items-center pt-3 pb-4 h-full gap-3">
           <button
             onClick={lock}
-            className="p-2 rounded-xl hover:bg-white/10 transition-colors group"
+            className={`${theme.styles.buttonIcon} p-2 rounded-lg`}
             title="Lock wallet"
           >
-            <Lock className="w-4 h-4 text-text-secondary group-hover:text-text-primary transition-colors" />
+            <Lock className="w-4 h-4 text-text-secondary" />
           </button>
           <ExecutionNetworkSelector collapsed />
         </div>
