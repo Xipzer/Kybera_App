@@ -384,7 +384,8 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
   const panelGroupRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
   const tabBarRef = useRef<HTMLDivElement>(null)
-  const [listMinSize, setListMinSize] = useState(35)
+  const [listMinPct, setListMinPct] = useState(35)
+  const listPanelRef = useRef<any>(null)
 
   useEffect(() => {
     const update = () => {
@@ -398,7 +399,11 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
 
       const fixedHeight = headerEl.offsetHeight + (tabBarEl?.offsetHeight || 0)
       const pct = (fixedHeight / panelGroupHeight) * 100
-      setListMinSize(Math.max(5, Math.min(Math.round(pct), 60)))
+      setListMinPct(Math.max(5, Math.min(Math.ceil(pct), 60)))
+
+      if (isWalletListCollapsed && listPanelRef.current) {
+        listPanelRef.current.resize(pct)
+      }
     }
 
     update()
@@ -824,9 +829,10 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
       <div ref={panelGroupRef} className="h-full relative z-10">
       <PanelGroup direction="vertical" className="h-full">
         <Panel
+          ref={listPanelRef}
           defaultSize={50}
-          minSize={activeWalletId ? listMinSize : 100}
-          maxSize={activeWalletId ? (isWalletListCollapsed ? listMinSize : 80) : 100}
+          minSize={activeWalletId ? listMinPct : 100}
+          maxSize={activeWalletId && isWalletListCollapsed ? listMinPct : (activeWalletId ? 80 : 100)}
           className="flex flex-col overflow-hidden"
         >
           {walletListHeader}
