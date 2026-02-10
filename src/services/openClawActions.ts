@@ -4,11 +4,21 @@
 
 import { useWalletStore } from '../store/walletStore'
 import { useSettingsStore } from '../store/settingsStore'
+import { useNotificationStore } from '../store/notificationStore'
+import { useWatchlistStore } from '../store/watchlistStore'
+import { useX402Store } from '../store/x402Store'
 import { blockchainService } from './blockchain/blockchainService'
 import { swapService } from './api/swapService'
+import { goPlusService } from './research/goPlusService'
+import { polymarketService } from './research/polymarketService'
+import { portfolioService } from './portfolioService'
+import { x402Service } from './x402Service'
+import { YIELD_TOOL_DEFINITIONS, yieldActionHandlers } from './defi/yieldActions'
 import { EVM_NETWORKS, SVM_NETWORKS, getNetworksByType } from '../utils/networks'
 import { PendingAction, RiskLevel, ActionCategory } from '../types/aiActions'
 import { ChainType } from '../types'
+import type { ResearchNetwork } from '../types/research'
+import type { AlertConfig } from '../types/notifications'
 
 export interface ToolDefinition {
   name: string
@@ -322,6 +332,398 @@ const actionHandlers: Record<string, ActionHandler> = {
       },
     }
   },
+
+  get_token_security: async (params) => {
+    const { contractAddress, network } = params as { contractAddress: string; network: string }
+
+    try {
+      const result = await goPlusService.getTokenSecurity(contractAddress, network as ResearchNetwork)
+      if (!result) return { success: false, message: `No security data found for ${contractAddress} on ${network}`, error: 'NO_DATA' }
+      return {
+        success: true,
+        message: `GoPlus security report for ${contractAddress} on ${network} — risk score: ${result.riskScore}/100`,
+        data: {
+          contractAddress,
+          network,
+          riskScore: result.riskScore,
+          isHoneypot: result.isHoneypot,
+          isOpenSource: result.isOpenSource,
+          isProxy: result.isProxy,
+          isMintable: result.isMintable,
+          holderCount: result.holderCount,
+          riskFlags: result.riskFlags,
+        },
+      }
+    } catch (error) {
+      return { success: false, message: 'Failed to get token security report', error: String(error) }
+    }
+  },
+
+  check_malicious_address: async (params) => {
+    const { address, network } = params as { address: string; network: string }
+
+    try {
+      const result = await goPlusService.checkMaliciousAddress(address, network as ResearchNetwork)
+      if (!result) return { success: false, message: `Could not check address ${address} on ${network}`, error: 'NO_DATA' }
+      return {
+        success: true,
+        message: result.isMalicious
+          ? `Address ${address} is flagged as malicious (${result.maliciousType || 'unknown type'})`
+          : `Address ${address} is not flagged as malicious`,
+        data: {
+          address,
+          network,
+          isMalicious: result.isMalicious,
+          maliciousType: result.maliciousType,
+          tag: result.tag,
+        },
+      }
+    } catch (error) {
+      return { success: false, message: 'Failed to check malicious address', error: String(error) }
+    }
+  },
+
+  create_alert: async (params) => {
+    const { alertType, config } = params as { alertType: string; config: Record<string, unknown> }
+
+    try {
+      const alertConfig = { ...config, type: alertType } as unknown as AlertConfig
+      const alertId = useNotificationStore.getState().addAlert(alertConfig)
+      return {
+        success: true,
+        message: `Created ${alertType} alert`,
+        data: { alertId, alertType },
+      }
+    } catch (error) {
+      return { success: false, message: 'Failed to create alert', error: String(error) }
+    }
+  },
+
+  list_alerts: async () => {
+    const { alerts } = useNotificationStore.getState()
+    return {
+      success: true,
+      message: `Found ${alerts.length} configured alerts`,
+      data: {
+        alerts: alerts.map((a) => ({
+          id: a.id,
+          type: a.config.type,
+          enabled: a.enabled,
+          triggerCount: a.triggerCount,
+          lastTriggeredAt: a.lastTriggeredAt,
+          createdAt: a.createdAt,
+        })),
+        total: alerts.length,
+      },
+    }
+  },
+
+  delete_alert: async (params) => {
+    const { alertId } = params as { alertId: string }
+    const { alerts, removeAlert } = useNotificationStore.getState()
+
+    if (!alerts.find((a) => a.id === alertId)) {
+      return { success: false, message: `Alert "${alertId}" not found`, error: 'NOT_FOUND' }
+    }
+
+    try {
+      removeAlert(alertId)
+      return { success: true, message: `Deleted alert ${alertId}`, data: { alertId } }
+    } catch (error) {
+      return { success: false, message: 'Failed to delete alert', error: String(error) }
+    }
+  },
+
+  search_prediction_markets: async (params) => {
+    const { query, limit = 10 } = params as { query: string; limit?: number }
+
+    try {
+      const markets = await polymarketService.searchMarkets(query, limit)
+      return {
+        success: true,
+        message: `Found ${markets.length} prediction markets for "${query}"`,
+        data: {
+          markets: markets.map((m) => ({
+            id: m.id,
+            question: m.question,
+            outcomes: m.outcomes.map((o) => ({ label: o.label, probability: o.probability })),
+            volume: m.volume,
+            endDate: m.endDate,
+            active: m.active,
+            sourceUrl: m.sourceUrl,
+          })),
+          count: markets.length,
+        },
+      }
+    } catch (error) {
+      return { success: false, message: 'Failed to search prediction markets', error: String(error) }
+    }
+  },
+
+  get_prediction_market: async (params) => {
+    const { marketId } = params as { marketId: string }
+
+    try {
+      const market = await polymarketService.getMarket(marketId)
+      if (!market) return { success: false, message: `Market "${marketId}" not found`, error: 'NOT_FOUND' }
+      return {
+        success: true,
+        message: `Market: ${market.question}`,
+        data: {
+          id: market.id,
+          question: market.question,
+          description: market.description,
+          outcomes: market.outcomes.map((o) => ({ label: o.label, price: o.price, probability: o.probability })),
+          volume: market.volume,
+          liquidity: market.liquidity,
+          endDate: market.endDate,
+          active: market.active,
+          closed: market.closed,
+          resolved: market.resolved,
+          tags: market.tags,
+          sourceUrl: market.sourceUrl,
+        },
+      }
+    } catch (error) {
+      return { success: false, message: 'Failed to get prediction market', error: String(error) }
+    }
+  },
+
+  get_crypto_sentiment: async () => {
+    try {
+      const sentiment = await polymarketService.getSentimentForTopic('crypto')
+      return {
+        success: true,
+        message: sentiment.sentimentSummary,
+        data: {
+          overallSentiment: sentiment.overallSentiment,
+          summary: sentiment.sentimentSummary,
+          relevantMarkets: sentiment.relevantMarkets.map((m) => ({
+            id: m.id,
+            question: m.question,
+            outcomes: m.outcomes.map((o) => ({ label: o.label, probability: o.probability })),
+            volume: m.volume,
+          })),
+          marketCount: sentiment.relevantMarkets.length,
+          dataTimestamp: sentiment.dataTimestamp,
+        },
+      }
+    } catch (error) {
+      return { success: false, message: 'Failed to get crypto sentiment', error: String(error) }
+    }
+  },
+
+  get_portfolio_pnl: async (params) => {
+    const { walletAddress, timeRange = '24h' } = params as { walletAddress?: string; timeRange?: string }
+
+    const address = walletAddress || useWalletStore.getState().wallets.find((w) => w.id === useWalletStore.getState().activeWalletId)?.address
+    if (!address) return { success: false, message: 'No wallet address provided or active', error: 'NO_WALLET' }
+
+    try {
+      const summary = await portfolioService.getPortfolioSummary(address)
+      return {
+        success: true,
+        message: `Portfolio P/L for ${address.slice(0, 8)}...${address.slice(-6)}: $${summary.totalPnl.toFixed(2)} (${summary.totalPnlPercent.toFixed(2)}%)`,
+        data: {
+          walletAddress: address,
+          timeRange,
+          totalValueUsd: summary.totalValueUsd,
+          totalPnl: summary.totalPnl,
+          totalPnlPercent: summary.totalPnlPercent,
+          change1h: summary.change1h,
+          change24h: summary.change24h,
+          change7d: summary.change7d,
+          change30d: summary.change30d,
+          bestPerformer: summary.bestPerformer,
+          worstPerformer: summary.worstPerformer,
+          topHoldings: summary.topHoldings,
+        },
+      }
+    } catch (error) {
+      return { success: false, message: 'Failed to get portfolio P/L', error: String(error) }
+    }
+  },
+
+  get_trade_history: async (params) => {
+    const { walletAddress, limit = 20 } = params as { walletAddress?: string; limit?: number }
+
+    const address = walletAddress || useWalletStore.getState().wallets.find((w) => w.id === useWalletStore.getState().activeWalletId)?.address
+    if (!address) return { success: false, message: 'No wallet address provided or active', error: 'NO_WALLET' }
+
+    try {
+      const trades = await portfolioService.getTradeHistory(address, { limit })
+      return {
+        success: true,
+        message: `Found ${trades.length} trades for ${address.slice(0, 8)}...${address.slice(-6)}`,
+        data: {
+          walletAddress: address,
+          trades: trades.map((t) => ({
+            id: t.id,
+            tokenInSymbol: t.tokenInSymbol,
+            tokenOutSymbol: t.tokenOutSymbol,
+            tokenInAmount: t.tokenInAmount,
+            tokenOutAmount: t.tokenOutAmount,
+            totalValueUsd: t.totalValueUsd,
+            networkId: t.networkId,
+            timestamp: t.timestamp,
+            txHash: t.txHash,
+          })),
+          count: trades.length,
+        },
+      }
+    } catch (error) {
+      return { success: false, message: 'Failed to get trade history', error: String(error) }
+    }
+  },
+
+  add_watched_wallet: async (params) => {
+    const { address, label, networks = ['ethereum', 'base'] } = params as {
+      address: string
+      label?: string
+      networks?: string[]
+    }
+
+    try {
+      const watchId = useWatchlistStore.getState().addWallet({
+        address,
+        label: label || `Watched ${address.slice(0, 8)}`,
+        tags: ['custom'],
+        networks,
+        trackSwaps: true,
+        trackTransfers: true,
+        trackApprovals: false,
+        minValueUsd: 0,
+      })
+      return {
+        success: true,
+        message: `Added ${address.slice(0, 8)}...${address.slice(-6)} to watchlist`,
+        data: { watchId, address, label: label || `Watched ${address.slice(0, 8)}`, networks },
+      }
+    } catch (error) {
+      return { success: false, message: 'Failed to add watched wallet', error: String(error) }
+    }
+  },
+
+  remove_watched_wallet: async (params) => {
+    const { watchId } = params as { watchId: string }
+    const { watchedWallets, removeWallet } = useWatchlistStore.getState()
+
+    if (!watchedWallets.find((w) => w.id === watchId)) {
+      return { success: false, message: `Watched wallet "${watchId}" not found`, error: 'NOT_FOUND' }
+    }
+
+    try {
+      removeWallet(watchId)
+      return { success: true, message: `Removed watched wallet ${watchId}`, data: { watchId } }
+    } catch (error) {
+      return { success: false, message: 'Failed to remove watched wallet', error: String(error) }
+    }
+  },
+
+  list_watched_wallets: async () => {
+    const { watchedWallets } = useWatchlistStore.getState()
+    return {
+      success: true,
+      message: `Found ${watchedWallets.length} watched wallets`,
+      data: {
+        wallets: watchedWallets.map((w) => ({
+          id: w.id,
+          address: w.address,
+          label: w.label,
+          networks: w.networks,
+          addedAt: w.addedAt,
+          lastActivityAt: w.lastActivityAt,
+          lastCheckedAt: w.lastCheckedAt,
+        })),
+        total: watchedWallets.length,
+      },
+    }
+  },
+
+  get_wallet_activity: async (params) => {
+    const { watchId, limit = 20 } = params as { watchId: string; limit?: number }
+    const { watchedWallets } = useWatchlistStore.getState()
+
+    const wallet = watchedWallets.find((w) => w.id === watchId)
+    if (!wallet) return { success: false, message: `Watched wallet "${watchId}" not found`, error: 'NOT_FOUND' }
+
+    try {
+      const activities = useWatchlistStore.getState().getActivitiesForWallet(watchId, limit)
+      return {
+        success: true,
+        message: `Found ${activities.length} activities for ${wallet.label}`,
+        data: {
+          watchId,
+          walletLabel: wallet.label,
+          activities: activities.map((a) => ({
+            id: a.id,
+            activityType: a.activityType,
+            networkId: a.networkId,
+            txHash: a.txHash,
+            timestamp: a.timestamp,
+            tokenInSymbol: a.tokenInSymbol,
+            tokenOutSymbol: a.tokenOutSymbol,
+            estimatedValueUsd: a.estimatedValueUsd,
+          })),
+          count: activities.length,
+        },
+      }
+    } catch (error) {
+      return { success: false, message: 'Failed to get wallet activity', error: String(error) }
+    }
+  },
+
+  get_x402_status: async () => {
+    try {
+      const spending = x402Service.getDailySpending()
+      const { config } = useX402Store.getState()
+      return {
+        success: true,
+        message: `x402 ${config.enabled ? 'enabled' : 'disabled'} — $${spending.spent.toFixed(2)}/$${spending.budget.toFixed(2)} daily budget used`,
+        data: {
+          enabled: config.enabled,
+          dailySpent: spending.spent,
+          dailyBudget: spending.budget,
+          dailyRemaining: spending.remaining,
+          maxPerRequest: config.maxPerRequestUsd,
+          paymentWalletId: config.paymentWalletId,
+          approvedDomains: config.approvedDomains,
+          blockedDomains: config.blockedDomains,
+          totalLifetimeSpent: config.totalLifetimeSpentUsd,
+          totalPaymentCount: config.totalPaymentCount,
+        },
+      }
+    } catch (error) {
+      return { success: false, message: 'Failed to get x402 status', error: String(error) }
+    }
+  },
+
+  list_x402_payments: async () => {
+    try {
+      const payments = x402Service.getPaymentHistory(50)
+      return {
+        success: true,
+        message: `Found ${payments.length} x402 payment records`,
+        data: {
+          payments: payments.map((p) => ({
+            id: p.id,
+            domain: p.domain,
+            description: p.description,
+            amountUsd: p.amountUsd,
+            tokenSymbol: p.tokenSymbol,
+            network: p.network,
+            status: p.status,
+            timestamp: p.timestamp,
+          })),
+          count: payments.length,
+        },
+      }
+    } catch (error) {
+      return { success: false, message: 'Failed to list x402 payments', error: String(error) }
+    }
+  },
+
+  ...yieldActionHandlers,
 }
 
 export const TOOL_DEFINITIONS: ToolDefinition[] = [
@@ -499,6 +901,214 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     riskLevel: 'low',
     requiresConfirmation: false,
   },
+  {
+    name: 'get_token_security',
+    description: 'Get a GoPlus security report for a token contract address, including honeypot detection, risk flags, and risk score',
+    parameters: {
+      type: 'object',
+      properties: {
+        contractAddress: { type: 'string', description: 'Token contract address to analyze' },
+        network: { type: 'string', description: 'Network the token is on', enum: ['ethereum', 'base', 'arbitrum', 'optimism', 'solana'] },
+      },
+      required: ['contractAddress', 'network'],
+    },
+    category: 'query',
+    riskLevel: 'low',
+    requiresConfirmation: false,
+  },
+  {
+    name: 'check_malicious_address',
+    description: 'Check if a wallet or contract address is flagged as malicious by GoPlus security',
+    parameters: {
+      type: 'object',
+      properties: {
+        address: { type: 'string', description: 'Address to check' },
+        network: { type: 'string', description: 'Network to check on', enum: ['ethereum', 'base', 'arbitrum', 'optimism', 'solana'] },
+      },
+      required: ['address', 'network'],
+    },
+    category: 'query',
+    riskLevel: 'low',
+    requiresConfirmation: false,
+  },
+  {
+    name: 'create_alert',
+    description: 'Create a new alert for price thresholds, whale activity, security events, portfolio changes, or research follow-ups',
+    parameters: {
+      type: 'object',
+      properties: {
+        alertType: {
+          type: 'string',
+          description: 'Type of alert to create',
+          enum: ['price_threshold', 'wallet_activity', 'research_followup', 'system'],
+        },
+        config: { type: 'object', description: 'Alert configuration object matching the alert type schema' },
+      },
+      required: ['alertType', 'config'],
+    },
+    category: 'wallet_management',
+    riskLevel: 'low',
+    requiresConfirmation: false,
+  },
+  {
+    name: 'list_alerts',
+    description: 'List all configured alerts and their status',
+    parameters: { type: 'object', properties: {}, required: [] },
+    category: 'query',
+    riskLevel: 'low',
+    requiresConfirmation: false,
+  },
+  {
+    name: 'delete_alert',
+    description: 'Delete an alert by its ID',
+    parameters: {
+      type: 'object',
+      properties: {
+        alertId: { type: 'string', description: 'ID of the alert to delete' },
+      },
+      required: ['alertId'],
+    },
+    category: 'wallet_management',
+    riskLevel: 'low',
+    requiresConfirmation: false,
+  },
+  {
+    name: 'search_prediction_markets',
+    description: 'Search Polymarket prediction markets by topic or keyword',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Search query (e.g., "bitcoin", "ethereum ETF", "crypto regulation")' },
+        limit: { type: 'number', description: 'Maximum number of results to return (default 10)' },
+      },
+      required: ['query'],
+    },
+    category: 'query',
+    riskLevel: 'low',
+    requiresConfirmation: false,
+  },
+  {
+    name: 'get_prediction_market',
+    description: 'Get detailed information about a specific Polymarket prediction market',
+    parameters: {
+      type: 'object',
+      properties: {
+        marketId: { type: 'string', description: 'Polymarket market ID' },
+      },
+      required: ['marketId'],
+    },
+    category: 'query',
+    riskLevel: 'low',
+    requiresConfirmation: false,
+  },
+  {
+    name: 'get_crypto_sentiment',
+    description: 'Get aggregated crypto market sentiment from Polymarket prediction markets',
+    parameters: { type: 'object', properties: {}, required: [] },
+    category: 'query',
+    riskLevel: 'low',
+    requiresConfirmation: false,
+  },
+  {
+    name: 'get_portfolio_pnl',
+    description: 'Get profit/loss summary for a wallet including total P/L, best/worst performers, and time-based changes',
+    parameters: {
+      type: 'object',
+      properties: {
+        walletAddress: { type: 'string', description: 'Wallet address (uses active wallet if not specified)' },
+        timeRange: { type: 'string', description: 'Time range for P/L calculation', enum: ['1h', '24h', '7d', '30d', '90d', 'all'] },
+      },
+      required: [],
+    },
+    category: 'query',
+    riskLevel: 'low',
+    requiresConfirmation: false,
+  },
+  {
+    name: 'get_trade_history',
+    description: 'Get trade history records for a wallet',
+    parameters: {
+      type: 'object',
+      properties: {
+        walletAddress: { type: 'string', description: 'Wallet address (uses active wallet if not specified)' },
+        limit: { type: 'number', description: 'Maximum number of trades to return (default 20)' },
+      },
+      required: [],
+    },
+    category: 'query',
+    riskLevel: 'low',
+    requiresConfirmation: false,
+  },
+  {
+    name: 'add_watched_wallet',
+    description: 'Add a wallet address to the watchlist for tracking activity',
+    parameters: {
+      type: 'object',
+      properties: {
+        address: { type: 'string', description: 'Wallet address to watch' },
+        label: { type: 'string', description: 'Human-readable label for the watched wallet' },
+        networks: { type: 'array', description: 'Networks to monitor (default: ethereum, base)' },
+      },
+      required: ['address'],
+    },
+    category: 'wallet_management',
+    riskLevel: 'low',
+    requiresConfirmation: false,
+  },
+  {
+    name: 'remove_watched_wallet',
+    description: 'Remove a wallet from the watchlist',
+    parameters: {
+      type: 'object',
+      properties: {
+        watchId: { type: 'string', description: 'ID of the watched wallet to remove' },
+      },
+      required: ['watchId'],
+    },
+    category: 'wallet_management',
+    riskLevel: 'low',
+    requiresConfirmation: false,
+  },
+  {
+    name: 'list_watched_wallets',
+    description: 'List all wallets currently on the watchlist',
+    parameters: { type: 'object', properties: {}, required: [] },
+    category: 'query',
+    riskLevel: 'low',
+    requiresConfirmation: false,
+  },
+  {
+    name: 'get_wallet_activity',
+    description: 'Get recent activity (swaps, transfers, approvals) for a watched wallet',
+    parameters: {
+      type: 'object',
+      properties: {
+        watchId: { type: 'string', description: 'ID of the watched wallet' },
+        limit: { type: 'number', description: 'Maximum number of activities to return (default 20)' },
+      },
+      required: ['watchId'],
+    },
+    category: 'query',
+    riskLevel: 'low',
+    requiresConfirmation: false,
+  },
+  {
+    name: 'get_x402_status',
+    description: 'Get x402 micropayment status including budget, spending, and configuration',
+    parameters: { type: 'object', properties: {}, required: [] },
+    category: 'query',
+    riskLevel: 'low',
+    requiresConfirmation: false,
+  },
+  {
+    name: 'list_x402_payments',
+    description: 'List recent x402 micropayment records',
+    parameters: { type: 'object', properties: {}, required: [] },
+    category: 'query',
+    riskLevel: 'low',
+    requiresConfirmation: false,
+  },
+  ...YIELD_TOOL_DEFINITIONS,
 ]
 
 export function getToolsForOpenClaw(): object[] {

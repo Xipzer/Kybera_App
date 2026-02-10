@@ -31,6 +31,7 @@ import { formatAddress, formatCompactNumber, formatTokenPrice } from '../../util
 import { getExplorerUrl } from '../../utils/networks'
 import { dexScreenerService } from '../../services/research/dexScreenerService'
 import { themeClasses, statusClasses } from '../../utils/themeClasses'
+import { SecurityBadge } from './SecurityBadge'
 
 function parseInlineMarkdown(text: string, tc: ReturnType<typeof themeClasses>): React.ReactNode[] {
   const elements: React.ReactNode[] = []
@@ -298,13 +299,24 @@ export function ResearchCard({
             </div>
           </div>
 
-          <div
-            className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full ${ratingConfig.bgColor} flex items-center gap-1 sm:gap-2 flex-shrink-0`}
-          >
-            <span className="text-sm sm:text-lg">{ratingConfig.emoji}</span>
-            <span className={`text-[10px] sm:text-sm font-bold ${ratingConfig.color}`}>
-              {ratingConfig.label}
-            </span>
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            {research.securityReport && (
+              <SecurityBadge
+                riskScore={research.securityReport.riskScore}
+                riskFlags={research.securityReport.riskFlags}
+                isHoneypot={research.securityReport.isHoneypot}
+                isMalicious={research.securityReport.isMalicious}
+                riskSummary={research.securityReport.riskSummary}
+              />
+            )}
+            <div
+              className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full ${ratingConfig.bgColor} flex items-center gap-1 sm:gap-2`}
+            >
+              <span className="text-sm sm:text-lg">{ratingConfig.emoji}</span>
+              <span className={`text-[10px] sm:text-sm font-bold ${ratingConfig.color}`}>
+                {ratingConfig.label}
+              </span>
+            </div>
           </div>
         </div>
 

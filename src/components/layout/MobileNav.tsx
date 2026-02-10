@@ -2,24 +2,28 @@
  * Code by Xipzer
  */
 
-import { Wallet, Settings, Home } from 'lucide-react'
+import { Wallet, Settings, Home, Bell } from 'lucide-react'
 import { useTheme } from '../../hooks/useTheme'
+import { useNotificationStore } from '../../store/notificationStore'
 
 interface MobileNavProps {
   onOpenWallet: () => void
   onClosePanel: () => void
   onOpenSettings: () => void
-  activePanel?: 'wallet' | 'settings' | null
+  onOpenNotifications: () => void
+  activePanel?: 'wallet' | 'settings' | 'notifications' | null
 }
 
 export function MobileNav({
   onOpenWallet,
   onClosePanel,
   onOpenSettings,
+  onOpenNotifications,
   activePanel,
 }: MobileNavProps) {
   const { theme } = useTheme()
   const styles = theme.styles.mobileNav
+  const unreadCount = useNotificationStore((s) => s.unreadCount)
 
   const handleResearchClick = () => {
     if (activePanel !== null) {
@@ -28,18 +32,27 @@ export function MobileNav({
   }
 
   const bottomTabs = [
-    { icon: Home, label: 'Research', onClick: handleResearchClick, isActive: activePanel === null },
+    { icon: Home, label: 'Research', onClick: handleResearchClick, isActive: activePanel === null, badge: 0 },
+    {
+      icon: Bell,
+      label: 'Alerts',
+      onClick: onOpenNotifications,
+      isActive: activePanel === 'notifications',
+      badge: unreadCount,
+    },
     {
       icon: Wallet,
       label: 'Wallets',
       onClick: onOpenWallet,
       isActive: activePanel === 'wallet',
+      badge: 0,
     },
     {
       icon: Settings,
       label: 'Settings',
       onClick: onOpenSettings,
       isActive: activePanel === 'settings',
+      badge: 0,
     },
   ]
 
@@ -77,6 +90,11 @@ export function MobileNav({
                     : `${styles.navIconColor} group-hover:text-text-secondary`
                 }`}
               />
+              {tab.badge > 0 && (
+                <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[9px] font-bold leading-none shadow-lg">
+                  {tab.badge > 99 ? '99+' : tab.badge}
+                </span>
+              )}
             </div>
 
             <span

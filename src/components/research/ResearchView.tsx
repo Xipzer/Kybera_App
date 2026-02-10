@@ -10,7 +10,14 @@ import {
   Sparkles,
   AlertCircle,
   Zap,
+  BarChart3,
+  Eye,
+  TrendingUp,
+  Sprout,
+  Search,
 } from 'lucide-react'
+import * as Tabs from '@radix-ui/react-tabs'
+import { NotificationBell } from '../notifications/NotificationBell'
 import { useResearchStore } from '../../store/researchStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useUIStore } from '../../store/uiStore'
@@ -19,6 +26,10 @@ import { ApeInterface } from './ApeInterface'
 import { ChatMessage } from '../chat/ChatMessage'
 import { ActionConfirmationDialog } from '../chat/ActionConfirmationDialog'
 import { SettingsDialog } from '../settings/SettingsDialog'
+import { PortfolioView } from '../portfolio/PortfolioView'
+import { WatchlistView } from '../watchlist/WatchlistView'
+import { PredictionMarketsView } from '../markets/PredictionMarketsView'
+import { YieldView } from '../defi/YieldView'
 import { useTheme } from '../../hooks/useTheme'
 import { themeClasses } from '../../utils/themeClasses'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
@@ -153,6 +164,7 @@ export function ResearchView() {
 
   const { openClawGatewayUrl, openClawAuthToken, openClawAutoConnect } = useSettingsStore()
 
+  const [activeTab, setActiveTab] = useState('research')
   const [input, setInput] = useState('')
   const [showSettings, setShowSettings] = useState(false)
   const [selectedResearch, setSelectedResearch] = useState<TokenResearch | null>(null)
@@ -317,8 +329,10 @@ export function ResearchView() {
     </div>
   )
 
+  const tabTriggerClass = "flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent data-[state=active]:bg-accent/10 transition-colors whitespace-nowrap touch-manipulation min-h-[44px]"
+
   return (
-    <div className="h-full flex flex-col bg-surface-base relative overflow-hidden">
+    <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col bg-surface-base relative overflow-hidden">
       {chatWallpaper && (
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -330,7 +344,7 @@ export function ResearchView() {
       )}
 
       <div className="relative z-10 h-full flex flex-col">
-        <div className="p-3 sm:p-4">
+        <div className="p-3 sm:p-4 pb-0">
           <div
             className={`${styles.headerBg} border ${styles.headerBorder} rounded-xl p-3 sm:p-4 relative overflow-hidden`}
           >
@@ -404,6 +418,7 @@ export function ResearchView() {
                     Disconnect
                   </button>
                 )}
+                <NotificationBell className="hidden lg:flex" />
                 <button
                   onClick={() => setShowSettings(true)}
                   className={`${theme.styles.buttonIcon} p-2 rounded-lg hidden lg:flex`}
@@ -433,172 +448,213 @@ export function ResearchView() {
           </div>
         </div>
 
-        {!openClawGatewayUrl ? (
-          notConfiguredContent
-        ) : (
-          <div
-            ref={scrollContainerRef}
-            onScroll={handleScroll}
-            className="flex-1 overflow-y-auto overscroll-contain relative"
-          >
+        <Tabs.List className="flex gap-1 px-3 sm:px-4 py-2 overflow-x-auto flex-shrink-0 border-b border-border-subtle">
+          <Tabs.Trigger value="research" className={tabTriggerClass}>
+            <Search className="w-4 h-4" />
+            Research
+          </Tabs.Trigger>
+          <Tabs.Trigger value="portfolio" className={tabTriggerClass}>
+            <BarChart3 className="w-4 h-4" />
+            Portfolio
+          </Tabs.Trigger>
+          <Tabs.Trigger value="watchlist" className={tabTriggerClass}>
+            <Eye className="w-4 h-4" />
+            Watchlist
+          </Tabs.Trigger>
+          <Tabs.Trigger value="markets" className={tabTriggerClass}>
+            <TrendingUp className="w-4 h-4" />
+            Markets
+          </Tabs.Trigger>
+          <Tabs.Trigger value="yield" className={tabTriggerClass}>
+            <Sprout className="w-4 h-4" />
+            Yield
+          </Tabs.Trigger>
+        </Tabs.List>
+
+        <Tabs.Content value="research" className="flex-1 flex flex-col min-h-0">
+          {!openClawGatewayUrl ? (
+            notConfiguredContent
+          ) : (
             <div
-              className="max-w-7xl mx-auto px-3 sm:px-4 pt-4"
-              style={{ paddingBottom: `${inputHeight + (isMobile ? 100 : 32)}px` }}
+              ref={scrollContainerRef}
+              onScroll={handleScroll}
+              className="flex-1 overflow-y-auto overscroll-contain relative"
             >
-              {researches.length > 0 && (
-                <div className="space-y-4 mb-6">
-                  {researches.map((research) => (
-                    <ResearchCard
-                      key={research.id}
-                      research={research}
-                      onApe={handleApe}
-                      onFade={handleFade}
-                      onRefresh={handleRefresh}
-                      isRefreshing={refreshingId === research.id}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {messages.map((message) => (
-                <ChatMessage
-                  key={message.id}
-                  message={{
-                    id: message.id,
-                    conversationId: 'research',
-                    role: message.role,
-                    content: message.content,
-                    timestamp: message.timestamp,
-                  }}
-                />
-              ))}
-
-              {isResearching && messages.length === 0 && researches.length === 0 && (
-                <div className="flex gap-4 mb-6">
-                  <div
-                    className={`flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r ${styles.sendGradient} flex items-center justify-center shadow-lg`}
-                  >
-                    <Bot className="w-5 h-5 text-white" />
+              <div
+                className="max-w-7xl mx-auto px-3 sm:px-4 pt-4"
+                style={{ paddingBottom: `${inputHeight + (isMobile ? 100 : 32)}px` }}
+              >
+                {researches.length > 0 && (
+                  <div className="space-y-4 mb-6">
+                    {researches.map((research) => (
+                      <ResearchCard
+                        key={research.id}
+                        research={research}
+                        onApe={handleApe}
+                        onFade={handleFade}
+                        onRefresh={handleRefresh}
+                        isRefreshing={refreshingId === research.id}
+                      />
+                    ))}
                   </div>
-                  <div
-                    className={`flex items-center gap-2 px-4 py-3 rounded-2xl ${styles.emptyStateBg} border ${styles.emptyStateBorder}`}
-                  >
-                    <div
-                      className={`w-2 h-2 ${styles.loadingDotBg} rounded-full animate-bounce`}
-                      style={{ animationDelay: '0ms' }}
-                    />
-                    <div
-                      className={`w-2 h-2 ${styles.loadingDotBg} rounded-full animate-bounce`}
-                      style={{ animationDelay: '150ms' }}
-                    />
-                    <div
-                      className={`w-2 h-2 ${styles.loadingDotBg} rounded-full animate-bounce`}
-                      style={{ animationDelay: '300ms' }}
-                    />
-                  </div>
-                </div>
-              )}
+                )}
 
-              {!isResearching &&
-                researches.length === 0 &&
-                messages.length === 0 &&
-                connectionState === 'connected' && (
-                  <div className="flex items-center justify-center h-full absolute inset-0 pointer-events-none -translate-y-8">
+                {messages.map((message) => (
+                  <ChatMessage
+                    key={message.id}
+                    message={{
+                      id: message.id,
+                      conversationId: 'research',
+                      role: message.role,
+                      content: message.content,
+                      timestamp: message.timestamp,
+                    }}
+                  />
+                ))}
+
+                {isResearching && messages.length === 0 && researches.length === 0 && (
+                  <div className="flex gap-4 mb-6">
                     <div
-                      className={`max-w-md text-center p-8 ${styles.inputSolidBg} border ${styles.emptyStateBorder} rounded-2xl shadow-xl pointer-events-auto`}
+                      className={`flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r ${styles.sendGradient} flex items-center justify-center shadow-lg`}
                     >
-                      <div className="relative inline-flex mb-6">
-                        <div
-                          className={`absolute inset-0 bg-gradient-to-br ${styles.sendGradient} rounded-2xl blur-xl opacity-30 animate-pulse`}
-                        />
-                        <div
-                          className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${styles.sendGradient} flex items-center justify-center shadow-lg`}
-                        >
-                          <Sparkles className="w-8 h-8 text-white" />
-                        </div>
-                      </div>
-                      <h3
-                        className={`text-xl font-bold bg-gradient-to-r ${styles.titleGradient} bg-clip-text text-transparent mb-3`}
-                      >
-                        Ready to Research
-                      </h3>
-                      <p className="text-text-secondary">
-                        Paste a contract address to start AI-powered OSINT research, or ask
-                        questions about tokens.
-                      </p>
+                      <Bot className="w-5 h-5 text-white" />
+                    </div>
+                    <div
+                      className={`flex items-center gap-2 px-4 py-3 rounded-2xl ${styles.emptyStateBg} border ${styles.emptyStateBorder}`}
+                    >
+                      <div
+                        className={`w-2 h-2 ${styles.loadingDotBg} rounded-full animate-bounce`}
+                        style={{ animationDelay: '0ms' }}
+                      />
+                      <div
+                        className={`w-2 h-2 ${styles.loadingDotBg} rounded-full animate-bounce`}
+                        style={{ animationDelay: '150ms' }}
+                      />
+                      <div
+                        className={`w-2 h-2 ${styles.loadingDotBg} rounded-full animate-bounce`}
+                        style={{ animationDelay: '300ms' }}
+                      />
                     </div>
                   </div>
                 )}
 
-              {connectionError && (
-                <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-4 flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-red-400 mb-1">Connection Error</h4>
-                    <p className="text-sm text-red-300/80">{connectionError}</p>
+                {!isResearching &&
+                  researches.length === 0 &&
+                  messages.length === 0 &&
+                  connectionState === 'connected' && (
+                    <div className="flex items-center justify-center h-full absolute inset-0 pointer-events-none -translate-y-8">
+                      <div
+                        className={`max-w-md text-center p-8 ${styles.inputSolidBg} border ${styles.emptyStateBorder} rounded-2xl shadow-xl pointer-events-auto`}
+                      >
+                        <div className="relative inline-flex mb-6">
+                          <div
+                            className={`absolute inset-0 bg-gradient-to-br ${styles.sendGradient} rounded-2xl blur-xl opacity-30 animate-pulse`}
+                          />
+                          <div
+                            className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${styles.sendGradient} flex items-center justify-center shadow-lg`}
+                          >
+                            <Sparkles className="w-8 h-8 text-white" />
+                          </div>
+                        </div>
+                        <h3
+                          className={`text-xl font-bold bg-gradient-to-r ${styles.titleGradient} bg-clip-text text-transparent mb-3`}
+                        >
+                          Ready to Research
+                        </h3>
+                        <p className="text-text-secondary">
+                          Paste a contract address to start AI-powered OSINT research, or ask
+                          questions about tokens.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                {connectionError && (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-4 flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-red-400 mb-1">Connection Error</h4>
+                      <p className="text-sm text-red-300/80">{connectionError}</p>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              <div ref={messagesEndRef} />
+                <div ref={messagesEndRef} />
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div className="absolute left-0 right-0 bottom-0 p-3 sm:p-4 pointer-events-none">
-          <div className="max-w-7xl mx-auto pointer-events-auto">
-            <div
-              className={`${styles.inputSolidBg} border ${styles.inputBorder} rounded-2xl shadow-lg overflow-hidden`}
-            >
-              <div className="relative">
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  placeholder={
-                    connectionState === 'connected'
-                      ? 'Paste contract address or ask a question...'
-                      : 'Connect to OpenClaw to start...'
-                  }
-                  disabled={connectionState !== 'connected'}
-                  rows={1}
-                  className={`w-full px-4 ${hasScroll ? '' : 'pr-14'} bg-transparent text-text-primary placeholder:text-text-tertiary focus:outline-none resize-none disabled:opacity-50 text-base`}
-                  style={{
-                    height: '48px',
-                    maxHeight: `${LINE_HEIGHT * MAX_LINES}px`,
-                    lineHeight: `${LINE_HEIGHT}px`,
-                    paddingTop: '14px',
-                    paddingBottom: '10px',
-                    fontSize: '16px',
-                  }}
-                />
+          <div className="absolute left-0 right-0 bottom-0 p-3 sm:p-4 pointer-events-none z-20">
+            <div className="max-w-7xl mx-auto pointer-events-auto">
+              <div
+                className={`${styles.inputSolidBg} border ${styles.inputBorder} rounded-2xl shadow-lg overflow-hidden`}
+              >
+                <div className="relative">
+                  <textarea
+                    ref={textareaRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                    placeholder={
+                      connectionState === 'connected'
+                        ? 'Paste contract address or ask a question...'
+                        : 'Connect to OpenClaw to start...'
+                    }
+                    disabled={connectionState !== 'connected'}
+                    rows={1}
+                    className={`w-full px-4 ${hasScroll ? '' : 'pr-14'} bg-transparent text-text-primary placeholder:text-text-tertiary focus:outline-none resize-none disabled:opacity-50 text-base`}
+                    style={{
+                      height: '48px',
+                      maxHeight: `${LINE_HEIGHT * MAX_LINES}px`,
+                      lineHeight: `${LINE_HEIGHT}px`,
+                      paddingTop: '14px',
+                      paddingBottom: '10px',
+                      fontSize: '16px',
+                    }}
+                  />
 
-                {!hasScroll && (
-                  <button
-                    onClick={handleSend}
-                    disabled={!input.trim() || connectionState !== 'connected'}
-                    className={`absolute bottom-2 right-2 w-10 h-10 sm:w-9 sm:h-9 rounded-full bg-gradient-to-r ${styles.sendGradient} flex items-center justify-center text-white shadow-md transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 touch-manipulation`}
-                  >
-                    <ArrowUp className="w-5 h-5" />
-                  </button>
+                  {!hasScroll && (
+                    <button
+                      onClick={handleSend}
+                      disabled={!input.trim() || connectionState !== 'connected'}
+                      className={`absolute bottom-2 right-2 w-10 h-10 sm:w-9 sm:h-9 rounded-full bg-gradient-to-r ${styles.sendGradient} flex items-center justify-center text-white shadow-md transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 touch-manipulation`}
+                    >
+                      <ArrowUp className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
+
+                {hasScroll && (
+                  <div className={`flex justify-end px-3 py-2 border-t ${tc.borderSubtle}`}>
+                    <button
+                      onClick={handleSend}
+                      disabled={!input.trim() || connectionState !== 'connected'}
+                      className={`w-10 h-10 sm:w-9 sm:h-9 rounded-full bg-gradient-to-r ${styles.sendGradient} flex items-center justify-center text-white shadow-md transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 touch-manipulation`}
+                    >
+                      <ArrowUp className="w-5 h-5" />
+                    </button>
+                  </div>
                 )}
               </div>
-
-              {hasScroll && (
-                <div className={`flex justify-end px-3 py-2 border-t ${tc.borderSubtle}`}>
-                  <button
-                    onClick={handleSend}
-                    disabled={!input.trim() || connectionState !== 'connected'}
-                    className={`w-10 h-10 sm:w-9 sm:h-9 rounded-full bg-gradient-to-r ${styles.sendGradient} flex items-center justify-center text-white shadow-md transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 touch-manipulation`}
-                  >
-                    <ArrowUp className="w-5 h-5" />
-                  </button>
-                </div>
-              )}
             </div>
           </div>
-        </div>
+        </Tabs.Content>
+
+        <Tabs.Content value="portfolio" className="flex-1 min-h-0 overflow-hidden">
+          <PortfolioView />
+        </Tabs.Content>
+
+        <Tabs.Content value="watchlist" className="flex-1 min-h-0 overflow-hidden">
+          <WatchlistView />
+        </Tabs.Content>
+
+        <Tabs.Content value="markets" className="flex-1 min-h-0 overflow-hidden">
+          <PredictionMarketsView />
+        </Tabs.Content>
+
+        <Tabs.Content value="yield" className="flex-1 min-h-0 overflow-hidden">
+          <YieldView />
+        </Tabs.Content>
 
         {!isMobile && <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />}
       </div>
@@ -620,6 +676,6 @@ export function ResearchView() {
         onApprove={approveAction}
         onReject={() => rejectAction()}
       />
-    </div>
+    </Tabs.Root>
   )
 }

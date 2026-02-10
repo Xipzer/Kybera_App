@@ -76,6 +76,8 @@ export interface DataSource {
     | 'moni'
     | 'twitter'
     | 'linkedin'
+    | 'goplus'
+    | 'polymarket'
     | 'other'
   url: string
   label: string
@@ -99,6 +101,14 @@ export interface TokenResearch {
   developer?: DeveloperInfo
   holderDistribution?: HolderDistribution
   liquidity?: LiquidityInfo
+
+  securityReport?: {
+    riskScore: number
+    riskFlags: string[]
+    isHoneypot: boolean
+    isMalicious: boolean
+    riskSummary: string
+  }
 
   pros: string[]
   cons: string[]
