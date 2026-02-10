@@ -271,12 +271,15 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
     return totals
   }, [actualGroups, wallets, walletBalances])
 
-  const tabTotals = useMemo(() => ({
-    groups: actualGroups.reduce((sum, g) => sum + (groupTotals.get(g.id) || 0), 0),
-    evm: walletsByType.EVM.reduce((sum, w) => sum + (walletBalances.get(w.id) || 0), 0),
-    svm: walletsByType.SVM.reduce((sum, w) => sum + (walletBalances.get(w.id) || 0), 0),
-    all: wallets.reduce((sum, w) => sum + (walletBalances.get(w.id) || 0), 0),
-  }), [actualGroups, groupTotals, walletsByType, walletBalances, wallets])
+  const tabTotals = useMemo(() => {
+    const all = wallets.reduce((sum, w) => sum + (walletBalances.get(w.id) || 0), 0)
+    return {
+      groups: all,
+      evm: walletsByType.EVM.reduce((sum, w) => sum + (walletBalances.get(w.id) || 0), 0),
+      svm: walletsByType.SVM.reduce((sum, w) => sum + (walletBalances.get(w.id) || 0), 0),
+      all,
+    }
+  }, [walletsByType, walletBalances, wallets])
 
   const handleGroupDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
@@ -475,19 +478,19 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
       <Tabs.List className={`${theme.styles.tabs.list} flex-shrink-0`}>
         <Tabs.Trigger value="groups" className={theme.styles.tabs.trigger}>
           <span>Groups ({actualGroups.length})</span>
-          {tabTotals.groups > 0 && <span className="text-xs text-text-tertiary ml-1">• {formatUSD(tabTotals.groups)}</span>}
+          {tabTotals.groups > 0 && <span className="block text-xs text-text-tertiary">{formatUSD(tabTotals.groups)}</span>}
         </Tabs.Trigger>
         <Tabs.Trigger value="evm" className={theme.styles.tabs.trigger}>
           <span>EVM ({walletsByType.EVM.length})</span>
-          {tabTotals.evm > 0 && <span className="text-xs text-text-tertiary ml-1">• {formatUSD(tabTotals.evm)}</span>}
+          {tabTotals.evm > 0 && <span className="block text-xs text-text-tertiary">{formatUSD(tabTotals.evm)}</span>}
         </Tabs.Trigger>
         <Tabs.Trigger value="svm" className={theme.styles.tabs.trigger}>
           <span>SVM ({walletsByType.SVM.length})</span>
-          {tabTotals.svm > 0 && <span className="text-xs text-text-tertiary ml-1">• {formatUSD(tabTotals.svm)}</span>}
+          {tabTotals.svm > 0 && <span className="block text-xs text-text-tertiary">{formatUSD(tabTotals.svm)}</span>}
         </Tabs.Trigger>
         <Tabs.Trigger value="all" className={theme.styles.tabs.trigger}>
           <span>All ({wallets.length})</span>
-          {tabTotals.all > 0 && <span className="text-xs text-text-tertiary ml-1">• {formatUSD(tabTotals.all)}</span>}
+          {tabTotals.all > 0 && <span className="block text-xs text-text-tertiary">{formatUSD(tabTotals.all)}</span>}
         </Tabs.Trigger>
       </Tabs.List>
 
