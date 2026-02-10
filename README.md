@@ -255,14 +255,15 @@ The production build automatically:
 - Disables source maps
 - Polyfills Node.js globals (Buffer, process) needed by crypto libraries
 
-**Required rewrite rule**: CoinGecko API requests are proxied through `/api/coingecko/*` to avoid CORS issues. Your
-hosting platform must rewrite this path:
+**Required rewrite rules**: Some external APIs don't support CORS, so requests are proxied through your domain. Your
+hosting platform must rewrite these paths:
 
-| Source             | Destination                   | Action  |
-|--------------------|-------------------------------|---------|
-| `/api/coingecko/*` | `https://api.coingecko.com/*` | Rewrite |
+| Source               | Destination                              | Action  |
+|----------------------|------------------------------------------|---------|
+| `/api/coingecko/*`   | `https://api.coingecko.com/*`            | Rewrite |
+| `/api/polymarket/*`  | `https://gamma-api.polymarket.com/*`     | Rewrite |
 
-On Render Static Sites, add this in **Redirects/Rewrites** settings. On Vercel, add it to `vercel.json` rewrites.
+On Render Static Sites, add these in **Redirects/Rewrites** settings. On Vercel, add them to `vercel.json` rewrites.
 
 ---
 
