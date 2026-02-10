@@ -76,7 +76,7 @@ export function X402Settings() {
         />
       </div>
 
-      <div className="border-t border-border-subtle pt-6">
+      <div>
         <h3 className="text-base font-medium text-text-primary mb-4">Spending Limits</h3>
         <div className="space-y-4">
           <div>
@@ -117,7 +117,7 @@ export function X402Settings() {
         </div>
       </div>
 
-      <div className="border-t border-border-subtle pt-6">
+      <div>
         <h3 className="text-base font-medium text-text-primary mb-3">Daily Spending</h3>
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
@@ -141,7 +141,7 @@ export function X402Settings() {
         </div>
       </div>
 
-      <div className="border-t border-border-subtle pt-6">
+      <div>
         <div className="flex items-center gap-2 mb-4">
           <Globe className="w-4 h-4 text-accent-500" />
           <h3 className="text-base font-medium text-text-primary">Approved Domains</h3>
@@ -197,7 +197,7 @@ export function X402Settings() {
         )}
       </div>
 
-      <div className="border-t border-border-subtle pt-6">
+      <div>
         <div className="flex items-center gap-2 mb-4">
           <Wallet className="w-4 h-4 text-accent-500" />
           <h3 className="text-base font-medium text-text-primary">Payment Wallet</h3>
@@ -217,7 +217,7 @@ export function X402Settings() {
         </select>
       </div>
 
-      <div className="border-t border-border-subtle pt-6">
+      <div>
         <h3 className="text-base font-medium text-text-primary mb-4">Recent Payments</h3>
         {paymentHistory.length === 0 ? (
           <div className="text-sm text-text-tertiary italic py-4 text-center">
