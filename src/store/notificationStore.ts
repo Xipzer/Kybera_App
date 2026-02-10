@@ -94,7 +94,6 @@ export const useNotificationStore = create<NotificationState>()(
           }
         })
 
-        // If this notification is tied to an alert, update trigger metadata
         if (notification.alertId) {
           set((state) => ({
             alerts: state.alerts.map((a) => {
@@ -104,7 +103,6 @@ export const useNotificationStore = create<NotificationState>()(
                 lastTriggeredAt: Date.now(),
                 triggerCount: a.triggerCount + 1,
               }
-              // Disable one-shot alerts after triggering
               if (a.oneShot) {
                 updated.enabled = false
               }

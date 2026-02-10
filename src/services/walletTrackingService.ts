@@ -17,7 +17,6 @@ const API_URLS: Record<ResearchNetwork, string> = {
   solana: '',
 }
 
-// Well-known DEX router addresses (lowercase)
 const KNOWN_DEX_ROUTERS = new Set([
   '0x7a250d5630b4cf539739df2c5dacb4c659f2488d', // Uniswap V2 Router
   '0xe592427a0aece92de3edee1f18e0157c05861564', // Uniswap V3 Router
@@ -31,7 +30,6 @@ const KNOWN_DEX_ROUTERS = new Set([
   '0xcf77a3ba9a5ca399b7c97c74d54e5b1beb874e43', // Aerodrome Router V2 (Base)
 ])
 
-// Approval method signature: approve(address,uint256)
 const APPROVAL_METHOD_ID = '0x095ea7b3'
 
 class WalletTrackingService {
@@ -50,7 +48,6 @@ class WalletTrackingService {
     console.log(`[WalletTracking] Starting monitoring with ${intervalMs}ms interval`)
     useWatchlistStore.getState().setMonitoring(true)
 
-    // Run immediately, then on interval
     this.pollAllWallets()
     this.pollingInterval = setInterval(() => this.pollAllWallets(), intervalMs)
   }
@@ -85,30 +82,25 @@ class WalletTrackingService {
           const activities = await this.checkWalletActivity(wallet)
 
           for (const activity of activities) {
-            // Check if we should trigger an alert
-            if (this.shouldTriggerAlert(activity, wallet)) {
+              if (this.shouldTriggerAlert(activity, wallet)) {
               useWatchlistStore.getState().addActivity(activity)
 
-              // Persist to IndexedDB
-              await this.persistActivity(activity)
+                await this.persistActivity(activity)
 
-              // Check copy trade configs
-              const config = copyTradeConfigs.find(
+                const config = copyTradeConfigs.find(
                 (c) => c.watchedWalletId === wallet.id && c.enabled,
               )
               if (config) {
                 const evaluation = this.evaluateCopyTrade(activity, config)
                 if (evaluation.shouldCopy) {
-                  console.log(
-                    `[WalletTracking] Copy trade triggered for ${wallet.label}: ${evaluation.reason}`,
-                  )
-                  // Copy trade execution would be handled by a separate execution service
-                }
+                    console.log(
+                      `[WalletTracking] Copy trade triggered for ${wallet.label}: ${evaluation.reason}`,
+                    )
+                  }
               }
             }
           }
 
-          // Update last checked timestamp
           useWatchlistStore.getState().updateWallet(wallet.id, {
             lastCheckedAt: Date.now(),
             ...(activities.length > 0 && { lastActivityAt: Date.now() }),
@@ -133,7 +125,6 @@ class WalletTrackingService {
         const chainType = getChainType(networkId)
 
         if (chainType === 'SVM') {
-          // Solana stub — returns empty for now
           const activities = await this.fetchSolanaTransactions(wallet, networkId)
           allActivities.push(...activities)
         } else {
@@ -174,14 +165,12 @@ class WalletTrackingService {
       ...(settings.alchemyApiKey && { apikey: settings.alchemyApiKey }),
     })
 
-    const response = await fetch(`${apiUrl}?${params}`)
-    const data = await response.json()
+    const data = await (await fetch(`${apiUrl}?${params}`)).json()
 
     if (data.status !== '1' || !Array.isArray(data.result)) {
       return []
     }
 
-    // Filter out already-seen transactions
     const existingTxHashes = new Set(
       useWatchlistStore
         .getState()
@@ -194,7 +183,6 @@ class WalletTrackingService {
     for (const tx of data.result) {
       if (existingTxHashes.has(tx.hash)) continue
 
-      // Only include transactions after the wallet was last checked
       const txTimestamp = parseInt(tx.timeStamp) * 1000
       if (wallet.lastCheckedAt && txTimestamp <= wallet.lastCheckedAt) continue
 
@@ -212,11 +200,9 @@ class WalletTrackingService {
         activityType,
         methodId,
         methodName: tx.functionName || undefined,
-        // Estimate value from native transfer
         estimatedValueUsd: this.estimateNativeValueUsd(tx.value, network),
       }
 
-      // Enrich based on activity type
       if (activityType === 'transfer_in') {
         activity.counterpartyAddress = tx.from
         activity.amount = this.weiToEth(tx.value)
@@ -247,9 +233,6 @@ class WalletTrackingService {
     _wallet: WatchedWallet,
     _networkId: string,
   ): Promise<WalletActivity[]> {
-    // TODO: Implement Solana transaction fetching via Helius RPC
-    // const heliusKey = useSettingsStore.getState().heliusApiKey
-    // Use getSignaturesForAddress + getTransaction for details
     console.log('[WalletTracking] Solana tracking not yet implemented')
     return []
   }
@@ -265,27 +248,22 @@ class WalletTrackingService {
     const value = BigInt(tx.value || '0')
     const methodId = input.substring(0, 10)
 
-    // Approval check
     if (methodId === APPROVAL_METHOD_ID) {
       return 'approval'
     }
 
-    // Incoming native transfer
     if (to === wallet && value > 0n) {
       return 'transfer_in'
     }
 
-    // Outgoing to a known DEX router → likely a swap
     if (from === wallet && KNOWN_DEX_ROUTERS.has(to)) {
       return 'swap'
     }
 
-    // Outgoing native transfer
     if (from === wallet && value > 0n) {
       return 'transfer_out'
     }
 
-    // Contract interaction (has calldata)
     if (input !== '0x') {
       return 'contract_interaction'
     }
@@ -298,14 +276,11 @@ class WalletTrackingService {
    * This is a best-effort heuristic based on common DEX patterns.
    */
   parseSwapFromTx(tx: any): { tokenIn: string; tokenOut: string; amounts: { in: string; out: string } } | null {
-    // Without decoding logs or internal transactions, we can only provide
-    // limited information from the top-level transaction
     const input = tx.input || '0x'
     if (input === '0x' || input.length < 10) return null
 
     const methodId = input.substring(0, 10)
 
-    // Common swap method signatures
     const swapMethods: Record<string, string> = {
       '0x38ed1739': 'swapExactTokensForTokens',
       '0x8803dbee': 'swapTokensForExactTokens',
@@ -341,7 +316,6 @@ class WalletTrackingService {
    * Checks if an activity matches the wallet's tracking configuration.
    */
   shouldTriggerAlert(activity: WalletActivity, wallet: WatchedWallet): boolean {
-    // Check activity type filters
     if (activity.activityType === 'swap' && !wallet.trackSwaps) return false
     if (
       (activity.activityType === 'transfer_in' || activity.activityType === 'transfer_out') &&
@@ -350,7 +324,6 @@ class WalletTrackingService {
       return false
     if (activity.activityType === 'approval' && !wallet.trackApprovals) return false
 
-    // Check minimum value threshold
     if (
       wallet.minValueUsd > 0 &&
       activity.estimatedValueUsd !== undefined &&
@@ -369,17 +342,14 @@ class WalletTrackingService {
     activity: WalletActivity,
     config: CopyTradeConfig,
   ): { shouldCopy: boolean; reason: string } {
-    // Only copy swaps
     if (activity.activityType !== 'swap') {
       return { shouldCopy: false, reason: 'Activity is not a swap' }
     }
 
-    // Check if config is enabled
     if (!config.enabled) {
       return { shouldCopy: false, reason: 'Copy trade config is disabled' }
     }
 
-    // Check daily trade limit — reset if new day
     const today = new Date().toISOString().split('T')[0]
     if (config.lastResetDate !== today) {
       useWatchlistStore.getState().updateCopyTradeConfig(config.watchedWalletId, {
@@ -390,7 +360,6 @@ class WalletTrackingService {
       return { shouldCopy: false, reason: 'Daily trade limit reached' }
     }
 
-    // Check minimum whale trade size
     if (
       activity.estimatedValueUsd !== undefined &&
       activity.estimatedValueUsd < config.minWhaleTradeUsd
@@ -401,7 +370,6 @@ class WalletTrackingService {
       }
     }
 
-    // Check token blacklist
     const involvedTokens = [
       activity.tokenInAddress,
       activity.tokenOutAddress,
@@ -414,7 +382,6 @@ class WalletTrackingService {
       }
     }
 
-    // Check token whitelist (if set, only copy whitelisted tokens)
     if (config.tokenWhitelist.length > 0) {
       const hasWhitelistedToken = involvedTokens.some((t) =>
         config.tokenWhitelist.includes(t.toLowerCase()),
@@ -424,7 +391,6 @@ class WalletTrackingService {
       }
     }
 
-    // Check network match
     if (activity.networkId !== config.executionNetworkId) {
       return {
         shouldCopy: false,
@@ -432,7 +398,6 @@ class WalletTrackingService {
       }
     }
 
-    // If confirmation is required, we flag it for user approval
     if (config.requireConfirmation) {
       return { shouldCopy: true, reason: 'Awaiting user confirmation' }
     }
@@ -483,7 +448,6 @@ class WalletTrackingService {
   private estimateNativeValueUsd(weiValue: string, network: string): number {
     try {
       const eth = Number(BigInt(weiValue || '0')) / 1e18
-      // Rough price estimates — in production, use live price feeds
       const prices: Record<string, number> = {
         ethereum: 2300,
         base: 2300,

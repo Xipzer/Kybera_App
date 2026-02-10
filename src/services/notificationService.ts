@@ -17,8 +17,6 @@ const DEFAULT_POLL_INTERVAL = 60_000 // 1 minute
 class NotificationService {
   private pollingInterval: ReturnType<typeof setInterval> | null = null
 
-  // ─── Polling engine ─────────────────────────────────────────────────
-
   startPolling(intervalMs: number = DEFAULT_POLL_INTERVAL): void {
     if (this.pollingInterval) return
 
@@ -31,7 +29,6 @@ class NotificationService {
       )
     }, intervalMs)
 
-    // Run an immediate evaluation on start
     this.evaluateAlerts().catch((err) =>
       console.error('[NotificationService] Initial alert evaluation error:', err),
     )
@@ -63,7 +60,6 @@ class NotificationService {
             await this.evaluateResearchFollowup(alert)
             break
           case 'system':
-            // System alerts are triggered programmatically, not polled
             break
         }
       } catch (err) {
@@ -72,13 +68,10 @@ class NotificationService {
     }
   }
 
-  // ─── Alert evaluators ───────────────────────────────────────────────
-
   async evaluatePriceAlert(alert: Alert): Promise<void> {
     const config = alert.config as PriceAlert
     const { tokenSymbol, tokenAddress, condition, targetValue } = config
 
-    // Try to get cached price from IndexedDB
     const lookupKey = tokenAddress?.toLowerCase() || tokenSymbol.toLowerCase()
     const cached = await db.priceData.get(lookupKey)
 
@@ -135,9 +128,6 @@ class NotificationService {
   }
 
   async evaluateWalletActivityAlert(_alert: Alert): Promise<void> {
-    // Placeholder — will be implemented in the wallet-tracking branch.
-    // The wallet activity monitoring requires websocket / polling against
-    // blockchain RPCs which is out of scope for this foundational PR.
     console.debug(
       `[NotificationService] Wallet activity alert evaluation is not yet implemented (alert ${_alert.id})`,
     )
@@ -147,7 +137,6 @@ class NotificationService {
     const config = alert.config as ResearchFollowupAlert
     const { contractAddress, tokenSymbol, priceChangeThreshold } = config
 
-    // Only re-evaluate if enough time has passed since last trigger
     const intervalMs = config.checkInterval * 60 * 60 * 1000
     if (alert.lastTriggeredAt && Date.now() - alert.lastTriggeredAt < intervalMs) {
       return
@@ -182,15 +171,11 @@ class NotificationService {
     }
   }
 
-  // ─── Notification delivery ──────────────────────────────────────────
-
   private triggerAndDeliver(
     notification: Omit<AppNotification, 'id' | 'createdAt' | 'status'>,
   ): void {
-    const store = useNotificationStore.getState()
-    store.triggerNotification(notification)
+    useNotificationStore.getState().triggerNotification(notification)
 
-    // Build a full notification object for delivery channels
     const full: AppNotification = {
       ...notification,
       id: '',
@@ -223,8 +208,6 @@ class NotificationService {
     }
   }
 
-  // ─── Browser Push ───────────────────────────────────────────────────
-
   async requestPushPermission(): Promise<boolean> {
     if (!('Notification' in window)) return false
     if (Notification.permission === 'granted') return true
@@ -240,8 +223,6 @@ class NotificationService {
       tag: 'kybera-alert',
     })
   }
-
-  // ─── Discord Webhook ───────────────────────────────────────────────
 
   async sendDiscordWebhook(webhookUrl: string, notification: AppNotification): Promise<void> {
     const priorityEmoji: Record<string, string> = {
@@ -263,8 +244,6 @@ class NotificationService {
       console.error('[NotificationService] Discord webhook failed:', err)
     }
   }
-
-  // ─── Telegram Bot ──────────────────────────────────────────────────
 
   async sendTelegramMessage(
     botToken: string,

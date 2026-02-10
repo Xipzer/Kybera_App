@@ -110,8 +110,7 @@ class GoPlusService {
         return null
       }
 
-      const security = this.parseTokenSecurity(tokenData)
-      return security
+      return this.parseTokenSecurity(tokenData)
     } catch (error) {
       console.error('[GoPlus] Error fetching token security:', error)
       return null
@@ -139,12 +138,10 @@ class GoPlusService {
         return null
       }
 
-      const result = data.result
-
       return {
-        isMalicious: result.is_malicious_address === '1' || result.is_malicious_address === 1,
-        maliciousType: result.malicious_type || null,
-        tag: result.tag || null,
+        isMalicious: data.result.is_malicious_address === '1' || data.result.is_malicious_address === 1,
+        maliciousType: data.result.malicious_type || null,
+        tag: data.result.tag || null,
       }
     } catch (error) {
       console.error('[GoPlus] Error checking malicious address:', error)

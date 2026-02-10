@@ -11,8 +11,6 @@ import {
 } from '../types/x402'
 
 class X402Service {
-  // ─── State queries ──────────────────────────────────────────────────
-
   isEnabled(): boolean {
     const { config } = useX402Store.getState()
     return config.enabled && !!config.paymentWalletId
@@ -22,12 +20,10 @@ class X402Service {
     const { config } = useX402Store.getState()
     const today = new Date().toISOString().split('T')[0]
 
-    // Check per-request limit
     if (amountUsd > config.maxPerRequestUsd) {
       return false
     }
 
-    // Check daily budget (auto-reset if new day)
     const dailySpent = config.lastResetDate === today ? config.dailySpentUsd : 0
     return dailySpent + amountUsd <= config.dailyBudgetUsd
   }
@@ -61,8 +57,6 @@ class X402Service {
     useX402Store.getState().addBlockedDomain(domain)
   }
 
-  // ─── 402 Response handling ──────────────────────────────────────────
-
   parsePaymentRequirement(response: Response): PaymentRequirement | null {
     try {
       const header = response.headers.get('x-payment') || response.headers.get('payment-required')
@@ -73,7 +67,6 @@ class X402Service {
 
       const parsed = JSON.parse(header)
 
-      // Validate required fields
       if (!parsed.scheme || !parsed.network || !parsed.maxAmountRequired || !parsed.payToAddress) {
         console.warn('[x402] Invalid payment requirement: missing required fields', parsed)
         return null
@@ -112,13 +105,11 @@ class X402Service {
     store.setIsProcessingPayment(true)
 
     try {
-      // 1. Parse the payment requirement
       const requirement = this.parsePaymentRequirement(response)
       if (!requirement) {
         return null
       }
 
-      // 2. Extract domain and check domain permissions
       const domain = new URL(requirement.resource).hostname
       const { config } = store
 
@@ -156,10 +147,8 @@ class X402Service {
         return null
       }
 
-      // 3. Convert raw amount to USD estimate (simplified: assume USDC at $1)
       const amountUsd = Number(requirement.maxAmountRequired) / 10 ** requirement.tokenDecimals
 
-      // 4. Check spending limits
       if (!this.canAfford(amountUsd)) {
         console.warn(`[x402] Cannot afford $${amountUsd} — exceeds budget or per-request limit`)
         this.recordPayment({
@@ -177,7 +166,6 @@ class X402Service {
         return null
       }
 
-      // 5. Sign the payment
       const paymentPayload = await this.signPayment(requirement)
       if (!paymentPayload) {
         this.recordPayment({
@@ -195,7 +183,6 @@ class X402Service {
         return null
       }
 
-      // 6. Resend the original request with the payment header
       const paidResponse = await fetch(originalRequest.url, {
         method: originalRequest.method,
         headers: {
@@ -205,7 +192,6 @@ class X402Service {
         body: originalRequest.method !== 'GET' ? await originalRequest.clone().text() : undefined,
       })
 
-      // 7. Record the successful payment
       this.recordPayment({
         resourceUrl: requirement.resource,
         domain,
@@ -228,17 +214,10 @@ class X402Service {
     }
   }
 
-  // ─── Payment signing (stub) ─────────────────────────────────────────
-
-  private async signPayment(requirement: PaymentRequirement): Promise<PaymentPayload | null> {
-    // TODO: Implement EIP-3009 signing for EVM (USDC transferWithAuthorization)
-    // TODO: Implement Solana transfer authorization
-    // For now, return null indicating payment signing is not yet implemented
+  private async signPayment(_requirement: PaymentRequirement): Promise<PaymentPayload | null> {
     console.warn('[x402] Payment signing not yet implemented')
     return null
   }
-
-  // ─── Payment recording ──────────────────────────────────────────────
 
   recordPayment(record: Omit<X402PaymentRecord, 'id' | 'timestamp'>): void {
     const fullRecord: X402PaymentRecord = {

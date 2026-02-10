@@ -140,11 +140,9 @@ class YieldService {
 
   private mapPoolToOpportunity(pool: LlamaPool): YieldOpportunity | null {
     const protocol = LLAMA_PROJECT_TO_PROTOCOL[pool.project] || null
-    // Only include pools from our supported protocols
     if (!protocol) return null
 
     const networkId = CHAIN_NAME_TO_NETWORK_ID[pool.chain]
-    // Only include pools from our supported networks
     if (!networkId) return null
 
     const apy = pool.apy ?? 0
@@ -152,14 +150,12 @@ class YieldService {
     const apyReward = pool.apyReward ?? 0
     const tvl = pool.tvlUsd ?? 0
 
-    // Skip pools with zero or negative APY
     if (apy <= 0) return null
 
     const yieldType = classifyYieldType(pool)
     const riskLevel = classifyRisk(protocol, tvl)
     const riskFactors = getRiskFactors(protocol, tvl, apy, yieldType)
 
-    // Extract token symbol from the pool symbol (e.g., "USDC" from "USDC-WETH")
     const tokenSymbol = pool.symbol?.split('-')[0] || pool.symbol || 'UNKNOWN'
 
     return {
@@ -214,7 +210,6 @@ class YieldService {
       filtered = filtered.filter((o) => o.yieldType === params.yieldType)
     }
 
-    // Sort
     const sortBy = params?.sortBy || 'apy'
     if (sortBy === 'apy') {
       filtered.sort((a, b) => b.apy - a.apy)
@@ -224,7 +219,6 @@ class YieldService {
       filtered.sort((a, b) => RISK_SORT_ORDER[a.riskLevel] - RISK_SORT_ORDER[b.riskLevel])
     }
 
-    // Limit
     const limit = params?.limit || 20
     return filtered.slice(0, limit)
   }

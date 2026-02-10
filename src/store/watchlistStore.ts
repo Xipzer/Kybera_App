@@ -12,25 +12,20 @@ interface WatchlistState {
   copyTradeConfigs: CopyTradeConfig[]
   isMonitoring: boolean
 
-  // Wallet actions
   addWallet: (wallet: Omit<WatchedWallet, 'id' | 'addedAt'>) => string
   removeWallet: (id: string) => void
   updateWallet: (id: string, updates: Partial<WatchedWallet>) => void
 
-  // Activity actions
   addActivity: (activity: Omit<WalletActivity, 'id'>) => void
   clearActivities: (watchedWalletId?: string) => void
 
-  // Copy trade actions
   addCopyTradeConfig: (config: Omit<CopyTradeConfig, 'dailyTradesUsed' | 'lastResetDate'>) => void
   removeCopyTradeConfig: (watchedWalletId: string) => void
   updateCopyTradeConfig: (watchedWalletId: string, updates: Partial<CopyTradeConfig>) => void
 
-  // Queries
   getWalletByAddress: (address: string) => WatchedWallet | undefined
   getActivitiesForWallet: (watchedWalletId: string, limit?: number) => WalletActivity[]
 
-  // Monitoring state
   setMonitoring: (isMonitoring: boolean) => void
 }
 

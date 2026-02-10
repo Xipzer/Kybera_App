@@ -9,6 +9,7 @@ import { MobileNav } from './MobileNav'
 import { AnimatedPanel, MobileOverlay } from '../common/AnimatedPanel'
 import { WalletDrawer } from '../wallet/WalletDrawer'
 import { SettingsPanel } from '../settings/SettingsPanel'
+import { NotificationPanel } from '../notifications/NotificationPanel'
 import { useUIStore } from '../../store/uiStore'
 
 interface ResponsiveLayoutProps {
@@ -17,7 +18,7 @@ interface ResponsiveLayoutProps {
 
 export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
   const isMobile = useMediaQuery('(max-width: 1024px)')
-  const [mobilePanel, setMobilePanel] = useState<'wallet' | 'settings' | null>(null)
+  const [mobilePanel, setMobilePanel] = useState<'wallet' | 'settings' | 'notifications' | null>(null)
   const { theme: uiTheme } = useUIStore()
 
   useEffect(() => {
@@ -59,6 +60,7 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
           onOpenWallet={() => setMobilePanel(mobilePanel === 'wallet' ? null : 'wallet')}
           onClosePanel={closePanel}
           onOpenSettings={() => setMobilePanel(mobilePanel === 'settings' ? null : 'settings')}
+          onOpenNotifications={() => setMobilePanel(mobilePanel === 'notifications' ? null : 'notifications')}
           activePanel={mobilePanel}
         />
 
@@ -83,6 +85,17 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
         >
           <div className="h-full overflow-y-auto overscroll-contain">
             <SettingsPanel />
+          </div>
+        </AnimatedPanel>
+
+        <AnimatedPanel
+          isOpen={mobilePanel === 'notifications'}
+          direction="right"
+          width="w-full sm:w-[85vw] sm:max-w-[400px]"
+          className="pb-[64px]"
+        >
+          <div className="h-full overflow-y-auto overscroll-contain">
+            <NotificationPanel />
           </div>
         </AnimatedPanel>
       </>

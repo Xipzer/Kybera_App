@@ -81,7 +81,6 @@ class PolymarketService {
     if (cached) return cached
 
     try {
-      // Try tag-based search first, then fall back to text search
       const tagParams = new URLSearchParams({
         tag: query,
         limit: limit.toString(),
@@ -98,7 +97,6 @@ class PolymarketService {
         markets = await tagResponse.json()
       }
 
-      // If tag search returned few results, also try text search
       if (markets.length < limit) {
         const textParams = new URLSearchParams({
           limit: limit.toString(),
@@ -114,7 +112,6 @@ class PolymarketService {
 
         if (textResponse.ok) {
           const textMarkets: GammaMarket[] = await textResponse.json()
-          // Merge, dedup by id
           const existingIds = new Set(markets.map((m) => m.id))
           for (const m of textMarkets) {
             if (!existingIds.has(m.id)) {
@@ -124,7 +121,6 @@ class PolymarketService {
         }
       }
 
-      // Filter results to those relevant to the query
       const queryLower = query.toLowerCase()
       const relevant = markets.filter(
         (m) =>
@@ -155,10 +151,10 @@ class PolymarketService {
       }
 
       const raw: GammaMarket = await response.json()
-      const market = this.mapMarket(raw)
+      const mapped = this.mapMarket(raw)
 
-      this.setCache(cacheKey, market)
-      return market
+      this.setCache(cacheKey, mapped)
+      return mapped
     } catch (error) {
       console.error('[Polymarket] Error fetching market:', error)
       return null
@@ -241,9 +237,6 @@ class PolymarketService {
       }
     }
 
-    // Extract "bullish" probabilities from each market
-    // For Yes/No markets, "Yes" is treated as the bullish outcome
-    // For multi-outcome markets, use the highest probability outcome
     const bullishProbabilities: number[] = []
 
     for (const market of markets) {
@@ -253,7 +246,6 @@ class PolymarketService {
       if (yesOutcome) {
         bullishProbabilities.push(yesOutcome.price)
       } else if (market.outcomes.length > 0) {
-        // Use highest probability outcome
         const maxOutcome = market.outcomes.reduce((max, o) =>
           o.price > max.price ? o : max,
         )
@@ -272,7 +264,6 @@ class PolymarketService {
     } else if (avgProbability < 0.4) {
       overallSentiment = 'bearish'
     } else {
-      // Check if there's high variance (mixed signals)
       const variance =
         bullishProbabilities.length > 1
           ? bullishProbabilities.reduce((sum, p) => sum + Math.pow(p - avgProbability, 2), 0) /
@@ -281,14 +272,12 @@ class PolymarketService {
       overallSentiment = variance > 0.04 ? 'mixed' : 'neutral'
     }
 
-    // Build summary
     const totalVolume = markets.reduce((sum, m) => sum + m.volume, 0)
     const volumeStr =
       totalVolume >= 1_000_000
         ? `$${(totalVolume / 1_000_000).toFixed(1)}M`
         : `$${(totalVolume / 1_000).toFixed(0)}K`
 
-    // Find the highest-volume market to cite
     const topMarket = markets.reduce((top, m) =>
       m.volume > top.volume ? m : top,
     )

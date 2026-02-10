@@ -75,19 +75,16 @@ class PortfolioService {
     const id = `snap_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
     const timestamp = Date.now()
 
-    // Read current wallet balances per network
     const walletBalances: StoredWalletBalance[] = await db.walletBalances
       .where('walletAddress')
       .equals(walletAddress)
       .toArray()
 
-    // Read current token balances
     const tokenBalances: StoredTokenBalance[] = await db.tokenBalances
       .where('walletAddress')
       .equals(walletAddress)
       .toArray()
 
-    // Network breakdown from wallet balances
     const networkBreakdown = walletBalances.map((wb) => ({
       networkId: wb.networkId,
       valueUsd: wb.totalUSD,
@@ -95,7 +92,6 @@ class PortfolioService {
 
     const totalValueUsd = networkBreakdown.reduce((sum, nb) => sum + nb.valueUsd, 0)
 
-    // Token breakdown — top 20 by value
     const tokenBreakdown = tokenBalances
       .filter((tb) => tb.usdValue !== undefined && tb.usdValue > 0)
       .sort((a, b) => (b.usdValue ?? 0) - (a.usdValue ?? 0))
@@ -159,18 +155,15 @@ class PortfolioService {
     tokenAddress: string,
     networkId: string,
   ): Promise<TokenPnL> {
-    // Get all trades involving this token
     const allTrades = await db.tradeRecords
       .where('walletAddress')
       .equals(walletAddress)
       .filter((t) => t.networkId === networkId)
       .sortBy('timestamp')
 
-    // Buy trades: token appears as tokenOut (we received it)
     const buyTrades = allTrades.filter(
       (t) => t.tokenOutAddress.toLowerCase() === tokenAddress.toLowerCase(),
     )
-    // Sell trades: token appears as tokenIn (we sent it)
     const sellTrades = allTrades.filter(
       (t) => t.tokenInAddress.toLowerCase() === tokenAddress.toLowerCase(),
     )
@@ -194,7 +187,6 @@ class PortfolioService {
       0,
     )
 
-    // Current balance from IndexedDB
     const currentBalanceRecord = await db.tokenBalances
       .where('walletAddress')
       .equals(walletAddress)
@@ -210,14 +202,11 @@ class PortfolioService {
     const currentBalanceNum = parseFloat(currentBalance)
     const currentPriceUsd = currentBalanceNum > 0 ? currentValueUsd / currentBalanceNum : 0
 
-    // Cost basis proportional allocation
     const avgBuyPrice = totalTokensBought > 0 ? totalBought / totalTokensBought : 0
     const avgSellPrice = totalTokensSold > 0 ? totalSold / totalTokensSold : 0
 
-    // Realized P&L: for each sell, the gain/loss vs average buy price
     const realizedPnl = totalTokensSold > 0 ? totalSold - totalTokensSold * avgBuyPrice : 0
 
-    // Unrealized P&L: current holdings valued at current price minus cost basis of remaining tokens
     const remainingCostBasis = currentBalanceNum * avgBuyPrice
     const unrealizedPnl = currentValueUsd - remainingCostBasis
 
@@ -259,20 +248,17 @@ class PortfolioService {
   }
 
   async getPortfolioSummary(walletAddress: string): Promise<PortfolioSummary> {
-    // Get all trades for this wallet to find unique tokens traded
     const allTrades = await db.tradeRecords
       .where('walletAddress')
       .equals(walletAddress)
       .toArray()
 
-    // Collect unique token+network combos
     const tokenKeys = new Set<string>()
     for (const trade of allTrades) {
       tokenKeys.add(`${trade.networkId}:${trade.tokenOutAddress}`)
       tokenKeys.add(`${trade.networkId}:${trade.tokenInAddress}`)
     }
 
-    // Calculate P&L for each token
     const pnls: TokenPnL[] = []
     for (const key of tokenKeys) {
       const [networkId, tokenAddress] = key.split(':')
@@ -282,7 +268,6 @@ class PortfolioService {
       }
     }
 
-    // Current total value from wallet balances
     const walletBalances = await db.walletBalances
       .where('walletAddress')
       .equals(walletAddress)
@@ -294,11 +279,9 @@ class PortfolioService {
     const totalPnl = pnls.reduce((sum, p) => sum + p.totalPnl, 0)
     const totalPnlPercent = totalBought > 0 ? (totalPnl / totalBought) * 100 : 0
 
-    // Time-based changes from snapshots
     const now = Date.now()
     const snapshotChanges = await this.calculateSnapshotChanges(walletAddress, now, totalValueUsd)
 
-    // Best / worst performers (only tokens with trades)
     const tradedPnls = pnls.filter((p) => p.totalBought > 0)
     const sorted = [...tradedPnls].sort((a, b) => b.pnlPercent - a.pnlPercent)
     const bestPerformer =
@@ -313,7 +296,6 @@ class PortfolioService {
           }
         : undefined
 
-    // Top holdings by current value
     const tokenBalances = await db.tokenBalances
       .where('walletAddress')
       .equals(walletAddress)
@@ -367,7 +349,6 @@ class PortfolioService {
 
     for (const { key, ms } of timeframes) {
       const targetTime = now - ms
-      // Find the snapshot closest to the target time
       const snapshot = await db.portfolioSnapshots
         .where('walletAddress')
         .equals(walletAddress)
@@ -396,7 +377,6 @@ class PortfolioService {
       }
     }, intervalMs)
 
-    // Take an immediate snapshot
     this.takeSnapshot(walletAddress).catch((error) => {
       console.error('[PortfolioService] Initial snapshot failed:', error)
     })
