@@ -6,7 +6,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { ThemeName } from '../hooks/useTheme'
 
-export type NavItem = 'research' | 'portfolio' | 'watchlist' | 'markets' | 'yield' | 'settings'
+export type NavItem = 'research' | 'portfolio' | 'watchlist' | 'markets' | 'yield'
 
 interface UIState {
   walletDrawerOpen: boolean

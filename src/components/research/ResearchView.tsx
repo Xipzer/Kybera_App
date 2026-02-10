@@ -26,7 +26,7 @@ import { ApeInterface } from './ApeInterface'
 import { ChatMessage } from '../chat/ChatMessage'
 import { ActionConfirmationDialog } from '../chat/ActionConfirmationDialog'
 import { SettingsDialog } from '../settings/SettingsDialog'
-import { SettingsPanel } from '../settings/SettingsPanel'
+
 import { PortfolioView } from '../portfolio/PortfolioView'
 import { WatchlistView } from '../watchlist/WatchlistView'
 import { PredictionMarketsView } from '../markets/PredictionMarketsView'
@@ -141,7 +141,7 @@ export function ResearchView() {
   const styles = theme.styles.chatInterface
   const isMobile = useMediaQuery('(max-width: 1024px)')
 
-  const { chatWallpaper, wallpaperOpacity, particlesApp, activeNavItem } = useUIStore()
+  const { chatWallpaper, wallpaperOpacity, particlesApp } = useUIStore()
 
   const connectionState = useResearchStore((state) => state.connectionState)
   const allResearches = useResearchStore((state) => state.researches)
@@ -185,8 +185,9 @@ export function ResearchView() {
     }
   }, [openClawGatewayUrl, openClawAuthToken, openClawAutoConnect, connectionState, connect])
 
+  const activeNavItem = useUIStore((s) => s.activeNavItem)
   useEffect(() => {
-    if (!isMobile && activeNavItem !== 'settings') setActiveTab(activeNavItem)
+    if (!isMobile) setActiveTab(activeNavItem)
   }, [isMobile, activeNavItem])
 
   useEffect(() => {
@@ -349,7 +350,7 @@ export function ResearchView() {
       )}
 
       <div className="relative z-10 h-full flex flex-col">
-        {(isMobile || activeNavItem !== 'settings') && <div className="p-3 sm:p-4 pb-0">
+        <div className="p-3 sm:p-4 pb-0">
           <div
             className={`${styles.headerBg} border ${styles.headerBorder} rounded-xl p-3 sm:p-4 relative overflow-hidden`}
           >
@@ -451,7 +452,7 @@ export function ResearchView() {
               </div>
             )}
           </div>
-        </div>}
+        </div>
 
         {isMobile && (
           <Tabs.List className="flex gap-1 px-3 sm:px-4 py-2 overflow-x-auto flex-shrink-0 border-b border-border-subtle">
@@ -478,7 +479,7 @@ export function ResearchView() {
           </Tabs.List>
         )}
 
-        <Tabs.Content value="research" className="flex-1 flex flex-col min-h-0" hidden={!isMobile && activeNavItem === 'settings'}>
+        <Tabs.Content value="research" className="flex-1 flex flex-col min-h-0">
           {!openClawGatewayUrl ? (
             notConfiguredContent
           ) : (
@@ -647,27 +648,21 @@ export function ResearchView() {
           </div>
         </Tabs.Content>
 
-        <Tabs.Content value="portfolio" className="flex-1 min-h-0 overflow-hidden" hidden={!isMobile && activeNavItem === 'settings'}>
+        <Tabs.Content value="portfolio" className="flex-1 min-h-0 overflow-hidden">
           <PortfolioView />
         </Tabs.Content>
 
-        <Tabs.Content value="watchlist" className="flex-1 min-h-0 overflow-hidden" hidden={!isMobile && activeNavItem === 'settings'}>
+        <Tabs.Content value="watchlist" className="flex-1 min-h-0 overflow-hidden">
           <WatchlistView />
         </Tabs.Content>
 
-        <Tabs.Content value="markets" className="flex-1 min-h-0 overflow-hidden" hidden={!isMobile && activeNavItem === 'settings'}>
+        <Tabs.Content value="markets" className="flex-1 min-h-0 overflow-hidden">
           <PredictionMarketsView />
         </Tabs.Content>
 
-        <Tabs.Content value="yield" className="flex-1 min-h-0 overflow-hidden" hidden={!isMobile && activeNavItem === 'settings'}>
+        <Tabs.Content value="yield" className="flex-1 min-h-0 overflow-hidden">
           <YieldView />
         </Tabs.Content>
-
-        {!isMobile && activeNavItem === 'settings' && (
-          <div className="flex-1 min-h-0 overflow-y-auto">
-            <SettingsPanel />
-          </div>
-        )}
 
         {!isMobile && <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />}
       </div>

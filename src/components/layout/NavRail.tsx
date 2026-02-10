@@ -4,7 +4,7 @@
 
 import * as Popover from '@radix-ui/react-popover'
 import { LuBrain } from 'react-icons/lu'
-import { BarChart3, Eye, TrendingUp, Sprout, Bell, Settings } from 'lucide-react'
+import { BarChart3, Eye, TrendingUp, Sprout, Bell } from 'lucide-react'
 import { useUIStore, type NavItem } from '../../store/uiStore'
 import { useNotificationStore } from '../../store/notificationStore'
 import { NotificationPanel } from '../notifications/NotificationPanel'
@@ -19,7 +19,6 @@ const NAV_ITEMS: { id: NavItem; label: string; icon: typeof BarChart3 | typeof L
   { id: 'watchlist', label: 'Watchlist', icon: Eye },
   { id: 'markets', label: 'Markets', icon: TrendingUp },
   { id: 'yield', label: 'Yield', icon: Sprout },
-  { id: 'settings', label: 'Settings', icon: Settings },
 ]
 
 export function NavRail() {
