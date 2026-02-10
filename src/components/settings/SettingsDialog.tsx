@@ -26,6 +26,7 @@ import { useSettingsState } from '../../hooks/useSettingsState'
 import { NetworkManagementDialog } from './NetworkManagementDialog'
 import { ModernToggle, ModernButton, ModernAlert } from '../ModernDialog'
 import { ConnectionBadge, SecretInput, ThemeSelector, OpacitySlider } from './SettingsPanel'
+import { X402Settings } from './X402Settings'
 
 interface SettingsDialogProps {
   open: boolean
@@ -433,6 +434,10 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         Add custom networks or hide default networks that you don't use. Hidden
                         networks won't appear in the network selector.
                       </p>
+                    </div>
+
+                    <div className="border-t border-border-subtle pt-6">
+                      <X402Settings />
                     </div>
                   </Tabs.Content>
 
