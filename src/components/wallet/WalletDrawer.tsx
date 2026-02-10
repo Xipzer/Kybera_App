@@ -2,7 +2,7 @@
  * Code by Xipzer
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ChevronDown,
   Copy,
@@ -34,6 +34,7 @@ import { ExportWalletDialog } from './ExportWalletDialog'
 import { ImportGroupDialog } from './ImportGroupDialog'
 import { WalletDetailView } from './WalletDetailView'
 
+import { Panel, PanelGroup, PanelResizeHandle, ImperativePanelHandle } from 'react-resizable-panels'
 import { useTheme } from '../../hooks/useTheme'
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard'
 import { useUIStore } from '../../store/uiStore'
@@ -478,19 +479,19 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
       <Tabs.List className={`${theme.styles.tabs.list} flex-shrink-0`}>
         <Tabs.Trigger value="groups" className={theme.styles.tabs.trigger}>
           <span>Groups ({actualGroups.length})</span>
-          {tabTotals.groups > 0 && <span className="block text-xs text-text-tertiary">{formatUSD(tabTotals.groups)}</span>}
+          <span className={`block text-xs font-medium bg-gradient-to-r ${walletStyles.titleGradient} bg-clip-text text-transparent`}>{formatUSD(tabTotals.groups)}</span>
         </Tabs.Trigger>
         <Tabs.Trigger value="evm" className={theme.styles.tabs.trigger}>
           <span>EVM ({walletsByType.EVM.length})</span>
-          {tabTotals.evm > 0 && <span className="block text-xs text-text-tertiary">{formatUSD(tabTotals.evm)}</span>}
+          <span className={`block text-xs font-medium bg-gradient-to-r ${walletStyles.titleGradient} bg-clip-text text-transparent`}>{formatUSD(tabTotals.evm)}</span>
         </Tabs.Trigger>
         <Tabs.Trigger value="svm" className={theme.styles.tabs.trigger}>
           <span>SVM ({walletsByType.SVM.length})</span>
-          {tabTotals.svm > 0 && <span className="block text-xs text-text-tertiary">{formatUSD(tabTotals.svm)}</span>}
+          <span className={`block text-xs font-medium bg-gradient-to-r ${walletStyles.titleGradient} bg-clip-text text-transparent`}>{formatUSD(tabTotals.svm)}</span>
         </Tabs.Trigger>
         <Tabs.Trigger value="all" className={theme.styles.tabs.trigger}>
           <span>All ({wallets.length})</span>
-          {tabTotals.all > 0 && <span className="block text-xs text-text-tertiary">{formatUSD(tabTotals.all)}</span>}
+          <span className={`block text-xs font-medium bg-gradient-to-r ${walletStyles.titleGradient} bg-clip-text text-transparent`}>{formatUSD(tabTotals.all)}</span>
         </Tabs.Trigger>
       </Tabs.List>
 
@@ -774,6 +775,20 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
     </Tabs.Root>
   )
 
+  const walletListPanelRef = useRef<ImperativePanelHandle>(null)
+
+  const handleListCollapse = useCallback(() => {
+    if (isWalletListCollapsed) {
+      walletListPanelRef.current?.collapse()
+    } else {
+      walletListPanelRef.current?.expand()
+    }
+  }, [isWalletListCollapsed])
+
+  useEffect(() => {
+    handleListCollapse()
+  }, [handleListCollapse])
+
   return (
     <div
       className={`h-full ${theme.styles.drawerContainer} panel-content-fade-right relative overflow-hidden`}
@@ -794,20 +809,27 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
       )}
       <div className="h-full flex flex-col relative z-10">
         {walletListHeader}
-        {!isWalletListCollapsed && (
-          <div className="flex-1 min-h-0 overflow-hidden">
+        <PanelGroup direction="vertical" className="flex-1 min-h-0">
+          <Panel
+            ref={walletListPanelRef}
+            defaultSize={50}
+            minSize={0}
+            collapsible
+            collapsedSize={0}
+            className="overflow-hidden"
+          >
             {walletListContent}
-          </div>
-        )}
+          </Panel>
+
+          <PanelResizeHandle
+            className={`h-px transition-colors ${activeWalletId ? theme.styles.resizeHandle : ''} ${activeWalletId ? theme.styles.resizeHandleHover : ''}`}
+            disabled={!activeWalletId}
+          />
+          <Panel minSize={activeWalletId ? 20 : 0} className="overflow-hidden">
+            {activeWalletId && <WalletDetailView />}
+          </Panel>
+        </PanelGroup>
         {dialogs}
-        {activeWalletId && (
-          <>
-            <div className={`h-px flex-shrink-0 ${theme.styles.resizeHandle}`} />
-            <div className="flex-1 min-h-0 overflow-hidden">
-              <WalletDetailView />
-            </div>
-          </>
-        )}
       </div>
     </div>
   )
