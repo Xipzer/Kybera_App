@@ -350,109 +350,124 @@ export function ResearchView() {
       )}
 
       <div className="relative z-10 h-full flex flex-col">
-        <div className="p-3 sm:p-4 pb-0">
-          <div
-            className={`${styles.headerBg} border ${styles.headerBorder} rounded-xl p-3 sm:p-4 relative overflow-hidden`}
-          >
-            {particlesApp && (
-              <>
-                <ResearchParticles
-                  color={theme.styles.unlockScreen.particleColor}
-                  opacity={theme.styles.unlockScreen.particleOpacity ?? 0.6}
-                />
-                <div
-                  className="absolute inset-0 pointer-events-none opacity-30"
-                  style={{
-                    background: `radial-gradient(ellipse at 50% 0%, rgba(${theme.styles.unlockScreen.particleColor}, 0.15), transparent 70%)`,
-                  }}
-                />
-              </>
-            )}
-            <div className="flex items-center justify-between relative z-10">
-              <div className="flex items-center gap-3">
-                <img src="/kybera-icon.png" alt="Kybera" className="w-7 h-7 rounded-lg shadow-md" />
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      connectionState === 'connected'
-                        ? 'bg-green-400 animate-pulse'
-                        : connectionState === 'connecting' || connectionState === 'reconnecting'
-                          ? 'bg-yellow-400 animate-pulse'
-                          : connectionState === 'error'
-                            ? 'bg-red-400'
-                            : 'bg-text-tertiary'
-                    }`}
-                  />
-                  <span
-                    className={`text-xs font-medium ${
-                      connectionState === 'connected'
-                        ? 'text-green-400'
-                        : connectionState === 'connecting' || connectionState === 'reconnecting'
-                          ? 'text-yellow-400'
-                          : connectionState === 'error'
-                            ? 'text-red-400'
-                            : 'text-text-tertiary'
-                    }`}
-                  >
-                    {connectionState === 'connected'
-                      ? 'Connected'
-                      : connectionState === 'connecting'
-                        ? 'Connecting...'
-                        : connectionState === 'reconnecting'
-                          ? 'Reconnecting...'
-                          : connectionState === 'error'
-                            ? 'Error'
-                            : 'Disconnected'}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {connectionState === 'disconnected' && (
-                  <button
-                    onClick={handleConnect}
-                    className={`px-3 py-1.5 bg-accent-500/20 hover:bg-accent-500/30 border border-accent-500/30 rounded-full text-xs font-medium ${theme.styles.iconAccent} transition-colors touch-manipulation`}
-                  >
-                    Connect
-                  </button>
-                )}
-                {connectionState === 'connected' && (
-                  <button
-                    onClick={disconnect}
-                    className="px-3 py-1.5 bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 rounded-full text-xs font-medium text-red-400 transition-all duration-200 touch-manipulation"
-                  >
-                    Disconnect
-                  </button>
-                )}
-                <NotificationBell className="hidden lg:flex" />
-                <button
-                  onClick={() => setShowSettings(true)}
-                  className={`${theme.styles.buttonIcon} p-2 rounded-lg hidden lg:flex`}
-                  title="Settings"
-                >
-                  <Settings className="w-4 h-4 text-text-secondary" />
-                </button>
-              </div>
-            </div>
-
-            {isResearching && (
-              <div className="mt-3 pt-3 border-t border-white/10 relative z-10">
-                <div className="flex items-center justify-between text-xs mb-2">
-                  <span className="text-text-secondary">
-                    {currentResearchStep || 'Researching...'}
-                  </span>
-                  <span className={theme.styles.iconAccent}>{researchProgress}%</span>
-                </div>
-                <div className="h-1 bg-black/30 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full bg-gradient-to-r ${styles.sendGradient} transition-all duration-300`}
-                    style={{ width: `${researchProgress}%` }}
-                  />
-                </div>
-              </div>
-            )}
+        {activeTab !== 'research' && !isMobile && (
+          <div className="flex items-center justify-end gap-2 px-4 pt-3 pb-0 flex-shrink-0">
+            <NotificationBell />
+            <button
+              onClick={() => setShowSettings(true)}
+              className={`${theme.styles.buttonIcon} p-2 rounded-lg`}
+              title="Settings"
+            >
+              <Settings className="w-4 h-4 text-text-secondary" />
+            </button>
           </div>
-        </div>
+        )}
+
+        {(activeTab === 'research' || isMobile) && (
+          <div className="p-3 sm:p-4 pb-0">
+            <div
+              className={`${styles.headerBg} border ${styles.headerBorder} rounded-xl p-3 sm:p-4 relative overflow-hidden`}
+            >
+              {particlesApp && (
+                <>
+                  <ResearchParticles
+                    color={theme.styles.unlockScreen.particleColor}
+                    opacity={theme.styles.unlockScreen.particleOpacity ?? 0.6}
+                  />
+                  <div
+                    className="absolute inset-0 pointer-events-none opacity-30"
+                    style={{
+                      background: `radial-gradient(ellipse at 50% 0%, rgba(${theme.styles.unlockScreen.particleColor}, 0.15), transparent 70%)`,
+                    }}
+                  />
+                </>
+              )}
+              <div className="flex items-center justify-between relative z-10">
+                <div className="flex items-center gap-3">
+                  <img src="/kybera-icon.png" alt="Kybera" className="w-7 h-7 rounded-lg shadow-md" />
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        connectionState === 'connected'
+                          ? 'bg-green-400 animate-pulse'
+                          : connectionState === 'connecting' || connectionState === 'reconnecting'
+                            ? 'bg-yellow-400 animate-pulse'
+                            : connectionState === 'error'
+                              ? 'bg-red-400'
+                              : 'bg-text-tertiary'
+                      }`}
+                    />
+                    <span
+                      className={`text-xs font-medium ${
+                        connectionState === 'connected'
+                          ? 'text-green-400'
+                          : connectionState === 'connecting' || connectionState === 'reconnecting'
+                            ? 'text-yellow-400'
+                            : connectionState === 'error'
+                              ? 'text-red-400'
+                              : 'text-text-tertiary'
+                      }`}
+                    >
+                      {connectionState === 'connected'
+                        ? 'Connected'
+                        : connectionState === 'connecting'
+                          ? 'Connecting...'
+                          : connectionState === 'reconnecting'
+                            ? 'Reconnecting...'
+                            : connectionState === 'error'
+                              ? 'Error'
+                              : 'Disconnected'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {connectionState === 'disconnected' && (
+                    <button
+                      onClick={handleConnect}
+                      className={`px-3 py-1.5 bg-accent-500/20 hover:bg-accent-500/30 border border-accent-500/30 rounded-full text-xs font-medium ${theme.styles.iconAccent} transition-colors touch-manipulation`}
+                    >
+                      Connect
+                    </button>
+                  )}
+                  {connectionState === 'connected' && (
+                    <button
+                      onClick={disconnect}
+                      className="px-3 py-1.5 bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 rounded-full text-xs font-medium text-red-400 transition-all duration-200 touch-manipulation"
+                    >
+                      Disconnect
+                    </button>
+                  )}
+                  <NotificationBell className="hidden lg:flex" />
+                  <button
+                    onClick={() => setShowSettings(true)}
+                    className={`${theme.styles.buttonIcon} p-2 rounded-lg hidden lg:flex`}
+                    title="Settings"
+                  >
+                    <Settings className="w-4 h-4 text-text-secondary" />
+                  </button>
+                </div>
+              </div>
+
+              {isResearching && (
+                <div className="mt-3 pt-3 border-t border-white/10 relative z-10">
+                  <div className="flex items-center justify-between text-xs mb-2">
+                    <span className="text-text-secondary">
+                      {currentResearchStep || 'Researching...'}
+                    </span>
+                    <span className={theme.styles.iconAccent}>{researchProgress}%</span>
+                  </div>
+                  <div className="h-1 bg-black/30 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full bg-gradient-to-r ${styles.sendGradient} transition-all duration-300`}
+                      style={{ width: `${researchProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {isMobile && (
           <Tabs.List className="flex gap-1 px-3 sm:px-4 py-2 overflow-x-auto flex-shrink-0 border-b border-border-subtle">
