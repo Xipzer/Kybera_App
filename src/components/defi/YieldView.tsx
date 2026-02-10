@@ -11,6 +11,8 @@ import {
   AlertTriangle,
   Flame,
   Sprout,
+  Filter,
+  Percent,
 } from 'lucide-react'
 import { useTheme } from '../../hooks/useTheme'
 import { yieldService } from '../../services/defi/yieldService'
@@ -39,26 +41,26 @@ const SORT_OPTIONS = [
   { value: 'risk', label: 'Risk' },
 ]
 
-const RISK_BADGE: Record<string, { bg: string; text: string; icon: typeof Shield }> = {
-  low: { bg: 'bg-green-500/15', text: 'text-green-500', icon: Shield },
-  medium: { bg: 'bg-yellow-500/15', text: 'text-yellow-500', icon: AlertTriangle },
-  high: { bg: 'bg-orange-500/15', text: 'text-orange-500', icon: Flame },
-  degen: { bg: 'bg-red-500/15', text: 'text-red-500', icon: Flame },
+const RISK_BADGE: Record<string, { bg: string; text: string; border: string; icon: typeof Shield }> = {
+  low: { bg: 'bg-green-500/10', text: 'text-green-400', border: 'border-green-500/20', icon: Shield },
+  medium: { bg: 'bg-yellow-500/10', text: 'text-yellow-400', border: 'border-yellow-500/20', icon: AlertTriangle },
+  high: { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/20', icon: Flame },
+  degen: { bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/20', icon: Flame },
 }
 
 function RiskBadge({ level }: { level: string }) {
   const config = RISK_BADGE[level] ?? RISK_BADGE.high
-  const Icon = config.icon
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${config.bg} ${config.text}`}>
-      <Icon className="w-3 h-3" />
-      {level.charAt(0).toUpperCase() + level.slice(1)}
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider ${config.bg} ${config.text} border ${config.border}`}>
+      <config.icon className="w-2.5 h-2.5" />
+      {level}
     </span>
   )
 }
 
 export function YieldView() {
-  const { isDark } = useTheme()
+  const { theme } = useTheme()
+  const styles = theme.styles.chatInterface
   const [opportunities, setOpportunities] = useState<YieldOpportunity[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [tokenFilter, setTokenFilter] = useState('')
@@ -70,15 +72,11 @@ export function YieldView() {
   const fetchYields = useCallback(async () => {
     setIsLoading(true)
     try {
-      const params: YieldSearchParams = {
-        sortBy,
-        limit: 50,
-      }
+      const params: YieldSearchParams = { sortBy, limit: 50 }
       if (networkFilter) params.networkId = networkFilter
       if (tokenFilter.trim()) params.tokenSymbol = tokenFilter.trim()
       if (minApy && parseFloat(minApy) > 0) params.minApy = parseFloat(minApy)
       if (riskFilter) params.maxRisk = riskFilter as 'low' | 'medium' | 'high'
-
       setOpportunities(await yieldService.getYieldOpportunities(params))
     } catch (err) {
       console.error('Failed to fetch yields:', err)
@@ -91,127 +89,161 @@ export function YieldView() {
     fetchYields()
   }, [fetchYields])
 
-  const inputBg = isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'
-  const selectBg = isDark ? 'bg-white/5 border-white/10 text-text-primary' : 'bg-white border-gray-200 text-text-primary'
-
   return (
-    <div className="h-full overflow-y-auto p-4 space-y-4">
-      <h2 className="text-base font-medium text-text-primary">DeFi Yield Opportunities</h2>
-
-      <div className="rounded-xl border border-border-subtle p-4 space-y-3">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
-            <input
-              type="text"
-              value={tokenFilter}
-              onChange={(e) => setTokenFilter(e.target.value)}
-              placeholder="Filter by token..."
-              className={`w-full pl-9 pr-3 py-2 ${inputBg} border rounded-lg text-sm placeholder:text-text-tertiary focus:outline-none focus:border-accent-500/50 transition-colors`}
-              style={{ fontSize: '16px' }}
-            />
+    <div className="h-full flex flex-col">
+      <div className="p-3 sm:p-4 pb-0">
+        <div className={`${styles.headerBg} border ${styles.headerBorder} rounded-xl p-3 sm:p-4`}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${styles.sendGradient} flex items-center justify-center shadow-md`}>
+                <Sprout className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <h2 className={`text-base font-semibold bg-gradient-to-r ${styles.titleGradient} bg-clip-text text-transparent`}>
+                  Yield
+                </h2>
+                <span className="text-[10px] text-text-tertiary">{opportunities.length} opportunit{opportunities.length !== 1 ? 'ies' : 'y'}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <ArrowUpDown className="w-3 h-3 text-text-tertiary" />
+              {SORT_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setSortBy(opt.value as 'apy' | 'tvl' | 'risk')}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wider transition-all duration-200 ${
+                    sortBy === opt.value
+                      ? `bg-gradient-to-r ${styles.sendGradient} text-white shadow-sm`
+                      : 'text-text-tertiary hover:text-text-primary hover:bg-surface-hover'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <input
-            type="text"
-            value={minApy}
-            onChange={(e) => { if (e.target.value === '' || /^\d*\.?\d*$/.test(e.target.value)) setMinApy(e.target.value) }}
-            placeholder="Min APY %"
-            className={`w-28 px-3 py-2 ${inputBg} border rounded-lg text-sm placeholder:text-text-tertiary focus:outline-none focus:border-accent-500/50 transition-colors`}
-            style={{ fontSize: '16px' }}
-          />
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <select
-            value={networkFilter}
-            onChange={(e) => setNetworkFilter(e.target.value)}
-            className={`px-3 py-1.5 ${selectBg} border rounded-lg text-xs focus:outline-none`}
-          >
-            {NETWORK_FILTERS.map((n) => (
-              <option key={n.value} value={n.value}>{n.label}</option>
-            ))}
-          </select>
-          <select
-            value={riskFilter}
-            onChange={(e) => setRiskFilter(e.target.value)}
-            className={`px-3 py-1.5 ${selectBg} border rounded-lg text-xs focus:outline-none`}
-          >
+
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
+              <input
+                type="text"
+                value={tokenFilter}
+                onChange={(e) => setTokenFilter(e.target.value)}
+                placeholder="Filter by token..."
+                className="w-full pl-9 pr-3 py-2 bg-surface-elevated/50 border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-500/50 transition-colors"
+                style={{ fontSize: '16px' }}
+              />
+            </div>
+            <div className="relative">
+              <Percent className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-tertiary" />
+              <input
+                type="text"
+                value={minApy}
+                onChange={(e) => { if (e.target.value === '' || /^\d*\.?\d*$/.test(e.target.value)) setMinApy(e.target.value) }}
+                placeholder="Min"
+                className="w-20 pl-7 pr-2 py-2 bg-surface-elevated/50 border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-500/50 transition-colors"
+                style={{ fontSize: '16px' }}
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-2 mt-2">
+            <div className="flex items-center gap-1.5">
+              <Filter className="w-3 h-3 text-text-tertiary" />
+              {NETWORK_FILTERS.map((n) => (
+                <button
+                  key={n.value}
+                  onClick={() => setNetworkFilter(n.value)}
+                  className={`px-2 py-1 rounded-md text-[10px] font-medium transition-all duration-200 ${
+                    networkFilter === n.value
+                      ? `bg-gradient-to-r ${styles.sendGradient} text-white shadow-sm`
+                      : 'text-text-tertiary hover:text-text-secondary hover:bg-surface-hover'
+                  }`}
+                >
+                  {n.label}
+                </button>
+              ))}
+            </div>
+            <div className="h-4 w-px bg-border-subtle self-center mx-1" />
             {RISK_FILTERS.map((r) => (
-              <option key={r.value} value={r.value}>{r.label}</option>
-            ))}
-          </select>
-          <div className="flex items-center gap-1 ml-auto">
-            <ArrowUpDown className="w-3.5 h-3.5 text-text-tertiary" />
-            {SORT_OPTIONS.map((opt) => (
               <button
-                key={opt.value}
-                onClick={() => setSortBy(opt.value as 'apy' | 'tvl' | 'risk')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
-                  sortBy === opt.value
-                    ? 'bg-accent-500/20 text-accent-500'
-                    : `text-text-secondary ${isDark ? 'hover:bg-white/5' : 'hover:bg-gray-100'}`
+                key={r.value}
+                onClick={() => setRiskFilter(r.value)}
+                className={`px-2 py-1 rounded-md text-[10px] font-medium transition-all duration-200 ${
+                  riskFilter === r.value
+                    ? `bg-gradient-to-r ${styles.sendGradient} text-white shadow-sm`
+                    : 'text-text-tertiary hover:text-text-secondary hover:bg-surface-hover'
                 }`}
               >
-                {opt.label}
+                {r.label}
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 text-text-secondary animate-spin" />
-        </div>
-      ) : opportunities.length === 0 ? (
-        <EmptyState
-          icon={Sprout}
-          title="No Yield Opportunities"
-          description="Try adjusting your filters or check back later."
-        />
-      ) : (
-        <div className="space-y-3">
-          {opportunities.map((opp) => (
-            <div key={opp.id} className="rounded-xl border border-border-subtle p-4">
+      <div className="flex-1 overflow-y-auto px-3 sm:px-4 pt-3 pb-4 space-y-2">
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <Loader2 className="w-6 h-6 text-accent-500 animate-spin" />
+            <span className="text-xs text-text-tertiary">Scanning protocols...</span>
+          </div>
+        ) : opportunities.length === 0 ? (
+          <EmptyState
+            icon={Sprout}
+            title="No Yield Opportunities"
+            description="Try adjusting your filters or check back later."
+          />
+        ) : (
+          opportunities.map((opp) => (
+            <div key={opp.id} className="rounded-xl border border-border-subtle bg-surface-elevated/30 p-4 transition-all duration-200 hover:border-accent-500/20">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-medium text-text-primary">{opp.protocolName}</span>
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] ${isDark ? 'bg-white/5 text-text-tertiary' : 'bg-gray-100 text-text-tertiary'}`}>
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-sm font-semibold text-text-primary">{opp.protocolName}</span>
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-surface-elevated text-text-tertiary border border-border-subtle/50">
                       {opp.networkId}
                     </span>
                   </div>
-                  <div className="text-xs text-text-secondary">{opp.tokenSymbol} &middot; {opp.yieldType.replace('_', ' ')}</div>
+                  <div className="text-xs text-text-tertiary">
+                    {opp.tokenSymbol}
+                    <span className="mx-1.5 text-text-muted">/</span>
+                    <span className="capitalize">{opp.yieldType.replace('_', ' ')}</span>
+                  </div>
                 </div>
                 <RiskBadge level={opp.riskLevel} />
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <div className="text-[10px] text-text-tertiary uppercase tracking-wide mb-0.5">APY</div>
-                  <div className="text-sm font-semibold text-green-500">{opp.apy.toFixed(2)}%</div>
+                  <div className="text-[9px] text-text-tertiary uppercase tracking-wider font-semibold mb-0.5">APY</div>
+                  <div className={`text-base font-bold bg-gradient-to-r ${styles.titleGradient} bg-clip-text text-transparent`}>
+                    {opp.apy.toFixed(2)}%
+                  </div>
                   {opp.apyReward > 0 && (
-                    <div className="text-[10px] text-text-tertiary">
-                      Base {opp.apyBase.toFixed(1)}% + Reward {opp.apyReward.toFixed(1)}%
+                    <div className="text-[10px] text-text-tertiary mt-0.5">
+                      {opp.apyBase.toFixed(1)}% base + {opp.apyReward.toFixed(1)}% reward
                     </div>
                   )}
                 </div>
                 <div>
-                  <div className="text-[10px] text-text-tertiary uppercase tracking-wide mb-0.5">TVL</div>
-                  <div className="text-sm font-medium text-text-primary">{formatCompactNumber(opp.tvl)}</div>
+                  <div className="text-[9px] text-text-tertiary uppercase tracking-wider font-semibold mb-0.5">TVL</div>
+                  <div className="text-sm font-semibold text-text-primary">{formatCompactNumber(opp.tvl)}</div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-text-tertiary uppercase tracking-wide mb-0.5">Protocol</div>
-                  <div className="text-sm font-medium text-text-primary">{opp.protocolName}</div>
+                  <div className="text-[9px] text-text-tertiary uppercase tracking-wider font-semibold mb-0.5">Protocol</div>
+                  <div className="text-sm font-medium text-text-secondary">{opp.protocolName}</div>
                 </div>
               </div>
 
               {opp.riskFactors.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-border-subtle">
+                <div className="mt-3 pt-3 border-t border-border-subtle/50">
                   <div className="flex flex-wrap gap-1.5">
                     {opp.riskFactors.map((factor, i) => (
                       <span
                         key={i}
-                        className={`px-2 py-0.5 rounded text-[10px] ${isDark ? 'bg-orange-500/10 text-orange-400' : 'bg-orange-50 text-orange-600'}`}
+                        className="px-2 py-0.5 rounded-md text-[9px] font-medium bg-orange-500/8 text-orange-400 border border-orange-500/15"
                       >
                         {factor}
                       </span>
@@ -220,9 +252,9 @@ export function YieldView() {
                 </div>
               )}
             </div>
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </div>
   )
 }
