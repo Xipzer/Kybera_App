@@ -825,8 +825,8 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
       <PanelGroup direction="vertical" className="h-full">
         <Panel
           defaultSize={50}
-          minSize={activeWalletId ? (isWalletListCollapsed ? 10 : listMinSize) : 100}
-          maxSize={activeWalletId ? (isWalletListCollapsed ? 10 : 80) : 100}
+          minSize={activeWalletId ? listMinSize : 100}
+          maxSize={activeWalletId ? (isWalletListCollapsed ? listMinSize : 80) : 100}
           className="flex flex-col overflow-hidden"
         >
           {walletListHeader}
