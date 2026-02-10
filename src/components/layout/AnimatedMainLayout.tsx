@@ -43,10 +43,9 @@ export function MainLayout({ children }: MainLayoutProps) {
   const handleWalletResize = (size: number) => {
     walletSizeRef.current = size
 
-    if (wasCollapsedOnDragStart.current.wallet && isDragging && size > COLLAPSED_SIZE) {
-      setIsWalletDraggingBelowMin(false)
-    }
-    else if (!isWalletCollapsed && size < MIN_WALLET_SIZE) {
+    if (wasCollapsedOnDragStart.current.wallet && isDragging) {
+      setIsWalletDraggingBelowMin(size < MIN_WALLET_SIZE)
+    } else if (!isWalletCollapsed && size < MIN_WALLET_SIZE) {
       setIsWalletDraggingBelowMin(true)
     } else if (!isWalletCollapsed && size >= MIN_WALLET_SIZE) {
       setIsWalletDraggingBelowMin(false)
