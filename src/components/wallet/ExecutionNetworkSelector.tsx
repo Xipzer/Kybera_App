@@ -32,7 +32,7 @@ export function ExecutionNetworkSelector({ collapsed = false }: { collapsed?: bo
           >
             <NetworkIcon
               networkId={activeNetwork.id}
-              size={16}
+              size={18}
               className="flex-shrink-0 opacity-80 group-hover:opacity-100 transition-opacity"
             />
           </button>

@@ -388,7 +388,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
             className={`${theme.styles.buttonIcon} p-2 rounded-lg`}
             title="Lock wallet"
           >
-            <Lock className="w-4 h-4 text-text-secondary" />
+            <Lock className="w-[18px] h-[18px] text-text-secondary" />
           </button>
           <ExecutionNetworkSelector collapsed />
         </div>
