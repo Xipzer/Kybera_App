@@ -849,7 +849,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
               minSize={listMinPct}
               collapsible
               collapsedSize={0}
-              className="overflow-hidden"
+              className="flex flex-col"
             >
               {walletListContent}
               {dialogs}
