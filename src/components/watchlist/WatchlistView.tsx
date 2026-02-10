@@ -125,227 +125,215 @@ export function WatchlistView() {
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-3 sm:p-4 pb-0">
-        <div className={`${styles.headerBg} border ${styles.headerBorder} rounded-xl p-3 sm:p-4`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${styles.sendGradient} flex items-center justify-center shadow-md`}>
-                <Eye className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <h2 className={`text-base font-semibold bg-gradient-to-r ${styles.titleGradient} bg-clip-text text-transparent`}>
-                  Watchlist
-                </h2>
-                <span className="text-[10px] text-text-tertiary">{watchedWallets.length} wallet{watchedWallets.length !== 1 ? 's' : ''} tracked</span>
-              </div>
-            </div>
-            <button
-              onClick={() => setShowForm(!showForm)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                showForm
-                  ? 'bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25'
-                  : `bg-gradient-to-r ${styles.sendGradient} text-white shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98]`
-              }`}
-            >
-              {showForm ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-              {showForm ? 'Cancel' : 'Add'}
-            </button>
-          </div>
+    <div className="h-full overflow-y-auto px-3 sm:px-4 pt-3 pb-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className={`w-1 h-4 rounded-full bg-gradient-to-b ${styles.sendGradient}`} />
+          <h3 className="text-sm font-semibold text-text-primary">Watched Wallets</h3>
+          <span className="text-[10px] text-text-tertiary">({watchedWallets.length})</span>
         </div>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+            showForm
+              ? 'bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25'
+              : `bg-gradient-to-r ${styles.sendGradient} text-white shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98]`
+          }`}
+        >
+          {showForm ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+          {showForm ? 'Cancel' : 'Add'}
+        </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-3 sm:px-4 pt-3 pb-4 space-y-3">
-        {showForm && (
-          <div className={`${styles.inputSolidBg} border ${styles.inputBorder} rounded-xl p-4 space-y-3`}>
-            <div>
-              <label className="block text-[10px] text-text-tertiary uppercase tracking-wider font-medium mb-1.5">Wallet Address</label>
-              <input
-                type="text"
-                value={addressInput}
-                onChange={(e) => setAddressInput(e.target.value)}
-                placeholder="0x... or SOL address"
-                className={`w-full px-3 py-2.5 bg-surface-elevated/50 border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-500/50 transition-colors`}
-                style={{ fontSize: '16px' }}
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] text-text-tertiary uppercase tracking-wider font-medium mb-1.5">Label</label>
-              <input
-                type="text"
-                value={labelInput}
-                onChange={(e) => setLabelInput(e.target.value)}
-                placeholder="e.g. Whale #1, Vitalik"
-                className={`w-full px-3 py-2.5 bg-surface-elevated/50 border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-500/50 transition-colors`}
-                style={{ fontSize: '16px' }}
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] text-text-tertiary uppercase tracking-wider font-medium mb-1.5">Networks</label>
-              <div className="flex flex-wrap gap-1.5">
-                {NETWORK_OPTIONS.map((net) => (
-                  <button
-                    key={net}
-                    onClick={() => toggleNetwork(net)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all duration-200 ${
-                      selectedNetworks.includes(net)
-                        ? `bg-gradient-to-r ${styles.sendGradient} text-white border-transparent shadow-sm`
-                        : 'bg-surface-elevated/50 border-border-subtle text-text-secondary hover:text-text-primary hover:border-accent-500/30'
-                    }`}
-                  >
-                    {net}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <label className="block text-[10px] text-text-tertiary uppercase tracking-wider font-medium mb-1.5">Tags</label>
-              <div className="flex flex-wrap gap-1.5">
-                {TAG_OPTIONS.map((tag) => (
-                  <button
-                    key={tag.value}
-                    onClick={() => toggleTag(tag.value)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all duration-200 ${
-                      selectedTags.includes(tag.value)
-                        ? tag.color
-                        : 'bg-surface-elevated/50 border-border-subtle text-text-secondary hover:text-text-primary'
-                    }`}
-                  >
-                    {tag.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <button
-              onClick={handleAddWallet}
-              disabled={!addressInput.trim() || !labelInput.trim()}
-              className={`w-full py-2.5 bg-gradient-to-r ${styles.sendGradient} rounded-xl text-sm font-medium text-white shadow-md hover:shadow-lg hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none`}
-            >
-              Add to Watchlist
-            </button>
+      {showForm && (
+        <div className={`${styles.inputSolidBg} border ${styles.inputBorder} rounded-xl p-4 space-y-3`}>
+          <div>
+            <label className="block text-[10px] text-text-tertiary uppercase tracking-wider font-medium mb-1.5">Wallet Address</label>
+            <input
+              type="text"
+              value={addressInput}
+              onChange={(e) => setAddressInput(e.target.value)}
+              placeholder="0x... or SOL address"
+              className="w-full px-3 py-2.5 bg-surface-elevated/50 border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-500/50 transition-colors"
+              style={{ fontSize: '16px' }}
+            />
           </div>
-        )}
+          <div>
+            <label className="block text-[10px] text-text-tertiary uppercase tracking-wider font-medium mb-1.5">Label</label>
+            <input
+              type="text"
+              value={labelInput}
+              onChange={(e) => setLabelInput(e.target.value)}
+              placeholder="e.g. Whale #1, Vitalik"
+              className="w-full px-3 py-2.5 bg-surface-elevated/50 border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-500/50 transition-colors"
+              style={{ fontSize: '16px' }}
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] text-text-tertiary uppercase tracking-wider font-medium mb-1.5">Networks</label>
+            <div className="flex flex-wrap gap-1.5">
+              {NETWORK_OPTIONS.map((net) => (
+                <button
+                  key={net}
+                  onClick={() => toggleNetwork(net)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all duration-200 ${
+                    selectedNetworks.includes(net)
+                      ? `bg-gradient-to-r ${styles.sendGradient} text-white border-transparent shadow-sm`
+                      : 'bg-surface-elevated/50 border-border-subtle text-text-secondary hover:text-text-primary hover:border-accent-500/30'
+                  }`}
+                >
+                  {net}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="block text-[10px] text-text-tertiary uppercase tracking-wider font-medium mb-1.5">Tags</label>
+            <div className="flex flex-wrap gap-1.5">
+              {TAG_OPTIONS.map((tag) => (
+                <button
+                  key={tag.value}
+                  onClick={() => toggleTag(tag.value)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all duration-200 ${
+                    selectedTags.includes(tag.value)
+                      ? tag.color
+                      : 'bg-surface-elevated/50 border-border-subtle text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  {tag.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <button
+            onClick={handleAddWallet}
+            disabled={!addressInput.trim() || !labelInput.trim()}
+            className={`w-full py-2.5 bg-gradient-to-r ${styles.sendGradient} rounded-xl text-sm font-medium text-white shadow-md hover:shadow-lg hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none`}
+          >
+            Add to Watchlist
+          </button>
+        </div>
+      )}
 
-        {watchedWallets.length === 0 && !showForm && (
-          <EmptyState
-            icon={Eye}
-            title="No Watched Wallets"
-            description="Add wallet addresses to track whale activity, smart money moves, and more."
-            action={{ label: 'Add Wallet', onClick: () => setShowForm(true) }}
-          />
-        )}
+      {watchedWallets.length === 0 && !showForm && (
+        <EmptyState
+          icon={Eye}
+          title="No Watched Wallets"
+          description="Add wallet addresses to track whale activity, smart money moves, and more."
+          action={{ label: 'Add Wallet', onClick: () => setShowForm(true) }}
+        />
+      )}
 
-        <div className="space-y-2">
-          {watchedWallets.map((wallet) => {
-            const walletActivities = getActivitiesForWallet(wallet.id, 10)
-            const isExpanded = expandedWallet === wallet.id
+      <div className="space-y-2">
+        {watchedWallets.map((wallet) => {
+          const walletActivities = getActivitiesForWallet(wallet.id, 10)
+          const isExpanded = expandedWallet === wallet.id
 
-            return (
-              <div key={wallet.id} className="rounded-xl border border-border-subtle bg-surface-elevated/30 overflow-hidden transition-all duration-200 hover:border-accent-500/20">
-                <div className="p-3 sm:p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                        <span className="font-semibold text-text-primary text-sm">{wallet.label}</span>
-                        {wallet.tags.map((tag) => {
-                          const tagConfig = TAG_OPTIONS.find((t) => t.value === tag)
-                          return (
-                            <span key={tag} className={`px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider ${tagConfig?.color ?? 'bg-gray-500/20 text-gray-400 border-gray-500/30'} border`}>
-                              {tagConfig?.label ?? tag}
-                            </span>
-                          )
-                        })}
-                      </div>
-                      <div className="text-xs text-text-tertiary font-mono ml-3.5">{formatAddress(wallet.address, 10, 6)}</div>
-                      <div className="flex gap-1 mt-2 ml-3.5">
-                        {wallet.networks.map((n) => (
-                          <span key={n} className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-surface-elevated text-text-tertiary border border-border-subtle">
-                            {n}
+          return (
+            <div key={wallet.id} className="rounded-xl border border-border-subtle bg-surface-elevated/30 overflow-hidden transition-all duration-200 hover:border-accent-500/20">
+              <div className="p-3 sm:p-4">
+                <div className="flex items-start justify-between">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                      <span className="font-semibold text-text-primary text-sm">{wallet.label}</span>
+                      {wallet.tags.map((tag) => {
+                        const tagConfig = TAG_OPTIONS.find((t) => t.value === tag)
+                        return (
+                          <span key={tag} className={`px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider ${tagConfig?.color ?? 'bg-gray-500/20 text-gray-400 border-gray-500/30'} border`}>
+                            {tagConfig?.label ?? tag}
                           </span>
-                        ))}
-                      </div>
+                        )
+                      })}
                     </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => handleCheckActivity(wallet.id)}
-                        disabled={isChecking === wallet.id}
-                        className={`${theme.styles.buttonIcon} p-1.5 rounded-lg disabled:opacity-40`}
-                        title="Check for new activity"
-                      >
-                        {isChecking === wallet.id
-                          ? <Loader2 className="w-3.5 h-3.5 text-text-secondary animate-spin" />
-                          : <Radio className="w-3.5 h-3.5 text-text-secondary" />}
-                      </button>
-                      <button
-                        onClick={() => removeWallet(wallet.id)}
-                        className={`${theme.styles.buttonIcon} p-1.5 rounded-lg hover:!bg-red-500/15`}
-                        title="Remove wallet"
-                      >
-                        <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                      </button>
-                      <button
-                        onClick={() => setExpandedWallet(isExpanded ? null : wallet.id)}
-                        className={`${theme.styles.buttonIcon} p-1.5 rounded-lg`}
-                      >
-                        {isExpanded
-                          ? <ChevronUp className="w-3.5 h-3.5 text-text-secondary" />
-                          : <ChevronDown className="w-3.5 h-3.5 text-text-secondary" />}
-                      </button>
+                    <div className="text-xs text-text-tertiary font-mono ml-3.5">{formatAddress(wallet.address, 10, 6)}</div>
+                    <div className="flex gap-1 mt-2 ml-3.5">
+                      {wallet.networks.map((n) => (
+                        <span key={n} className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-surface-elevated text-text-tertiary border border-border-subtle">
+                          {n}
+                        </span>
+                      ))}
                     </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleCheckActivity(wallet.id)}
+                      disabled={isChecking === wallet.id}
+                      className={`${theme.styles.buttonIcon} p-1.5 rounded-lg disabled:opacity-40`}
+                      title="Check for new activity"
+                    >
+                      {isChecking === wallet.id
+                        ? <Loader2 className="w-3.5 h-3.5 text-text-secondary animate-spin" />
+                        : <Radio className="w-3.5 h-3.5 text-text-secondary" />}
+                    </button>
+                    <button
+                      onClick={() => removeWallet(wallet.id)}
+                      className={`${theme.styles.buttonIcon} p-1.5 rounded-lg hover:!bg-red-500/15`}
+                      title="Remove wallet"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                    </button>
+                    <button
+                      onClick={() => setExpandedWallet(isExpanded ? null : wallet.id)}
+                      className={`${theme.styles.buttonIcon} p-1.5 rounded-lg`}
+                    >
+                      {isExpanded
+                        ? <ChevronUp className="w-3.5 h-3.5 text-text-secondary" />
+                        : <ChevronDown className="w-3.5 h-3.5 text-text-secondary" />}
+                    </button>
                   </div>
                 </div>
+              </div>
 
-                {isExpanded && (
-                  <div className="border-t border-border-subtle px-3 sm:px-4 py-3">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className={`w-1 h-3.5 rounded-full bg-gradient-to-b ${styles.sendGradient}`} />
-                      <h4 className="text-[10px] font-semibold text-text-tertiary uppercase tracking-wider">Recent Activity</h4>
-                    </div>
-                    {walletActivities.length === 0 ? (
-                      <p className="text-xs text-text-tertiary text-center py-6">No recent activity detected</p>
-                    ) : (
-                      <div className="space-y-1.5">
-                        {walletActivities.map((activity) => {
-                          const IconComponent = ACTIVITY_ICONS[activity.activityType] ?? HelpCircle
-                          const colors = ACTIVITY_COLORS[activity.activityType] ?? ACTIVITY_COLORS.unknown
-                          return (
-                            <div key={activity.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-surface-elevated/50 border border-border-subtle/50">
-                              <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${colors.bg}`}>
-                                <IconComponent className={`w-3.5 h-3.5 ${colors.text}`} />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-xs font-medium text-text-primary">
-                                  {ACTIVITY_LABELS[activity.activityType]}
-                                  {activity.activityType === 'swap' && activity.tokenInSymbol && activity.tokenOutSymbol && (
-                                    <span className="text-text-tertiary ml-1.5">
-                                      {activity.tokenInSymbol} → {activity.tokenOutSymbol}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="text-[10px] text-text-tertiary">{activity.networkId}</div>
-                              </div>
-                              <div className="text-right flex-shrink-0">
-                                {activity.estimatedValueUsd !== undefined && activity.estimatedValueUsd > 0 && (
-                                  <div className="text-xs font-semibold text-text-primary">
-                                    {formatUSD(activity.estimatedValueUsd)}
-                                  </div>
+              {isExpanded && (
+                <div className="border-t border-border-subtle px-3 sm:px-4 py-3">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className={`w-1 h-3.5 rounded-full bg-gradient-to-b ${styles.sendGradient}`} />
+                    <h4 className="text-[10px] font-semibold text-text-tertiary uppercase tracking-wider">Recent Activity</h4>
+                  </div>
+                  {walletActivities.length === 0 ? (
+                    <p className="text-xs text-text-tertiary text-center py-6">No recent activity detected</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {walletActivities.map((activity) => {
+                        const IconComponent = ACTIVITY_ICONS[activity.activityType] ?? HelpCircle
+                        const colors = ACTIVITY_COLORS[activity.activityType] ?? ACTIVITY_COLORS.unknown
+                        return (
+                          <div key={activity.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-surface-elevated/50 border border-border-subtle/50">
+                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${colors.bg}`}>
+                              <IconComponent className={`w-3.5 h-3.5 ${colors.text}`} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs font-medium text-text-primary">
+                                {ACTIVITY_LABELS[activity.activityType]}
+                                {activity.activityType === 'swap' && activity.tokenInSymbol && activity.tokenOutSymbol && (
+                                  <span className="text-text-tertiary ml-1.5">
+                                    {activity.tokenInSymbol} → {activity.tokenOutSymbol}
+                                  </span>
                                 )}
-                                <div className="text-[10px] text-text-tertiary">
-                                  {formatTimeAgo(activity.timestamp)}
+                              </div>
+                              <div className="text-[10px] text-text-tertiary">{activity.networkId}</div>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              {activity.estimatedValueUsd !== undefined && activity.estimatedValueUsd > 0 && (
+                                <div className="text-xs font-semibold text-text-primary">
+                                  {formatUSD(activity.estimatedValueUsd)}
                                 </div>
+                              )}
+                              <div className="text-[10px] text-text-tertiary">
+                                {formatTimeAgo(activity.timestamp)}
                               </div>
                             </div>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
     </div>
   )

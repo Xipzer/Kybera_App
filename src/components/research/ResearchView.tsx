@@ -350,24 +350,10 @@ export function ResearchView() {
       )}
 
       <div className="relative z-10 h-full flex flex-col">
-        {activeTab !== 'research' && !isMobile && (
-          <div className="flex items-center justify-end gap-2 px-4 pt-3 pb-0 flex-shrink-0">
-            <NotificationBell />
-            <button
-              onClick={() => setShowSettings(true)}
-              className={`${theme.styles.buttonIcon} p-2 rounded-lg`}
-              title="Settings"
-            >
-              <Settings className="w-4 h-4 text-text-secondary" />
-            </button>
-          </div>
-        )}
-
-        {(activeTab === 'research' || isMobile) && (
-          <div className="p-3 sm:p-4 pb-0">
-            <div
-              className={`${styles.headerBg} border ${styles.headerBorder} rounded-xl p-3 sm:p-4 relative overflow-hidden`}
-            >
+        <div className="p-3 sm:p-4 pb-0 flex-shrink-0">
+          <div
+            className={`${styles.headerBg} border ${styles.headerBorder} rounded-xl p-3 sm:p-4 relative overflow-hidden`}
+          >
               {particlesApp && (
                 <>
                   <ResearchParticles
@@ -467,7 +453,6 @@ export function ResearchView() {
               )}
             </div>
           </div>
-        )}
 
         {isMobile && (
           <Tabs.List className="flex gap-1 px-3 sm:px-4 py-2 overflow-x-auto flex-shrink-0 border-b border-border-subtle">
