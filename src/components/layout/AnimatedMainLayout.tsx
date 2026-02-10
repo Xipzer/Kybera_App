@@ -3,7 +3,6 @@
  */
 
 import { ReactNode, useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { useUIStore } from '../../store/uiStore'
 import { WalletDrawer } from '../wallet/WalletDrawer'
@@ -126,32 +125,9 @@ export function MainLayout({ children }: MainLayoutProps) {
               opacity: isWalletDraggingBelowMin ? 0.5 : 1,
             }}
           >
-            <AnimatePresence mode="wait">
-              {!isWalletDraggingBelowMin &&
-                (isWalletCollapsed ? (
-                  <motion.div
-                    key="collapsed-wallet"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="h-full"
-                  >
-                    <WalletDrawer collapsed />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="expanded-wallet"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="h-full"
-                  >
-                    <WalletDrawer />
-                  </motion.div>
-                ))}
-            </AnimatePresence>
+            {!isWalletDraggingBelowMin && (
+              <WalletDrawer collapsed={isWalletCollapsed} />
+            )}
           </div>
         </Panel>
       </PanelGroup>

@@ -33,7 +33,7 @@ import { ExportGroupDialog } from './ExportGroupDialog'
 import { ExportWalletDialog } from './ExportWalletDialog'
 import { ImportGroupDialog } from './ImportGroupDialog'
 import { WalletDetailView } from './WalletDetailView'
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
+
 import { useTheme } from '../../hooks/useTheme'
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard'
 import { useUIStore } from '../../store/uiStore'
@@ -771,29 +771,11 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
     </Tabs.Root>
   )
 
-  if (isWalletListCollapsed) {
-    return (
-      <div
-        className={`h-full flex flex-col ${theme.styles.drawerContainer} panel-content-fade-right`}
-      >
-        {walletListHeader}
-
-        {activeWalletId && (
-          <div className="flex-1 overflow-y-auto">
-            <WalletDetailView />
-          </div>
-        )}
-
-        {dialogs}
-      </div>
-    )
-  }
-
   return (
     <div
       className={`h-full ${theme.styles.drawerContainer} panel-content-fade-right relative overflow-hidden`}
     >
-      {particlesApp && (
+      {particlesApp && !isWalletListCollapsed && (
         <>
           <CollapsedParticles
             color={theme.styles.unlockScreen.particleColor}
@@ -807,24 +789,23 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
           />
         </>
       )}
-      <PanelGroup direction="vertical" className="h-full relative z-10">
-        <Panel defaultSize={50} minSize={30} maxSize={70} className="flex flex-col overflow-hidden">
-          {walletListHeader}
-          {walletListContent}
-          {dialogs}
-        </Panel>
-
+      <div className="h-full flex flex-col relative z-10">
+        {walletListHeader}
+        {!isWalletListCollapsed && (
+          <div className="flex-1 min-h-0 overflow-hidden">
+            {walletListContent}
+          </div>
+        )}
+        {dialogs}
         {activeWalletId && (
           <>
-            <PanelResizeHandle
-              className={`h-px transition-colors ${theme.styles.resizeHandle} ${theme.styles.resizeHandleHover}`}
-            />
-            <Panel>
+            <div className={`h-px flex-shrink-0 ${theme.styles.resizeHandle}`} />
+            <div className="flex-1 min-h-0 overflow-hidden">
               <WalletDetailView />
-            </Panel>
+            </div>
           </>
         )}
-      </PanelGroup>
+      </div>
     </div>
   )
 }
