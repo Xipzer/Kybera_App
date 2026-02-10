@@ -4,12 +4,10 @@
 
 import { useState } from 'react'
 import {
-  CreditCard,
   Plus,
   X,
   DollarSign,
   Globe,
-  Wallet,
   CheckCircle,
   XCircle,
   Clock,
@@ -63,10 +61,7 @@ export function X402Settings() {
   return (
     <div className="space-y-6">
       <div>
-        <div className="flex items-center gap-2 mb-4">
-          <CreditCard className="w-5 h-5 text-accent-500" />
-          <h3 className="text-lg font-medium text-text-primary">x402 Auto-Payments</h3>
-        </div>
+        <h3 className="text-lg font-medium text-text-primary mb-4">x402 Auto-Payments</h3>
 
         <div className="space-y-4">
           <ModernToggle
@@ -77,10 +72,7 @@ export function X402Settings() {
           />
 
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <Wallet className="w-4 h-4 text-accent-500" />
-              <h4 className="text-sm font-medium text-text-primary">Payment Wallet</h4>
-            </div>
+            <h4 className="text-sm font-medium text-text-primary mb-4">Payment Wallet</h4>
             <select
               value={config.paymentWalletId || ''}
               onChange={(e) => setPaymentWallet(e.target.value)}
@@ -165,10 +157,7 @@ export function X402Settings() {
       </div>
 
       <div className="border-t border-border-subtle pt-6">
-        <div className="flex items-center gap-2 mb-1">
-          <Globe className="w-5 h-5 text-accent-500" />
-          <h3 className="text-lg font-medium text-text-primary">Approved Domains</h3>
-        </div>
+        <h3 className="text-lg font-medium text-text-primary mb-1">Approved Domains</h3>
         <p className="text-xs text-text-tertiary mb-4">
           Only these domains can trigger auto-payments. Leave empty to allow all.
         </p>
