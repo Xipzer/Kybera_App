@@ -15,6 +15,7 @@ import {
   Percent,
 } from 'lucide-react'
 import { useTheme } from '../../hooks/useTheme'
+import { themeClasses } from '../../utils/themeClasses'
 import { yieldService } from '../../services/defi/yieldService'
 import { EmptyState } from '../common/EmptyState'
 import { formatCompactNumber } from '../../utils/formatters'
@@ -51,16 +52,54 @@ const RISK_BADGE: Record<string, { bg: string; text: string; border: string; ico
 function RiskBadge({ level }: { level: string }) {
   const config = RISK_BADGE[level] ?? RISK_BADGE.high
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider ${config.bg} ${config.text} border ${config.border}`}>
-      <config.icon className="w-2.5 h-2.5" />
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider ${config.bg} ${config.text} border ${config.border}`}>
+      <config.icon className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
       {level}
     </span>
   )
 }
 
+function getCardStyles(themeName: string) {
+  switch (themeName) {
+    case 'xipz':
+      return {
+        bg: 'bg-gradient-to-br from-primary-950 via-primary-900 to-primary-950',
+        border: 'border-primary-800/50 hover:border-primary-700/50',
+      }
+    case 'dark':
+      return {
+        bg: 'bg-surface-base',
+        border: 'border-[#8b8bff]/10 hover:border-[#8b8bff]/20',
+      }
+    case 'ogDark':
+      return {
+        bg: 'bg-surface-base',
+        border: 'border-white/10 hover:border-white/20',
+      }
+    case 'light':
+      return {
+        bg: 'bg-surface-elevated',
+        border: 'border-indigo-200/30 hover:border-indigo-300/40',
+      }
+    case 'ogLight':
+      return {
+        bg: 'bg-surface-elevated',
+        border: 'border-gray-200/30 hover:border-gray-300/40',
+      }
+    default:
+      return {
+        bg: 'bg-surface-elevated',
+        border: 'border-gray-200 hover:border-gray-300',
+      }
+  }
+}
+
 export function YieldView() {
-  const { theme } = useTheme()
+  const { theme, themeName, isDark } = useTheme()
   const styles = theme.styles.chatInterface
+  const iconAccent = theme.styles.iconAccent
+  const tc = themeClasses(isDark)
+  const card = getCardStyles(themeName)
   const [opportunities, setOpportunities] = useState<YieldOpportunity[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -101,7 +140,7 @@ export function YieldView() {
             value={tokenFilter}
             onChange={(e) => setTokenFilter(e.target.value)}
             placeholder="Filter by token..."
-            className="w-full pl-9 pr-3 py-2 bg-surface-elevated/50 border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-500/50 transition-colors"
+            className={`w-full pl-9 pr-3 py-2 ${tc.inputBg} border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-500/50 transition-colors`}
             style={{ fontSize: '16px' }}
           />
         </div>
@@ -112,7 +151,7 @@ export function YieldView() {
             value={minApy}
             onChange={(e) => { if (e.target.value === '' || /^\d*\.?\d*$/.test(e.target.value)) setMinApy(e.target.value) }}
             placeholder="Min"
-            className="w-20 pl-7 pr-2 py-2 bg-surface-elevated/50 border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-500/50 transition-colors"
+            className={`w-20 pl-7 pr-2 py-2 ${tc.inputBg} border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-500/50 transition-colors`}
             style={{ fontSize: '16px' }}
           />
         </div>
@@ -170,7 +209,7 @@ export function YieldView() {
 
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-16 gap-3">
-          <Loader2 className="w-6 h-6 text-accent-500 animate-spin" />
+          <Loader2 className={`w-6 h-6 ${iconAccent} animate-spin`} />
           <span className="text-xs text-text-tertiary">Scanning protocols...</span>
         </div>
       ) : error ? (
@@ -190,59 +229,68 @@ export function YieldView() {
           description="Try adjusting your filters or check back later."
         />
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {opportunities.map((opp) => (
-            <div key={opp.id} className="rounded-xl border border-border-subtle bg-surface-elevated/30 p-4 transition-all duration-200 hover:border-accent-500/20">
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-sm font-semibold text-text-primary">{opp.protocolName}</span>
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-surface-elevated text-text-tertiary border border-border-subtle/50">
-                      {opp.networkId}
-                    </span>
+            <div
+              key={opp.id}
+              className={`${card.bg} border ${card.border} rounded-2xl overflow-hidden transition-all duration-300`}
+            >
+              <div className={`p-3 sm:p-4 border-b ${tc.borderSubtle}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-sm sm:text-base font-semibold text-text-primary">{opp.protocolName}</span>
+                      <span className={`px-1.5 py-0.5 rounded-md text-[9px] sm:text-[10px] font-medium ${tc.sectionBg} border text-text-tertiary`}>
+                        {opp.networkId}
+                      </span>
+                    </div>
+                    <div className="text-xs sm:text-sm text-text-tertiary">
+                      {opp.tokenSymbol}
+                      <span className="mx-1.5 opacity-40">/</span>
+                      <span className="capitalize">{opp.yieldType.replace('_', ' ')}</span>
+                    </div>
                   </div>
-                  <div className="text-xs text-text-tertiary">
-                    {opp.tokenSymbol}
-                    <span className="mx-1.5 text-text-muted">/</span>
-                    <span className="capitalize">{opp.yieldType.replace('_', ' ')}</span>
-                  </div>
+                  <RiskBadge level={opp.riskLevel} />
                 </div>
-                <RiskBadge level={opp.riskLevel} />
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <div className="text-[9px] text-text-tertiary uppercase tracking-wider font-semibold mb-0.5">APY</div>
-                  <div className={`text-base font-bold bg-gradient-to-r ${styles.titleGradient} bg-clip-text text-transparent`}>
-                    {opp.apy.toFixed(2)}%
-                  </div>
-                  {opp.apyReward > 0 && (
-                    <div className="text-[10px] text-text-tertiary mt-0.5">
-                      {opp.apyBase.toFixed(1)}% base + {opp.apyReward.toFixed(1)}% reward
+              <div className="p-3 sm:p-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
+                  <div>
+                    <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5 sm:mb-1">APY</div>
+                    <div className={`text-base sm:text-lg font-bold ${iconAccent}`}>
+                      {opp.apy.toFixed(2)}%
                     </div>
-                  )}
-                </div>
-                <div>
-                  <div className="text-[9px] text-text-tertiary uppercase tracking-wider font-semibold mb-0.5">TVL</div>
-                  <div className="text-sm font-semibold text-text-primary">{formatCompactNumber(opp.tvl)}</div>
-                </div>
-                <div>
-                  <div className="text-[9px] text-text-tertiary uppercase tracking-wider font-semibold mb-0.5">Protocol</div>
-                  <div className="text-sm font-medium text-text-secondary">{opp.protocolName}</div>
+                    {opp.apyReward > 0 && (
+                      <div className="text-[10px] sm:text-xs text-text-tertiary mt-0.5">
+                        {opp.apyBase.toFixed(1)}% base + {opp.apyReward.toFixed(1)}% reward
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5 sm:mb-1">TVL</div>
+                    <div className="text-sm sm:text-base font-medium text-text-primary">{formatCompactNumber(opp.tvl)}</div>
+                  </div>
+                  <div className="col-span-2 sm:col-span-1">
+                    <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5 sm:mb-1">Type</div>
+                    <div className="text-sm sm:text-base font-medium text-text-secondary capitalize">{opp.yieldType.replace('_', ' ')}</div>
+                  </div>
                 </div>
               </div>
 
               {opp.riskFactors.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-border-subtle/50">
-                  <div className="flex flex-wrap gap-1.5">
-                    {opp.riskFactors.map((factor, i) => (
-                      <span
-                        key={i}
-                        className="px-2 py-0.5 rounded-md text-[9px] font-medium bg-orange-500/8 text-orange-400 border border-orange-500/15"
-                      >
-                        {factor}
-                      </span>
-                    ))}
+                <div className={`px-3 sm:px-4 pb-3 sm:pb-4`}>
+                  <div className={`${tc.sectionBg} border rounded-xl p-2.5 sm:p-3`}>
+                    <div className="flex flex-wrap gap-1.5">
+                      {opp.riskFactors.map((factor, i) => (
+                        <span
+                          key={i}
+                          className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-medium bg-orange-500/20 text-orange-500 border border-orange-500/15"
+                        >
+                          {factor}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
