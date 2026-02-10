@@ -31,47 +31,36 @@ export function NavRail() {
   return (
     <aside
       className="group/rail fixed top-0 left-0 bottom-0 z-[110] bg-surface-base border-r border-border-subtle flex flex-col py-1.5 overflow-hidden transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:shadow-[6px_0_24px_rgba(0,0,0,0.12)]"
-      style={{
-        width: NAV_RAIL_COLLAPSED,
-      }}
+      style={{ width: NAV_RAIL_COLLAPSED }}
       onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.width = NAV_RAIL_EXPANDED }}
       onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.width = NAV_RAIL_COLLAPSED }}
     >
-      <div className="flex items-center gap-3 px-[11px] h-[48px] mb-1 flex-shrink-0">
-        <img src="/kybera-icon.png" alt="Kybera" className="w-[30px] h-[30px] rounded-lg shadow-md flex-shrink-0" />
-        <span className="text-sm font-bold text-text-primary whitespace-nowrap opacity-0 group-hover/rail:opacity-100 transition-opacity duration-200 delay-[50ms]">
-          Kybera
-        </span>
-      </div>
-
-      <div className="h-px bg-border-subtle mx-3.5 mb-1 flex-shrink-0" />
-
-      <nav className="flex flex-col gap-0.5 px-1.5 flex-1">
+      <nav className="flex flex-col gap-0.5 px-1 flex-1 mt-1">
         {NAV_ITEMS.map((item) => (
           <button
             key={item.id}
             onClick={() => setActiveNavItem(item.id)}
-            className={`flex items-center gap-3 h-[40px] px-[11px] rounded-lg text-sm font-medium whitespace-nowrap transition-colors duration-150 w-full text-left ${
+            className={`flex items-center justify-center group-hover/rail:justify-start gap-3 h-[40px] group-hover/rail:px-[11px] rounded-lg text-sm font-medium whitespace-nowrap transition-colors duration-150 w-full ${
               activeNavItem === item.id
                 ? `${theme.styles.iconAccent} bg-accent/10 font-semibold`
                 : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'
             }`}
           >
             <item.icon className={`w-[18px] h-[18px] flex-shrink-0 ${activeNavItem === item.id ? 'drop-shadow-[0_0_4px_rgba(var(--color-accent-500),0.4)]' : ''}`} />
-            <span className="opacity-0 group-hover/rail:opacity-100 transition-opacity duration-200 delay-[50ms]">
+            <span className="opacity-0 group-hover/rail:opacity-100 transition-opacity duration-200 delay-[50ms] hidden group-hover/rail:inline">
               {item.label}
             </span>
           </button>
         ))}
       </nav>
 
-      <div className="h-px bg-border-subtle mx-3.5 my-1 flex-shrink-0" />
+      <div className="h-px bg-border-subtle mx-2 my-1 flex-shrink-0" />
 
-      <div className="px-1.5 pb-1">
+      <div className="px-1 pb-1">
         <Popover.Root>
           <Popover.Trigger asChild>
             <button
-              className="relative flex items-center gap-3 h-[40px] px-[11px] rounded-lg text-sm font-medium whitespace-nowrap text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors duration-150 w-full text-left"
+              className="relative flex items-center justify-center group-hover/rail:justify-start gap-3 h-[40px] group-hover/rail:px-[11px] rounded-lg text-sm font-medium whitespace-nowrap text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors duration-150 w-full"
             >
               <div className="relative flex-shrink-0">
                 <Bell className="w-[18px] h-[18px]" />
@@ -81,7 +70,7 @@ export function NavRail() {
                   </span>
                 )}
               </div>
-              <span className="opacity-0 group-hover/rail:opacity-100 transition-opacity duration-200 delay-[50ms]">
+              <span className="opacity-0 group-hover/rail:opacity-100 transition-opacity duration-200 delay-[50ms] hidden group-hover/rail:inline">
                 Notifications
               </span>
             </button>

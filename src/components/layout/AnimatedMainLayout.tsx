@@ -83,9 +83,9 @@ export function MainLayout({ children }: MainLayoutProps) {
   }
 
   return (
-    <div className="h-screen bg-bg-subtle">
+    <div className="h-screen bg-bg-subtle overflow-hidden">
       <NavRail />
-      <PanelGroup direction="horizontal" className="h-full" style={{ marginLeft: NAV_RAIL_COLLAPSED }}>
+      <PanelGroup direction="horizontal" className="h-full" style={{ marginLeft: NAV_RAIL_COLLAPSED, width: `calc(100vw - ${NAV_RAIL_COLLAPSED})` }}>
         <Panel id="main-content" order={1}>
           <div className="h-full">{children}</div>
         </Panel>

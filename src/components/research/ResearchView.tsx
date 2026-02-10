@@ -17,6 +17,7 @@ import {
   Search,
 } from 'lucide-react'
 import * as Tabs from '@radix-ui/react-tabs'
+import { NotificationBell } from '../notifications/NotificationBell'
 import { useResearchStore } from '../../store/researchStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useUIStore } from '../../store/uiStore'
@@ -422,6 +423,14 @@ export function ResearchView() {
                     Disconnect
                   </button>
                 )}
+                <NotificationBell className="hidden lg:flex" />
+                <button
+                  onClick={() => setShowSettings(true)}
+                  className={`${theme.styles.buttonIcon} p-2 rounded-lg hidden lg:flex`}
+                  title="Settings"
+                >
+                  <Settings className="w-4 h-4 text-text-secondary" />
+                </button>
               </div>
             </div>
 
