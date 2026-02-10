@@ -17,7 +17,6 @@ import {
   Search,
 } from 'lucide-react'
 import * as Tabs from '@radix-ui/react-tabs'
-import { NotificationBell } from '../notifications/NotificationBell'
 import { useResearchStore } from '../../store/researchStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useUIStore } from '../../store/uiStore'
@@ -26,6 +25,7 @@ import { ApeInterface } from './ApeInterface'
 import { ChatMessage } from '../chat/ChatMessage'
 import { ActionConfirmationDialog } from '../chat/ActionConfirmationDialog'
 import { SettingsDialog } from '../settings/SettingsDialog'
+import { SettingsPanel } from '../settings/SettingsPanel'
 import { PortfolioView } from '../portfolio/PortfolioView'
 import { WatchlistView } from '../watchlist/WatchlistView'
 import { PredictionMarketsView } from '../markets/PredictionMarketsView'
@@ -140,7 +140,7 @@ export function ResearchView() {
   const styles = theme.styles.chatInterface
   const isMobile = useMediaQuery('(max-width: 1024px)')
 
-  const { chatWallpaper, wallpaperOpacity, particlesApp } = useUIStore()
+  const { chatWallpaper, wallpaperOpacity, particlesApp, activeNavItem } = useUIStore()
 
   const connectionState = useResearchStore((state) => state.connectionState)
   const allResearches = useResearchStore((state) => state.researches)
@@ -183,6 +183,10 @@ export function ResearchView() {
       connect(openClawGatewayUrl, openClawAuthToken || undefined).catch(console.error)
     }
   }, [openClawGatewayUrl, openClawAuthToken, openClawAutoConnect, connectionState, connect])
+
+  useEffect(() => {
+    if (!isMobile && activeNavItem !== 'settings') setActiveTab(activeNavItem)
+  }, [isMobile, activeNavItem])
 
   useEffect(() => {
     if (isNearBottomRef.current) {
@@ -344,7 +348,7 @@ export function ResearchView() {
       )}
 
       <div className="relative z-10 h-full flex flex-col">
-        <div className="p-3 sm:p-4 pb-0">
+        {(isMobile || activeNavItem !== 'settings') && <div className="p-3 sm:p-4 pb-0">
           <div
             className={`${styles.headerBg} border ${styles.headerBorder} rounded-xl p-3 sm:p-4 relative overflow-hidden`}
           >
@@ -418,14 +422,6 @@ export function ResearchView() {
                     Disconnect
                   </button>
                 )}
-                <NotificationBell className="hidden lg:flex" />
-                <button
-                  onClick={() => setShowSettings(true)}
-                  className={`${theme.styles.buttonIcon} p-2 rounded-lg hidden lg:flex`}
-                  title="Settings"
-                >
-                  <Settings className="w-4 h-4 text-text-secondary" />
-                </button>
               </div>
             </div>
 
@@ -446,32 +442,34 @@ export function ResearchView() {
               </div>
             )}
           </div>
-        </div>
+        </div>}
 
-        <Tabs.List className="flex gap-1 px-3 sm:px-4 py-2 overflow-x-auto flex-shrink-0 border-b border-border-subtle">
-          <Tabs.Trigger value="research" className={tabTriggerClass}>
-            <Search className="w-4 h-4" />
-            Research
-          </Tabs.Trigger>
-          <Tabs.Trigger value="portfolio" className={tabTriggerClass}>
-            <BarChart3 className="w-4 h-4" />
-            Portfolio
-          </Tabs.Trigger>
-          <Tabs.Trigger value="watchlist" className={tabTriggerClass}>
-            <Eye className="w-4 h-4" />
-            Watchlist
-          </Tabs.Trigger>
-          <Tabs.Trigger value="markets" className={tabTriggerClass}>
-            <TrendingUp className="w-4 h-4" />
-            Markets
-          </Tabs.Trigger>
-          <Tabs.Trigger value="yield" className={tabTriggerClass}>
-            <Sprout className="w-4 h-4" />
-            Yield
-          </Tabs.Trigger>
-        </Tabs.List>
+        {isMobile && (
+          <Tabs.List className="flex gap-1 px-3 sm:px-4 py-2 overflow-x-auto flex-shrink-0 border-b border-border-subtle">
+            <Tabs.Trigger value="research" className={tabTriggerClass}>
+              <Search className="w-4 h-4" />
+              Research
+            </Tabs.Trigger>
+            <Tabs.Trigger value="portfolio" className={tabTriggerClass}>
+              <BarChart3 className="w-4 h-4" />
+              Portfolio
+            </Tabs.Trigger>
+            <Tabs.Trigger value="watchlist" className={tabTriggerClass}>
+              <Eye className="w-4 h-4" />
+              Watchlist
+            </Tabs.Trigger>
+            <Tabs.Trigger value="markets" className={tabTriggerClass}>
+              <TrendingUp className="w-4 h-4" />
+              Markets
+            </Tabs.Trigger>
+            <Tabs.Trigger value="yield" className={tabTriggerClass}>
+              <Sprout className="w-4 h-4" />
+              Yield
+            </Tabs.Trigger>
+          </Tabs.List>
+        )}
 
-        <Tabs.Content value="research" className="flex-1 flex flex-col min-h-0">
+        <Tabs.Content value="research" className="flex-1 flex flex-col min-h-0" hidden={!isMobile && activeNavItem === 'settings'}>
           {!openClawGatewayUrl ? (
             notConfiguredContent
           ) : (
@@ -640,21 +638,27 @@ export function ResearchView() {
           </div>
         </Tabs.Content>
 
-        <Tabs.Content value="portfolio" className="flex-1 min-h-0 overflow-hidden">
+        <Tabs.Content value="portfolio" className="flex-1 min-h-0 overflow-hidden" hidden={!isMobile && activeNavItem === 'settings'}>
           <PortfolioView />
         </Tabs.Content>
 
-        <Tabs.Content value="watchlist" className="flex-1 min-h-0 overflow-hidden">
+        <Tabs.Content value="watchlist" className="flex-1 min-h-0 overflow-hidden" hidden={!isMobile && activeNavItem === 'settings'}>
           <WatchlistView />
         </Tabs.Content>
 
-        <Tabs.Content value="markets" className="flex-1 min-h-0 overflow-hidden">
+        <Tabs.Content value="markets" className="flex-1 min-h-0 overflow-hidden" hidden={!isMobile && activeNavItem === 'settings'}>
           <PredictionMarketsView />
         </Tabs.Content>
 
-        <Tabs.Content value="yield" className="flex-1 min-h-0 overflow-hidden">
+        <Tabs.Content value="yield" className="flex-1 min-h-0 overflow-hidden" hidden={!isMobile && activeNavItem === 'settings'}>
           <YieldView />
         </Tabs.Content>
+
+        {!isMobile && activeNavItem === 'settings' && (
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <SettingsPanel />
+          </div>
+        )}
 
         {!isMobile && <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />}
       </div>

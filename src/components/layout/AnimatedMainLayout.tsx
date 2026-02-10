@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { useUIStore } from '../../store/uiStore'
 import { WalletDrawer } from '../wallet/WalletDrawer'
+import { NavRail, NAV_RAIL_COLLAPSED } from './NavRail'
 import { useTheme } from '../../hooks/useTheme'
 
 interface MainLayoutProps {
@@ -83,7 +84,8 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   return (
     <div className="h-screen bg-bg-subtle">
-      <PanelGroup direction="horizontal" className="h-full">
+      <NavRail />
+      <PanelGroup direction="horizontal" className="h-full" style={{ marginLeft: NAV_RAIL_COLLAPSED }}>
         <Panel id="main-content" order={1}>
           <div className="h-full">{children}</div>
         </Panel>

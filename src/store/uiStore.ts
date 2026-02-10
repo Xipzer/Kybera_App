@@ -6,11 +6,14 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { ThemeName } from '../hooks/useTheme'
 
+export type NavItem = 'research' | 'portfolio' | 'watchlist' | 'markets' | 'yield' | 'settings'
+
 interface UIState {
   walletDrawerOpen: boolean
   walletDrawerWidth: number
   theme: ThemeName
   chatSidebarOpen: boolean
+  activeNavItem: NavItem
   profilePicture: string | null
   chatWallpaper: string | null
   wallpaperOpacity: number
@@ -26,6 +29,7 @@ interface UIState {
   toggleTheme: () => void
   setTheme: (theme: ThemeName) => void
   toggleChatSidebar: () => void
+  setActiveNavItem: (item: NavItem) => void
   setProfilePicture: (dataUrl: string | null) => void
   setChatWallpaper: (dataUrl: string | null) => void
   setWallpaperOpacity: (opacity: number) => void
@@ -44,6 +48,7 @@ export const useUIStore = create<UIState>()(
       walletDrawerWidth: 320,
       theme: 'xipz',
       chatSidebarOpen: true,
+      activeNavItem: 'research',
       profilePicture: null,
       chatWallpaper: null,
       wallpaperOpacity: 0.1,
@@ -75,6 +80,10 @@ export const useUIStore = create<UIState>()(
 
       toggleChatSidebar: () => {
         set((state) => ({ chatSidebarOpen: !state.chatSidebarOpen }))
+      },
+
+      setActiveNavItem: (item) => {
+        set({ activeNavItem: item })
       },
 
       setProfilePicture: (dataUrl) => {
