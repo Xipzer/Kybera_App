@@ -9,7 +9,6 @@ import {
   Eye,
   EyeOff,
   Shield,
-  Brain,
   Palette,
   AlertCircle,
   Check,
@@ -20,6 +19,7 @@ import {
   Zap,
   Import,
 } from 'lucide-react'
+import { SiBasicattentiontoken } from 'react-icons/si'
 import { ImageUpload } from '../common/ImageUpload'
 import { useTheme } from '../../hooks/useTheme'
 import { useSettingsState } from '../../hooks/useSettingsState'
@@ -89,7 +89,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     value="ai"
                     className="flex items-center gap-2 sm:gap-3 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent-500 data-[state=active]:bg-accent-500/10 transition-colors sm:w-full text-left whitespace-nowrap touch-manipulation min-h-[44px]"
                   >
-                    <Brain className="w-4 h-4" />
+                    <SiBasicattentiontoken className="w-4 h-4" />
                     <span className="hidden sm:inline">Configuration</span>
                     <span className="sm:hidden">Config</span>
                   </Tabs.Trigger>

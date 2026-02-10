@@ -10,7 +10,6 @@ import {
   Moon,
   Sun,
   Shield,
-  Brain,
   Palette,
   AlertCircle,
   Check,
@@ -21,6 +20,7 @@ import {
   Zap,
   CreditCard,
 } from 'lucide-react'
+import { SiBasicattentiontoken } from 'react-icons/si'
 import { ImageUpload } from '../common/ImageUpload'
 import { useTheme } from '../../hooks/useTheme'
 import { useSettingsState } from '../../hooks/useSettingsState'
@@ -59,7 +59,7 @@ export function SettingsPanel() {
               value="ai"
               className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent data-[state=active]:bg-accent/10 transition-colors whitespace-nowrap touch-manipulation min-h-[44px]"
             >
-              <Brain className="w-4 h-4" />
+              <SiBasicattentiontoken className="w-4 h-4" />
               Config
             </Tabs.Trigger>
             <Tabs.Trigger

@@ -4,8 +4,7 @@
 
 import * as Popover from '@radix-ui/react-popover'
 import { LuBrain } from 'react-icons/lu'
-import { SiBasicattentiontoken } from 'react-icons/si'
-import { BarChart3, Eye, TrendingUp, Sprout, Bell } from 'lucide-react'
+import { BarChart3, Eye, TrendingUp, Sprout, Bell, Settings } from 'lucide-react'
 import { useUIStore, type NavItem } from '../../store/uiStore'
 import { useNotificationStore } from '../../store/notificationStore'
 import { NotificationPanel } from '../notifications/NotificationPanel'
@@ -14,13 +13,13 @@ import { useTheme } from '../../hooks/useTheme'
 export const NAV_RAIL_COLLAPSED = 'calc(4vw / 1.04)'
 export const NAV_RAIL_EXPANDED = '220px'
 
-const NAV_ITEMS: { id: NavItem; label: string; icon: typeof BarChart3 | typeof LuBrain | typeof SiBasicattentiontoken }[] = [
+const NAV_ITEMS: { id: NavItem; label: string; icon: typeof BarChart3 | typeof LuBrain }[] = [
   { id: 'research', label: 'Research', icon: LuBrain },
   { id: 'portfolio', label: 'Portfolio', icon: BarChart3 },
   { id: 'watchlist', label: 'Watchlist', icon: Eye },
   { id: 'markets', label: 'Markets', icon: TrendingUp },
   { id: 'yield', label: 'Yield', icon: Sprout },
-  { id: 'settings', label: 'Settings', icon: SiBasicattentiontoken },
+  { id: 'settings', label: 'Settings', icon: Settings },
 ]
 
 export function NavRail() {
