@@ -381,8 +381,36 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
     </>
   )
 
+  const panelGroupRef = useRef<HTMLDivElement>(null)
+  const headerRef = useRef<HTMLDivElement>(null)
+  const tabBarRef = useRef<HTMLDivElement>(null)
+  const [listMinSize, setListMinSize] = useState(35)
+
+  useEffect(() => {
+    const update = () => {
+      const panelGroupEl = panelGroupRef.current
+      const headerEl = headerRef.current
+      const tabBarEl = tabBarRef.current
+      if (!panelGroupEl || !headerEl) return
+
+      const panelGroupHeight = panelGroupEl.offsetHeight
+      if (panelGroupHeight <= 0) return
+
+      const fixedHeight = headerEl.offsetHeight + (tabBarEl?.offsetHeight || 0)
+      const pct = Math.ceil((fixedHeight / panelGroupHeight) * 100) + 1
+      setListMinSize(Math.max(10, Math.min(pct, 60)))
+    }
+
+    update()
+    const observer = new ResizeObserver(update)
+    if (panelGroupRef.current) observer.observe(panelGroupRef.current)
+    if (headerRef.current) observer.observe(headerRef.current)
+    return () => observer.disconnect()
+  }, [isWalletListCollapsed])
+
   const walletListHeader = (
     <div
+      ref={headerRef}
       className={`p-4 flex-shrink-0 ${theme.styles.panelHeader} ${isWalletListCollapsed ? `border-b border-border-subtle` : ''}`}
     >
       <div className={`flex items-center justify-between ${isWalletListCollapsed ? '' : 'mb-4'}`}>
@@ -476,7 +504,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
 
   const walletListContent = (
     <Tabs.Root defaultValue="groups" className="flex-1 flex flex-col min-h-0">
-      <Tabs.List className={`${theme.styles.tabs.list} flex-shrink-0`}>
+      <Tabs.List ref={tabBarRef} className={`${theme.styles.tabs.list} flex-shrink-0`}>
         <Tabs.Trigger value="groups" className={theme.styles.tabs.trigger}>
           <span>Groups ({actualGroups.length})</span>
           <span className={`block text-xs font-medium bg-gradient-to-r ${walletStyles.titleGradient} bg-clip-text text-transparent`}>{formatUSD(tabTotals.groups)}</span>
@@ -793,10 +821,11 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
           />
         </>
       )}
-      <PanelGroup direction="vertical" className="h-full relative z-10">
+      <div ref={panelGroupRef} className="h-full relative z-10">
+      <PanelGroup direction="vertical" className="h-full">
         <Panel
           defaultSize={50}
-          minSize={activeWalletId ? (isWalletListCollapsed ? 10 : 35) : 100}
+          minSize={activeWalletId ? (isWalletListCollapsed ? 10 : listMinSize) : 100}
           maxSize={activeWalletId ? (isWalletListCollapsed ? 10 : 80) : 100}
           className="flex flex-col overflow-hidden"
         >
@@ -817,6 +846,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
           </>
         )}
       </PanelGroup>
+      </div>
     </div>
   )
 }
