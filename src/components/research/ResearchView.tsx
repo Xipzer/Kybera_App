@@ -457,26 +457,21 @@ export function ResearchView() {
           </div>
 
         {isMobile && (
-          <Tabs.List className="flex gap-1 px-3 sm:px-4 py-2 overflow-x-auto flex-shrink-0 border-b border-border-subtle">
-            <Tabs.Trigger value="research" className={tabTriggerClass}>
-              <Search className="w-4 h-4" />
-              Research
+          <Tabs.List className="flex justify-center gap-1 px-3 py-2 flex-shrink-0 border-b border-border-subtle">
+            <Tabs.Trigger value="research" className={tabTriggerClass} title="Research">
+              <Search className="w-5 h-5" />
             </Tabs.Trigger>
-            <Tabs.Trigger value="portfolio" className={tabTriggerClass}>
-              <BarChart3 className="w-4 h-4" />
-              Portfolio
+            <Tabs.Trigger value="portfolio" className={tabTriggerClass} title="Portfolio">
+              <BarChart3 className="w-5 h-5" />
             </Tabs.Trigger>
-            <Tabs.Trigger value="watchlist" className={tabTriggerClass}>
-              <Eye className="w-4 h-4" />
-              Watchlist
+            <Tabs.Trigger value="watchlist" className={tabTriggerClass} title="Watchlist">
+              <Eye className="w-5 h-5" />
             </Tabs.Trigger>
-            <Tabs.Trigger value="markets" className={tabTriggerClass}>
-              <TrendingUp className="w-4 h-4" />
-              Markets
+            <Tabs.Trigger value="markets" className={tabTriggerClass} title="Markets">
+              <TrendingUp className="w-5 h-5" />
             </Tabs.Trigger>
-            <Tabs.Trigger value="yield" className={tabTriggerClass}>
-              <Sprout className="w-4 h-4" />
-              Yield
+            <Tabs.Trigger value="yield" className={tabTriggerClass} title="Yield">
+              <Sprout className="w-5 h-5" />
             </Tabs.Trigger>
           </Tabs.List>
         )}

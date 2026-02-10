@@ -54,34 +54,34 @@ export function SettingsPanel() {
           onValueChange={s.setActiveTab}
           className="flex-1 flex flex-col min-h-0"
         >
-          <Tabs.List className="flex justify-center gap-1 p-3 border-b border-border-subtle overflow-x-auto flex-shrink-0">
+          <Tabs.List className="flex justify-center gap-1 p-3 border-b border-border-subtle flex-shrink-0">
             <Tabs.Trigger
               value="ai"
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent data-[state=active]:bg-accent/10 transition-colors whitespace-nowrap touch-manipulation min-h-[44px]"
+              className="flex items-center justify-center p-3 text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent data-[state=active]:bg-accent/10 transition-colors touch-manipulation min-h-[44px] min-w-[44px]"
+              title="Config"
             >
-              <SiBasicattentiontoken className="w-4 h-4" />
-              Config
+              <SiBasicattentiontoken className="w-5 h-5" />
             </Tabs.Trigger>
             <Tabs.Trigger
               value="security"
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent data-[state=active]:bg-accent/10 transition-colors whitespace-nowrap touch-manipulation min-h-[44px]"
+              className="flex items-center justify-center p-3 text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent data-[state=active]:bg-accent/10 transition-colors touch-manipulation min-h-[44px] min-w-[44px]"
+              title="Security"
             >
-              <Shield className="w-4 h-4" />
-              Security
+              <Shield className="w-5 h-5" />
             </Tabs.Trigger>
             <Tabs.Trigger
               value="appearance"
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent data-[state=active]:bg-accent/10 transition-colors whitespace-nowrap touch-manipulation min-h-[44px]"
+              className="flex items-center justify-center p-3 text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent data-[state=active]:bg-accent/10 transition-colors touch-manipulation min-h-[44px] min-w-[44px]"
+              title="Theme"
             >
-              <Palette className="w-4 h-4" />
-              Theme
+              <Palette className="w-5 h-5" />
             </Tabs.Trigger>
             <Tabs.Trigger
               value="x402"
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent data-[state=active]:bg-accent/10 transition-colors whitespace-nowrap touch-manipulation min-h-[44px]"
+              className="flex items-center justify-center p-3 text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent data-[state=active]:bg-accent/10 transition-colors touch-manipulation min-h-[44px] min-w-[44px]"
+              title="x402 Payments"
             >
-              <CreditCard className="w-4 h-4" />
-              x402 Payments
+              <CreditCard className="w-5 h-5" />
             </Tabs.Trigger>
           </Tabs.List>
 
