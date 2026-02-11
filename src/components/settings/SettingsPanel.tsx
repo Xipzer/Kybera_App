@@ -63,6 +63,13 @@ export function SettingsPanel() {
               <SiBasicattentiontoken className="w-5 h-5" />
             </Tabs.Trigger>
             <Tabs.Trigger
+              value="x402"
+              className="flex items-center justify-center p-3 text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent data-[state=active]:bg-accent/10 transition-colors touch-manipulation min-h-[44px] min-w-[44px]"
+              title="x402 Payments"
+            >
+              <CreditCard className="w-5 h-5" />
+            </Tabs.Trigger>
+            <Tabs.Trigger
               value="security"
               className="flex items-center justify-center p-3 text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent data-[state=active]:bg-accent/10 transition-colors touch-manipulation min-h-[44px] min-w-[44px]"
               title="Security"
@@ -75,13 +82,6 @@ export function SettingsPanel() {
               title="Theme"
             >
               <Palette className="w-5 h-5" />
-            </Tabs.Trigger>
-            <Tabs.Trigger
-              value="x402"
-              className="flex items-center justify-center p-3 text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent data-[state=active]:bg-accent/10 transition-colors touch-manipulation min-h-[44px] min-w-[44px]"
-              title="x402 Payments"
-            >
-              <CreditCard className="w-5 h-5" />
             </Tabs.Trigger>
           </Tabs.List>
 
