@@ -12,7 +12,7 @@ import {
   ResearchFollowupAlert,
 } from '../types/notifications'
 
-const DEFAULT_POLL_INTERVAL = 60_000 // 1 minute
+const DEFAULT_POLL_INTERVAL = 60_000
 
 class NotificationService {
   private pollingInterval: ReturnType<typeof setInterval> | null = null
@@ -211,8 +211,7 @@ class NotificationService {
   async requestPushPermission(): Promise<boolean> {
     if (!('Notification' in window)) return false
     if (Notification.permission === 'granted') return true
-    const result = await Notification.requestPermission()
-    return result === 'granted'
+    return (await Notification.requestPermission()) === 'granted'
   }
 
   async sendBrowserPush(title: string, body: string, icon?: string): Promise<void> {

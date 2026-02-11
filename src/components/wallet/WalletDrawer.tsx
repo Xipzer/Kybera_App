@@ -260,7 +260,6 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
     }
   }, [wallets])
 
-  const walletsByType = sortedWallets
   const walletBalances = useWalletListBalances(wallets)
 
   const groupTotals = useMemo(() => {
@@ -276,11 +275,11 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
     const all = wallets.reduce((sum, w) => sum + (walletBalances.get(w.id) || 0), 0)
     return {
       groups: all,
-      evm: walletsByType.EVM.reduce((sum, w) => sum + (walletBalances.get(w.id) || 0), 0),
-      svm: walletsByType.SVM.reduce((sum, w) => sum + (walletBalances.get(w.id) || 0), 0),
+      evm: sortedWallets.EVM.reduce((sum, w) => sum + (walletBalances.get(w.id) || 0), 0),
+      svm: sortedWallets.SVM.reduce((sum, w) => sum + (walletBalances.get(w.id) || 0), 0),
       all,
     }
-  }, [walletsByType, walletBalances, wallets])
+  }, [sortedWallets, walletBalances, wallets])
 
   const handleGroupDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
@@ -315,11 +314,8 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
   }
 
   const { copy: copyToClipboard } = useCopyToClipboard()
-  const copyAddress = (address: string) => copyToClipboard(address)
 
-  const handleExportWallet = (wallet: (typeof wallets)[0]) => {
-    setExportWallet(wallet)
-  }
+
 
   const panelGroupRef = useRef<HTMLDivElement>(null)
   const tabBarRef = useRef<HTMLDivElement>(null)
@@ -527,11 +523,11 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
           <span className={`block text-xs font-medium bg-gradient-to-r ${walletStyles.titleGradient} bg-clip-text text-transparent`}>{formatUSD(tabTotals.groups)}</span>
         </Tabs.Trigger>
         <Tabs.Trigger value="evm" className={theme.styles.tabs.trigger}>
-          <span>EVM ({walletsByType.EVM.length})</span>
+          <span>EVM ({sortedWallets.EVM.length})</span>
           <span className={`block text-xs font-medium bg-gradient-to-r ${walletStyles.titleGradient} bg-clip-text text-transparent`}>{formatUSD(tabTotals.evm)}</span>
         </Tabs.Trigger>
         <Tabs.Trigger value="svm" className={theme.styles.tabs.trigger}>
-          <span>SVM ({walletsByType.SVM.length})</span>
+          <span>SVM ({sortedWallets.SVM.length})</span>
           <span className={`block text-xs font-medium bg-gradient-to-r ${walletStyles.titleGradient} bg-clip-text text-transparent`}>{formatUSD(tabTotals.svm)}</span>
         </Tabs.Trigger>
         <Tabs.Trigger value="all" className={theme.styles.tabs.trigger}>
@@ -589,7 +585,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
                         onExportGroup={(group) => setExportGroup(group)}
                         onRenameWallet={(wallet) => setRenameWallet(wallet)}
                         onDeleteWallet={(walletId) => removeWallet(walletId)}
-                        onCopyAddress={(address) => copyAddress(address)}
+                        onCopyAddress={(address) => copyToClipboard(address)}
                         groupTotalUSD={groupTotals.get(group.id)}
                         walletBalances={walletBalances}
                       />
@@ -617,9 +613,9 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
                                 setActiveWallet(wallet.id)
                               }
                             }}
-                            onCopy={() => copyAddress(wallet.address)}
+                            onCopy={() => copyToClipboard(wallet.address)}
                             onRename={() => setRenameWallet(wallet)}
-                            onExport={() => handleExportWallet(wallet)}
+                            onExport={() => setExportWallet(wallet)}
                             onDelete={() => removeWallet(wallet.id)}
                             network={activeNetwork}
                             totalUSD={walletBalances.get(wallet.id)}
@@ -637,7 +633,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
       <Tabs.Content value="evm" className="flex-1 overflow-hidden min-h-0">
         <div className="h-full w-full overflow-y-auto">
           <div className="p-4">
-            {walletsByType.EVM.length === 0 ? (
+            {sortedWallets.EVM.length === 0 ? (
               <EmptyState
                 icon={WalletIcon}
                 title="No EVM wallets yet"
@@ -669,9 +665,9 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
                         onSelect={() =>
                           setActiveWallet(wallet.id === activeWalletId ? null : wallet.id)
                         }
-                        onCopy={() => copyAddress(wallet.address)}
+                        onCopy={() => copyToClipboard(wallet.address)}
                         onRename={() => setRenameWallet(wallet)}
-                        onExport={() => handleExportWallet(wallet)}
+                        onExport={() => setExportWallet(wallet)}
                         onDelete={() => removeWallet(wallet.id)}
                         network={activeNetwork}
                         totalUSD={walletBalances.get(wallet.id)}
@@ -688,7 +684,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
       <Tabs.Content value="svm" className="flex-1 overflow-hidden min-h-0">
         <div className="h-full w-full overflow-y-auto">
           <div className="p-4">
-            {walletsByType.SVM.length === 0 ? (
+            {sortedWallets.SVM.length === 0 ? (
               <EmptyState
                 icon={WalletIcon}
                 title="No SVM wallets yet"
@@ -720,9 +716,9 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
                         onSelect={() =>
                           setActiveWallet(wallet.id === activeWalletId ? null : wallet.id)
                         }
-                        onCopy={() => copyAddress(wallet.address)}
+                        onCopy={() => copyToClipboard(wallet.address)}
                         onRename={() => setRenameWallet(wallet)}
-                        onExport={() => handleExportWallet(wallet)}
+                        onExport={() => setExportWallet(wallet)}
                         onDelete={() => removeWallet(wallet.id)}
                         network={activeNetwork}
                         totalUSD={walletBalances.get(wallet.id)}
@@ -764,9 +760,9 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
                           onSelect={() =>
                             setActiveWallet(wallet.id === activeWalletId ? null : wallet.id)
                           }
-                          onCopy={() => copyAddress(wallet.address)}
+                          onCopy={() => copyToClipboard(wallet.address)}
                           onRename={() => setRenameWallet(wallet)}
-                          onExport={() => handleExportWallet(wallet)}
+                          onExport={() => setExportWallet(wallet)}
                           onDelete={() => removeWallet(wallet.id)}
                           network={activeNetwork}
                           totalUSD={walletBalances.get(wallet.id)}
@@ -801,9 +797,9 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
                           onSelect={() =>
                             setActiveWallet(wallet.id === activeWalletId ? null : wallet.id)
                           }
-                          onCopy={() => copyAddress(wallet.address)}
+                          onCopy={() => copyToClipboard(wallet.address)}
                           onRename={() => setRenameWallet(wallet)}
-                          onExport={() => handleExportWallet(wallet)}
+                          onExport={() => setExportWallet(wallet)}
                           onDelete={() => removeWallet(wallet.id)}
                           network={activeNetwork}
                           totalUSD={walletBalances.get(wallet.id)}

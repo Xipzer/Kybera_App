@@ -56,7 +56,7 @@ You can also add custom networks through the settings.
 ```bash
 # Clone the repo
 git clone <repo-url>
-cd SmartWallet_AI
+cd Kybera_App
 
 # Install dependencies
 npm install
@@ -220,15 +220,18 @@ src/
   components/        UI components
     chat/            AI chat interface and message rendering
     common/          Shared components (empty states, image upload, etc.)
-    layout/          Responsive layout, navigation
+    defi/            DeFi yield views
+    layout/          Responsive layout, navigation rail, mobile nav
+    markets/         Prediction markets (Polymarket)
     research/        Token research view, research cards, ape interface
-    settings/        Settings dialogs and panels
-    wallet/          Wallet list, detail view, send/receive dialogs
+    settings/        Settings dialogs, panels, x402 payments
+    wallet/          Wallet list, detail view, send/receive, network selectors
   hooks/             Custom React hooks
   services/          Core business logic
     api/             External API integrations (CoinGecko, swaps, bridge, rate limiter)
     blockchain/      Blockchain services (EVM, Solana, balance aggregation, providers)
-    research/        Token research data sources (DexScreener, Basescan)
+    defi/            DeFi yield data (DeFiLlama)
+    research/        Token research data sources (DexScreener, Basescan, Polymarket)
     security/        Memory protection and XSS defense
   store/             Zustand state stores
   types/             TypeScript type definitions
@@ -258,12 +261,14 @@ The production build automatically:
 **Required rewrite rules**: Some external APIs don't support CORS, so requests are proxied through your domain. Your
 hosting platform must rewrite these paths:
 
-| Source               | Destination                              | Action  |
-|----------------------|------------------------------------------|---------|
-| `/api/coingecko/*`   | `https://api.coingecko.com/*`            | Rewrite |
-| `/api/polymarket/*`  | `https://gamma-api.polymarket.com/*`     | Rewrite |
+| Source               | Destination                              | Action  | Notes                                         |
+|----------------------|------------------------------------------|---------|-----------------------------------------------|
+| `/api/coingecko/*`   | `https://api.coingecko.com/*`            | Rewrite | Works on Render (CoinGecko sends CORS headers)|
+| `/api/polymarket/*`  | CORS proxy URL                           | Rewrite | Gamma API has no CORS; requires a proxy (e.g. Cloudflare Worker) |
 
-On Render Static Sites, add these in **Redirects/Rewrites** settings. On Vercel, add them to `vercel.json` rewrites.
+On Render Static Sites, add these in **Redirects/Rewrites** settings. Note that Render "rewrites" to external URLs
+actually perform 302 redirects, which only work if the destination API sends CORS headers. The Polymarket Gamma API does
+not, so a server-side CORS proxy (such as a Cloudflare Worker) is required as the rewrite destination.
 
 ---
 

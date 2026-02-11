@@ -95,15 +95,11 @@ export function WalletDetailView() {
     },
   }
 
-  const loading = multiLoading
-  const error = multiError
   const balance = {
     ...executionBalance,
     totalUSD: totalMultiUSD,
     total24hChange: total24hChangeMulti,
   }
-  const copyAddress = () => copyToClipboard(activeWallet.address)
-
   const handleRefresh = async () => {
     setIsRefreshing(true)
     try {
@@ -134,7 +130,7 @@ export function WalletDetailView() {
               {formatAddress(activeWallet.address)}
             </p>
             <button
-              onClick={copyAddress}
+              onClick={() => copyToClipboard(activeWallet.address)}
               className={`p-1 rounded-lg transition-all duration-200 ${styles.iconButtonHover} hover:scale-110`}
               title="Copy address"
             >
@@ -162,7 +158,7 @@ export function WalletDetailView() {
           <div className="flex items-center justify-between mb-1.5 sm:mb-2">
             <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
               <p className={`text-xs sm:text-sm text-text-secondary`}>Total Portfolio Value</p>
-              {!loading && balance.dataQuality && (
+              {!multiLoading && balance.dataQuality && (
                 <div className="flex items-center gap-1">
                   {balance.dataQuality.onChainFromCache ? (
                     <div
@@ -193,12 +189,12 @@ export function WalletDetailView() {
               title="Refresh all balances"
             >
               <RefreshCw
-                className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isRefreshing || loading ? 'animate-spin' : ''} text-text-secondary`}
+                className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isRefreshing || multiLoading ? 'animate-spin' : ''} text-text-secondary`}
               />
             </button>
           </div>
 
-          {loading && balance.totalUSD === 0 ? (
+          {multiLoading && balance.totalUSD === 0 ? (
             <div className="h-8 sm:h-10 w-32 sm:w-40 animate-pulse rounded-lg bg-white/10" />
           ) : (
             <>
@@ -232,7 +228,7 @@ export function WalletDetailView() {
                     Updated {formatTimeAgo(balance.lastUpdated)}
                   </span>
                 )}
-                {error && balance.totalUSD > 0 && (
+                {multiError && balance.totalUSD > 0 && (
                   <span className={`text-[10px] sm:text-xs text-text-tertiary`}>(cached)</span>
                 )}
               </div>

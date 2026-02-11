@@ -33,9 +33,7 @@ export function useWalletListBalances(wallets: Wallet[]): Map<string, number> {
             try {
               const cached = await blockchainService.loadCachedBalance(wallet, network)
               if (cached) walletTotal += cached.totalUSD
-            } catch {
-              // skip
-            }
+            } catch {}
           }),
         )
 

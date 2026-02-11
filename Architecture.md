@@ -74,20 +74,26 @@ src/
       EmptyState.tsx               Placeholder for empty views
       ImageUpload.tsx              Profile picture / wallpaper upload
       OpenClawDeepLinkBanner.tsx   Banner for OpenClaw deep links
+    defi/
+      YieldView.tsx                DeFi yield opportunities (DeFiLlama data)
     layout/
-      AnimatedMainLayout.tsx       Desktop three-panel layout (resizable)
+      AnimatedMainLayout.tsx       Desktop layout with NavRail + PanelGroup
+      NavRail.tsx                  Fixed left navigation with hover-expand
       MobileNav.tsx                Bottom navigation bar for mobile
       ResponsiveLayout.tsx         Desktop vs mobile layout switcher
+    markets/
+      PredictionMarketsView.tsx    Polymarket prediction markets view
     research/
       ResearchView.tsx             Token research interface
       ResearchCard.tsx             Structured research result display
       ApeInterface.tsx             Quick-buy interface after research
     settings/
-      SettingsDialog.tsx           Main settings modal
-      SettingsPanel.tsx            Settings content panel
+      SettingsDialog.tsx           Main settings modal (Interface tab with Restore Defaults)
+      SettingsPanel.tsx            Settings content panel (mobile, icon-only tabs)
+      X402Settings.tsx             x402 payment configuration
       NetworkManagementDialog.tsx  Add/hide/manage networks
     wallet/
-      WalletDrawer.tsx             Left sidebar with wallet groups and wallets
+      WalletDrawer.tsx             Right sidebar with wallet groups and wallets
       WalletDetailView.tsx         Selected wallet: balances, tokens, actions
       WalletNameEditor.tsx         Batch wallet name editor with address preview
       TokenList.tsx                Token balance list for a wallet
@@ -120,8 +126,10 @@ src/
   services/
     database.ts                    Dexie schema (16 tables, single version)
     networkService.ts              Network CRUD, custom networks, visibility
+    notificationService.ts         Alert polling and browser push notifications
     openClawService.ts             OpenClaw Gateway WebSocket client
     tokenImageService.ts           Token logo fetching (CoinGecko, queued)
+    walletTrackingService.ts       Watched wallet polling, activity classification, copy trade evaluation
     api/
       coinGeckoService.ts          Token price fetching (proxied via /api/coingecko)
       rateLimiter.ts               Priority-based API rate limiting
@@ -140,9 +148,12 @@ src/
       evmRpcService.ts             Raw EVM RPC calls
       svmService.ts                Solana RPC service
       eventBus.ts                  Internal event system
+    defi/
+      yieldService.ts              DeFi yield data from DeFiLlama
     research/
       basescanService.ts           Basescan/Etherscan contract data
       dexScreenerService.ts        DexScreener token/pair data
+      polymarketService.ts         Polymarket Gamma API (prediction markets)
     security/
       memoryProtection.ts          Sensitive data protection (XOR obfuscation, auto-wipe)
       securityService.ts           XSS/extension detection, prototype freezing
@@ -153,14 +164,21 @@ src/
     permissionStore.ts             AI action permissions, transfer limits
     researchStore.ts               OpenClaw connection, active researches, results
     settingsStore.ts               Gateway URL, API keys, auto-lock timeout
-    uiStore.ts                     Theme, drawer state, wallpapers, profile pic
+    uiStore.ts                     Theme, drawer state, wallpapers, panel sizes, resetUI()
     walletStore.ts                 Wallets, groups, active wallet/network, lock state
+    watchlistStore.ts              Watched wallets, activities, copy trade configs
 
   types/
     aiActions.ts                   AI action system type definitions
     chat.ts                        Chat/message types
+    defi.ts                        DeFi yield types
+    notifications.ts               Alert and notification types
+    portfolio.ts                   Trade records, P&L, portfolio snapshots
+    predictions.ts                 Prediction market types
     research.ts                    Token research types
     wallet.ts                      Wallet, network, token types
+    watchlist.ts                   Watched wallet and copy trade types
+    x402.ts                        x402 payment protocol types
     index.ts                       Re-exports
 
   utils/
@@ -195,7 +213,8 @@ encryption salt. Persists all three to localStorage.
 auto-lock timeout, and default network. API keys persist to IndexedDB, other settings to localStorage.
 
 **uiStore** - Controls theme selection, drawer open/width state, chat sidebar visibility, profile picture, wallpapers (
-chat + lockscreen with opacity), and particle effect settings. Persists to localStorage.
+chat + lockscreen with opacity), particle effect settings, wallet detail panel size, and UI defaults with a `resetUI()`
+action. Persists to localStorage.
 
 **researchStore** - Manages OpenClaw WebSocket connection state, active research requests, streaming chat messages, and
 completed research results. Persists completed researches to localStorage.
@@ -436,15 +455,19 @@ The app has two layout modes, switched by `ResponsiveLayout` based on screen wid
 **Desktop** (`AnimatedMainLayout`):
 
 ```
-+------------------+-------------------------+------------------+
-|                  |                         |                  |
-|  WalletDrawer    |    Main Content         |  ChatSidebar     |
-|  (resizable)     |    (ResearchView)       |  (collapsible)   |
-|                  |                         |                  |
-+------------------+-------------------------+------------------+
++------+---------------------------+------------------+
+|      |                           |                  |
+| Nav  |    Main Content           |  WalletDrawer    |
+| Rail |    (Tabbed: Research,     |  (resizable,     |
+|      |     Portfolio, Watchlist, |   collapsible)   |
+|      |     Markets, Yield)       |                  |
++------+---------------------------+------------------+
 ```
 
-**Mobile**:
+NavRail is a fixed left sidebar with hover-expand that provides navigation between tabs.
+The main content and WalletDrawer form a horizontal PanelGroup with a resize handle.
+
+**Mobile** (`ResponsiveLayout`):
 
 ```
 +-------------------------+
@@ -453,15 +476,15 @@ The app has two layout modes, switched by `ResponsiveLayout` based on screen wid
 |    (ResearchView)       |
 |                         |
 +-------------------------+
-|  Home | Wallet | Chat   |  <- MobileNav (bottom)
+| Research | Portfolio |  |  <- MobileNav (bottom, icon-only tabs)
 +-------------------------+
 ```
 
-Wallet drawer and chat sidebar slide in/out on mobile.
+WalletDrawer and settings slide in as overlay panels on mobile.
 
 ### Theme System
 
-Defined in `src/config/themes.ts` (~1200 lines) with CSS custom properties in `src/styles/themes.css`.
+Defined in `src/themes.ts` (~1200 lines) with CSS custom properties applied via `src/utils/themeClasses.ts`.
 
 5 themes:
 
@@ -495,6 +518,8 @@ Users can also upload custom wallpapers for the chat background and lock screen,
 | CoinGecko          | coinGeckoService.ts             | HTTP (proxied) | Token prices and 24h price change                          |
 | DexScreener        | dexScreenerService.ts           | HTTP           | DEX pair data, token logos, trending tokens                |
 | Basescan/Etherscan | basescanService.ts              | HTTP           | Contract source code, holder data, deployer identification |
+| Polymarket         | polymarketService.ts            | HTTP (proxied) | Prediction market data from Gamma API                      |
+| DeFiLlama          | yieldService.ts                 | HTTP           | DeFi yield and TVL data                                    |
 | Jupiter            | swapService.ts                  | HTTP           | Solana token swap quotes and execution                     |
 | KyberSwap          | swapService.ts                  | HTTP           | EVM token swap quotes and execution (no API key needed)    |
 | relay.link         | relayLinkService.ts             | HTTP           | EVM-to-EVM cross-chain bridge quotes and execution         |
@@ -572,8 +597,9 @@ Result emitted as 'action_result' -> displayed in chat
 
 ### Vite Configuration
 
-- **Dev server proxy**: `/api/coingecko` is proxied to `https://api.coingecko.com` to avoid CORS (production requires a
-  matching rewrite rule on the hosting platform)
+- **Dev server proxy**: `/api/coingecko` and `/api/polymarket` are proxied to their respective APIs to avoid CORS
+  (production requires matching rewrite rules on the hosting platform; Polymarket needs a CORS proxy since the Gamma API
+  does not send CORS headers)
 - **Node polyfills**: `vite-plugin-node-polyfills` provides Buffer, global, and process polyfills needed by ethers.js
   and Solana libraries
 - **Production optimizations**: Source maps disabled, console/debugger statements stripped via esbuild `drop`

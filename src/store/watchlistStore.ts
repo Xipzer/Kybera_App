@@ -8,7 +8,7 @@ import type { WatchedWallet, WalletActivity, CopyTradeConfig } from '../types/wa
 
 interface WatchlistState {
   watchedWallets: WatchedWallet[]
-  activities: WalletActivity[] // last 500 activities across all watched wallets
+  activities: WalletActivity[]
   copyTradeConfigs: CopyTradeConfig[]
   isMonitoring: boolean
 

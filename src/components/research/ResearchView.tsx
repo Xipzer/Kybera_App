@@ -239,8 +239,7 @@ export function ResearchView() {
     setInput('')
 
     if (isValidAddress(trimmedInput)) {
-      const network = detectNetworkFromAddress(trimmedInput) as ResearchNetwork
-      await requestResearch(trimmedInput, network)
+      await requestResearch(trimmedInput, detectNetworkFromAddress(trimmedInput) as ResearchNetwork)
     } else {
       await sendMessage(trimmedInput)
     }
@@ -258,9 +257,6 @@ export function ResearchView() {
     setShowApeInterface(true)
   }
 
-  const handleFade = (research: TokenResearch) => {
-    dismissResearch(research.id)
-  }
 
   const handleRefresh = async (research: TokenResearch) => {
     if (connectionState !== 'connected' || refreshingId) return
@@ -496,7 +492,7 @@ export function ResearchView() {
                         key={research.id}
                         research={research}
                         onApe={handleApe}
-                        onFade={handleFade}
+                        onFade={(research) => dismissResearch(research.id)}
                         onRefresh={handleRefresh}
                         isRefreshing={refreshingId === research.id}
                       />

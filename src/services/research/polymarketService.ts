@@ -27,8 +27,8 @@ interface CacheEntry<T> {
 
 class PolymarketService {
   private readonly API_URL = '/api/polymarket'
-  private readonly MARKET_LIST_TTL = 5 * 60 * 1000 // 5 minutes
-  private readonly SINGLE_MARKET_TTL = 1 * 60 * 1000 // 1 minute
+  private readonly MARKET_LIST_TTL = 5 * 60 * 1000
+  private readonly SINGLE_MARKET_TTL = 1 * 60 * 1000
 
   private cache = new Map<string, CacheEntry<unknown>>()
 
@@ -288,13 +288,11 @@ class PolymarketService {
       ? `${Math.round(topYes.probability)}%`
       : `${Math.round(topMarket.outcomes[0]?.probability ?? 0)}%`
 
-    const sentimentSummary = `Polymarket gives ${topProbStr} odds on "${topMarket.question}". ${markets.length} active market${markets.length === 1 ? '' : 's'} with ${volumeStr} total volume.`
-
     return {
       query: topic,
       relevantMarkets: markets,
       overallSentiment,
-      sentimentSummary,
+      sentimentSummary: `Polymarket gives ${topProbStr} odds on "${topMarket.question}". ${markets.length} active market${markets.length === 1 ? '' : 's'} with ${volumeStr} total volume.`,
       dataTimestamp: Date.now(),
     }
   }

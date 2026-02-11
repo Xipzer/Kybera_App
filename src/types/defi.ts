@@ -11,30 +11,24 @@ export interface YieldOpportunity {
   protocol: DeFiProtocol
   protocolName: string
   protocolLogoUrl?: string
-  // What to deposit
   tokenAddress: string
   tokenSymbol: string
   tokenDecimals: number
   networkId: string
-  // Yield info
-  apy: number // annual percentage yield
-  apyBase: number // base APY without rewards
-  apyReward: number // reward token APY
+  apy: number
+  apyBase: number
+  apyReward: number
   rewardTokenSymbol?: string
   yieldType: YieldType
-  // Pool info
-  tvl: number // total value locked in USD
+  tvl: number
   poolAddress: string
-  // Risk
   isAudited: boolean
   riskLevel: 'low' | 'medium' | 'high'
   riskFactors: string[]
-  // Limits
-  minDeposit?: number // in token units
+  minDeposit?: number
   maxDeposit?: number
-  // Additional info
-  lockPeriod?: number // in days, 0 = no lock
-  withdrawalDelay?: number // in days
+  lockPeriod?: number
+  withdrawalDelay?: number
   lastUpdated: number
 }
 
@@ -44,14 +38,12 @@ export interface YieldPosition {
   tokenAddress: string
   tokenSymbol: string
   networkId: string
-  // Position data
   depositedAmount: string
   depositedValueUsd: number
   currentValueUsd: number
-  earnedYield: number // in USD
-  earnedYieldToken: string // in token units
+  earnedYield: number
+  earnedYieldToken: string
   apy: number
-  // Tracking
   depositTxHash: string
   depositTimestamp: number
   lastUpdated: number
@@ -65,7 +57,6 @@ export interface DeFiAction {
   networkId: string
   amount: string
   poolAddress: string
-  // For UI
   estimatedGasUsd?: number
   estimatedApy?: number
 }

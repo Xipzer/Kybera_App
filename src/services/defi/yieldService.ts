@@ -34,7 +34,7 @@ const CHAIN_NAME_TO_NETWORK_ID: Record<string, string> = Object.fromEntries(
   Object.entries(LLAMA_CHAIN_NAMES).map(([networkId, chainName]) => [chainName, networkId])
 )
 
-const CACHE_TTL_MS = 10 * 60 * 1000 // 10 minutes
+const CACHE_TTL_MS = 10 * 60 * 1000
 
 interface LlamaPool {
   pool: string
@@ -164,7 +164,7 @@ class YieldService {
       protocolName: PROTOCOL_DISPLAY_NAMES[protocol],
       tokenAddress: pool.underlyingTokens?.[0] || '',
       tokenSymbol,
-      tokenDecimals: 18, // Default; DeFiLlama doesn't provide this
+      tokenDecimals: 18,
       networkId,
       apy,
       apyBase,
@@ -173,7 +173,7 @@ class YieldService {
       yieldType,
       tvl,
       poolAddress: pool.pool,
-      isAudited: true, // All our curated protocols are audited
+      isAudited: true,
       riskLevel,
       riskFactors,
       lockPeriod: 0,

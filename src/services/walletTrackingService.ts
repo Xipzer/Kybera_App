@@ -18,16 +18,16 @@ const API_URLS: Record<ResearchNetwork, string> = {
 }
 
 const KNOWN_DEX_ROUTERS = new Set([
-  '0x7a250d5630b4cf539739df2c5dacb4c659f2488d', // Uniswap V2 Router
-  '0xe592427a0aece92de3edee1f18e0157c05861564', // Uniswap V3 Router
-  '0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45', // Uniswap Universal Router
-  '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad', // Uniswap Universal Router V2
-  '0xdef1c0ded9bec7f1a1670819833240f027b25eff', // 0x Exchange Proxy
-  '0x1111111254eeb25477b68fb85ed929f73a960582', // 1inch V5 Router
-  '0x111111125421ca6dc452d289314280a0f8842a65', // 1inch V6 Router
-  '0xd9e1ce17f2641f24ae83637ab66a2cca9c378b9f', // SushiSwap Router
-  '0x2b42affd4b7c14d9b7aeb6d1e90360dae6ab5b5a', // Aerodrome Router (Base)
-  '0xcf77a3ba9a5ca399b7c97c74d54e5b1beb874e43', // Aerodrome Router V2 (Base)
+  '0x7a250d5630b4cf539739df2c5dacb4c659f2488d',
+  '0xe592427a0aece92de3edee1f18e0157c05861564',
+  '0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45',
+  '0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad',
+  '0xdef1c0ded9bec7f1a1670819833240f027b25eff',
+  '0x1111111254eeb25477b68fb85ed929f73a960582',
+  '0x111111125421ca6dc452d289314280a0f8842a65',
+  '0xd9e1ce17f2641f24ae83637ab66a2cca9c378b9f',
+  '0x2b42affd4b7c14d9b7aeb6d1e90360dae6ab5b5a',
+  '0xcf77a3ba9a5ca399b7c97c74d54e5b1beb874e43',
 ])
 
 const APPROVAL_METHOD_ID = '0x095ea7b3'
@@ -36,9 +36,6 @@ class WalletTrackingService {
   private pollingInterval: ReturnType<typeof setInterval> | null = null
   private isProcessing = false
 
-  /**
-   * Starts polling watched wallets at the given interval.
-   */
   startMonitoring(intervalMs: number = 60000): void {
     if (this.pollingInterval) {
       console.warn('[WalletTracking] Already monitoring, stopping previous interval')
@@ -52,9 +49,6 @@ class WalletTrackingService {
     this.pollingInterval = setInterval(() => this.pollAllWallets(), intervalMs)
   }
 
-  /**
-   * Stops the polling loop.
-   */
   stopMonitoring(): void {
     if (this.pollingInterval) {
       clearInterval(this.pollingInterval)
@@ -64,9 +58,6 @@ class WalletTrackingService {
     console.log('[WalletTracking] Monitoring stopped')
   }
 
-  /**
-   * Polls all watched wallets for new activity.
-   */
   private async pollAllWallets(): Promise<void> {
     if (this.isProcessing) {
       console.log('[WalletTracking] Already processing, skipping poll cycle')
@@ -114,9 +105,6 @@ class WalletTrackingService {
     }
   }
 
-  /**
-   * Fetches recent transactions for a wallet across its configured networks.
-   */
   async checkWalletActivity(wallet: WatchedWallet): Promise<WalletActivity[]> {
     const allActivities: WalletActivity[] = []
 
@@ -142,9 +130,6 @@ class WalletTrackingService {
     return allActivities
   }
 
-  /**
-   * Fetches EVM transactions using Etherscan-compatible APIs.
-   */
   private async fetchEvmTransactions(
     wallet: WatchedWallet,
     network: ResearchNetwork,
@@ -225,10 +210,6 @@ class WalletTrackingService {
     return activities
   }
 
-  /**
-   * Stub for Solana transaction fetching.
-   * Will use Helius/Solana RPC getSignaturesForAddress in the future.
-   */
   private async fetchSolanaTransactions(
     _wallet: WatchedWallet,
     _networkId: string,
@@ -237,9 +218,6 @@ class WalletTrackingService {
     return []
   }
 
-  /**
-   * Determines if a transaction is a swap, transfer, approval, etc.
-   */
   classifyTransaction(tx: any, walletAddress: string): ActivityType {
     const from = (tx.from || '').toLowerCase()
     const to = (tx.to || '').toLowerCase()
@@ -271,10 +249,6 @@ class WalletTrackingService {
     return 'unknown'
   }
 
-  /**
-   * Attempts to parse swap details from a transaction.
-   * This is a best-effort heuristic based on common DEX patterns.
-   */
   parseSwapFromTx(tx: any): { tokenIn: string; tokenOut: string; amounts: { in: string; out: string } } | null {
     const input = tx.input || '0x'
     if (input === '0x' || input.length < 10) return null
@@ -312,9 +286,6 @@ class WalletTrackingService {
     return null
   }
 
-  /**
-   * Checks if an activity matches the wallet's tracking configuration.
-   */
   shouldTriggerAlert(activity: WalletActivity, wallet: WatchedWallet): boolean {
     if (activity.activityType === 'swap' && !wallet.trackSwaps) return false
     if (
@@ -335,9 +306,6 @@ class WalletTrackingService {
     return true
   }
 
-  /**
-   * Determines if a copy trade should execute based on the config and activity.
-   */
   evaluateCopyTrade(
     activity: WalletActivity,
     config: CopyTradeConfig,
@@ -405,9 +373,6 @@ class WalletTrackingService {
     return { shouldCopy: true, reason: 'All checks passed' }
   }
 
-  /**
-   * Persists an activity to IndexedDB for historical storage.
-   */
   private async persistActivity(activity: WalletActivity): Promise<void> {
     try {
       await db.walletActivities.put({
@@ -429,9 +394,6 @@ class WalletTrackingService {
     }
   }
 
-  /**
-   * Converts wei string to ETH string.
-   */
   private weiToEth(weiValue: string): string {
     try {
       const wei = BigInt(weiValue || '0')
@@ -442,9 +404,6 @@ class WalletTrackingService {
     }
   }
 
-  /**
-   * Rough USD estimate for native token transfers.
-   */
   private estimateNativeValueUsd(weiValue: string, network: string): number {
     try {
       const eth = Number(BigInt(weiValue || '0')) / 1e18

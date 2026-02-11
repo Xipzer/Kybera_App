@@ -34,8 +34,8 @@ export interface ResearchFollowupAlert {
   contractAddress: string
   network: string
   tokenSymbol: string
-  checkInterval: number // hours
-  priceChangeThreshold: number // percent
+  checkInterval: number
+  priceChangeThreshold: number
 }
 
 export interface SystemAlert {
@@ -52,13 +52,12 @@ export interface Alert {
   createdAt: number
   lastTriggeredAt?: number
   triggerCount: number
-  // If true, alert fires once then disables itself
   oneShot: boolean
 }
 
 export interface Notification {
   id: string
-  alertId?: string // which alert triggered this, if any
+  alertId?: string
   type: AlertType
   priority: NotificationPriority
   title: string
@@ -66,7 +65,6 @@ export interface Notification {
   status: NotificationStatus
   createdAt: number
   readAt?: number
-  // Optional action data
   actionType?: 'navigate' | 'open_research' | 'open_swap' | 'open_wallet'
   actionPayload?: Record<string, string>
 }
