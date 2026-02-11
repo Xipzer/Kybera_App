@@ -10,6 +10,8 @@ import { useTheme } from '../../hooks/useTheme'
 
 export const NAV_RAIL_COLLAPSED = 'calc(4vw / 1.04)'
 export const NAV_RAIL_EXPANDED = '220px'
+const ICON_ZONE = `calc(4vw / 1.04 - 8px)`
+
 const NAV_ITEMS: { id: NavItem; label: string; icon: typeof BarChart3 | typeof LuBrain }[] = [
   { id: 'research', label: 'Research', icon: LuBrain },
   { id: 'portfolio', label: 'Portfolio', icon: BarChart3 },
@@ -122,16 +124,21 @@ export function NavRail() {
         </>
       )}
 
-      <nav className="relative z-10 flex flex-col items-center group-hover/rail:items-stretch gap-0.5 px-1 flex-1 mt-0.5">
+      <nav className="relative z-10 flex flex-col gap-0.5 px-1 flex-1 mt-0.5">
         {NAV_ITEMS.map((item) => (
           <button
             key={item.id}
             onClick={() => setActiveNavItem(item.id)}
-            className={`${theme.styles.buttonIcon} p-2 rounded-lg flex items-center gap-3 text-sm font-medium whitespace-nowrap ${
+            className={`${theme.styles.buttonIcon} rounded-lg flex items-center gap-0 group-hover/rail:gap-3 text-sm font-medium whitespace-nowrap w-full ${
               activeNavItem === item.id
                 ? `${theme.styles.iconAccent} font-semibold`
                 : 'text-text-secondary hover:text-text-primary'
             }`}
+            style={{
+              height: ICON_ZONE,
+              paddingLeft: `calc((${ICON_ZONE} - 18px) / 2)`,
+              paddingRight: `calc((${ICON_ZONE} - 18px) / 2)`,
+            }}
           >
             <item.icon className={`w-[18px] h-[18px] flex-shrink-0 ${activeNavItem === item.id ? 'drop-shadow-[0_0_4px_rgba(var(--color-accent-500),0.4)]' : ''}`} />
             <span className="opacity-0 group-hover/rail:opacity-100 transition-opacity duration-200 delay-[50ms] overflow-hidden">
