@@ -33,7 +33,7 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
-          className="w-[380px] max-h-[520px] bg-surface-base border border-border-subtle rounded-xl shadow-2xl z-[100] overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+          className="w-[380px] max-h-[520px] bg-surface-base border border-border-subtle rounded-xl shadow-2xl z-[9999] overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
           sideOffset={8}
           align="end"
         >

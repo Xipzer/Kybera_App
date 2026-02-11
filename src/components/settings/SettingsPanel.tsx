@@ -494,7 +494,7 @@ export function ThemeSelector({
         </Select.Icon>
       </Select.Trigger>
       <Select.Portal>
-        <Select.Content className="min-w-[200px] bg-surface-base rounded-lg shadow-lg border border-border-subtle p-1 z-[100]">
+        <Select.Content className="min-w-[200px] bg-surface-base rounded-lg shadow-lg border border-border-subtle p-1 z-[9999]">
           <Select.Viewport>
             {themeOptions.map((opt) => (
               <Select.Item
