@@ -301,7 +301,7 @@ export function YieldView() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className="text-sm sm:text-lg font-semibold text-text-primary">{opp.protocolName}</span>
-                      <NetworkIcon networkId={opp.networkId} size={14} className="flex-shrink-0" />
+                      <NetworkIcon networkId={opp.networkId} size={18} className="flex-shrink-0" />
                     </div>
                     <div className="text-xs sm:text-sm text-text-tertiary">
                       {opp.tokenSymbol}
