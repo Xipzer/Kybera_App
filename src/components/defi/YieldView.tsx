@@ -13,7 +13,10 @@ import {
   Sprout,
   Filter,
   Percent,
+  ChevronDown,
+  Check,
 } from 'lucide-react'
+import * as Popover from '@radix-ui/react-popover'
 import { useTheme } from '../../hooks/useTheme'
 import { themeClasses } from '../../utils/themeClasses'
 import { NetworkIcon } from '../NetworkIcons'
@@ -53,8 +56,8 @@ const RISK_BADGE: Record<string, { bg: string; text: string; border: string; ico
 function RiskBadge({ level }: { level: string }) {
   const config = RISK_BADGE[level] ?? RISK_BADGE.high
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider ${config.bg} ${config.text} border ${config.border}`}>
-      <config.icon className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold uppercase tracking-wider ${config.bg} ${config.text} border ${config.border}`}>
+      <config.icon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
       {level}
     </span>
   )
@@ -93,6 +96,69 @@ function getCardStyles(themeName: string) {
         border: 'border-gray-200 hover:border-gray-300',
       }
   }
+}
+
+function NetworkFilterDropdown({
+  networkFilter,
+  setNetworkFilter,
+  theme,
+}: {
+  networkFilter: string
+  setNetworkFilter: (v: string) => void
+  theme: ReturnType<typeof useTheme>['theme']
+}) {
+  const [open, setOpen] = useState(false)
+  const selected = NETWORK_FILTERS.find((n) => n.value === networkFilter) ?? NETWORK_FILTERS[0]
+
+  return (
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Trigger asChild>
+        <button className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors bg-surface-elevated ${theme.styles.listItemHover}`}>
+          {selected.value
+            ? <NetworkIcon networkId={selected.value} size={14} className="flex-shrink-0" />
+            : <Filter className="w-3.5 h-3.5 text-text-tertiary" />
+          }
+          <span className={`text-[11px] font-medium ${theme.styles.textPrimary}`}>{selected.label}</span>
+          <ChevronDown className={`w-3 h-3 ${theme.styles.iconSecondary} transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Content
+          className={`${theme.styles.dropdown.content} w-[180px] max-h-[300px] overflow-hidden flex flex-col z-[9999]`}
+          sideOffset={5}
+          align="start"
+          side="bottom"
+          avoidCollisions={true}
+          collisionPadding={16}
+        >
+          <div className="flex-1 overflow-y-auto py-1">
+            {NETWORK_FILTERS.map((n) => (
+              <button
+                key={n.value}
+                onClick={() => { setNetworkFilter(n.value); setOpen(false) }}
+                className={`w-full ${theme.styles.dropdown.item} ${
+                  networkFilter === n.value ? 'bg-accent/10' : theme.styles.dropdown.itemHover
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-2">
+                    {n.value
+                      ? <NetworkIcon networkId={n.value} size={16} className="flex-shrink-0" />
+                      : <Filter className="w-4 h-4 text-text-tertiary flex-shrink-0" />
+                    }
+                    <span className={`text-xs ${networkFilter === n.value ? 'text-accent font-medium' : theme.styles.textPrimary}`}>
+                      {n.label}
+                    </span>
+                  </div>
+                  {networkFilter === n.value && <Check className="w-3 h-3 text-accent flex-shrink-0" />}
+                </div>
+              </button>
+            ))}
+          </div>
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
+  )
 }
 
 export function YieldView() {
@@ -159,23 +225,11 @@ export function YieldView() {
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        <div className="flex items-center gap-1">
-          <Filter className="w-3 h-3 text-text-tertiary" />
-          {NETWORK_FILTERS.map((n) => (
-            <button
-              key={n.value}
-              onClick={() => setNetworkFilter(n.value)}
-              className={`px-2 py-1 rounded-md text-[10px] font-medium transition-all duration-200 flex items-center gap-1 ${
-                networkFilter === n.value
-                  ? `bg-gradient-to-r ${styles.sendGradient} text-white shadow-sm`
-                  : 'text-text-tertiary hover:text-text-secondary hover:bg-surface-hover'
-              }`}
-              title={n.label}
-            >
-              {n.value ? <NetworkIcon networkId={n.value} size={14} /> : n.label}
-            </button>
-          ))}
-        </div>
+        <NetworkFilterDropdown
+          networkFilter={networkFilter}
+          setNetworkFilter={setNetworkFilter}
+          theme={theme}
+        />
         <div className="h-4 w-px bg-border-subtle" />
         {RISK_FILTERS.map((r) => (
           <button
@@ -241,7 +295,7 @@ export function YieldView() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-sm sm:text-base font-semibold text-text-primary">{opp.protocolName}</span>
+                      <span className="text-sm sm:text-lg font-semibold text-text-primary">{opp.protocolName}</span>
                       <span className={`inline-flex items-center px-1.5 py-0.5 rounded-md ${tc.sectionBg} border`} title={opp.networkId}>
                         <NetworkIcon networkId={opp.networkId} size={14} className="flex-shrink-0" />
                       </span>
@@ -260,7 +314,7 @@ export function YieldView() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
                   <div>
                     <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5 sm:mb-1">APY</div>
-                    <div className={`text-base sm:text-lg font-bold ${iconAccent}`}>
+                    <div className={`text-xs sm:text-base font-bold ${iconAccent}`}>
                       {opp.apy.toFixed(2)}%
                     </div>
                     {opp.apyReward > 0 && (
@@ -271,11 +325,11 @@ export function YieldView() {
                   </div>
                   <div>
                     <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5 sm:mb-1">TVL</div>
-                    <div className="text-sm sm:text-base font-medium text-text-primary">{formatCompactNumber(opp.tvl)}</div>
+                    <div className="text-xs sm:text-base font-medium text-text-primary">{formatCompactNumber(opp.tvl)}</div>
                   </div>
                   <div className="col-span-2 sm:col-span-1">
                     <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5 sm:mb-1">Type</div>
-                    <div className="text-sm sm:text-base font-medium text-text-secondary capitalize">{opp.yieldType.replace('_', ' ')}</div>
+                    <div className="text-xs sm:text-base font-medium text-text-secondary capitalize">{opp.yieldType.replace('_', ' ')}</div>
                   </div>
                 </div>
               </div>
@@ -287,7 +341,7 @@ export function YieldView() {
                       {opp.riskFactors.map((factor, i) => (
                         <span
                           key={i}
-                          className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-medium bg-orange-500/20 text-orange-500 border border-orange-500/15"
+                          className="px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-orange-500/20 text-orange-500 border border-orange-500/15"
                         >
                           {factor}
                         </span>
