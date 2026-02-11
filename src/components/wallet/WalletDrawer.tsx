@@ -846,11 +846,6 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
           <PanelGroup
             direction="vertical"
             className="h-full"
-            onLayout={(sizes: number[]) => {
-              if (sizes.length === 2 && sizes[1] > 0) {
-                setWalletDetailPanelSize(Math.round(sizes[1]))
-              }
-            }}
           >
             <Panel
               ref={listPanelRef}
@@ -868,6 +863,12 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
             <PanelResizeHandle
               className={`h-px transition-colors ${theme.styles.resizeHandle} ${theme.styles.resizeHandleHover}`}
               disabled={isWalletListCollapsed || !activeWalletId}
+              onDragging={(isDragging: boolean) => {
+                if (!isDragging) {
+                  const detailSize = detailPanelRef.current?.getSize?.()
+                  if (detailSize && detailSize > 0) setWalletDetailPanelSize(Math.round(detailSize))
+                }
+              }}
             />
             <Panel
               ref={detailPanelRef}
