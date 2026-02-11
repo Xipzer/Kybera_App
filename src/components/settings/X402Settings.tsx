@@ -61,7 +61,7 @@ export function X402Settings() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-text-primary mb-4">x402 Auto-Payments</h3>
+        <h3 className="text-base sm:text-lg font-medium text-text-primary mb-3 sm:mb-4">x402 Auto-Payments</h3>
 
         <div className="space-y-4">
           <ModernToggle
@@ -72,7 +72,7 @@ export function X402Settings() {
           />
 
           <div>
-            <h4 className="text-sm font-medium text-text-primary mb-4">Payment Wallet</h4>
+            <h4 className="text-xs sm:text-sm font-medium text-text-primary mb-3 sm:mb-4">Payment Wallet</h4>
             <select
               value={config.paymentWalletId || ''}
               onChange={(e) => setPaymentWallet(e.target.value)}
@@ -90,15 +90,15 @@ export function X402Settings() {
         </div>
       </div>
 
-      <div className="border-t border-border-subtle pt-6">
-        <h3 className="text-lg font-medium text-text-primary mb-1">Spending Limits</h3>
-        <p className="text-xs text-text-tertiary mb-4">
+      <div className="border-t border-border-subtle pt-4 sm:pt-6">
+        <h3 className="text-base sm:text-lg font-medium text-text-primary mb-1">Spending Limits</h3>
+        <p className="text-xs text-text-tertiary mb-3 sm:mb-4">
           Control how much can be spent automatically per request and per day.
         </p>
 
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">
+            <label className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
               Daily Budget (USD)
             </label>
             <div className="relative">
@@ -116,7 +116,7 @@ export function X402Settings() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">
+            <label className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
               Per-Request Limit (USD)
             </label>
             <div className="relative">
@@ -133,8 +133,8 @@ export function X402Settings() {
             </div>
           </div>
 
-          <div className="mt-4 p-4 bg-surface-elevated rounded-lg border border-border-subtle">
-            <div className="flex items-center justify-between text-sm mb-2">
+          <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-surface-elevated rounded-lg border border-border-subtle">
+            <div className="flex items-center justify-between text-xs sm:text-sm mb-2">
               <span className="text-text-secondary">
                 ${summary.todaySpent.toFixed(2)} / ${summary.todayBudget.toFixed(2)}
               </span>
@@ -142,13 +142,13 @@ export function X402Settings() {
                 {spendingPercent.toFixed(0)}%
               </span>
             </div>
-            <div className="w-full h-2.5 bg-surface-base rounded-full overflow-hidden">
+            <div className="w-full h-2 sm:h-2.5 bg-surface-base rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${barColor}`}
                 style={{ width: `${spendingPercent}%` }}
               />
             </div>
-            <div className="flex items-center justify-between text-xs text-text-tertiary mt-2">
+            <div className="flex items-center justify-between text-[10px] sm:text-xs text-text-tertiary mt-2">
               <span>{summary.paymentCount} payments total</span>
               <span>${summary.lifetimeSpent.toFixed(2)} lifetime</span>
             </div>
@@ -156,8 +156,8 @@ export function X402Settings() {
         </div>
       </div>
 
-      <div className="border-t border-border-subtle pt-6">
-        <h3 className="text-lg font-medium text-text-primary mb-1">Approved Domains</h3>
+      <div className="border-t border-border-subtle pt-4 sm:pt-6">
+        <h3 className="text-base sm:text-lg font-medium text-text-primary mb-1">Approved Domains</h3>
         <p className="text-xs text-text-tertiary mb-4">
           Only these domains can trigger auto-payments. Leave empty to allow all.
         </p>
@@ -209,39 +209,39 @@ export function X402Settings() {
         )}
       </div>
 
-      <div className="border-t border-border-subtle pt-6">
-        <h3 className="text-lg font-medium text-text-primary mb-4">Recent Payments</h3>
+      <div className="border-t border-border-subtle pt-4 sm:pt-6">
+        <h3 className="text-base sm:text-lg font-medium text-text-primary mb-3 sm:mb-4">Recent Payments</h3>
         {paymentHistory.length === 0 ? (
-          <div className="text-sm text-text-tertiary italic py-4 text-center">
+          <div className="text-xs sm:text-sm text-text-tertiary italic py-3 sm:py-4 text-center">
             No payments yet
           </div>
         ) : (
           <div className="rounded-xl border border-border-subtle overflow-hidden">
-            <table className="w-full text-sm">
+            <table className="w-full text-xs sm:text-sm">
               <thead>
                 <tr className="bg-surface-elevated">
-                  <th className="px-3 py-2 text-left text-xs font-medium text-text-tertiary uppercase tracking-wide">Date</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-text-tertiary uppercase tracking-wide">Domain</th>
-                  <th className="px-3 py-2 text-right text-xs font-medium text-text-tertiary uppercase tracking-wide">Amount</th>
-                  <th className="px-3 py-2 text-center text-xs font-medium text-text-tertiary uppercase tracking-wide">Status</th>
+                  <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-left text-[10px] sm:text-xs font-medium text-text-tertiary uppercase tracking-wide">Date</th>
+                  <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-left text-[10px] sm:text-xs font-medium text-text-tertiary uppercase tracking-wide">Domain</th>
+                  <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-right text-[10px] sm:text-xs font-medium text-text-tertiary uppercase tracking-wide">Amount</th>
+                  <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-center text-[10px] sm:text-xs font-medium text-text-tertiary uppercase tracking-wide">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {paymentHistory.slice(0, 10).map((payment) => (
                   <tr key={payment.id} className="border-t border-border-subtle">
-                    <td className="px-3 py-2 text-text-secondary text-xs whitespace-nowrap">
+                    <td className="px-2 sm:px-3 py-1.5 sm:py-2 text-text-secondary text-[10px] sm:text-xs whitespace-nowrap">
                       {new Date(payment.timestamp).toLocaleDateString()}
                     </td>
-                    <td className="px-3 py-2 text-text-primary text-xs truncate max-w-[140px]">
+                    <td className="px-2 sm:px-3 py-1.5 sm:py-2 text-text-primary text-[10px] sm:text-xs truncate max-w-[100px] sm:max-w-[140px]">
                       {payment.domain}
                     </td>
-                    <td className="px-3 py-2 text-right text-text-primary text-xs font-medium">
+                    <td className="px-2 sm:px-3 py-1.5 sm:py-2 text-right text-text-primary text-[10px] sm:text-xs font-medium">
                       ${payment.amountUsd.toFixed(4)}
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="px-2 sm:px-3 py-1.5 sm:py-2">
                       <div className="flex items-center justify-center gap-1">
                         {statusIcon(payment.status)}
-                        <span className={`text-xs capitalize ${
+                        <span className={`text-[10px] sm:text-xs capitalize ${
                           payment.status === 'completed' ? 'text-green-500'
                             : payment.status === 'failed' || payment.status === 'rejected' ? 'text-red-500'
                               : 'text-yellow-500'

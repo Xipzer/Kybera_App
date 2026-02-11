@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { useTheme } from '../../hooks/useTheme'
 import { themeClasses } from '../../utils/themeClasses'
+import { NetworkIcon } from '../NetworkIcons'
 import { yieldService } from '../../services/defi/yieldService'
 import { EmptyState } from '../common/EmptyState'
 import { formatCompactNumber } from '../../utils/formatters'
@@ -164,13 +165,14 @@ export function YieldView() {
             <button
               key={n.value}
               onClick={() => setNetworkFilter(n.value)}
-              className={`px-2 py-1 rounded-md text-[10px] font-medium transition-all duration-200 ${
+              className={`px-2 py-1 rounded-md text-[10px] font-medium transition-all duration-200 flex items-center gap-1 ${
                 networkFilter === n.value
                   ? `bg-gradient-to-r ${styles.sendGradient} text-white shadow-sm`
                   : 'text-text-tertiary hover:text-text-secondary hover:bg-surface-hover'
               }`}
+              title={n.label}
             >
-              {n.label}
+              {n.value ? <NetworkIcon networkId={n.value} size={14} /> : n.label}
             </button>
           ))}
         </div>
@@ -240,8 +242,8 @@ export function YieldView() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className="text-sm sm:text-base font-semibold text-text-primary">{opp.protocolName}</span>
-                      <span className={`px-1.5 py-0.5 rounded-md text-[9px] sm:text-[10px] font-medium ${tc.sectionBg} border text-text-tertiary`}>
-                        {opp.networkId}
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-md ${tc.sectionBg} border`} title={opp.networkId}>
+                        <NetworkIcon networkId={opp.networkId} size={14} className="flex-shrink-0" />
                       </span>
                     </div>
                     <div className="text-xs sm:text-sm text-text-tertiary">

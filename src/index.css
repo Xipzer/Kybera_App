@@ -351,11 +351,11 @@
   }
   
   .dialog-overlay {
-    @apply fixed inset-0 bg-black/80 z-40;
+    @apply fixed inset-0 bg-black/80 z-[120];
   }
   
   .dialog-content {
-    @apply fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50;
+    @apply fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[130];
     @apply max-w-[calc(100vw-32px)] max-h-[calc(100vh-32px)];
   }
 

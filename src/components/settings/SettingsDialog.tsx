@@ -21,6 +21,7 @@ import {
   CreditCard,
   Maximize2,
   Minimize2,
+  RotateCcw,
 } from 'lucide-react'
 import { SiBasicattentiontoken } from 'react-icons/si'
 import { ImageUpload } from '../common/ImageUpload'
@@ -65,6 +66,7 @@ export function SettingsDialog({ open, onOpenChange, maximized = false }: Settin
   } = s.uiStore
 
   const setSettingsMaximized = useUIStore((st) => st.setSettingsMaximized)
+  const resetUI = useUIStore((st) => st.resetUI)
 
   const handleMaximize = () => {
     setSettingsMaximized(true)
@@ -109,7 +111,7 @@ export function SettingsDialog({ open, onOpenChange, maximized = false }: Settin
                   </Tabs.Trigger>
                   <Tabs.Trigger value="appearance" className={tabTriggerClass}>
                     <Palette className="w-4 h-4" />
-                    <span className="hidden sm:inline">Appearance</span>
+                    <span className="hidden sm:inline">Interface</span>
                     <span className="sm:hidden">Theme</span>
                   </Tabs.Trigger>
                 </Tabs.List>
@@ -696,8 +698,26 @@ export function SettingsDialog({ open, onOpenChange, maximized = false }: Settin
                               </div>
                             </>
                           )}
-                        </div>
+                         </div>
                       </div>
+                    </div>
+
+                    <div className="border-t border-border-subtle pt-6">
+                      <h3 className="text-lg font-medium text-text-primary mb-2">Restore Defaults</h3>
+                      <p className="text-sm text-text-secondary mb-4">
+                        Reset all interface settings to their defaults, including theme, wallpapers, particle effects, and panel positions.
+                      </p>
+                      <button
+                        onClick={() => {
+                          if (confirm('Reset all interface settings to defaults? This cannot be undone.')) {
+                            resetUI()
+                          }
+                        }}
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/30 rounded-lg transition-all duration-200"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        Reset Interface Settings
+                      </button>
                     </div>
                   </Tabs.Content>
 

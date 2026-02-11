@@ -335,9 +335,11 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
     }
   }, [isWalletListCollapsed])
 
+  const { walletDetailPanelSize, setWalletDetailPanelSize } = useUIStore()
+
   useEffect(() => {
     if (activeWalletId) {
-      listPanelRef.current?.resize(50)
+      listPanelRef.current?.resize(100 - walletDetailPanelSize)
       detailPanelRef.current?.expand()
     } else {
       detailPanelRef.current?.collapse()
@@ -841,11 +843,19 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
           {walletListHeader}
         </div>
         <div ref={panelGroupRef} className="flex-1 min-h-0">
-          <PanelGroup direction="vertical" className="h-full">
+          <PanelGroup
+            direction="vertical"
+            className="h-full"
+            onLayout={(sizes: number[]) => {
+              if (sizes.length === 2 && sizes[1] > 0) {
+                setWalletDetailPanelSize(Math.round(sizes[1]))
+              }
+            }}
+          >
             <Panel
               ref={listPanelRef}
               id="wallet-list"
-              defaultSize={activeWalletId ? 50 : 100}
+              defaultSize={activeWalletId ? (100 - walletDetailPanelSize) : 100}
               minSize={listMinPct}
               collapsible
               collapsedSize={0}
@@ -862,7 +872,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
             <Panel
               ref={detailPanelRef}
               id="wallet-detail"
-              defaultSize={activeWalletId ? 50 : 0}
+              defaultSize={activeWalletId ? walletDetailPanelSize : 0}
               minSize={20}
               collapsible
               collapsedSize={0}
