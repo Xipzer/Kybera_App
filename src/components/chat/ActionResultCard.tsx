@@ -25,6 +25,7 @@ import {
   AlertTriangle,
   Copy,
   Check,
+  Flame,
 } from 'lucide-react'
 import { useTheme } from '../../hooks/useTheme'
 import { NetworkIcon, NativeTokenIcon } from '../NetworkIcons'
@@ -602,6 +603,22 @@ function X402Card({ data, action }: { data: any; action: 'status' | 'payments' }
   )
 }
 
+function YieldRiskBadge({ level }: { level: string }) {
+  const config: Record<string, { bg: string; text: string; border: string; icon: typeof Shield }> = {
+    low: { bg: 'bg-green-500/10', text: 'text-green-400', border: 'border-green-500/20', icon: Shield },
+    medium: { bg: 'bg-yellow-500/10', text: 'text-yellow-400', border: 'border-yellow-500/20', icon: AlertTriangle },
+    high: { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/20', icon: Flame },
+    degen: { bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/20', icon: Flame },
+  }
+  const c = config[level] ?? config.high
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold uppercase tracking-wider ${c.bg} ${c.text} border ${c.border}`}>
+      <c.icon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+      {level}
+    </span>
+  )
+}
+
 function YieldCard({ data }: { data: any }) {
   const { card, iconAccent } = useCardTheme()
 
@@ -617,12 +634,8 @@ function YieldCard({ data }: { data: any }) {
                 <span className="text-[10px] sm:text-xs text-text-tertiary">{o.token}</span>
               </div>
               <div className="flex items-center gap-2 sm:gap-3">
-                <span className={`text-xs sm:text-base font-medium ${iconAccent}`}>{Number(o.apy || 0).toFixed(1)}%</span>
-                <span className={`text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full ${
-                  o.riskLevel === 'low' ? 'bg-green-500/20 text-green-500' :
-                  o.riskLevel === 'high' ? 'bg-red-500/20 text-red-500' :
-                  'bg-yellow-500/20 text-yellow-500'
-                }`}>{o.riskLevel}</span>
+                <span className={`text-xs sm:text-base font-medium ${iconAccent}`}>{Number(o.apy || 0).toFixed(2)}%</span>
+                <YieldRiskBadge level={o.riskLevel} />
               </div>
             </div>
           ))}
