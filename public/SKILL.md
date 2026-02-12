@@ -1,6 +1,6 @@
 ---
 name: kybera
-version: 1.0.2
+version: 1.1.0
 description: Kybera wallet control and token research assistant
 homepage: https://app.kybera.xyz
 ---
@@ -350,6 +350,151 @@ Done! You're now on Ethereum mainnet.
 ```json
 {
   "action": "get_settings",
+  "params": {}
+}
+```
+
+### Security
+
+**get_token_security** - Get a GoPlus security report for a token contract including honeypot detection, risk flags, and risk score
+```json
+{
+  "action": "get_token_security",
+  "params": {
+    "contractAddress": "0x...",
+    "network": "ethereum | base | arbitrum | optimism | solana"
+  }
+}
+```
+
+**check_malicious_address** - Check if a wallet or contract address is flagged as malicious by GoPlus
+```json
+{
+  "action": "check_malicious_address",
+  "params": {
+    "address": "0x...",
+    "network": "ethereum | base | arbitrum | optimism | solana"
+  }
+}
+```
+
+### Alerts
+
+**create_alert** - Create a new alert for price thresholds, wallet activity, security events, or research follow-ups
+```json
+{
+  "action": "create_alert",
+  "params": {
+    "alertType": "price_threshold | wallet_activity | research_followup | system",
+    "config": {}
+  }
+}
+```
+- `alertType` (required): Type of alert
+- `config` (required): Alert configuration object matching the alert type schema
+
+**list_alerts** - List all configured alerts and their status
+```json
+{
+  "action": "list_alerts",
+  "params": {}
+}
+```
+
+**delete_alert** - Delete an alert by its ID
+```json
+{
+  "action": "delete_alert",
+  "params": {
+    "alertId": "alert-id"
+  }
+}
+```
+
+### Portfolio & Trade History
+
+**get_portfolio_pnl** - Get profit/loss summary for a wallet including total P/L, best/worst performers
+```json
+{
+  "action": "get_portfolio_pnl",
+  "params": {
+    "walletAddress": "optional - uses active wallet if omitted",
+    "timeRange": "1h | 24h | 7d | 30d | 90d | all"
+  }
+}
+```
+
+**get_trade_history** - Get trade history records for a wallet
+```json
+{
+  "action": "get_trade_history",
+  "params": {
+    "walletAddress": "optional - uses active wallet if omitted",
+    "limit": 20
+  }
+}
+```
+
+### Wallet Watchlist
+
+**add_watched_wallet** - Add a wallet address to the watchlist for tracking activity
+```json
+{
+  "action": "add_watched_wallet",
+  "params": {
+    "address": "0x...",
+    "label": "Whale Wallet",
+    "networks": ["ethereum", "base"]
+  }
+}
+```
+- `address` (required): Wallet address to watch
+- `label` (optional): Human-readable label
+- `networks` (optional): Networks to monitor (default: ethereum, base)
+
+**remove_watched_wallet** - Remove a wallet from the watchlist
+```json
+{
+  "action": "remove_watched_wallet",
+  "params": {
+    "watchId": "watch-id"
+  }
+}
+```
+
+**list_watched_wallets** - List all wallets currently on the watchlist
+```json
+{
+  "action": "list_watched_wallets",
+  "params": {}
+}
+```
+
+**get_wallet_activity** - Get recent activity (swaps, transfers, approvals) for a watched wallet
+```json
+{
+  "action": "get_wallet_activity",
+  "params": {
+    "watchId": "watch-id",
+    "limit": 20
+  }
+}
+```
+
+### x402 Micropayments
+
+**get_x402_status** - Get x402 micropayment status including budget, spending, and configuration
+```json
+{
+  "action": "get_x402_status",
+  "params": {}
+}
+```
+
+**list_x402_payments** - List recent x402 micropayment records
+```json
+{
+  "action": "list_x402_payments",
   "params": {}
 }
 ```
