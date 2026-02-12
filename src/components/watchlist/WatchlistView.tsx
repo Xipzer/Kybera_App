@@ -18,6 +18,9 @@ import {
   ChevronUp,
   Zap,
   Radio,
+  Pencil,
+  Copy,
+  Check,
 } from 'lucide-react'
 import { useTheme } from '../../hooks/useTheme'
 import { useWatchlistStore } from '../../store/watchlistStore'
@@ -71,6 +74,7 @@ export function WatchlistView() {
   const watchedWallets = useWatchlistStore((s) => s.watchedWallets)
   const addWallet = useWatchlistStore((s) => s.addWallet)
   const removeWallet = useWatchlistStore((s) => s.removeWallet)
+  const updateWallet = useWatchlistStore((s) => s.updateWallet)
   const getActivitiesForWallet = useWatchlistStore((s) => s.getActivitiesForWallet)
 
   const [showForm, setShowForm] = useState(false)
@@ -80,6 +84,11 @@ export function WatchlistView() {
   const [selectedTags, setSelectedTags] = useState<WatchedWalletTag[]>([])
   const [expandedWallet, setExpandedWallet] = useState<string | null>(null)
   const [isChecking, setIsChecking] = useState<string | null>(null)
+  const [editingWallet, setEditingWallet] = useState<string | null>(null)
+  const [editLabel, setEditLabel] = useState('')
+  const [editTags, setEditTags] = useState<WatchedWalletTag[]>([])
+  const [editNetworks, setEditNetworks] = useState<string[]>([])
+  const [copiedAddress, setCopiedAddress] = useState<string | null>(null)
 
   const handleAddWallet = useCallback(() => {
     if (!addressInput.trim() || !labelInput.trim()) return
@@ -112,6 +121,29 @@ export function WatchlistView() {
     }
   }, [watchedWallets, isChecking])
 
+  const startEditing = useCallback((wallet: typeof watchedWallets[0]) => {
+    setEditingWallet(wallet.id)
+    setEditLabel(wallet.label)
+    setEditTags([...wallet.tags])
+    setEditNetworks([...wallet.networks])
+  }, [])
+
+  const saveEdit = useCallback(() => {
+    if (!editingWallet || !editLabel.trim()) return
+    updateWallet(editingWallet, {
+      label: editLabel.trim(),
+      tags: editTags,
+      networks: editNetworks.length > 0 ? editNetworks : ['ethereum', 'base'],
+    })
+    setEditingWallet(null)
+  }, [editingWallet, editLabel, editTags, editNetworks, updateWallet])
+
+  const copyAddress = useCallback((address: string) => {
+    navigator.clipboard.writeText(address)
+    setCopiedAddress(address)
+    setTimeout(() => setCopiedAddress(null), 2000)
+  }, [])
+
   const toggleNetwork = (net: string) => {
     setSelectedNetworks((prev) =>
       prev.includes(net) ? prev.filter((n) => n !== net) : [...prev, net]
@@ -120,6 +152,18 @@ export function WatchlistView() {
 
   const toggleTag = (tag: WatchedWalletTag) => {
     setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    )
+  }
+
+  const toggleEditNetwork = (net: string) => {
+    setEditNetworks((prev) =>
+      prev.includes(net) ? prev.filter((n) => n !== net) : [...prev, net]
+    )
+  }
+
+  const toggleEditTag = (tag: WatchedWalletTag) => {
+    setEditTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     )
   }
@@ -228,64 +272,150 @@ export function WatchlistView() {
         {watchedWallets.map((wallet) => {
           const walletActivities = getActivitiesForWallet(wallet.id, 10)
           const isExpanded = expandedWallet === wallet.id
+          const isEditing = editingWallet === wallet.id
 
           return (
             <div key={wallet.id} className="rounded-xl border border-border-subtle bg-surface-elevated/30 overflow-hidden transition-all duration-200 hover:border-accent-500/20">
               <div className="p-3 sm:p-4">
-                <div className="flex items-start justify-between">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                      <span className="font-semibold text-text-primary text-sm">{wallet.label}</span>
-                      {wallet.tags.map((tag) => {
-                        const tagConfig = TAG_OPTIONS.find((t) => t.value === tag)
-                        return (
-                          <span key={tag} className={`px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider ${tagConfig?.color ?? 'bg-gray-500/20 text-gray-400 border-gray-500/30'} border`}>
-                            {tagConfig?.label ?? tag}
-                          </span>
-                        )
-                      })}
+                {isEditing ? (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-[10px] text-text-tertiary uppercase tracking-wider font-medium mb-1.5">Label</label>
+                      <input
+                        type="text"
+                        value={editLabel}
+                        onChange={(e) => setEditLabel(e.target.value)}
+                        className="w-full px-3 py-2 bg-surface-elevated/50 border border-border-subtle rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-500/50 transition-colors"
+                        style={{ fontSize: '16px' }}
+                        autoFocus
+                      />
                     </div>
-                    <div className="text-xs text-text-tertiary font-mono ml-3.5">{formatAddress(wallet.address, 10, 6)}</div>
-                    <div className="flex gap-1 mt-2 ml-3.5">
-                      {wallet.networks.map((n) => (
-                        <span key={n} className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-surface-elevated text-text-tertiary border border-border-subtle">
-                          {n}
+                    <div>
+                      <label className="block text-[10px] text-text-tertiary uppercase tracking-wider font-medium mb-1.5">Tags</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {TAG_OPTIONS.map((tag) => (
+                          <button
+                            key={tag.value}
+                            onClick={() => toggleEditTag(tag.value)}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all duration-200 ${
+                              editTags.includes(tag.value)
+                                ? tag.color
+                                : 'bg-surface-elevated/50 border-border-subtle text-text-secondary hover:text-text-primary'
+                            }`}
+                          >
+                            {tag.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-text-tertiary uppercase tracking-wider font-medium mb-1.5">Networks</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {NETWORK_OPTIONS.map((net) => (
+                          <button
+                            key={net}
+                            onClick={() => toggleEditNetwork(net)}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all duration-200 ${
+                              editNetworks.includes(net)
+                                ? `bg-gradient-to-r ${styles.sendGradient} text-white border-transparent shadow-sm`
+                                : 'bg-surface-elevated/50 border-border-subtle text-text-secondary hover:text-text-primary hover:border-accent-500/30'
+                            }`}
+                          >
+                            {net}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={saveEdit}
+                        disabled={!editLabel.trim()}
+                        className={`flex-1 py-2 bg-gradient-to-r ${styles.sendGradient} rounded-lg text-xs font-medium text-white shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-30`}
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setEditingWallet(null)}
+                        className="flex-1 py-2 bg-surface-elevated/50 border border-border-subtle rounded-lg text-xs font-medium text-text-secondary hover:text-text-primary transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                        <span className="font-semibold text-text-primary text-sm">{wallet.label}</span>
+                        {wallet.tags.map((tag) => {
+                          const tagConfig = TAG_OPTIONS.find((t) => t.value === tag)
+                          return (
+                            <span key={tag} className={`px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider ${tagConfig?.color ?? 'bg-gray-500/20 text-gray-400 border-gray-500/30'} border`}>
+                              {tagConfig?.label ?? tag}
+                            </span>
+                          )
+                        })}
+                      </div>
+                      <button
+                        onClick={() => copyAddress(wallet.address)}
+                        className="flex items-center gap-1.5 ml-3.5 group cursor-pointer"
+                      >
+                        <span className="text-xs text-text-tertiary font-mono group-hover:text-text-secondary transition-colors">
+                          {formatAddress(wallet.address, 10, 6)}
                         </span>
-                      ))}
+                        {copiedAddress === wallet.address
+                          ? <Check className="w-3 h-3 text-green-500" />
+                          : <Copy className="w-3 h-3 text-text-tertiary opacity-0 group-hover:opacity-100 transition-opacity" />
+                        }
+                      </button>
+                      <div className="flex gap-1 mt-2 ml-3.5">
+                        {wallet.networks.map((n) => (
+                          <span key={n} className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-surface-elevated text-text-tertiary border border-border-subtle">
+                            {n}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => startEditing(wallet)}
+                        className={`${theme.styles.buttonIcon} p-1.5 rounded-lg`}
+                        title="Edit wallet"
+                      >
+                        <Pencil className="w-3.5 h-3.5 text-text-secondary" />
+                      </button>
+                      <button
+                        onClick={() => handleCheckActivity(wallet.id)}
+                        disabled={isChecking === wallet.id}
+                        className={`${theme.styles.buttonIcon} p-1.5 rounded-lg disabled:opacity-40`}
+                        title="Check for new activity"
+                      >
+                        {isChecking === wallet.id
+                          ? <Loader2 className="w-3.5 h-3.5 text-text-secondary animate-spin" />
+                          : <Radio className="w-3.5 h-3.5 text-text-secondary" />}
+                      </button>
+                      <button
+                        onClick={() => removeWallet(wallet.id)}
+                        className={`${theme.styles.buttonIcon} p-1.5 rounded-lg hover:!bg-red-500/15`}
+                        title="Remove wallet"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                      </button>
+                      <button
+                        onClick={() => setExpandedWallet(isExpanded ? null : wallet.id)}
+                        className={`${theme.styles.buttonIcon} p-1.5 rounded-lg`}
+                      >
+                        {isExpanded
+                          ? <ChevronUp className="w-3.5 h-3.5 text-text-secondary" />
+                          : <ChevronDown className="w-3.5 h-3.5 text-text-secondary" />}
+                      </button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleCheckActivity(wallet.id)}
-                      disabled={isChecking === wallet.id}
-                      className={`${theme.styles.buttonIcon} p-1.5 rounded-lg disabled:opacity-40`}
-                      title="Check for new activity"
-                    >
-                      {isChecking === wallet.id
-                        ? <Loader2 className="w-3.5 h-3.5 text-text-secondary animate-spin" />
-                        : <Radio className="w-3.5 h-3.5 text-text-secondary" />}
-                    </button>
-                    <button
-                      onClick={() => removeWallet(wallet.id)}
-                      className={`${theme.styles.buttonIcon} p-1.5 rounded-lg hover:!bg-red-500/15`}
-                      title="Remove wallet"
-                    >
-                      <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                    </button>
-                    <button
-                      onClick={() => setExpandedWallet(isExpanded ? null : wallet.id)}
-                      className={`${theme.styles.buttonIcon} p-1.5 rounded-lg`}
-                    >
-                      {isExpanded
-                        ? <ChevronUp className="w-3.5 h-3.5 text-text-secondary" />
-                        : <ChevronDown className="w-3.5 h-3.5 text-text-secondary" />}
-                    </button>
-                  </div>
-                </div>
+                )}
               </div>
 
-              {isExpanded && (
+              {isExpanded && !isEditing && (
                 <div className="border-t border-border-subtle px-3 sm:px-4 py-3">
                   <div className="flex items-center gap-2 mb-3">
                     <div className={`w-1 h-3.5 rounded-full bg-gradient-to-b ${styles.sendGradient}`} />
