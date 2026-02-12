@@ -2,6 +2,7 @@
  * Code by Xipzer
  */
 
+import { useState } from 'react'
 import {
   Wallet,
   Network,
@@ -21,9 +22,10 @@ import {
   XCircle,
   Globe,
   AlertTriangle,
+  Copy,
+  Check,
 } from 'lucide-react'
 import { useTheme } from '../../hooks/useTheme'
-import { themeClasses } from '../../utils/themeClasses'
 import { NetworkIcon } from '../NetworkIcons'
 import type { ActionResultData } from '../../types/research'
 
@@ -32,47 +34,15 @@ interface ActionResultCardProps {
 }
 
 function useCardTheme() {
-  const { themeName, theme, isDark } = useTheme()
-  const tc = themeClasses(isDark)
-
-  const getCardStyles = () => {
-    switch (themeName) {
-      case 'xipz':
-        return {
-          bg: 'bg-gradient-to-br from-primary-950 via-primary-900 to-primary-950',
-          border: 'border-primary-800/50',
-        }
-      case 'dark':
-        return {
-          bg: 'bg-surface-base',
-          border: 'border-[#8b8bff]/10',
-        }
-      case 'ogDark':
-        return {
-          bg: 'bg-surface-base',
-          border: 'border-white/10',
-        }
-      case 'light':
-        return {
-          bg: 'bg-surface-elevated',
-          border: 'border-indigo-200/30',
-        }
-      case 'ogLight':
-        return {
-          bg: 'bg-surface-elevated',
-          border: 'border-gray-200/30',
-        }
-      default:
-        return {
-          bg: 'bg-surface-elevated',
-          border: 'border-gray-200',
-        }
-    }
-  }
+  const { theme, isDark } = useTheme()
 
   return {
-    card: getCardStyles(),
-    tc,
+    card: {
+      bg: 'bg-surface-elevated/30',
+      border: 'border-border-subtle',
+      innerBg: 'bg-surface-elevated/50',
+      innerBorder: 'border-border-subtle/50',
+    },
     isDark,
     iconAccent: theme.styles.iconAccent,
     sendGradient: theme.styles.chatInterface.sendGradient,
@@ -85,11 +55,11 @@ function CardShell({ icon: Icon, title, children }: {
   title: string
   children: React.ReactNode
 }) {
-  const { card, tc, sendGradient } = useCardTheme()
+  const { card, sendGradient } = useCardTheme()
 
   return (
     <div className={`${card.bg} border ${card.border} rounded-2xl overflow-hidden`}>
-      <div className={`flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 border-b ${tc.borderSubtle}`}>
+      <div className={`flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 border-b ${card.innerBorder}`}>
         <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-r ${sendGradient} flex items-center justify-center flex-shrink-0`}>
           <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
         </div>
@@ -110,15 +80,28 @@ function StatCell({ label, value, mono, className }: { label: string; value: str
 }
 
 function AddressChip({ address }: { address: string }) {
+  const [copied, setCopied] = useState(false)
+
   return (
-    <span className="font-mono text-[10px] sm:text-xs text-text-tertiary">
+    <button
+      onClick={() => {
+        navigator.clipboard.writeText(address)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      }}
+      className="inline-flex items-center gap-1 font-mono text-[10px] sm:text-xs text-text-tertiary hover:text-text-secondary transition-colors cursor-pointer"
+    >
       {address.slice(0, 6)}...{address.slice(-4)}
-    </span>
+      {copied
+        ? <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-green-500" />
+        : <Copy className="w-2.5 h-2.5 sm:w-3 sm:h-3 opacity-0 group-hover:opacity-100" />
+      }
+    </button>
   )
 }
 
 function WalletListCard({ data }: { data: any }) {
-  const { tc } = useCardTheme()
+  const { card } = useCardTheme()
 
   return (
     <CardShell icon={Wallet} title={`${data.totalWallets} Wallets in ${data.totalGroups} Groups`}>
@@ -126,9 +109,9 @@ function WalletListCard({ data }: { data: any }) {
         {data.groups?.map((group: any) => (
           <div key={group.groupId}>
             <div className="text-[10px] sm:text-xs font-medium text-text-secondary uppercase tracking-wide mb-1.5">{group.groupName}</div>
-            <div className={`${tc.sectionBg} border rounded-xl overflow-hidden`}>
+            <div className={`${card.innerBg} border ${card.innerBorder} rounded-xl overflow-hidden`}>
               {group.wallets?.map((w: any, i: number) => (
-                <div key={w.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${tc.border}` : ''}`}>
+                <div key={w.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${card.innerBorder}` : ''}`}>
                   <span className="text-xs sm:text-base text-text-primary font-medium">{w.name}</span>
                   <div className="flex items-center gap-2 sm:gap-3">
                     <span className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-accent-500/10 text-accent-500 font-medium">{w.type}</span>
@@ -145,11 +128,13 @@ function WalletListCard({ data }: { data: any }) {
 }
 
 function NetworkListCard({ data }: { data: any }) {
+  const { card } = useCardTheme()
+
   return (
     <CardShell icon={Globe} title={`${(data.evm?.length || 0) + (data.svm?.length || 0)} Networks Available`}>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         {[...(data.evm || []), ...(data.svm || [])].map((n: any) => (
-          <div key={n.id} className="flex items-center gap-1.5 sm:gap-2 px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-surface-hover/50">
+          <div key={n.id} className={`flex items-center gap-1.5 sm:gap-2 px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl ${card.innerBg} border ${card.innerBorder}`}>
             <NetworkIcon networkId={n.id} size={16} className="flex-shrink-0" />
             <div className="min-w-0">
               <div className="text-xs sm:text-base text-text-primary font-medium truncate">{n.name}</div>
@@ -163,7 +148,7 @@ function NetworkListCard({ data }: { data: any }) {
 }
 
 function BalanceCard({ data }: { data: any }) {
-  const { card, tc, titleGradient } = useCardTheme()
+  const { card, titleGradient } = useCardTheme()
 
   const statItems: { label: string; value: string }[] = [
     { label: 'Total Value', value: `$${Number(data.totalUSD || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
@@ -175,7 +160,7 @@ function BalanceCard({ data }: { data: any }) {
 
   return (
     <div className={`${card.bg} border ${card.border} rounded-2xl overflow-hidden`}>
-      <div className={`px-3 py-2 sm:px-4 sm:py-3 border-b ${tc.borderSubtle}`}>
+      <div className={`px-3 py-2 sm:px-4 sm:py-3 border-b ${card.innerBorder}`}>
         <span className={`text-sm sm:text-lg font-bold bg-gradient-to-r ${titleGradient} bg-clip-text text-transparent`}>
           {data.wallet || 'Wallet'}
         </span>
@@ -190,13 +175,13 @@ function BalanceCard({ data }: { data: any }) {
           ))}
         </div>
         {data.tokens?.length > 0 && (
-          <div className={`border-t ${tc.border} pt-3`}>
+          <div className={`border-t ${card.innerBorder} pt-3`}>
             <div className="mb-2">
               <span className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide">Tokens</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
               {data.tokens.map((t: any, i: number) => (
-                <div key={i} className={`${tc.sectionBg} border rounded-xl px-2.5 py-2 sm:px-3 sm:py-2.5`}>
+                <div key={i} className={`${card.innerBg} border ${card.innerBorder} rounded-xl px-2.5 py-2 sm:px-3 sm:py-2.5`}>
                   <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide truncate mb-1">{t.symbol}</div>
                   <div className="text-xs sm:text-base text-text-primary font-medium">{t.balance}</div>
                   {t.network && <div className="text-[10px] sm:text-xs text-text-tertiary mt-0.5">{t.network}</div>}
@@ -283,7 +268,7 @@ function RenameCard({ data, type }: { data: any; type: 'wallet' | 'group' }) {
 }
 
 function SecurityCard({ data }: { data: any }) {
-  const { tc } = useCardTheme()
+  const { card } = useCardTheme()
   const riskScore = Number(data.riskScore || 0)
   const riskColor = riskScore > 70 ? 'text-red-500' : riskScore > 40 ? 'text-yellow-500' : 'text-green-500'
 
@@ -304,7 +289,7 @@ function SecurityCard({ data }: { data: any }) {
           {data.isOpenSource && <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-500 font-medium">Open Source</span>}
         </div>
         {data.riskFlags?.length > 0 && (
-          <div className={`flex flex-wrap gap-1.5 sm:gap-2 pt-2 border-t ${tc.border}`}>
+          <div className={`flex flex-wrap gap-1.5 sm:gap-2 pt-2 border-t ${card.innerBorder}`}>
             {data.riskFlags.map((flag: string, i: number) => (
               <span key={i} className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-500">{flag}</span>
             ))}
@@ -336,14 +321,14 @@ function MaliciousCheckCard({ data }: { data: any }) {
 }
 
 function AlertsCard({ data }: { data: any }) {
-  const { tc } = useCardTheme()
+  const { card } = useCardTheme()
 
   return (
     <CardShell icon={Bell} title={`${data.total || data.alerts?.length || 0} Alerts`}>
       {data.alerts?.length > 0 ? (
-        <div className={`${tc.sectionBg} border rounded-xl overflow-hidden`}>
+        <div className={`${card.innerBg} border ${card.innerBorder} rounded-xl overflow-hidden`}>
           {data.alerts.map((a: any, i: number) => (
-            <div key={a.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${tc.border}` : ''}`}>
+            <div key={a.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${card.innerBorder}` : ''}`}>
               <div className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${a.enabled ? 'bg-green-500' : 'bg-gray-400'}`} />
                 <span className="text-xs sm:text-base text-text-primary">{a.type.replace(/_/g, ' ')}</span>
@@ -360,13 +345,13 @@ function AlertsCard({ data }: { data: any }) {
 }
 
 function PredictionMarketsCard({ data }: { data: any }) {
-  const { tc, iconAccent } = useCardTheme()
+  const { card, iconAccent } = useCardTheme()
 
   return (
     <CardShell icon={TrendingUp} title={`${data.count || data.markets?.length || 0} Prediction Markets`}>
       <div className="space-y-3">
         {data.markets?.slice(0, 5).map((m: any) => (
-          <div key={m.id} className={`${tc.sectionBg} border rounded-xl p-2.5 sm:p-3`}>
+          <div key={m.id} className={`${card.innerBg} border ${card.innerBorder} rounded-xl p-2.5 sm:p-3`}>
             <div className="text-xs sm:text-base text-text-primary font-medium leading-tight mb-2">{m.question}</div>
             <div className="flex items-center flex-wrap gap-1.5 sm:gap-2">
               {m.outcomes?.map((o: any, i: number) => (
@@ -428,14 +413,14 @@ function PortfolioCard({ data }: { data: any }) {
 }
 
 function TradeHistoryCard({ data }: { data: any }) {
-  const { tc, iconAccent } = useCardTheme()
+  const { card, iconAccent } = useCardTheme()
 
   return (
     <CardShell icon={ArrowRightLeft} title={`${data.count || data.trades?.length || 0} Recent Trades`}>
       {data.trades?.length > 0 ? (
-        <div className={`${tc.sectionBg} border rounded-xl overflow-hidden`}>
+        <div className={`${card.innerBg} border ${card.innerBorder} rounded-xl overflow-hidden`}>
           {data.trades.slice(0, 5).map((t: any, i: number) => (
-            <div key={t.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${tc.border}` : ''}`}>
+            <div key={t.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${card.innerBorder}` : ''}`}>
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="text-xs sm:text-base text-text-primary">{t.tokenInSymbol}</span>
                 <ArrowRightLeft className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${iconAccent}`} />
@@ -453,15 +438,15 @@ function TradeHistoryCard({ data }: { data: any }) {
 }
 
 function WatchlistCard({ data, action }: { data: any; action: 'list' | 'added' | 'activity' }) {
-  const { tc } = useCardTheme()
+  const { card } = useCardTheme()
 
   if (action === 'list') {
     return (
       <CardShell icon={Eye} title={`${data.total || data.wallets?.length || 0} Watched Wallets`}>
         {data.wallets?.length > 0 ? (
-          <div className={`${tc.sectionBg} border rounded-xl overflow-hidden`}>
+          <div className={`${card.innerBg} border ${card.innerBorder} rounded-xl overflow-hidden`}>
             {data.wallets.map((w: any, i: number) => (
-              <div key={w.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${tc.border}` : ''}`}>
+              <div key={w.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${card.innerBorder}` : ''}`}>
                 <span className="text-xs sm:text-base text-text-primary font-medium">{w.label}</span>
                 <AddressChip address={w.address} />
               </div>
@@ -477,9 +462,9 @@ function WatchlistCard({ data, action }: { data: any; action: 'list' | 'added' |
     return (
       <CardShell icon={Eye} title={`${data.count || 0} Activities — ${data.walletLabel || 'Wallet'}`}>
         {data.activities?.length > 0 ? (
-          <div className={`${tc.sectionBg} border rounded-xl overflow-hidden`}>
+          <div className={`${card.innerBg} border ${card.innerBorder} rounded-xl overflow-hidden`}>
             {data.activities.slice(0, 5).map((a: any, i: number) => (
-              <div key={a.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${tc.border}` : ''}`}>
+              <div key={a.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${card.innerBorder}` : ''}`}>
                 <span className="text-xs sm:text-base text-text-primary capitalize">{a.activityType?.replace(/_/g, ' ')}</span>
                 {a.estimatedValueUsd > 0 && <span className="text-[10px] sm:text-xs text-text-tertiary">${Number(a.estimatedValueUsd).toFixed(2)}</span>}
               </div>
@@ -502,7 +487,7 @@ function WatchlistCard({ data, action }: { data: any; action: 'list' | 'added' |
 }
 
 function X402Card({ data, action }: { data: any; action: 'status' | 'payments' }) {
-  const { tc } = useCardTheme()
+  const { card } = useCardTheme()
 
   if (action === 'status') {
     return (
@@ -524,9 +509,9 @@ function X402Card({ data, action }: { data: any; action: 'status' | 'payments' }
   return (
     <CardShell icon={CreditCard} title={`${data.count || data.payments?.length || 0} x402 Payments`}>
       {data.payments?.length > 0 ? (
-        <div className={`${tc.sectionBg} border rounded-xl overflow-hidden`}>
+        <div className={`${card.innerBg} border ${card.innerBorder} rounded-xl overflow-hidden`}>
           {data.payments.slice(0, 5).map((p: any, i: number) => (
-            <div key={p.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${tc.border}` : ''}`}>
+            <div key={p.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${card.innerBorder}` : ''}`}>
               <span className="text-xs sm:text-base text-text-primary">{p.domain}</span>
               <span className="text-[10px] sm:text-xs text-text-tertiary">${Number(p.amountUsd || 0).toFixed(4)}</span>
             </div>
@@ -540,14 +525,14 @@ function X402Card({ data, action }: { data: any; action: 'status' | 'payments' }
 }
 
 function YieldCard({ data }: { data: any }) {
-  const { tc, iconAccent } = useCardTheme()
+  const { card, iconAccent } = useCardTheme()
 
   return (
     <CardShell icon={Sprout} title={`${data.count || data.opportunities?.length || 0} Yield Opportunities`}>
       {data.opportunities?.length > 0 ? (
-        <div className={`${tc.sectionBg} border rounded-xl overflow-hidden`}>
+        <div className={`${card.innerBg} border ${card.innerBorder} rounded-xl overflow-hidden`}>
           {data.opportunities.slice(0, 5).map((o: any, i: number) => (
-            <div key={o.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${tc.border}` : ''}`}>
+            <div key={o.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${card.innerBorder}` : ''}`}>
               <div className="flex items-center gap-1.5 sm:gap-2">
                 {o.network && <NetworkIcon networkId={o.network} size={14} className="flex-shrink-0" />}
                 <span className="text-xs sm:text-base text-text-primary font-medium">{o.protocol}</span>
