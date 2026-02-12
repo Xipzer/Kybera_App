@@ -328,12 +328,18 @@ export function initializeResearchListeners() {
     const store = useResearchStore.getState()
 
     if (hasCard) {
-      const regex = new RegExp(`"action":\\s*"${result.actionName}"`)
-      useResearchStore.setState((state) => ({
-        messages: state.messages.filter((m) =>
-          !(m.role === 'assistant' && !m.actionResult && regex.test(m.content))
-        ),
-      }))
+      useResearchStore.setState((state) => {
+        let idx = -1
+        for (let i = state.messages.length - 1; i >= 0; i--) {
+          const m = state.messages[i]
+          if (m.role === 'assistant' && !m.actionResult && m.content.includes(result.actionName!)) {
+            idx = i
+            break
+          }
+        }
+        if (idx === -1) return state
+        return { messages: state.messages.filter((_, i) => i !== idx) }
+      })
     }
 
     store._setResearching(false, null, 0)
