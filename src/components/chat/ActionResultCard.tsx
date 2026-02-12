@@ -13,6 +13,7 @@ import {
   Eye,
   CreditCard,
   TrendingUp,
+  TrendingDown,
   Sprout,
   Settings,
   Plus,
@@ -26,7 +27,8 @@ import {
   Check,
 } from 'lucide-react'
 import { useTheme } from '../../hooks/useTheme'
-import { NetworkIcon } from '../NetworkIcons'
+import { NetworkIcon, NativeTokenIcon } from '../NetworkIcons'
+import { formatCryptoBalance, formatUSD } from '../../utils/formatters'
 import type { ActionResultData } from '../../types/research'
 
 interface ActionResultCardProps {
@@ -148,46 +150,122 @@ function NetworkListCard({ data }: { data: any }) {
 }
 
 function BalanceCard({ data }: { data: any }) {
-  const { card, titleGradient } = useCardTheme()
-
-  const statItems: { label: string; value: string }[] = [
-    { label: 'Total Value', value: `$${Number(data.totalUSD || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
-  ]
-  if (data.native && parseFloat(data.native) > 0)
-    statItems.push({ label: data.nativeSymbol || 'Native', value: `${data.native}` })
-  if (data.native && parseFloat(data.native) > 0 && data.nativeUSD)
-    statItems.push({ label: 'Native USD', value: `$${Number(data.nativeUSD || 0).toFixed(2)}` })
+  const { card, titleGradient, sendGradient } = useCardTheme()
+  const { theme } = useTheme()
+  const tokenStyles = theme.styles.tokenList
 
   return (
     <div className={`${card.bg} border ${card.border} rounded-2xl overflow-hidden`}>
-      <div className={`px-3 py-2 sm:px-4 sm:py-3 border-b ${card.innerBorder}`}>
+      <div className={`flex items-center justify-between px-3 py-2.5 sm:px-4 sm:py-3 border-b ${card.innerBorder}`}>
         <span className={`text-sm sm:text-lg font-bold bg-gradient-to-r ${titleGradient} bg-clip-text text-transparent`}>
           {data.wallet || 'Wallet'}
         </span>
+        {data.walletAddress && <AddressChip address={data.walletAddress} />}
       </div>
-      <div className="p-3 sm:p-4 space-y-3">
-        <div className="flex items-center justify-center gap-6 sm:gap-10">
-          {statItems.map((s) => (
-            <div key={s.label} className="text-center">
-              <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5 sm:mb-1">{s.label}</div>
-              <div className="text-xs sm:text-base text-text-primary font-medium">{s.value}</div>
+
+      <div className="p-3 sm:p-4 space-y-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          <div className={`relative rounded-xl border ${card.innerBorder} p-3 sm:p-4 text-center overflow-hidden`}>
+            <div className={`absolute inset-0 bg-gradient-to-br ${sendGradient} opacity-[0.06]`} />
+            <div className="relative">
+              <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wider mb-1 sm:mb-2">Total Value</div>
+              <div className="text-base sm:text-xl font-bold text-text-primary font-mono">
+                ${Number(data.totalUSD || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
             </div>
-          ))}
-        </div>
-        {data.tokens?.length > 0 && (
-          <div className={`border-t ${card.innerBorder} pt-3`}>
-            <div className="mb-2">
-              <span className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide">Tokens</span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-              {data.tokens.map((t: any, i: number) => (
-                <div key={i} className={`${card.innerBg} border ${card.innerBorder} rounded-xl px-2.5 py-2 sm:px-3 sm:py-2.5`}>
-                  <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide truncate mb-1">{t.symbol}</div>
-                  <div className="text-xs sm:text-base text-text-primary font-medium">{t.balance}</div>
-                  {t.network && <div className="text-[10px] sm:text-xs text-text-tertiary mt-0.5">{t.network}</div>}
+          </div>
+
+          {data.native && parseFloat(data.native) > 0 && (
+            <div className={`relative rounded-xl border ${card.innerBorder} p-3 sm:p-4 text-center overflow-hidden`}>
+              <div className={`absolute inset-0 bg-gradient-to-br ${sendGradient} opacity-[0.04]`} />
+              <div className="relative">
+                <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wider mb-1 sm:mb-2">{data.nativeSymbol || 'Native'}</div>
+                <div className="text-base sm:text-xl font-bold text-text-primary font-mono">
+                  {formatCryptoBalance(data.native)}
                 </div>
-              ))}
+              </div>
             </div>
+          )}
+
+          {data.native && parseFloat(data.native) > 0 && data.nativeUSD > 0 && (
+            <div className={`relative rounded-xl border ${card.innerBorder} p-3 sm:p-4 text-center overflow-hidden`}>
+              <div className={`absolute inset-0 bg-gradient-to-br ${sendGradient} opacity-[0.04]`} />
+              <div className="relative">
+                <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wider mb-1 sm:mb-2">Native USD</div>
+                <div className="text-base sm:text-xl font-bold text-text-primary font-mono">
+                  {formatUSD(data.nativeUSD)}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {data.tokens?.length > 0 && (
+          <div className="space-y-1.5 sm:space-y-2">
+            {data.tokens.map((t: any, i: number) => (
+              <div
+                key={i}
+                className={`p-3 sm:p-4 ${tokenStyles.cardBg} border ${tokenStyles.cardBorder} rounded-xl ${tokenStyles.cardShadow} transition-all duration-200`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="relative flex-shrink-0">
+                      <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center overflow-hidden ${t.isNative ? '' : tokenStyles.iconBg}`}>
+                        {t.isNative ? (
+                          <NativeTokenIcon symbol={t.symbol} size={44} className="w-9 h-9 sm:w-11 sm:h-11" />
+                        ) : t.logoURI ? (
+                          <img
+                            src={t.logoURI}
+                            alt={t.symbol}
+                            className="w-full h-full object-cover rounded-full"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none'
+                              e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                            }}
+                          />
+                        ) : null}
+                        {!t.isNative && (
+                          <span className={`text-xs sm:text-sm font-bold text-text-primary ${t.logoURI ? 'hidden' : ''}`}>
+                            {t.symbol.slice(0, 2).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      {t.network && (
+                        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-surface-base border border-border-subtle flex items-center justify-center">
+                          <NetworkIcon networkId={t.network} size={14} className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm sm:text-base font-semibold text-text-primary">{t.symbol}</p>
+                      <p className="text-xs sm:text-sm text-text-secondary">{t.name || t.symbol}</p>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="text-sm sm:text-base font-semibold text-text-primary font-mono mb-0.5">
+                      {formatCryptoBalance(t.balance)}
+                    </p>
+                    <div className="flex items-center justify-end gap-1.5 sm:gap-2">
+                      {t.usdValue > 0 && (
+                        <span className="text-xs sm:text-sm text-text-secondary">{formatUSD(t.usdValue)}</span>
+                      )}
+                      {t.usdValue > 0 && t.change24h !== undefined && t.change24h !== 0 && (
+                        <div className={`flex items-center gap-0.5 sm:gap-1 px-1 sm:px-1.5 py-0.5 rounded-md ${t.change24h >= 0 ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+                          {t.change24h >= 0
+                            ? <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-green-500" />
+                            : <TrendingDown className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-500" />
+                          }
+                          <span className={`text-[10px] sm:text-xs font-medium ${t.change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                            {t.change24h >= 0 ? '+' : ''}{t.change24h.toFixed(2)}%
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

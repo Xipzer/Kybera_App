@@ -232,15 +232,27 @@ const actionHandlers: Record<string, ActionHandler> = {
       let totalUSD = 0
       let totalNativeUSD = 0
       let totalNative = 0
-      const allTokens: { symbol: string; balance: string; network: string }[] = []
+      let native24hChange = 0
+      const allTokens: { symbol: string; name: string; balance: string; usdValue: number; change24h: number; logoURI?: string; address?: string; isNative: boolean; network: string }[] = []
 
       for (const bal of balances) {
         totalUSD += bal.totalUSD
         totalNativeUSD += bal.nativeUSD
+        native24hChange += bal.native24hChange || 0
         totalNative += parseFloat(bal.native) || 0
         for (const t of bal.tokens) {
           if (parseFloat(t.balance) > 0) {
-            allTokens.push({ symbol: t.symbol, balance: t.balance, network: bal.networkId })
+            allTokens.push({
+              symbol: t.symbol,
+              name: t.name,
+              balance: t.balance,
+              usdValue: t.usdValue,
+              change24h: t.usd24hChange || 0,
+              logoURI: t.logoURI,
+              address: t.address || undefined,
+              isNative: false,
+              network: bal.networkId,
+            })
           }
         }
       }
@@ -253,10 +265,12 @@ const actionHandlers: Record<string, ActionHandler> = {
         message: `Balance for ${wallet.name} on ${networkLabel}`,
         data: {
           wallet: wallet.name,
+          walletAddress: wallet.address,
           network: networkLabel,
           native: totalNative.toFixed(6),
           nativeSymbol: primarySymbol,
           nativeUSD: totalNativeUSD,
+          native24hChange,
           tokens: allTokens,
           totalUSD,
         },
