@@ -769,16 +769,6 @@ If this is a wallet action request, use the Kybera skill (cached at ~/.openclaw/
           toolCallId,
           ...result,
         })
-
-        this.emit('chat_message', {
-          id: `result_${toolCallId}`,
-          role: 'assistant',
-          content: result.success
-            ? `✓ ${result.message}${result.data ? '\n\n```json\n' + JSON.stringify(result.data, null, 2) + '\n```' : ''}`
-            : `✗ ${result.message}${result.error ? `: ${result.error}` : ''}`,
-          timestamp: new Date(),
-          isStreaming: false,
-        })
       })
     }
   }
@@ -821,16 +811,6 @@ If this is a wallet action request, use the Kybera skill (cached at ~/.openclaw/
                 actionId: `auto_${actionName}_${Date.now()}`,
                 toolCallId: `json_${Date.now()}`,
                 ...result,
-              })
-
-              this.emit('chat_message', {
-                id: `result_${actionName}_${Date.now()}`,
-                role: 'assistant',
-                content: result.success
-                  ? `✓ ${result.message}${result.data ? '\n\n```json\n' + JSON.stringify(result.data, null, 2) + '\n```' : ''}`
-                  : `✗ ${result.message}${result.error ? `: ${result.error}` : ''}`,
-                timestamp: new Date(),
-                isStreaming: false,
               })
             })
           }

@@ -319,13 +319,13 @@ export function initializeResearchListeners() {
   })
 
   OpenClawService.on('action_result', (event: OpenClawEvent) => {
-    const result = event.data as { success: boolean; message: string; data?: unknown }
+    const result = event.data as { success: boolean; message: string; data?: unknown; error?: string }
     useResearchStore.getState()._addChatMessage({
       id: `action_result_${Date.now()}`,
       role: 'assistant',
       content: result.success
         ? `✓ ${result.message}${result.data ? '\n\n```json\n' + JSON.stringify(result.data, null, 2) + '\n```' : ''}`
-        : `✗ ${result.message}`,
+        : `✗ ${result.message}${result.error ? `: ${result.error}` : ''}`,
       timestamp: new Date(),
       isStreaming: false,
     })
