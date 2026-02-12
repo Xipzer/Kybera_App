@@ -296,7 +296,11 @@ export function initializeResearchListeners() {
   })
 
   OpenClawService.on('chat_message', (event: OpenClawEvent) => {
-    useResearchStore.getState()._addChatMessage(event.data as ResearchChatMessage)
+    const msg = event.data as ResearchChatMessage
+    useResearchStore.getState()._addChatMessage(msg)
+    if (!msg.isStreaming && !msg.researchId) {
+      useResearchStore.getState()._setResearching(false, null, 0)
+    }
   })
 
   OpenClawService.on('error', (event: OpenClawEvent) => {
@@ -320,16 +324,29 @@ export function initializeResearchListeners() {
 
   OpenClawService.on('action_result', (event: OpenClawEvent) => {
     const result = event.data as { actionName?: string; success: boolean; message: string; data?: unknown; error?: string }
-    useResearchStore.getState()._addChatMessage({
+    const hasCard = !!result.actionName
+    const store = useResearchStore.getState()
+
+    if (hasCard) {
+      const regex = new RegExp(`"action":\\s*"${result.actionName}"`)
+      useResearchStore.setState((state) => ({
+        messages: state.messages.filter((m) =>
+          !(m.role === 'assistant' && !m.actionResult && regex.test(m.content))
+        ),
+      }))
+    }
+
+    store._setResearching(false, null, 0)
+    store._addChatMessage({
       id: `action_result_${Date.now()}`,
       role: 'assistant',
-      content: result.success
-        ? `✓ ${result.message}`
+      content: hasCard && result.success
+        ? ''
         : `✗ ${result.message}${result.error ? `: ${result.error}` : ''}`,
       timestamp: new Date(),
       isStreaming: false,
-      actionResult: result.actionName ? {
-        actionName: result.actionName,
+      actionResult: hasCard ? {
+        actionName: result.actionName!,
         success: result.success,
         message: result.message,
         data: result.data,
