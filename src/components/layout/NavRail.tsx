@@ -13,7 +13,7 @@ export const NAV_RAIL_EXPANDED = '220px'
 const ICON_ZONE = `calc(4vw / 1.04 - 8px)`
 
 const NAV_ITEMS: { id: NavItem; label: string; icon: typeof BarChart3 | typeof LuBrain }[] = [
-  { id: 'research', label: 'Research', icon: LuBrain },
+  { id: 'research', label: 'Chat', icon: LuBrain },
   { id: 'portfolio', label: 'Portfolio', icon: BarChart3 },
   { id: 'watchlist', label: 'Watchlist', icon: Eye },
   { id: 'markets', label: 'Markets', icon: TrendingUp },

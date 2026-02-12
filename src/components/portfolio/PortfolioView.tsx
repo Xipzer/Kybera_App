@@ -292,7 +292,7 @@ export function PortfolioView() {
         <EmptyState
           icon={BarChart3}
           title="No Trade History"
-          description="Execute trades through the Research tab to start tracking your P/L."
+          description="Execute trades through the Chat tab to start tracking your P/L."
         />
       )}
     </div>

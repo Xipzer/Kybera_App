@@ -32,7 +32,7 @@ export function MobileNav({
   }
 
   const bottomTabs = [
-    { icon: Home, label: 'Research', onClick: handleResearchClick, isActive: activePanel === null, badge: 0 },
+    { icon: Home, label: 'Chat', onClick: handleResearchClick, isActive: activePanel === null, badge: 0 },
     {
       icon: Bell,
       label: 'Alerts',

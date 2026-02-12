@@ -454,7 +454,7 @@ export function ResearchView() {
 
         {isMobile && (
           <Tabs.List className="flex justify-center gap-1 px-3 py-2 flex-shrink-0 border-b border-border-subtle">
-            <Tabs.Trigger value="research" className={tabTriggerClass} title="Research">
+            <Tabs.Trigger value="research" className={tabTriggerClass} title="Chat">
               <LuBrain className="w-5 h-5" />
             </Tabs.Trigger>
             <Tabs.Trigger value="portfolio" className={tabTriggerClass} title="Portfolio">

@@ -579,7 +579,7 @@ export function SettingsDialog({ open, onOpenChange, maximized = false }: Settin
                           checked={particlesApp}
                           onChange={setParticlesApp}
                           label="App"
-                          description="Animated particles in the wallet drawer and research header"
+                          description="Animated particles in the wallet drawer and chat header"
                         />
                       </div>
                     </div>
