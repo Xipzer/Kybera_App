@@ -24,6 +24,7 @@ import { useUIStore } from '../../store/uiStore'
 import { ResearchCard } from './ResearchCard'
 import { ApeInterface } from './ApeInterface'
 import { ChatMessage } from '../chat/ChatMessage'
+import { ActionResultCard } from '../chat/ActionResultCard'
 import { ActionConfirmationDialog } from '../chat/ActionConfirmationDialog'
 import { SettingsDialog } from '../settings/SettingsDialog'
 
@@ -501,16 +502,29 @@ export function ResearchView() {
                 )}
 
                 {messages.map((message) => (
-                  <ChatMessage
-                    key={message.id}
-                    message={{
-                      id: message.id,
-                      conversationId: 'research',
-                      role: message.role,
-                      content: message.content,
-                      timestamp: message.timestamp,
-                    }}
-                  />
+                  message.actionResult?.success ? (
+                    <div key={message.id} className="mb-6 flex gap-3">
+                      <div className="flex-shrink-0">
+                        <div className={`w-10 h-10 rounded-full overflow-hidden ${theme.styles.chatMessage.assistantIconShadow}`}>
+                          <img src="/kybera-icon.png" alt="Kybera" className="w-full h-full object-cover" />
+                        </div>
+                      </div>
+                      <div className="max-w-[85%] sm:max-w-[75%]">
+                        <ActionResultCard result={message.actionResult} />
+                      </div>
+                    </div>
+                  ) : (
+                    <ChatMessage
+                      key={message.id}
+                      message={{
+                        id: message.id,
+                        conversationId: 'research',
+                        role: message.role,
+                        content: message.content,
+                        timestamp: message.timestamp,
+                      }}
+                    />
+                  )
                 ))}
 
                 {isResearching && messages.length === 0 && researches.length === 0 && (

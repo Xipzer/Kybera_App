@@ -286,6 +286,7 @@ If this is a wallet action request, use the Kybera skill (cached at ~/.openclaw/
 
     this.emit('action_result', {
       actionId: action.id,
+      actionName: action.name,
       toolCallId: action.toolCallId,
       ...result,
     })
@@ -312,6 +313,7 @@ If this is a wallet action request, use the Kybera skill (cached at ~/.openclaw/
   async rejectAction(action: PendingAction, reason?: string): Promise<void> {
     this.emit('action_result', {
       actionId: action.id,
+      actionName: action.name,
       toolCallId: action.toolCallId,
       success: false,
       message: reason || 'Action rejected by user',
@@ -766,6 +768,7 @@ If this is a wallet action request, use the Kybera skill (cached at ~/.openclaw/
       executeAction(toolName, params).then((result) => {
         this.emit('action_result', {
           actionId: `auto_${toolCallId}`,
+          actionName: toolName,
           toolCallId,
           ...result,
         })
@@ -809,6 +812,7 @@ If this is a wallet action request, use the Kybera skill (cached at ~/.openclaw/
             executeAction(actionName, params).then((result) => {
               this.emit('action_result', {
                 actionId: `auto_${actionName}_${Date.now()}`,
+                actionName,
                 toolCallId: `json_${Date.now()}`,
                 ...result,
               })

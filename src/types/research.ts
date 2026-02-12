@@ -162,6 +162,14 @@ export interface OpenClawError {
   researchId?: string
 }
 
+export interface ActionResultData {
+  actionName: string
+  success: boolean
+  message: string
+  data?: unknown
+  error?: string
+}
+
 export interface ResearchChatMessage {
   id: string
   role: 'user' | 'assistant'
@@ -177,6 +185,8 @@ export interface ResearchChatMessage {
     pros: string[]
     cons: string[]
   }
+
+  actionResult?: ActionResultData
 }
 
 export interface ResearchSession {
