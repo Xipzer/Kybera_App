@@ -262,6 +262,7 @@ export const useResearchStore = create<ResearchState>()(
 )
 
 let listenersInitialized = false
+const consumedRunIds = new Set<string>()
 
 export function initializeResearchListeners() {
   if (listenersInitialized) return
@@ -297,6 +298,10 @@ export function initializeResearchListeners() {
 
   OpenClawService.on('chat_message', (event: OpenClawEvent) => {
     const msg = event.data as ResearchChatMessage
+    if (consumedRunIds.has(msg.id)) {
+      if (!msg.isStreaming) consumedRunIds.delete(msg.id)
+      return
+    }
     useResearchStore.getState()._addChatMessage(msg)
     if (!msg.isStreaming && !msg.researchId) {
       useResearchStore.getState()._setResearching(false, null, 0)
@@ -328,6 +333,7 @@ export function initializeResearchListeners() {
     const store = useResearchStore.getState()
 
     if (hasCard) {
+      if (result.runId) consumedRunIds.add(result.runId)
       useResearchStore.setState((state) => ({
         messages: state.messages.filter((m) => {
           if (result.runId && m.id === result.runId) return false
