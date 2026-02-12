@@ -503,15 +503,8 @@ export function ResearchView() {
 
                 {messages.map((message) => (
                   message.actionResult ? (
-                    <div key={message.id} className="mb-6 flex gap-3">
-                      <div className="flex-shrink-0">
-                        <div className={`w-10 h-10 rounded-full overflow-hidden ${theme.styles.chatMessage.assistantIconShadow}`}>
-                          <img src="/kybera-icon.png" alt="Kybera" className="w-full h-full object-cover" />
-                        </div>
-                      </div>
-                      <div className="max-w-[85%] sm:max-w-[75%]">
-                        <ActionResultCard result={message.actionResult} />
-                      </div>
+                    <div key={message.id} className="mb-6">
+                      <ActionResultCard result={message.actionResult} />
                     </div>
                   ) : (
                     <ChatMessage
