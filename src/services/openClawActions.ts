@@ -210,7 +210,7 @@ const actionHandlers: Record<string, ActionHandler> = {
 
   get_balance: async (params) => {
     const { walletId, networkId } = params as { walletId?: string; networkId?: string }
-    const { wallets, activeWalletId, activeNetwork } = useWalletStore.getState()
+    const { wallets, activeWalletId } = useWalletStore.getState()
 
     const wallet = walletId
       ? wallets.find((w) => w.id === walletId || w.name.toLowerCase() === walletId.toLowerCase() || w.address.toLowerCase() === walletId.toLowerCase())
@@ -218,26 +218,47 @@ const actionHandlers: Record<string, ActionHandler> = {
 
     if (!wallet) return { success: false, message: 'Wallet not found', error: 'NOT_FOUND' }
 
-    const networks = getNetworksByType(wallet.type)
-    const network = networkId ? networks.find((n) => n.id === networkId || n.name.toLowerCase() === networkId.toLowerCase()) : activeNetwork
-
-    if (!network || network.type !== wallet.type) {
-      return { success: false, message: `Network incompatible with wallet type ${wallet.type}`, error: 'INCOMPATIBLE' }
-    }
-
     try {
-      const balance = await blockchainService.getBalance(wallet, network)
+      const compatibleNetworks = getNetworksByType(wallet.type)
+      const targetNetworks = networkId
+        ? compatibleNetworks.filter((n) => n.id === networkId || n.name.toLowerCase() === networkId.toLowerCase())
+        : compatibleNetworks
+
+      if (targetNetworks.length === 0) {
+        return { success: false, message: `Network "${networkId}" not found or incompatible with ${wallet.type}`, error: 'NOT_FOUND' }
+      }
+
+      const balances = await blockchainService.getMultiWalletBalances([wallet], targetNetworks)
+      let totalUSD = 0
+      let totalNativeUSD = 0
+      let totalNative = 0
+      const allTokens: { symbol: string; balance: string; network: string }[] = []
+
+      for (const bal of balances) {
+        totalUSD += bal.totalUSD
+        totalNativeUSD += bal.nativeUSD
+        totalNative += parseFloat(bal.native) || 0
+        for (const t of bal.tokens) {
+          if (parseFloat(t.balance) > 0) {
+            allTokens.push({ symbol: t.symbol, balance: t.balance, network: bal.networkId })
+          }
+        }
+      }
+
+      const primarySymbol = targetNetworks[0].symbol
+      const networkLabel = targetNetworks.length === 1 ? targetNetworks[0].name : 'all networks'
+
       return {
         success: true,
-        message: `Balance for ${wallet.name} on ${network.name}`,
+        message: `Balance for ${wallet.name} on ${networkLabel}`,
         data: {
           wallet: wallet.name,
-          network: network.name,
-          native: balance.native,
-          nativeSymbol: network.symbol,
-          nativeUSD: balance.nativeUSD,
-          tokens: balance.tokens.map((t) => ({ symbol: t.symbol, balance: t.balance })),
-          totalUSD: balance.totalUSD,
+          network: networkLabel,
+          native: totalNative.toFixed(6),
+          nativeSymbol: primarySymbol,
+          nativeUSD: totalNativeUSD,
+          tokens: allTokens,
+          totalUSD,
         },
       }
     } catch (error) {

@@ -117,13 +117,19 @@ function BalanceCard({ data }: { data: any }) {
           <span className="text-xs text-text-tertiary">Total Value</span>
           <span className="text-sm font-bold text-text-primary">${Number(data.totalUSD || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
         </div>
-        {data.native && (
+        {data.native && parseFloat(data.native) > 0 && (
           <StatRow label={`${data.nativeSymbol || 'Native'}`} value={`${data.native} ($${Number(data.nativeUSD || 0).toFixed(2)})`} />
         )}
         {data.tokens?.length > 0 && (
           <div className="space-y-0.5 pt-1 border-t border-border-subtle">
             {data.tokens.map((t: any, i: number) => (
-              <StatRow key={i} label={t.symbol} value={t.balance} />
+              <div key={i} className="flex items-center justify-between py-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] text-text-tertiary">{t.symbol}</span>
+                  {t.network && <span className="text-[9px] text-text-tertiary/50">{t.network}</span>}
+                </div>
+                <span className="text-[11px] text-text-primary font-medium">{t.balance}</span>
+              </div>
             ))}
           </div>
         )}
