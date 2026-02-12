@@ -323,23 +323,18 @@ export function initializeResearchListeners() {
   })
 
   OpenClawService.on('action_result', (event: OpenClawEvent) => {
-    const result = event.data as { actionName?: string; success: boolean; message: string; data?: unknown; error?: string }
+    const result = event.data as { actionName?: string; runId?: string; success: boolean; message: string; data?: unknown; error?: string }
     const hasCard = !!result.actionName
     const store = useResearchStore.getState()
 
     if (hasCard) {
-      useResearchStore.setState((state) => {
-        let idx = -1
-        for (let i = state.messages.length - 1; i >= 0; i--) {
-          const m = state.messages[i]
-          if (m.role === 'assistant' && !m.actionResult && m.content.includes(result.actionName!)) {
-            idx = i
-            break
-          }
-        }
-        if (idx === -1) return state
-        return { messages: state.messages.filter((_, i) => i !== idx) }
-      })
+      useResearchStore.setState((state) => ({
+        messages: state.messages.filter((m) => {
+          if (result.runId && m.id === result.runId) return false
+          if (m.role === 'assistant' && m.isStreaming) return false
+          return true
+        }),
+      }))
     }
 
     store._setResearching(false, null, 0)

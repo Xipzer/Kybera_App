@@ -769,6 +769,7 @@ If this is a wallet action request, use the Kybera skill (cached at ~/.openclaw/
         this.emit('action_result', {
           actionId: `auto_${toolCallId}`,
           actionName: toolName,
+          runId,
           toolCallId,
           ...result,
         })
@@ -813,6 +814,7 @@ If this is a wallet action request, use the Kybera skill (cached at ~/.openclaw/
               this.emit('action_result', {
                 actionId: `auto_${actionName}_${Date.now()}`,
                 actionName,
+                runId,
                 toolCallId: `json_${Date.now()}`,
                 ...result,
               })
