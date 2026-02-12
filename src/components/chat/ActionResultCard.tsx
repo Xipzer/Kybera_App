@@ -76,6 +76,7 @@ function useCardTheme() {
     isDark,
     iconAccent: theme.styles.iconAccent,
     sendGradient: theme.styles.chatInterface.sendGradient,
+    titleGradient: theme.styles.walletDetail.titleGradient,
   }
 }
 
@@ -127,7 +128,7 @@ function WalletListCard({ data }: { data: any }) {
             <div className="text-[10px] sm:text-xs font-medium text-text-secondary uppercase tracking-wide mb-1.5">{group.groupName}</div>
             <div className={`${tc.sectionBg} border rounded-xl overflow-hidden`}>
               {group.wallets?.map((w: any, i: number) => (
-                <div key={w.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${tc.borderSubtle}` : ''}`}>
+                <div key={w.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${tc.border}` : ''}`}>
                   <span className="text-xs sm:text-base text-text-primary font-medium">{w.name}</span>
                   <div className="flex items-center gap-2 sm:gap-3">
                     <span className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-accent-500/10 text-accent-500 font-medium">{w.type}</span>
@@ -162,33 +163,41 @@ function NetworkListCard({ data }: { data: any }) {
 }
 
 function BalanceCard({ data }: { data: any }) {
-  const { tc, iconAccent } = useCardTheme()
+  const { card, tc, titleGradient } = useCardTheme()
+
+  const statItems: { label: string; value: string }[] = [
+    { label: 'Total Value', value: `$${Number(data.totalUSD || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
+  ]
+  if (data.native && parseFloat(data.native) > 0)
+    statItems.push({ label: data.nativeSymbol || 'Native', value: `${data.native}` })
+  if (data.native && parseFloat(data.native) > 0 && data.nativeUSD)
+    statItems.push({ label: 'Native USD', value: `$${Number(data.nativeUSD || 0).toFixed(2)}` })
 
   return (
-    <CardShell icon={Wallet} title={`Balance — ${data.wallet || 'Wallet'}`}>
-      <div className="space-y-3">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
-          <StatCell label="Total Value" value={`$${Number(data.totalUSD || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} />
-          {data.native && parseFloat(data.native) > 0 && (
-            <StatCell label={data.nativeSymbol || 'Native'} value={`${data.native}`} />
-          )}
-          {data.native && parseFloat(data.native) > 0 && data.nativeUSD && (
-            <StatCell label="Native USD" value={`$${Number(data.nativeUSD || 0).toFixed(2)}`} />
-          )}
+    <div className={`${card.bg} border ${card.border} rounded-2xl overflow-hidden`}>
+      <div className={`px-3 py-2 sm:px-4 sm:py-3 border-b ${tc.borderSubtle}`}>
+        <span className={`text-sm sm:text-lg font-bold bg-gradient-to-r ${titleGradient} bg-clip-text text-transparent`}>
+          {data.wallet || 'Wallet'}
+        </span>
+      </div>
+      <div className="p-3 sm:p-4 space-y-3">
+        <div className="flex items-center justify-center gap-6 sm:gap-10">
+          {statItems.map((s) => (
+            <div key={s.label} className="text-center">
+              <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5 sm:mb-1">{s.label}</div>
+              <div className="text-xs sm:text-base text-text-primary font-medium">{s.value}</div>
+            </div>
+          ))}
         </div>
         {data.tokens?.length > 0 && (
-          <div className={`border-t ${tc.borderSubtle} pt-3`}>
-            <div className="flex items-center gap-1.5 mb-2">
-              <Wallet className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${iconAccent}`} />
+          <div className={`border-t ${tc.border} pt-3`}>
+            <div className="mb-2">
               <span className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide">Tokens</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
               {data.tokens.map((t: any, i: number) => (
                 <div key={i} className={`${tc.sectionBg} border rounded-xl px-2.5 py-2 sm:px-3 sm:py-2.5`}>
-                  <div className="flex items-center gap-1.5 mb-1">
-                    {t.network && <NetworkIcon networkId={t.network} size={12} className="flex-shrink-0" />}
-                    <span className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide truncate">{t.symbol}</span>
-                  </div>
+                  <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide truncate mb-1">{t.symbol}</div>
                   <div className="text-xs sm:text-base text-text-primary font-medium">{t.balance}</div>
                   {t.network && <div className="text-[10px] sm:text-xs text-text-tertiary mt-0.5">{t.network}</div>}
                 </div>
@@ -197,7 +206,7 @@ function BalanceCard({ data }: { data: any }) {
           </div>
         )}
       </div>
-    </CardShell>
+    </div>
   )
 }
 
@@ -295,7 +304,7 @@ function SecurityCard({ data }: { data: any }) {
           {data.isOpenSource && <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-500 font-medium">Open Source</span>}
         </div>
         {data.riskFlags?.length > 0 && (
-          <div className={`flex flex-wrap gap-1.5 sm:gap-2 pt-2 border-t ${tc.borderSubtle}`}>
+          <div className={`flex flex-wrap gap-1.5 sm:gap-2 pt-2 border-t ${tc.border}`}>
             {data.riskFlags.map((flag: string, i: number) => (
               <span key={i} className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-500">{flag}</span>
             ))}
@@ -334,7 +343,7 @@ function AlertsCard({ data }: { data: any }) {
       {data.alerts?.length > 0 ? (
         <div className={`${tc.sectionBg} border rounded-xl overflow-hidden`}>
           {data.alerts.map((a: any, i: number) => (
-            <div key={a.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${tc.borderSubtle}` : ''}`}>
+            <div key={a.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${tc.border}` : ''}`}>
               <div className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${a.enabled ? 'bg-green-500' : 'bg-gray-400'}`} />
                 <span className="text-xs sm:text-base text-text-primary">{a.type.replace(/_/g, ' ')}</span>
@@ -426,7 +435,7 @@ function TradeHistoryCard({ data }: { data: any }) {
       {data.trades?.length > 0 ? (
         <div className={`${tc.sectionBg} border rounded-xl overflow-hidden`}>
           {data.trades.slice(0, 5).map((t: any, i: number) => (
-            <div key={t.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${tc.borderSubtle}` : ''}`}>
+            <div key={t.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${tc.border}` : ''}`}>
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="text-xs sm:text-base text-text-primary">{t.tokenInSymbol}</span>
                 <ArrowRightLeft className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${iconAccent}`} />
@@ -452,7 +461,7 @@ function WatchlistCard({ data, action }: { data: any; action: 'list' | 'added' |
         {data.wallets?.length > 0 ? (
           <div className={`${tc.sectionBg} border rounded-xl overflow-hidden`}>
             {data.wallets.map((w: any, i: number) => (
-              <div key={w.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${tc.borderSubtle}` : ''}`}>
+              <div key={w.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${tc.border}` : ''}`}>
                 <span className="text-xs sm:text-base text-text-primary font-medium">{w.label}</span>
                 <AddressChip address={w.address} />
               </div>
@@ -470,7 +479,7 @@ function WatchlistCard({ data, action }: { data: any; action: 'list' | 'added' |
         {data.activities?.length > 0 ? (
           <div className={`${tc.sectionBg} border rounded-xl overflow-hidden`}>
             {data.activities.slice(0, 5).map((a: any, i: number) => (
-              <div key={a.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${tc.borderSubtle}` : ''}`}>
+              <div key={a.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${tc.border}` : ''}`}>
                 <span className="text-xs sm:text-base text-text-primary capitalize">{a.activityType?.replace(/_/g, ' ')}</span>
                 {a.estimatedValueUsd > 0 && <span className="text-[10px] sm:text-xs text-text-tertiary">${Number(a.estimatedValueUsd).toFixed(2)}</span>}
               </div>
@@ -517,7 +526,7 @@ function X402Card({ data, action }: { data: any; action: 'status' | 'payments' }
       {data.payments?.length > 0 ? (
         <div className={`${tc.sectionBg} border rounded-xl overflow-hidden`}>
           {data.payments.slice(0, 5).map((p: any, i: number) => (
-            <div key={p.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${tc.borderSubtle}` : ''}`}>
+            <div key={p.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${tc.border}` : ''}`}>
               <span className="text-xs sm:text-base text-text-primary">{p.domain}</span>
               <span className="text-[10px] sm:text-xs text-text-tertiary">${Number(p.amountUsd || 0).toFixed(4)}</span>
             </div>
@@ -538,7 +547,7 @@ function YieldCard({ data }: { data: any }) {
       {data.opportunities?.length > 0 ? (
         <div className={`${tc.sectionBg} border rounded-xl overflow-hidden`}>
           {data.opportunities.slice(0, 5).map((o: any, i: number) => (
-            <div key={o.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${tc.borderSubtle}` : ''}`}>
+            <div key={o.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${tc.border}` : ''}`}>
               <div className="flex items-center gap-1.5 sm:gap-2">
                 {o.network && <NetworkIcon networkId={o.network} size={14} className="flex-shrink-0" />}
                 <span className="text-xs sm:text-base text-text-primary font-medium">{o.protocol}</span>
