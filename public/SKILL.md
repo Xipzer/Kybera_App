@@ -125,6 +125,105 @@ Adjust your Conviction Rating based on GoPlus findings:
 - Risk score 40-70: Factor into HIGH RISK consideration
 - Risk score < 20: Positive signal for SAFE/POTENTIAL rating
 
+## Arkham Intel — Wallet Forensics & Entity Attribution
+
+Use Arkham Intel (https://intel.arkm.com/) to perform deep wallet forensics on the deployer and any related addresses. Arkham maps blockchain addresses to real-world entities (people, companies, funds, exchanges).
+
+### What to Look Up
+
+1. **Deployer Wallet**: Search the deployer/launcher address on Arkham. Check if Arkham has labeled it (e.g., "Known Scammer", "Wintermute", "Vitalik.eth", etc.)
+2. **Connected Wallets**: Trace funding sources — where did the deployer get its ETH/gas? Follow the trail to identify the real entity behind the wallet
+3. **Other Deployments**: Check if the deployer has launched other tokens. If so, what happened to them? (rugged, abandoned, successful)
+4. **Fund Flow Analysis**: Track where token sale proceeds or LP fees are flowing — are they going to a known entity, a mixer, or a CEX?
+5. **Smart Money Holdings**: Check if any Arkham-labeled wallets (VCs, funds, known whales) hold this token
+
+### How to Integrate Findings
+
+- If Arkham identifies the deployer as a known entity → report in Developer/Team table
+- If the deployer has prior rug history → flag as 🟥 critical risk
+- If funding traces back to a reputable source (known fund, established dev) → positive signal
+- If the deployer is fresh/unlabeled with no history → note as inconclusive, not necessarily negative
+- Always cite Arkham as the source: "Arkham Intel labels this address as [entity]"
+
+### Arkham URLs
+
+- Entity page: `https://intel.arkm.com/explorer/entity/{entity_name}`
+- Address page: `https://intel.arkm.com/explorer/address/{address}`
+
+Include direct Arkham links in your report when referencing specific entities or addresses.
+
+## Get Moni — Social Intelligence & Smart Money Signals
+
+Use Get Moni (https://getmoni.io/) to analyze the social footprint and smart money attention around a token or project.
+
+### What to Look Up
+
+1. **Project Score**: Check the Moni score for the project — this aggregates social signals, engagement quality, and smart money attention
+2. **Smart Money Tracker**: See which notable wallets (KOLs, funds, smart traders) are holding or recently bought/sold
+3. **Social Analytics**: Analyze the project's X/Twitter presence — follower quality, engagement ratio, bot detection, notable followers
+4. **KOL Interest**: Which influencers/KOLs are following or mentioning this project? Are they genuine or paid promotions?
+5. **Narrative Tracking**: What narrative/meta does this token fit into? How does it compare to peers in the same narrative?
+
+### How to Integrate Findings
+
+- High Moni score with genuine smart money interest → 🟩 positive signal for SOCIAL & SMART MONEY section
+- Low score with mostly bot followers → 🟥 flag as artificial engagement
+- Notable KOL holders who have strong track records → cite specific names and their track records
+- Compare the social metrics to similar tokens in the same narrative/meta
+- Always cite Get Moni as the source
+
+## Bubblemaps — Holder Distribution & Cluster Analysis
+
+Use Bubblemaps (https://app.bubblemaps.io/) to visualize token holder distribution and detect suspicious clustering.
+
+### What to Look Up
+
+1. **Holder Concentration**: What % of supply is held by top 10 wallets? Are they clustered (connected)?
+2. **Sybil Detection**: Do multiple top holders appear to be the same entity (funded from same source, transact together)?
+3. **Deployer Holdings**: How much supply does the deployer still control? Has it been distributed or is it concentrated?
+4. **LP Holdings**: Is liquidity locked, burned, or held by a single wallet?
+
+### How to Integrate Findings
+
+- High concentration with cluster connections → 🟥 flag as insider/sybil risk
+- Widely distributed with no suspicious clusters → 🟩 healthy distribution
+- Include the Bubblemaps visualization link: `https://app.bubblemaps.io/{network}/token/{contract}`
+
+## DEXScreener — Real-Time Market Data
+
+Use DEXScreener (https://dexscreener.com/) as the primary source for real-time market data.
+
+### Data to Extract
+
+- Current price, market cap, FDV
+- 24h volume, buy/sell counts, unique traders
+- Liquidity pool size and distribution across DEXes
+- Price chart patterns (recent pumps, dumps, consolidation)
+- Age of the token (time since first trade)
+
+### DEXScreener URL
+
+- Token page: `https://dexscreener.com/{network}/{contract_address}`
+
+Always include the DEXScreener link in your report for the user to verify data independently.
+
+## Block Explorers — Contract Verification & Transaction History
+
+Use the appropriate block explorer for the token's network:
+
+- **Ethereum**: https://etherscan.io
+- **Base**: https://basescan.org
+- **Arbitrum**: https://arbiscan.io
+- **Optimism**: https://optimistic.etherscan.io
+- **Solana**: https://solscan.io
+
+### What to Check
+
+1. **Contract Verification**: Is the source code verified and published?
+2. **Deployer History**: What other contracts has this deployer created?
+3. **Token Transfers**: Large transfers to/from the deployer after launch
+4. **Proxy Patterns**: Is the contract upgradeable? Can the owner change logic?
+
 ## Prediction Market Data
 
 When prediction market data is available, incorporate it as a sentiment indicator:
@@ -366,7 +465,7 @@ Each action supports an optional `"visibility"` field that controls whether the 
 }
 ```
 
-**get_balance** - Get wallet balance on a network
+**get_balance** - Getwallet balance on a network
 ```json
 {
   "action": "get_balance",
