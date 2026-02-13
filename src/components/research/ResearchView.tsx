@@ -26,6 +26,7 @@ import { ApeInterface } from './ApeInterface'
 import { ChatMessage } from '../chat/ChatMessage'
 import { ActionResultCard } from '../chat/ActionResultCard'
 import { ActionConfirmationDialog } from '../chat/ActionConfirmationDialog'
+import { SuggestedActions } from '../chat/SuggestedActions'
 import { SettingsDialog } from '../settings/SettingsDialog'
 
 import { PortfolioView } from '../portfolio/PortfolioView'
@@ -176,6 +177,7 @@ export function ResearchView() {
   const [inputHeight, setInputHeight] = useState(48)
   const [hasScroll, setHasScroll] = useState(false)
   const [refreshingId, setRefreshingId] = useState<string | null>(null)
+  const [showSuggestions, setShowSuggestions] = useState(false)
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -252,6 +254,16 @@ export function ResearchView() {
       handleSend()
     }
   }
+
+  const suggestionsInteracting = useRef(false)
+
+  const handleSuggestedSelect = useCallback(async (text: string) => {
+    setShowSuggestions(false)
+    suggestionsInteracting.current = false
+    if (connectionState !== 'connected') return
+    setInput('')
+    await sendMessage(text)
+  }, [connectionState, sendMessage])
 
   const handleApe = (research: TokenResearch) => {
     setSelectedResearch(research)
@@ -593,7 +605,12 @@ export function ResearchView() {
           )}
 
           <div className="absolute left-0 right-0 bottom-0 p-3 sm:p-4 pointer-events-none z-20">
-            <div className="max-w-7xl mx-auto pointer-events-auto">
+            <div className="max-w-7xl mx-auto pointer-events-auto relative">
+              <SuggestedActions
+                visible={showSuggestions && !input.trim() && connectionState === 'connected'}
+                onSelect={handleSuggestedSelect}
+                onMouseDown={() => { suggestionsInteracting.current = true }}
+              />
               <div
                 className={`${styles.inputSolidBg} border ${styles.inputBorder} rounded-2xl shadow-lg overflow-hidden`}
               >
@@ -603,6 +620,11 @@ export function ResearchView() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyPress}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() => {
+                      if (!suggestionsInteracting.current) setShowSuggestions(false)
+                      suggestionsInteracting.current = false
+                    }}
                     placeholder={
                       connectionState === 'connected'
                         ? 'Paste contract address or ask a question...'
