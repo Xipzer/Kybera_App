@@ -22,6 +22,10 @@ import {
   FileText,
   Settings,
   Layers,
+  Pencil,
+  Trash2,
+  Plus,
+  RefreshCw,
   type LucideIcon,
 } from 'lucide-react'
 import { useTheme } from '../../hooks/useTheme'
@@ -45,12 +49,31 @@ const CATEGORIES: SuggestedCategory[] = [
     label: 'Wallet',
     icon: Wallet,
     prompts: [
-      { text: 'Create a new wallet group', icon: Wallet, category: 'wallet' },
       { text: 'Show my wallets', icon: Layers, category: 'wallet' },
       { text: 'Check my balance', icon: Coins, category: 'wallet' },
-      { text: 'Switch to Ethereum', icon: Globe, category: 'wallet' },
-      { text: 'Switch to Base', icon: Globe, category: 'wallet' },
-      { text: 'Switch to Solana', icon: Globe, category: 'wallet' },
+      { text: 'Check my balance on Base', icon: Coins, category: 'wallet' },
+      { text: 'Create a new wallet group', icon: Plus, category: 'wallet' },
+      { text: 'Add wallets to my group', icon: Plus, category: 'wallet' },
+      { text: 'Rename my wallet', icon: Pencil, category: 'wallet' },
+      { text: 'Rename my wallet group', icon: Pencil, category: 'wallet' },
+      { text: 'Delete a wallet', icon: Trash2, category: 'wallet' },
+      { text: 'Delete a wallet group', icon: Trash2, category: 'wallet' },
+      { text: 'Switch wallet', icon: Wallet, category: 'wallet' },
+    ],
+  },
+  {
+    id: 'networks',
+    label: 'Networks',
+    icon: Globe,
+    prompts: [
+      { text: 'List available networks', icon: Globe, category: 'networks' },
+      { text: 'Switch to Ethereum', icon: Globe, category: 'networks' },
+      { text: 'Switch to Base', icon: Globe, category: 'networks' },
+      { text: 'Switch to Solana', icon: Globe, category: 'networks' },
+      { text: 'Switch to Polygon', icon: Globe, category: 'networks' },
+      { text: 'Switch to Arbitrum', icon: Globe, category: 'networks' },
+      { text: 'Switch to BSC', icon: Globe, category: 'networks' },
+      { text: 'Switch to Optimism', icon: Globe, category: 'networks' },
     ],
   },
   {
@@ -62,6 +85,8 @@ const CATEGORIES: SuggestedCategory[] = [
       { text: 'Is this token safe to buy?', icon: Shield, category: 'research' },
       { text: 'Who is the developer behind this token?', icon: Users, category: 'research' },
       { text: 'What are the top holders of this token?', icon: BarChart3, category: 'research' },
+      { text: 'Show me the liquidity for this token', icon: Activity, category: 'research' },
+      { text: 'Compare these two tokens', icon: ArrowLeftRight, category: 'research' },
     ],
   },
   {
@@ -69,8 +94,9 @@ const CATEGORIES: SuggestedCategory[] = [
     label: 'Security',
     icon: Shield,
     prompts: [
-      { text: 'Run a security check on this contract', icon: Shield, category: 'security' },
-      { text: 'Check if this address is malicious', icon: Shield, category: 'security' },
+      { text: 'Run a GoPlus security scan on this contract', icon: Shield, category: 'security' },
+      { text: 'Is this contract a honeypot?', icon: Shield, category: 'security' },
+      { text: 'Check if this address is flagged as malicious', icon: Shield, category: 'security' },
     ],
   },
   {
@@ -79,9 +105,13 @@ const CATEGORIES: SuggestedCategory[] = [
     icon: Sprout,
     prompts: [
       { text: 'Find the best yield for my USDC', icon: Sprout, category: 'defi' },
+      { text: 'Find the best yield for my ETH', icon: Sprout, category: 'defi' },
+      { text: 'Show top yields on Ethereum', icon: TrendingUp, category: 'defi' },
       { text: 'Show top yields on Base', icon: TrendingUp, category: 'defi' },
-      { text: 'Where can I earn on my ETH?', icon: Coins, category: 'defi' },
+      { text: 'Search yield opportunities for stablecoins', icon: Search, category: 'defi' },
+      { text: 'Where can I earn the highest APY?', icon: Coins, category: 'defi' },
       { text: 'Get a swap quote for ETH to USDC', icon: ArrowLeftRight, category: 'defi' },
+      { text: 'Get a swap quote for USDC to ETH', icon: ArrowLeftRight, category: 'defi' },
     ],
   },
   {
@@ -89,9 +119,11 @@ const CATEGORIES: SuggestedCategory[] = [
     label: 'Markets',
     icon: BarChart3,
     prompts: [
-      { text: 'Search prediction markets for ETH', icon: BarChart3, category: 'markets' },
-      { text: 'What does the market think about Bitcoin?', icon: TrendingUp, category: 'markets' },
+      { text: 'Search prediction markets for ETH', icon: Search, category: 'markets' },
+      { text: 'Search prediction markets for Bitcoin', icon: Search, category: 'markets' },
       { text: 'Show crypto market sentiment', icon: Activity, category: 'markets' },
+      { text: 'What does the market think about Bitcoin?', icon: TrendingUp, category: 'markets' },
+      { text: 'Show trending prediction markets', icon: BarChart3, category: 'markets' },
     ],
   },
   {
@@ -100,7 +132,8 @@ const CATEGORIES: SuggestedCategory[] = [
     icon: Eye,
     prompts: [
       { text: 'Show my watched wallets', icon: Eye, category: 'watchlist' },
-      { text: 'Watch this wallet address', icon: Eye, category: 'watchlist' },
+      { text: 'Watch this wallet address', icon: Plus, category: 'watchlist' },
+      { text: 'Remove a wallet from my watchlist', icon: Trash2, category: 'watchlist' },
       { text: 'Show activity for my watched wallets', icon: Activity, category: 'watchlist' },
     ],
   },
@@ -110,6 +143,9 @@ const CATEGORIES: SuggestedCategory[] = [
     icon: FileText,
     prompts: [
       { text: 'Show my portfolio P&L', icon: TrendingUp, category: 'portfolio' },
+      { text: 'Show my 24h P&L', icon: TrendingUp, category: 'portfolio' },
+      { text: 'Show my 7 day P&L', icon: TrendingUp, category: 'portfolio' },
+      { text: 'Show my 30 day P&L', icon: TrendingUp, category: 'portfolio' },
       { text: 'Show my recent trades', icon: FileText, category: 'portfolio' },
     ],
   },
@@ -119,7 +155,9 @@ const CATEGORIES: SuggestedCategory[] = [
     icon: Bell,
     prompts: [
       { text: 'Show my alerts', icon: Bell, category: 'alerts' },
-      { text: 'Create a price alert', icon: Bell, category: 'alerts' },
+      { text: 'Create a price alert', icon: Plus, category: 'alerts' },
+      { text: 'Create a wallet activity alert', icon: Plus, category: 'alerts' },
+      { text: 'Delete an alert', icon: Trash2, category: 'alerts' },
     ],
   },
   {
@@ -137,7 +175,7 @@ const CATEGORIES: SuggestedCategory[] = [
     icon: Settings,
     prompts: [
       { text: 'Show my current settings', icon: Settings, category: 'settings' },
-      { text: 'What networks are available?', icon: Globe, category: 'settings' },
+      { text: 'Update your Kybera skills', icon: RefreshCw, category: 'settings' },
     ],
   },
 ]
@@ -236,7 +274,7 @@ export function SuggestedActions({ visible, onSelect, onDismiss, containerRef }:
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 8, scale: 0.98 }}
           transition={{ duration: 0.15, ease: 'easeOut' }}
-          className="absolute left-0 right-0 bottom-full mb-2 z-30 max-w-7xl mx-auto"
+          className="absolute left-0 right-0 bottom-full mb-2 z-30 max-w-7xl mx-auto pointer-events-auto"
         >
           <div className="bg-surface-elevated/30 backdrop-blur-xl border border-border-subtle rounded-2xl shadow-2xl overflow-hidden">
             <div className="px-3 pt-3 pb-2">
