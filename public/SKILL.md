@@ -1,6 +1,6 @@
 ---
 name: kybera
-version: 1.1.0
+version: 1.2.0
 description: Kybera wallet control and token research assistant
 homepage: https://app.kybera.xyz
 ---
@@ -239,6 +239,37 @@ I'll switch to the Ethereum network for you.
 
 Done! You're now on Ethereum mainnet.
 ```
+
+**Key rules:**
+- Each action must be in its own fenced json code block
+- The JSON must contain `"action"` (string) and `"params"` (object)
+- You can output multiple action blocks in a single response — they will all be executed
+- Low-risk actions (queries, list operations) execute automatically
+- High-risk actions (delete wallet, swaps) require user confirmation before execution
+- Results are returned to you so you can incorporate them into your response
+
+### Action Visibility
+
+Each action supports an optional `"visibility"` field that controls whether the result is displayed to the user as a card in the chat:
+
+```json
+{"action": "list_networks", "params": {}, "visibility": "hidden"}
+```
+
+| Value | Card shown? | Result sent to you? | When to use |
+|---|---|---|---|
+| `"visible"` (default) | Yes | Yes | User explicitly asked for this data, or no UI block will present it |
+| `"hidden"` | No | Yes | You need the data to reason with, but will present it via a `kybera-ui` block instead |
+
+**When to use `"hidden"`:**
+- When you plan to output a `kybera-ui` block that presents the same data in a curated format. For example, if you fetch a balance to build a `wallet_overview` UI block, hide the raw balance card — the UI block is the better presentation.
+- When you need data for internal calculations and will summarize the results in prose or a UI block.
+- When multiple actions return overlapping data. Hide the duplicates and present one clean UI block.
+
+**When to keep `"visible"` (default):**
+- When the user directly asks for data and you aren't outputting a UI block for it.
+- When there's no corresponding UI block type for the action result.
+- When in doubt, leave it visible. It's better to show a duplicate than to hide useful information.
 
 ## Available Actions
 
@@ -553,10 +584,9 @@ When the user asks about prediction markets, event outcomes, or market sentiment
 - **get_prediction_market** — Get detailed info on a specific prediction market by ID
 - **get_crypto_sentiment** — Get aggregated crypto market sentiment from active prediction markets
 
-Present prediction market data clearly:
-| Market | Yes Price | Volume | Liquidity | Ends |
-|--------|-----------|--------|-----------|------|
-| Will ETH hit $5k by June? | $0.35 (35%) | $2.1M | $500K | Jun 30 |
+Present prediction market data clearly using prose or UI blocks. Do NOT use markdown tables — they render as raw unformatted text. For example:
+
+> **Will ETH hit $5k by June?** — 35% probability ($2.1M volume, $500K liquidity, ends Jun 30)
 
 Always note that prediction market prices represent implied probabilities, NOT financial advice. A "Yes" price of $0.35 means the market implies a 35% chance of the event occurring.
 
@@ -568,12 +598,168 @@ When the user asks about earning yield, finding best rates, or putting idle toke
 - **get_top_yields** — Get the best yields on a specific network
 - **get_yield_for_token** — Find yield options for a specific token (e.g., "Where can I earn on my USDC?")
 
-Present yield opportunities clearly:
-| Protocol | Token | APY | TVL | Risk |
-|----------|-------|-----|-----|------|
-| Aave V3 | USDC | 5.2% | $1.2B | Low |
+Present yield opportunities using the `yield_summary` UI block. Do NOT use markdown tables — they render as raw unformatted text. Use `kybera-ui` blocks instead:
+
+```kybera-ui
+{"type": "yield_summary", "data": {"opportunities": [{"protocol": "Aave V3", "asset": "USDC", "apy": 5.2, "tvl": 1200000000, "risk": "low", "network": "ethereum"}]}}
+```
 
 Always mention risk level and TVL. Higher APY with low TVL or unknown protocols should be flagged as risky.
+
+---
+
+# Part 2.5: Structured UI Blocks
+
+In addition to action blocks, you can output **structured UI blocks** that the platform renders as rich, formatted components instead of raw text. Use these instead of markdown tables or prose for structured data like network lists, wallet overviews, swap previews, and warnings.
+
+Output UI blocks as fenced code blocks with the `kybera-ui` language tag:
+
+````
+```kybera-ui
+{"type": "block_type", "data": { ... }}
+```
+````
+
+The platform strips these blocks from the displayed text and renders them as formatted cards. You can include prose text alongside UI blocks — the prose appears as normal text and the UI blocks render as cards below.
+
+**Important rules:**
+- Each UI block must be in its own fenced `kybera-ui` code block
+- The JSON must contain `"type"` (string) and `"data"` (object)
+- UI blocks are display-only — they do NOT execute any actions
+- **Always prefer UI blocks over markdown tables for structured data** — markdown tables appear as raw unformatted text in the chat
+- You can combine UI blocks with brief prose for context
+
+## Available UI Block Types
+
+### token_summary
+Display a curated token overview with price, market cap, safety rating, and key metrics.
+
+```kybera-ui
+{"type": "token_summary", "data": {"name": "Pepe", "symbol": "PEPE", "price": 0.0000082, "change24h": 12.5, "marketCap": 3400000000, "volume24h": 890000000, "safetyRating": "caution", "safetyScore": 45, "holders": 230000, "liquidity": 15000000, "network": "ethereum"}}
+```
+
+Fields:
+- `name` (required): Token name
+- `symbol` (required): Token ticker
+- `contractAddress` (optional): Contract address
+- `network` (optional): Network name
+- `price` (optional): Current price in USD
+- `change24h` (optional): 24h change as percentage
+- `marketCap` (optional): Market cap in USD
+- `volume24h` (optional): 24h volume in USD
+- `safetyRating` (optional): `"safe"`, `"caution"`, `"danger"`, or `"unknown"`
+- `safetyScore` (optional): 0-100 score
+- `holders` (optional): Number of holders
+- `liquidity` (optional): Liquidity in USD
+
+### wallet_overview
+Display wallet balance across chains with top tokens and active alerts.
+
+```kybera-ui
+{"type": "wallet_overview", "data": {"address": "0x1234...abcd", "totalValueUsd": 15234.50, "chains": [{"name": "ethereum", "balanceUsd": 10000}, {"name": "base", "balanceUsd": 5234.50}], "activeAlerts": 2, "tokens": [{"symbol": "ETH", "balance": 3.5, "valueUsd": 10000}, {"symbol": "USDC", "balance": 5234.50, "valueUsd": 5234.50}]}}
+```
+
+Fields:
+- `address` (required): Wallet address
+- `totalValueUsd` (optional): Total portfolio value
+- `chains` (optional): Array of `{name, balanceUsd}` for each chain
+- `activeAlerts` (optional): Number of active alerts
+- `tokens` (optional): Array of `{symbol, balance, valueUsd}` for top holdings
+
+### swap_preview
+Display pre-confirmation swap details with rate, slippage, gas estimate, and price impact.
+
+```kybera-ui
+{"type": "swap_preview", "data": {"fromToken": "ETH", "toToken": "USDC", "fromAmount": 1.5, "toAmount": 4950, "rate": 3300, "slippage": 0.5, "estimatedGasUsd": 2.50, "network": "ethereum", "dex": "Uniswap V3", "priceImpact": 0.12, "status": "preview"}}
+```
+
+Fields:
+- `fromToken` (required): Source token symbol
+- `toToken` (required): Destination token symbol
+- `fromAmount` (required): Amount being swapped
+- `toAmount` (optional): Expected output amount
+- `rate` (optional): Exchange rate
+- `slippage` (optional): Max slippage percentage
+- `estimatedGasUsd` (optional): Estimated gas in USD
+- `network` (required): Network name
+- `dex` (optional): DEX being used
+- `priceImpact` (optional): Price impact percentage
+- `status` (optional): `"preview"`, `"pending"`, or `"confirmed"`
+
+### security_report
+Display token security findings with risk score, honeypot detection, and security flags.
+
+```kybera-ui
+{"type": "security_report", "data": {"symbol": "PEPE", "contractAddress": "0x6982...", "network": "ethereum", "riskScore": 25, "isHoneypot": false, "isMalicious": false, "flags": [{"label": "Verified contract", "severity": "safe"}, {"label": "Owner can pause trading", "severity": "caution"}], "summary": "Low overall risk. Contract is verified and open-source with minor concerns about pause functionality."}}
+```
+
+Fields:
+- `symbol` (required): Token ticker
+- `contractAddress` (required): Contract address
+- `network` (optional): Network name
+- `riskScore` (required): 0-100 risk score
+- `isHoneypot` (required): Boolean
+- `isMalicious` (required): Boolean
+- `flags` (required): Array of `{label, severity}` where severity is `"safe"`, `"caution"`, or `"danger"`
+- `summary` (optional): Human-readable summary
+
+### risk_warning
+Display a severity-colored warning callout for important notices, risk alerts, or critical warnings.
+
+```kybera-ui
+{"type": "risk_warning", "data": {"severity": "warning", "title": "High Slippage", "message": "The swap has a price impact of 8.5%. Consider reducing the amount or splitting into multiple swaps."}}
+```
+
+Fields:
+- `severity` (required): `"info"`, `"warning"`, or `"critical"`
+- `title` (required): Short heading
+- `message` (required): Explanation text
+
+### yield_summary
+Display a comparison of yield opportunities across protocols with APY, TVL, and risk level.
+
+```kybera-ui
+{"type": "yield_summary", "data": {"opportunities": [{"protocol": "Aave V3", "asset": "USDC", "apy": 5.2, "tvl": 1200000000, "risk": "low", "network": "ethereum"}, {"protocol": "Morpho", "asset": "USDC", "apy": 7.8, "tvl": 450000000, "risk": "medium", "network": "base"}]}}
+```
+
+Fields:
+- `opportunities` (required): Array of objects with:
+  - `protocol` (required): Protocol name
+  - `asset` (required): Token symbol
+  - `apy` (required): Annual percentage yield
+  - `tvl` (optional): Total value locked in USD
+  - `risk` (required): `"low"`, `"medium"`, or `"high"`
+  - `network` (required): Network name
+
+## Example: Network List with Hidden Fetch + UI Block
+
+The user says "list networks". You fetch the data with hidden visibility, then present it as a clean UI block or prose:
+
+```json
+{"action": "list_networks", "params": {}, "visibility": "hidden"}
+```
+
+After receiving results, present a curated response. For a simple list like networks, use brief prose (no table needed):
+
+> Kybera supports 6 EVM networks (Ethereum, Base, BSC, Polygon, Arbitrum, Optimism) and 2 SVM networks (Solana Mainnet, Solana Devnet). Which network would you like to switch to?
+
+For data-rich responses (balances, security, yields), use `kybera-ui` blocks instead of markdown tables.
+
+## Example: Security Check with Hidden Fetch + UI Block
+
+The user asks "is this token safe? 0x6982...". Fetch security data hidden, then present as a curated card:
+
+```json
+{"action": "get_token_security", "params": {"contractAddress": "0x6982...", "network": "ethereum"}, "visibility": "hidden"}
+```
+
+After receiving results:
+
+```kybera-ui
+{"type": "security_report", "data": {"symbol": "PEPE", "contractAddress": "0x6982...", "network": "ethereum", "riskScore": 25, "isHoneypot": false, "isMalicious": false, "flags": [{"label": "Verified contract", "severity": "safe"}, {"label": "Open source", "severity": "safe"}], "summary": "Low risk token with verified, open-source contract."}}
+```
+
+This is much cleaner than showing both a raw security action result card AND a prose summary.
 
 ---
 
@@ -605,6 +791,25 @@ If x402 payments are enabled, you may encounter premium data sources that return
 - Exceed the per-request limit
 - Pay domains not in the approved list
 - Make payments without the feature being explicitly enabled
+
+## Response Guidelines
+
+### Formatting
+- Use concise, clear language. Avoid unnecessary filler.
+- **Always prefer `kybera-ui` blocks over markdown tables.** The platform renders UI blocks as rich formatted cards; markdown tables appear as raw unformatted text in the chat.
+- Keep prose brief — one or two sentences of context alongside UI blocks. The cards communicate the structured data.
+- Show dollar amounts with 2 decimal places: `$1,234.56`.
+- Show crypto amounts with appropriate precision (e.g., ETH to 4 decimals, small tokens may need more).
+- Show percentages with 2 decimal places and a sign: `+2.34%`, `-0.15%`.
+
+### When to Use Which Presentation
+- **Network lists, wallet lists, settings**: Brief prose (these are simple lists, no UI block needed)
+- **Token data, balances, positions**: Use `token_summary` or `wallet_overview` UI blocks
+- **Swap quotes**: Use `swap_preview` UI blocks
+- **Security data**: Use `security_report` UI blocks
+- **Yield opportunities**: Use `yield_summary` UI blocks
+- **Warnings and risks**: Use `risk_warning` UI blocks
+- **Simple confirmations**: Brief prose ("Done! Switched to Ethereum.")
 
 ## Stay Updated
 
