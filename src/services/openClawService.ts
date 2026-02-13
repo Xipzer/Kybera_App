@@ -434,16 +434,19 @@ If this is a wallet action request, use the Kybera skill (cached at ~/.openclaw/
             if (!runId) return
 
             const researchId = this.runIdToResearchId.get(runId) || runId
+            const isResearch = this.researchContext.has(researchId)
 
             if (agentPayload?.stream === 'lifecycle') {
               const phase = agentPayload.data?.phase
               if (phase === 'start') {
-                this.emit('research_update', {
-                  researchId,
-                  status: 'researching',
-                  currentStep: 'AI agent started processing...',
-                  progress: 20,
-                })
+                if (isResearch) {
+                  this.emit('research_update', {
+                    researchId,
+                    status: 'researching',
+                    currentStep: 'AI agent started processing...',
+                    progress: 20,
+                  })
+                }
               } else if (phase === 'end') {
                 const accumulatedText = this.streamingResponses.get(runId)
                 if (accumulatedText) {
@@ -452,21 +455,20 @@ If this is a wallet action request, use the Kybera skill (cached at ~/.openclaw/
                   this.lastChatEmit.delete(runId)
                   this.runIdToResearchId.delete(runId)
 
-                  // Emit final non-streaming message
                   this.emit('chat_message', {
                     id: runId,
                     role: 'assistant',
                     content: accumulatedText,
                     timestamp: new Date(),
                     isStreaming: false,
-                    researchId,
+                    researchId: isResearch ? researchId : undefined,
                   })
 
-                  // Parse & execute JSON action blocks only once the full
-                  // response is available, so all actions are batched.
                   this.parseAndExecuteActions(accumulatedText, runId)
 
-                  this.handleAgentResponse(researchId, { text: accumulatedText })
+                  if (isResearch) {
+                    this.handleAgentResponse(researchId, { text: accumulatedText })
+                  }
                 }
               } else if (phase === 'error') {
                 this.runIdToResearchId.delete(runId)
@@ -486,15 +488,16 @@ If this is a wallet action request, use the Kybera skill (cached at ~/.openclaw/
                   content: streamText,
                   timestamp: new Date(),
                   isStreaming: true,
-                  researchId,
+                  researchId: isResearch ? researchId : undefined,
                 })
-                this.emit('research_update', {
-                  researchId,
-                  status: 'researching',
-                  currentStep: 'OpenClaw is cooking...',
-                  progress: 50,
-                })
-                // NOTE: Do NOT parse actions during streaming — defer to lifecycle:end
+                if (isResearch) {
+                  this.emit('research_update', {
+                    researchId,
+                    status: 'researching',
+                    currentStep: 'OpenClaw is cooking...',
+                    progress: 50,
+                  })
+                }
               }
 
               const toolUse = agentPayload?.data?.toolUse || agentPayload?.toolUse
@@ -516,16 +519,15 @@ If this is a wallet action request, use the Kybera skill (cached at ~/.openclaw/
                   content: textContent,
                   timestamp: new Date(),
                   isStreaming: true,
-                  researchId,
+                  researchId: isResearch ? researchId : undefined,
                 })
-                // NOTE: Do NOT parse actions during streaming — defer to lifecycle:end
               }
             } else if (
               agentPayload?.stream === 'result' ||
               agentPayload?.text ||
               agentPayload?.content
             ) {
-              this.handleAgentResponse(researchId, agentPayload)
+              if (isResearch) this.handleAgentResponse(researchId, agentPayload)
             }
             return
           }
@@ -592,12 +594,14 @@ If this is a wallet action request, use the Kybera skill (cached at ~/.openclaw/
                 this.researchContext.set(acceptedRunId, ctx)
               }
             }
-            this.emit('research_update', {
-              researchId: message.id,
-              status: 'researching',
-              currentStep: 'Request accepted, AI is processing...',
-              progress: 10,
-            })
+            if (this.researchContext.has(message.id)) {
+              this.emit('research_update', {
+                researchId: message.id,
+                status: 'researching',
+                currentStep: 'Request accepted, AI is processing...',
+                progress: 10,
+              })
+            }
             return
           }
 
@@ -605,7 +609,9 @@ If this is a wallet action request, use the Kybera skill (cached at ~/.openclaw/
             if (this.completedResearchIds.has(message.id)) {
               return
             }
-            this.handleAgentResponse(message.id, message.payload)
+            if (this.researchContext.has(message.id)) {
+              this.handleAgentResponse(message.id, message.payload)
+            }
           }
           return
         } else if (!message.ok) {

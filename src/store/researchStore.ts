@@ -307,8 +307,11 @@ export function initializeResearchListeners() {
       return
     }
     useResearchStore.getState()._addChatMessage(msg)
-    if (!msg.isStreaming && !msg.researchId) {
-      useResearchStore.getState()._setResearching(false, null, 0)
+    if (!msg.isStreaming) {
+      const isActiveResearch = msg.researchId && useResearchStore.getState().researches.some((r) => r.id === msg.researchId)
+      if (!isActiveResearch) {
+        useResearchStore.getState()._setResearching(false, null, 0)
+      }
     }
   })
 
