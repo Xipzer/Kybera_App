@@ -255,15 +255,18 @@ export function ResearchView() {
     }
   }
 
-  const suggestionsInteracting = useRef(false)
+  const inputContainerRef = useRef<HTMLDivElement>(null)
 
   const handleSuggestedSelect = useCallback(async (text: string) => {
     setShowSuggestions(false)
-    suggestionsInteracting.current = false
     if (connectionState !== 'connected') return
     setInput('')
     await sendMessage(text)
   }, [connectionState, sendMessage])
+
+  const handleDismissSuggestions = useCallback(() => {
+    setShowSuggestions(false)
+  }, [])
 
   const handleApe = (research: TokenResearch) => {
     setSelectedResearch(research)
@@ -605,11 +608,12 @@ export function ResearchView() {
           )}
 
           <div className="absolute left-0 right-0 bottom-0 p-3 sm:p-4 pointer-events-none z-20">
-            <div className="max-w-7xl mx-auto pointer-events-auto relative">
+            <div ref={inputContainerRef} className="max-w-7xl mx-auto pointer-events-auto relative">
               <SuggestedActions
                 visible={showSuggestions && !input.trim() && connectionState === 'connected'}
                 onSelect={handleSuggestedSelect}
-                onMouseDown={() => { suggestionsInteracting.current = true }}
+                onDismiss={handleDismissSuggestions}
+                containerRef={inputContainerRef}
               />
               <div
                 className={`${styles.inputSolidBg} border ${styles.inputBorder} rounded-2xl shadow-lg overflow-hidden`}
@@ -621,10 +625,6 @@ export function ResearchView() {
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyPress}
                     onFocus={() => setShowSuggestions(true)}
-                    onBlur={() => {
-                      if (!suggestionsInteracting.current) setShowSuggestions(false)
-                      suggestionsInteracting.current = false
-                    }}
                     placeholder={
                       connectionState === 'connected'
                         ? 'Paste contract address or ask a question...'

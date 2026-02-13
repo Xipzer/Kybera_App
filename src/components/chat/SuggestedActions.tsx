@@ -145,16 +145,18 @@ const CATEGORIES: SuggestedCategory[] = [
 interface SuggestedActionsProps {
   visible: boolean
   onSelect: (text: string) => void
-  onMouseDown: () => void
+  onDismiss: () => void
+  containerRef: React.RefObject<HTMLDivElement | null>
 }
 
-export function SuggestedActions({ visible, onSelect, onMouseDown }: SuggestedActionsProps) {
+export function SuggestedActions({ visible, onSelect, onDismiss, containerRef }: SuggestedActionsProps) {
   const { theme } = useTheme()
   const styles = theme.styles.chatInterface
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const searchRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
   const [selectedIndex, setSelectedIndex] = useState(-1)
 
   useEffect(() => {
@@ -164,6 +166,28 @@ export function SuggestedActions({ visible, onSelect, onMouseDown }: SuggestedAc
       setSelectedIndex(-1)
     }
   }, [visible])
+
+  useEffect(() => {
+    if (!visible) return
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node
+      if (panelRef.current?.contains(target)) return
+      if (containerRef.current?.contains(target)) return
+      onDismiss()
+    }
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onDismiss()
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [visible, onDismiss, containerRef])
 
   const filteredPrompts = useMemo(() => {
     if (search.trim()) {
@@ -190,10 +214,10 @@ export function SuggestedActions({ visible, onSelect, onMouseDown }: SuggestedAc
         e.preventDefault()
         onSelect(filteredPrompts[selectedIndex].text)
       } else if (e.key === 'Escape') {
-        searchRef.current?.blur()
+        onDismiss()
       }
     },
-    [filteredPrompts, selectedIndex, onSelect]
+    [filteredPrompts, selectedIndex, onSelect, onDismiss]
   )
 
   useEffect(() => {
@@ -207,14 +231,11 @@ export function SuggestedActions({ visible, onSelect, onMouseDown }: SuggestedAc
     <AnimatePresence>
       {visible && (
         <motion.div
+          ref={panelRef}
           initial={{ opacity: 0, y: 8, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 8, scale: 0.98 }}
           transition={{ duration: 0.15, ease: 'easeOut' }}
-          onMouseDown={(e) => {
-            e.preventDefault()
-            onMouseDown()
-          }}
           className="absolute left-0 right-0 bottom-full mb-2 z-30 max-w-7xl mx-auto"
         >
           <div className="bg-surface-elevated/30 backdrop-blur-xl border border-border-subtle rounded-2xl shadow-2xl overflow-hidden">
