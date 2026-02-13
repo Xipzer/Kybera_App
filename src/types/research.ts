@@ -201,3 +201,110 @@ export interface ResearchSession {
   isConnected: boolean
   lastPingAt?: Date
 }
+
+// ─── Structured UI Blocks ───────────────────────────────────────────────────
+// The agent can emit ```kybera-ui fenced blocks containing structured JSON
+// that the frontend parses and renders as dedicated React components.
+
+export type KyberaUiBlockType =
+  | 'token_summary'
+  | 'wallet_overview'
+  | 'swap_preview'
+  | 'security_report'
+  | 'risk_warning'
+  | 'yield_summary'
+
+export interface KyberaUiBlockBase {
+  type: KyberaUiBlockType
+}
+
+export interface TokenSummaryBlock extends KyberaUiBlockBase {
+  type: 'token_summary'
+  data: {
+    name: string
+    symbol: string
+    contractAddress?: string
+    network?: string
+    price?: number
+    change24h?: number
+    marketCap?: number
+    volume24h?: number
+    safetyRating?: 'safe' | 'caution' | 'danger' | 'unknown'
+    safetyScore?: number
+    holders?: number
+    liquidity?: number
+  }
+}
+
+export interface WalletOverviewBlock extends KyberaUiBlockBase {
+  type: 'wallet_overview'
+  data: {
+    address: string
+    totalValueUsd?: number
+    chains?: { name: string; balanceUsd: number }[]
+    activeAlerts?: number
+    tokens?: { symbol: string; balance: number; valueUsd?: number }[]
+  }
+}
+
+export interface SwapPreviewBlock extends KyberaUiBlockBase {
+  type: 'swap_preview'
+  data: {
+    fromToken: string
+    toToken: string
+    fromAmount: number
+    toAmount?: number
+    rate?: number
+    slippage?: number
+    estimatedGasUsd?: number
+    network: string
+    dex?: string
+    priceImpact?: number
+    status?: 'preview' | 'pending' | 'confirmed'
+  }
+}
+
+export interface SecurityReportBlock extends KyberaUiBlockBase {
+  type: 'security_report'
+  data: {
+    symbol: string
+    contractAddress: string
+    network?: string
+    riskScore: number
+    isHoneypot: boolean
+    isMalicious: boolean
+    flags: { label: string; severity: 'safe' | 'caution' | 'danger' }[]
+    summary?: string
+  }
+}
+
+export interface RiskWarningBlock extends KyberaUiBlockBase {
+  type: 'risk_warning'
+  data: {
+    severity: 'info' | 'warning' | 'critical'
+    title: string
+    message: string
+  }
+}
+
+export interface YieldSummaryBlock extends KyberaUiBlockBase {
+  type: 'yield_summary'
+  data: {
+    opportunities: {
+      protocol: string
+      asset: string
+      apy: number
+      tvl?: number
+      risk: 'low' | 'medium' | 'high'
+      network: string
+    }[]
+  }
+}
+
+export type KyberaUiBlock =
+  | TokenSummaryBlock
+  | WalletOverviewBlock
+  | SwapPreviewBlock
+  | SecurityReportBlock
+  | RiskWarningBlock
+  | YieldSummaryBlock

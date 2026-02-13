@@ -228,12 +228,16 @@ export const useResearchStore = create<ResearchState>()(
           const existingIndex = state.messages.findIndex((m) => m.id === message.id)
 
           if (existingIndex >= 0) {
+            const existing = state.messages[existingIndex]
             const updatedMessages = [...state.messages]
             updatedMessages[existingIndex] = {
-              ...updatedMessages[existingIndex],
+              ...existing,
               content: message.content,
               isStreaming: message.isStreaming,
               ...(message.researchId && { researchId: message.researchId }),
+              // Preserve actionResult if the new message doesn't carry one
+              // (streaming overwrites would otherwise lose it)
+              actionResult: message.actionResult ?? existing.actionResult,
             }
             return { messages: updatedMessages }
           }
