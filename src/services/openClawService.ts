@@ -13,6 +13,8 @@ import { dexScreenerService } from './research/dexScreenerService'
 import { getToolDefinition, executeAction, createPendingAction, TOOL_DEFINITIONS } from './openClawActions'
 import { PendingAction } from '../types/aiActions'
 
+export type ActionVisibility = 'visible' | 'hidden' | 'silent'
+
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error' | 'reconnecting'
 
 export type OpenClawEventType =
@@ -449,6 +451,21 @@ If this is a wallet action request, use the Kybera skill (cached at ~/.openclaw/
                   this.streamingResponses.delete(runId)
                   this.lastChatEmit.delete(runId)
                   this.runIdToResearchId.delete(runId)
+
+                  // Emit final non-streaming message
+                  this.emit('chat_message', {
+                    id: runId,
+                    role: 'assistant',
+                    content: accumulatedText,
+                    timestamp: new Date(),
+                    isStreaming: false,
+                    researchId,
+                  })
+
+                  // Parse & execute JSON action blocks only once the full
+                  // response is available, so all actions are batched.
+                  this.parseAndExecuteActions(accumulatedText, runId)
+
                   this.handleAgentResponse(researchId, { text: accumulatedText })
                 }
               } else if (phase === 'error') {
@@ -477,7 +494,7 @@ If this is a wallet action request, use the Kybera skill (cached at ~/.openclaw/
                   currentStep: 'OpenClaw is cooking...',
                   progress: 50,
                 })
-                this.parseAndExecuteActions(streamText, runId)
+                // NOTE: Do NOT parse actions during streaming — defer to lifecycle:end
               }
 
               const toolUse = agentPayload?.data?.toolUse || agentPayload?.toolUse
@@ -501,7 +518,7 @@ If this is a wallet action request, use the Kybera skill (cached at ~/.openclaw/
                   isStreaming: true,
                   researchId,
                 })
-                this.parseAndExecuteActions(textContent, runId)
+                // NOTE: Do NOT parse actions during streaming — defer to lifecycle:end
               }
             } else if (
               agentPayload?.stream === 'result' ||
@@ -779,9 +796,16 @@ If this is a wallet action request, use the Kybera skill (cached at ~/.openclaw/
 
   private executedActions: Set<string> = new Set()
 
+  /**
+   * Parse JSON action blocks from the agent's completed response text.
+   * Actions are batched and executed concurrently, with a single combined
+   * result sent back to the agent. Respects the `visibility` field.
+   */
   private parseAndExecuteActions(text: string, runId: string): void {
     const jsonBlockRegex = /```json\s*([\s\S]*?)```/g
     let match
+
+    const autoExecuteBatch: { name: string; params: Record<string, unknown>; toolCallId: string; visibility: ActionVisibility }[] = []
 
     while ((match = jsonBlockRegex.exec(text)) !== null) {
       try {
@@ -795,6 +819,9 @@ If this is a wallet action request, use the Kybera skill (cached at ~/.openclaw/
         if (parsed.action && typeof parsed.action === 'string') {
           const actionName = parsed.action
           const params = parsed.params || {}
+          const visibility: ActionVisibility = (['visible', 'hidden', 'silent'].includes(parsed.visibility)
+            ? parsed.visibility
+            : 'visible')
 
           const toolDef = TOOL_DEFINITIONS.find((t) => t.name === actionName)
           if (!toolDef) {
@@ -804,26 +831,92 @@ If this is a wallet action request, use the Kybera skill (cached at ~/.openclaw/
 
           this.executedActions.add(actionKey)
 
+          const toolCallId = `json_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+
           if (toolDef.requiresConfirmation) {
-            const pendingAction = createPendingAction(`json_${Date.now()}`, actionName, params)
+            const pendingAction = createPendingAction(toolCallId, actionName, params)
             if (pendingAction) {
               this.emit('action_requested', { action: pendingAction, runId })
             }
           } else {
-            executeAction(actionName, params).then((result) => {
-              this.emit('action_result', {
-                actionId: `auto_${actionName}_${Date.now()}`,
-                actionName,
-                runId,
-                toolCallId: `json_${Date.now()}`,
-                ...result,
-              })
-            })
+            autoExecuteBatch.push({ name: actionName, params, toolCallId, visibility })
           }
         }
       } catch {
         continue
       }
+    }
+
+    // Execute all auto-execute actions concurrently, then send one batched result.
+    if (autoExecuteBatch.length > 0) {
+      this.executeBatchAndReport(autoExecuteBatch)
+    }
+  }
+
+  /**
+   * Execute multiple JSON-parsed actions concurrently and send all results
+   * back to the agent as a single message. Respects visibility:
+   *  - "visible" (default): emit UI card + include in batch summary
+   *  - "hidden": no UI card, but still included in batch summary
+   *  - "silent": no UI card, not shown in user-facing summary (agent still gets it)
+   */
+  private async executeBatchAndReport(
+    actions: { name: string; params: Record<string, unknown>; toolCallId: string; visibility: ActionVisibility }[],
+  ): Promise<void> {
+    const entries = await Promise.all(
+      actions.map(async (action) => {
+        try {
+          const result = await executeAction(action.name, action.params)
+          return {
+            actionName: action.name,
+            result,
+            visibility: action.visibility,
+            toolCallId: action.toolCallId,
+          }
+        } catch (err) {
+          return {
+            actionName: action.name,
+            result: {
+              success: false,
+              message: err instanceof Error ? err.message : 'Unknown execution error',
+            },
+            visibility: action.visibility,
+            toolCallId: action.toolCallId,
+          }
+        }
+      }),
+    )
+
+    // Emit UI cards only for visible actions.
+    for (const entry of entries) {
+      if (entry.visibility === 'visible') {
+        this.emit('action_result', {
+          actionId: `auto_${entry.actionName}_${Date.now()}`,
+          actionName: entry.actionName,
+          toolCallId: entry.toolCallId,
+          ...entry.result,
+        })
+      }
+    }
+
+    // Send one combined message back to the agent (always includes all results).
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      const msgId = this.generateId()
+      const summary = entries
+        .map((e) => `${e.actionName}: ${e.result.success ? 'OK' : 'FAILED'} — ${JSON.stringify(e.result)}`)
+        .join('\n')
+
+      const request = {
+        type: 'req',
+        id: msgId,
+        method: 'agent',
+        params: {
+          message: `Batch tool results:\n${summary}`,
+          idempotencyKey: msgId,
+          agentId: 'main',
+        },
+      }
+      this.sendRaw(request)
     }
   }
 
