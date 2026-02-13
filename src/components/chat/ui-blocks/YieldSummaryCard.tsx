@@ -5,14 +5,15 @@
  * across protocols with APY, TVL, and risk level.
  */
 
-import { Sprout } from 'lucide-react'
+import { Sprout, Shield, AlertTriangle, Flame } from 'lucide-react'
 import { useTheme } from '../../../hooks/useTheme'
 import type { YieldSummaryBlock } from '../../../types/research'
 
-const RISK_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
-  low: { color: 'text-green-400', bg: 'bg-green-500/20', label: 'LOW' },
-  medium: { color: 'text-yellow-400', bg: 'bg-yellow-500/20', label: 'MED' },
-  high: { color: 'text-red-400', bg: 'bg-red-500/20', label: 'HIGH' },
+const RISK_CONFIG: Record<string, { color: string; bg: string; border: string; label: string; icon: typeof Shield }> = {
+  low: { color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/20', label: 'LOW', icon: Shield },
+  medium: { color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', label: 'MED', icon: AlertTriangle },
+  high: { color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20', label: 'HIGH', icon: Flame },
+  degen: { color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20', label: 'DEGEN', icon: Flame },
 }
 
 function formatCompact(n: number): string {
@@ -56,9 +57,10 @@ export function YieldSummaryCard({ block }: { block: YieldSummaryBlock }) {
                     <span className="text-xs sm:text-sm font-semibold text-text-primary">{opp.protocol}</span>
                     <span className="text-[10px] sm:text-xs text-text-tertiary">{opp.asset}</span>
                   </div>
-                  <div className={`px-1.5 py-0.5 rounded-full ${risk.bg}`}>
-                    <span className={`text-[9px] sm:text-[10px] font-bold ${risk.color}`}>{risk.label}</span>
-                  </div>
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold uppercase tracking-wider ${risk.bg} ${risk.color} border ${risk.border}`}>
+                    <risk.icon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    {risk.label}
+                  </span>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div>
