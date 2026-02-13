@@ -1,6 +1,6 @@
 ---
 name: kybera
-version: 1.2.0
+version: 1.2.1
 description: Kybera wallet control and token research assistant
 homepage: https://app.kybera.xyz
 ---
