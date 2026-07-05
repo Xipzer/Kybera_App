@@ -5,6 +5,7 @@
  */
 
 import { BarChart3, ArrowRightLeft } from 'lucide-react'
+import { formatUSD } from '../../../utils/formatters'
 import { useCardTheme, CardShell, StatCell } from './shared'
 
 export function PortfolioCard({ data }: { data: any }) {
@@ -13,11 +14,11 @@ export function PortfolioCard({ data }: { data: any }) {
   return (
     <CardShell icon={BarChart3} title="Portfolio P/L">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
-        <StatCell label="Total Value" value={`$${Number(data.totalValueUsd || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`} />
+        <StatCell label="Total Value" value={formatUSD(Number(data.totalValueUsd || 0))} />
         <div>
-          <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5 sm:mb-1">P/L</div>
+          <div className="text-2xs sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5 sm:mb-1">P/L</div>
           <div className={`text-xs sm:text-base font-bold ${pnlColor}`}>
-            {(data.totalPnl || 0) >= 0 ? '+' : ''}${Number(data.totalPnl || 0).toFixed(2)} ({Number(data.totalPnlPercent || 0).toFixed(1)}%)
+            {(data.totalPnl || 0) >= 0 ? '+' : ''}{formatUSD(Number(data.totalPnl || 0))} ({Number(data.totalPnlPercent || 0).toFixed(1)}%)
           </div>
         </div>
         {data.bestPerformer && <StatCell label="Best" value={`${data.bestPerformer.symbol} +${data.bestPerformer.pnlPercent?.toFixed(1)}%`} />}
@@ -41,7 +42,7 @@ export function TradeHistoryCard({ data }: { data: any }) {
                 <ArrowRightLeft className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${iconAccent}`} />
                 <span className="text-xs sm:text-base text-text-primary">{t.tokenOutSymbol}</span>
               </div>
-              <span className="text-[10px] sm:text-xs text-text-tertiary">${Number(t.totalValueUsd || 0).toFixed(2)}</span>
+              <span className="text-2xs sm:text-xs text-text-tertiary">{formatUSD(Number(t.totalValueUsd || 0))}</span>
             </div>
           ))}
         </div>

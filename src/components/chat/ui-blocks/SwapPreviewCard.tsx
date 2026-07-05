@@ -6,7 +6,8 @@
  */
 
 import { ArrowRightLeft, AlertTriangle } from 'lucide-react'
-import { useTheme } from '../../../hooks/useTheme'
+import { CardShell } from '../result-cards/shared'
+import { formatUSD } from '../../../utils/formatters'
 import type { SwapPreviewBlock } from '../../../types/research'
 
 const STATUS_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
@@ -16,35 +17,30 @@ const STATUS_CONFIG: Record<string, { color: string; bg: string; label: string }
 }
 
 export function SwapPreviewCard({ block }: { block: SwapPreviewBlock }) {
-  const { theme } = useTheme()
   const d = block.data
-  const sendGradient = theme.styles.chatInterface.sendGradient
   const status = STATUS_CONFIG[d.status ?? 'preview']
 
   return (
-    <div className="bg-surface-elevated/30 border border-border-subtle rounded-2xl overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 border-b border-border-subtle/50">
-        <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-r ${sendGradient} flex items-center justify-center flex-shrink-0`}>
-          <ArrowRightLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+    <CardShell
+      icon={ArrowRightLeft}
+      title="Swap Preview"
+      trailing={
+        <div className={`px-2 py-0.5 rounded-full ${status.bg}`}>
+          <span className={`text-2xs font-bold ${status.color}`}>{status.label}</span>
         </div>
-        <span className="text-sm sm:text-lg font-semibold text-text-primary">Swap Preview</span>
-        <div className={`ml-auto px-2 py-0.5 rounded-full ${status.bg}`}>
-          <span className={`text-[10px] font-bold ${status.color}`}>{status.label}</span>
-        </div>
-      </div>
-
-      <div className="p-3 sm:p-4 space-y-3">
+      }
+    >
+      <div className="space-y-3">
         {/* Swap direction */}
         <div className="flex items-center gap-3">
           <div className="flex-1 bg-surface-elevated/50 border border-border-subtle/50 rounded-xl p-2.5 sm:p-3 text-center">
-            <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5">From</div>
+            <div className="text-2xs sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5">From</div>
             <div className="text-sm sm:text-lg font-bold text-text-primary">{d.fromAmount}</div>
             <div className="text-xs text-text-secondary">{d.fromToken}</div>
           </div>
           <ArrowRightLeft className="w-4 h-4 text-text-tertiary flex-shrink-0" />
           <div className="flex-1 bg-surface-elevated/50 border border-border-subtle/50 rounded-xl p-2.5 sm:p-3 text-center">
-            <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5">To</div>
+            <div className="text-2xs sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5">To</div>
             <div className="text-sm sm:text-lg font-bold text-text-primary">
               {d.toAmount != null ? d.toAmount.toLocaleString(undefined, { maximumFractionDigits: 6 }) : '...'}
             </div>
@@ -56,25 +52,25 @@ export function SwapPreviewCard({ block }: { block: SwapPreviewBlock }) {
         <div className="bg-surface-elevated/50 border border-border-subtle/50 rounded-xl p-2.5 sm:p-3 space-y-1.5">
           {d.rate != null && (
             <div className="flex justify-between">
-              <span className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide">Rate</span>
+              <span className="text-2xs sm:text-xs text-text-tertiary uppercase tracking-wide">Rate</span>
               <span className="text-xs sm:text-sm text-text-primary font-medium">1 {d.fromToken} = {d.rate.toLocaleString(undefined, { maximumFractionDigits: 6 })} {d.toToken}</span>
             </div>
           )}
           {d.slippage != null && (
             <div className="flex justify-between">
-              <span className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide">Slippage</span>
+              <span className="text-2xs sm:text-xs text-text-tertiary uppercase tracking-wide">Slippage</span>
               <span className="text-xs sm:text-sm text-text-primary font-medium">{d.slippage}%</span>
             </div>
           )}
           {d.estimatedGasUsd != null && (
             <div className="flex justify-between">
-              <span className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide">Est. Gas</span>
-              <span className="text-xs sm:text-sm text-text-primary font-medium">${d.estimatedGasUsd.toFixed(2)}</span>
+              <span className="text-2xs sm:text-xs text-text-tertiary uppercase tracking-wide">Est. Gas</span>
+              <span className="text-xs sm:text-sm text-text-primary font-medium">{formatUSD(d.estimatedGasUsd)}</span>
             </div>
           )}
           {d.priceImpact != null && (
             <div className="flex justify-between">
-              <span className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide">Price Impact</span>
+              <span className="text-2xs sm:text-xs text-text-tertiary uppercase tracking-wide">Price Impact</span>
               <span className={`text-xs sm:text-sm font-medium ${
                 Math.abs(d.priceImpact) > 5 ? 'text-red-400' :
                 Math.abs(d.priceImpact) > 2 ? 'text-yellow-400' :
@@ -86,12 +82,12 @@ export function SwapPreviewCard({ block }: { block: SwapPreviewBlock }) {
           )}
           {d.dex && (
             <div className="flex justify-between">
-              <span className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide">DEX</span>
+              <span className="text-2xs sm:text-xs text-text-tertiary uppercase tracking-wide">DEX</span>
               <span className="text-xs sm:text-sm text-text-primary font-medium">{d.dex}</span>
             </div>
           )}
           <div className="flex justify-between">
-            <span className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide">Network</span>
+            <span className="text-2xs sm:text-xs text-text-tertiary uppercase tracking-wide">Network</span>
             <span className="text-xs sm:text-sm text-text-primary font-medium capitalize">{d.network}</span>
           </div>
         </div>
@@ -104,6 +100,6 @@ export function SwapPreviewCard({ block }: { block: SwapPreviewBlock }) {
           </div>
         )}
       </div>
-    </div>
+    </CardShell>
   )
 }

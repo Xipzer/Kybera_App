@@ -36,7 +36,7 @@ export function WatchlistCard({ data, action }: { data: any; action: 'list' | 'a
             {data.activities.slice(0, 5).map((a: any, i: number) => (
               <div key={a.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${card.innerBorder}` : ''}`}>
                 <span className="text-xs sm:text-base text-text-primary capitalize">{a.activityType?.replace(/_/g, ' ')}</span>
-                {a.estimatedValueUsd > 0 && <span className="text-[10px] sm:text-xs text-text-tertiary">${Number(a.estimatedValueUsd).toFixed(2)}</span>}
+                {a.estimatedValueUsd > 0 && <span className="text-2xs sm:text-xs text-text-tertiary">${Number(a.estimatedValueUsd).toFixed(2)}</span>}
               </div>
             ))}
           </div>
@@ -48,9 +48,7 @@ export function WatchlistCard({ data, action }: { data: any; action: 'list' | 'a
   }
   return (
     <CardShell icon={Eye} title="Wallet Added to Watchlist">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
-        <StatCell label="Label" value={data.label || 'Unlabeled'} />
-      </div>
+      <StatCell label="Label" value={data.label || 'Unlabeled'} />
       {data.address && <div className="mt-2"><AddressChip address={data.address} /></div>}
     </CardShell>
   )

@@ -110,7 +110,7 @@ export function ImportWalletDialog({ open, onOpenChange }: ImportWalletDialogPro
 
       await addWallet(wallet)
       handleClose()
-    } catch (err) {
+    } catch {
       setError('Failed to import wallet. Please check your input.')
     } finally {
       setIsLoading(false)
@@ -187,6 +187,10 @@ export function ImportWalletDialog({ open, onOpenChange }: ImportWalletDialogPro
               value={privateKey}
               onChange={(e) => setPrivateKey(e.target.value)}
               rows={3}
+              spellCheck={false}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
             />
           </Tabs.Content>
 
@@ -197,6 +201,10 @@ export function ImportWalletDialog({ open, onOpenChange }: ImportWalletDialogPro
               value={mnemonic}
               onChange={(e) => setMnemonic(e.target.value)}
               rows={3}
+              spellCheck={false}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
             />
           </Tabs.Content>
         </Tabs.Root>

@@ -68,7 +68,7 @@ export function TransactionHistory({ wallet, network }: TransactionHistoryProps)
                         {isSent ? 'Sent' : 'Received'} {nativeCurrency.symbol}
                       </p>
                       <span
-                        className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${
+                        className={`text-2xs sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${
                           tx.status === 'confirmed'
                             ? 'bg-green-500/10 text-green-500'
                             : tx.status === 'pending'
@@ -83,7 +83,7 @@ export function TransactionHistory({ wallet, network }: TransactionHistoryProps)
                       {isSent ? 'To: ' : 'From: '}
                       {formatAddress(isSent ? tx.to : tx.from)}
                     </p>
-                    <p className="text-[10px] sm:text-xs text-text-tertiary mt-0.5 sm:mt-1">
+                    <p className="text-2xs sm:text-xs text-text-tertiary mt-0.5 sm:mt-1">
                       {formatDate(tx.timestamp)}
                     </p>
                   </div>
@@ -102,7 +102,7 @@ export function TransactionHistory({ wallet, network }: TransactionHistoryProps)
                     href={`${network.explorerUrl}/tx/${tx.hash}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-[10px] sm:text-xs text-text-tertiary hover:text-text-secondary transition-colors mt-0.5 sm:mt-1 touch-manipulation"
+                    className="inline-flex items-center gap-1 text-2xs sm:text-xs text-text-tertiary hover:text-text-secondary transition-colors mt-0.5 sm:mt-1 touch-manipulation"
                   >
                     View
                     <ExternalLink className="w-2.5 h-2.5 sm:w-3 sm:h-3" />

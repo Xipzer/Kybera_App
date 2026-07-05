@@ -54,7 +54,7 @@ export class EVMRpcService {
   async getTokenDecimals(tokenAddress: string): Promise<number> {
     try {
       return parseInt(await this.callContract(tokenAddress, '0x313ce567'), 16)
-    } catch (error) {
+    } catch {
       return 18
     }
   }
@@ -86,7 +86,7 @@ export class EVMRpcService {
       }
 
       return symbol || 'UNKNOWN'
-    } catch (error) {
+    } catch {
       return 'UNKNOWN'
     }
   }
@@ -118,7 +118,7 @@ export class EVMRpcService {
       }
 
       return name || 'Unknown Token'
-    } catch (error) {
+    } catch {
       return 'Unknown Token'
     }
   }

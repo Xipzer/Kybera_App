@@ -2,7 +2,7 @@
  * Code by Xipzer
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useId } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { X, AlertCircle } from 'lucide-react'
 import { Network } from '../../types'
@@ -24,6 +24,7 @@ export function NetworkManagementDialog({
   onUpdate
 }: NetworkManagementDialogProps) {
   const { theme: themeConfig } = useTheme()
+  const fieldId = useId()
   const [formData, setFormData] = useState({
     name: '',
     chainId: '',
@@ -126,7 +127,10 @@ export function NetworkManagementDialog({
               {network ? 'Edit Network' : 'Add Custom Network'}
             </Dialog.Title>
             <Dialog.Close asChild>
-              <button className="p-2 rounded-lg hover:bg-surface-hover transition-colors touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center">
+              <button
+                aria-label="Close"
+                className="p-2 rounded-lg hover:bg-surface-hover transition-colors touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
+              >
                 <X className="w-5 h-5 text-text-secondary" />
               </button>
             </Dialog.Close>
@@ -145,10 +149,11 @@ export function NetworkManagementDialog({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <label className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
+                <label htmlFor={`${fieldId}-name`} className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
                   Network Name <span className="text-accent">*</span>
                 </label>
                 <input
+                  id={`${fieldId}-name`}
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -160,10 +165,11 @@ export function NetworkManagementDialog({
               </div>
 
               <div>
-                <label className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
+                <label htmlFor={`${fieldId}-type`} className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
                   Type <span className="text-accent">*</span>
                 </label>
                 <select
+                  id={`${fieldId}-type`}
                   value={formData.type}
                   onChange={(e) =>
                     setFormData({
@@ -187,10 +193,11 @@ export function NetworkManagementDialog({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <label className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
+                <label htmlFor={`${fieldId}-chain-id`} className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
                   Chain ID <span className="text-accent">*</span>
                 </label>
                 <input
+                  id={`${fieldId}-chain-id`}
                   type={formData.type === 'EVM' ? 'number' : 'text'}
                   value={formData.chainId}
                   onChange={(e) => setFormData({ ...formData, chainId: e.target.value })}
@@ -202,10 +209,11 @@ export function NetworkManagementDialog({
               </div>
 
               <div>
-                <label className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
+                <label htmlFor={`${fieldId}-symbol`} className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
                   Native Token Symbol <span className="text-accent">*</span>
                 </label>
                 <input
+                  id={`${fieldId}-symbol`}
                   type="text"
                   value={formData.symbol}
                   onChange={(e) =>
@@ -220,10 +228,11 @@ export function NetworkManagementDialog({
             </div>
 
             <div>
-              <label className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
+              <label htmlFor={`${fieldId}-rpc-url`} className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
                 RPC URL <span className="text-accent">*</span>
               </label>
               <input
+                id={`${fieldId}-rpc-url`}
                 type="url"
                 value={formData.rpcUrl}
                 onChange={(e) => setFormData({ ...formData, rpcUrl: e.target.value })}
@@ -234,10 +243,11 @@ export function NetworkManagementDialog({
             </div>
 
             <div>
-              <label className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
+              <label htmlFor={`${fieldId}-alchemy-rpc-url`} className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
                 Alchemy RPC URL (Optional)
               </label>
               <input
+                id={`${fieldId}-alchemy-rpc-url`}
                 type="url"
                 value={formData.alchemyRpcUrl}
                 onChange={(e) => setFormData({ ...formData, alchemyRpcUrl: e.target.value })}
@@ -245,16 +255,17 @@ export function NetworkManagementDialog({
                 className={`${themeConfig.styles.input} text-sm`}
                 style={{ fontSize: '16px' }}
               />
-              <p className="mt-1 text-[10px] sm:text-xs text-text-tertiary">
+              <p className="mt-1 text-2xs sm:text-xs text-text-tertiary">
                 If you have an Alchemy RPC URL for this network, it will be used for token discovery
               </p>
             </div>
 
             <div>
-              <label className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
+              <label htmlFor={`${fieldId}-explorer-url`} className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
                 Block Explorer URL
               </label>
               <input
+                id={`${fieldId}-explorer-url`}
                 type="url"
                 value={formData.explorerUrl}
                 onChange={(e) =>
@@ -275,10 +286,11 @@ export function NetworkManagementDialog({
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
+                  <label htmlFor={`${fieldId}-currency-name`} className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
                     Currency Name
                   </label>
                   <input
+                    id={`${fieldId}-currency-name`}
                     type="text"
                     value={formData.nativeCurrency.name}
                     onChange={(e) =>
@@ -294,10 +306,11 @@ export function NetworkManagementDialog({
                 </div>
 
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
+                  <label htmlFor={`${fieldId}-decimals`} className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
                     Decimals
                   </label>
                   <input
+                    id={`${fieldId}-decimals`}
                     type="number"
                     value={formData.nativeCurrency.decimals}
                     readOnly

@@ -2,7 +2,7 @@
  * Code by Xipzer
  */
 
-import { ToolDefinition, ActionResult } from '../openClawActions'
+import { ToolDefinition, ActionResult } from '../agentActions'
 import { yieldService } from './yieldService'
 import { YieldOpportunity, YieldSearchParams } from '../../types/defi'
 

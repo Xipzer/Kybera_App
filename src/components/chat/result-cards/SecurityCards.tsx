@@ -5,7 +5,7 @@
  */
 
 import { Shield, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react'
-import { useCardTheme, CardShell, StatCell, AddressChip } from './shared'
+import { useCardTheme, CardShell, AddressChip } from './shared'
 
 export function SecurityCard({ data }: { data: any }) {
   const { card } = useCardTheme()
@@ -17,21 +17,26 @@ export function SecurityCard({ data }: { data: any }) {
       <div className="space-y-3">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
           <div>
-            <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5 sm:mb-1">Risk Score</div>
+            <div className="text-2xs sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5 sm:mb-1">Risk Score</div>
             <div className={`text-sm sm:text-lg font-bold ${riskColor}`}>{riskScore}/100</div>
           </div>
-          {data.contractAddress && <StatCell label="Contract" value={`${data.contractAddress.slice(0, 10)}...`} mono />}
+          {data.contractAddress && (
+            <div>
+              <div className="text-2xs sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5 sm:mb-1">Contract</div>
+              <AddressChip address={data.contractAddress} />
+            </div>
+          )}
         </div>
         <div className="flex flex-wrap gap-1.5 sm:gap-2">
-          {data.isHoneypot && <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-500 font-medium">Honeypot</span>}
-          {data.isMintable && <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-500 font-medium">Mintable</span>}
-          {data.isProxy && <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-500 font-medium">Proxy</span>}
-          {data.isOpenSource && <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-500 font-medium">Open Source</span>}
+          {data.isHoneypot && <span className="text-2xs sm:text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-500 font-medium">Honeypot</span>}
+          {data.isMintable && <span className="text-2xs sm:text-xs px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-500 font-medium">Mintable</span>}
+          {data.isProxy && <span className="text-2xs sm:text-xs px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-500 font-medium">Proxy</span>}
+          {data.isOpenSource && <span className="text-2xs sm:text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-500 font-medium">Open Source</span>}
         </div>
         {data.riskFlags?.length > 0 && (
           <div className={`flex flex-wrap gap-1.5 sm:gap-2 pt-2 border-t ${card.innerBorder}`}>
-            {data.riskFlags.map((flag: string, i: number) => (
-              <span key={i} className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-500">{flag}</span>
+            {data.riskFlags.map((flag: string) => (
+              <span key={flag} className="text-2xs sm:text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-500">{flag}</span>
             ))}
           </div>
         )}

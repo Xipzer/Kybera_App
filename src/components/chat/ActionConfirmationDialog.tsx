@@ -2,8 +2,11 @@
  * Code by Xipzer
  */
 
-import { AlertTriangle, Info, AlertCircle, Shield, CheckCircle, Clock } from 'lucide-react'
+import { useState } from 'react'
+import { AlertTriangle, Info, AlertCircle, Shield, CheckCircle, Clock, Copy } from 'lucide-react'
 import { PendingAction, RiskLevel } from '../../types'
+import { formatAddress } from '../../utils/formatters'
+import { useCopyToClipboard } from '../../hooks/useCopyToClipboard'
 import {
   ModernDialog,
   ModernDialogHeader,
@@ -20,12 +23,64 @@ interface ActionConfirmationDialogProps {
   onReject: () => void
 }
 
+const ADDRESS_KEYS = new Set(['to', 'recipient', 'address', 'from', 'destination', 'spender'])
+const AMOUNT_KEYS = new Set(['amount', 'value', 'quantity'])
+
+function looksLikeAddress(v: string): boolean {
+  return /^(0x[a-fA-F0-9]{40}|[1-9A-HJ-NP-Za-km-z]{32,44})$/.test(v)
+}
+
+function ParameterRow({ paramKey, value }: { paramKey: string; value: unknown }) {
+  const { copied, copy } = useCopyToClipboard()
+  const label = paramKey.replace(/_/g, ' ')
+  const lower = paramKey.toLowerCase()
+
+  if (typeof value === 'object' && value !== null) {
+    return (
+      <div>
+        <span className="text-xs font-medium text-text-tertiary capitalize">{label}:</span>
+        <pre className="mt-1 text-2xs sm:text-xs bg-surface-sunken p-2 sm:p-3 rounded-lg overflow-x-auto text-text-primary font-mono">
+          {JSON.stringify(value, null, 2)}
+        </pre>
+      </div>
+    )
+  }
+
+  const str = String(value)
+  const isAddress = ADDRESS_KEYS.has(lower) || looksLikeAddress(str)
+
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-xs font-medium text-text-tertiary capitalize">{label}</span>
+      {isAddress ? (
+        <button
+          type="button"
+          onClick={() => copy(str)}
+          className="flex items-center gap-1.5 font-mono text-xs sm:text-sm text-text-primary hover:text-accent-400 transition-colors"
+          aria-label={`Copy ${label}`}
+          title={str}
+        >
+          <span>{formatAddress(str, 8, 6)}</span>
+          <Copy className={`w-3.5 h-3.5 ${copied ? 'text-green-400' : 'text-text-tertiary'}`} />
+        </button>
+      ) : (
+        <span
+          className={`text-xs sm:text-sm text-text-primary text-right ${AMOUNT_KEYS.has(lower) ? 'font-semibold' : ''}`}
+        >
+          {str}
+        </span>
+      )}
+    </div>
+  )
+}
+
 export function ActionConfirmationDialog({
   action,
   open,
   onApprove,
   onReject,
 }: ActionConfirmationDialogProps) {
+  const [confirmText, setConfirmText] = useState('')
   if (!action) return null
 
   const getRiskConfig = (risk: RiskLevel) => {
@@ -73,15 +128,9 @@ export function ActionConfirmationDialog({
     }
   }
 
-  const formatParameterValue = (value: any): string => {
-    if (typeof value === 'object') {
-      return JSON.stringify(value, null, 2)
-    }
-    return String(value)
-  }
-
   const riskConfig = getRiskConfig(action.riskLevel)
   const isHighRisk = action.riskLevel === 'high' || action.riskLevel === 'critical'
+  const isCritical = action.riskLevel === 'critical'
 
   return (
     <ModernDialog open={open} onOpenChange={(isOpen: boolean) => !isOpen && onReject()} width="md">
@@ -116,14 +165,9 @@ export function ActionConfirmationDialog({
               <span className="text-xs sm:text-sm font-medium text-text-secondary">
                 Parameters:
               </span>
-              <div className="mt-2 space-y-2">
+              <div className="mt-2 space-y-2.5">
                 {Object.entries(action.parameters).map(([key, value]) => (
-                  <div key={key}>
-                    <span className="text-xs font-medium text-text-tertiary">{key}:</span>
-                    <pre className="mt-1 text-[10px] sm:text-xs bg-surface-sunken p-2 sm:p-3 rounded-lg overflow-x-auto text-text-primary font-mono">
-                      {formatParameterValue(value)}
-                    </pre>
-                  </div>
+                  <ParameterRow key={key} paramKey={key} value={value} />
                 ))}
               </div>
             </div>
@@ -153,13 +197,30 @@ export function ActionConfirmationDialog({
 
         {isHighRisk && (
           <ModernAlert
-            type={action.riskLevel === 'critical' ? 'error' : 'warning'}
+            type={isCritical ? 'error' : 'warning'}
             icon={<AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5" />}
-            title="High-Risk Action"
+            title={isCritical ? 'Critical Action' : 'High-Risk Action'}
           >
             This action involves sensitive operations. Please verify all details carefully before
             proceeding.
           </ModernAlert>
+        )}
+
+        {isCritical && (
+          <div className="space-y-1.5">
+            <label htmlFor="confirm-critical" className="block text-xs font-medium text-text-secondary">
+              Type <span className="font-mono font-semibold text-red-400">CONFIRM</span> to proceed
+            </label>
+            <input
+              id="confirm-critical"
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="CONFIRM"
+              className="w-full px-3 py-2 rounded-lg bg-surface-sunken border border-white/10 text-sm font-mono text-text-primary placeholder:text-text-tertiary focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:outline-none"
+            />
+          </div>
         )}
       </ModernDialogSection>
 
@@ -167,8 +228,13 @@ export function ActionConfirmationDialog({
         <ModernButton variant="secondary" fullWidth onClick={onReject}>
           Reject
         </ModernButton>
-        <ModernButton variant={isHighRisk ? 'danger' : 'primary'} fullWidth onClick={onApprove}>
-          Approve & Execute
+        <ModernButton
+          variant={isHighRisk ? 'danger' : 'primary'}
+          fullWidth
+          disabled={isCritical && confirmText.trim().toUpperCase() !== 'CONFIRM'}
+          onClick={onApprove}
+        >
+          Approve &amp; Execute
         </ModernButton>
       </ModernDialogActions>
     </ModernDialog>

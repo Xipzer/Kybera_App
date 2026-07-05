@@ -2,6 +2,14 @@
  * Code by Xipzer
  */
 
+export const THEME_CLASSES = ['light', 'dark', 'xipz', 'ogDark', 'ogLight'] as const
+
+export function applyThemeClass(theme: string) {
+  const root = document.documentElement
+  root.classList.remove(...THEME_CLASSES)
+  root.classList.add(theme)
+}
+
 export function themeClasses(isDark: boolean) {
   return {
     sectionBg: isDark ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200',

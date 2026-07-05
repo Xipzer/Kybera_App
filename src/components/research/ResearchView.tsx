@@ -20,6 +20,8 @@ import * as Tabs from '@radix-ui/react-tabs'
 import { NotificationBell } from '../notifications/NotificationBell'
 import { useResearchStore } from '../../store/researchStore'
 import { useSettingsStore } from '../../store/settingsStore'
+import { getStoredCredential } from '../../services/llm/oauth/manager'
+import { getAdapter } from '../../services/llm/providers'
 import { useUIStore } from '../../store/uiStore'
 import { ResearchCard } from './ResearchCard'
 import { ApeInterface } from './ApeInterface'
@@ -29,10 +31,10 @@ import { ActionConfirmationDialog } from '../chat/ActionConfirmationDialog'
 import { SuggestedActions } from '../chat/SuggestedActions'
 import { SettingsDialog } from '../settings/SettingsDialog'
 
-import { PortfolioView } from '../portfolio/PortfolioView'
-import { WatchlistView } from '../watchlist/WatchlistView'
-import { PredictionMarketsView } from '../markets/PredictionMarketsView'
-import { YieldView } from '../defi/YieldView'
+import { PortfolioView } from '../PortfolioView'
+import { WatchlistView } from '../WatchlistView'
+import { PredictionMarketsView } from '../PredictionMarketsView'
+import { YieldView } from '../YieldView'
 import { useTheme } from '../../hooks/useTheme'
 import { themeClasses } from '../../utils/themeClasses'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
@@ -42,7 +44,13 @@ import { TokenResearch, ResearchNetwork } from '../../types/research'
 const LINE_HEIGHT = 24
 const MAX_LINES = 6
 
-const ResearchParticles = memo(function ResearchParticles({ color, opacity = 0.4 }: { color: string; opacity?: number }) {
+const ResearchParticles = memo(function ResearchParticles({
+  color,
+  opacity = 0.4,
+}: {
+  color: string
+  opacity?: number
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -52,7 +60,14 @@ const ResearchParticles = memo(function ResearchParticles({ color, opacity = 0.4
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const particles: { x: number; y: number; vx: number; vy: number; size: number; opacity: number }[] = []
+    const particles: {
+      x: number
+      y: number
+      vx: number
+      vy: number
+      size: number
+      opacity: number
+    }[] = []
     const particleCount = 35
     let initialized = false
 
@@ -134,7 +149,9 @@ const ResearchParticles = memo(function ResearchParticles({ color, opacity = 0.4
     }
   }, [color, opacity])
 
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-0" />
+  return (
+    <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-0" />
+  )
 })
 
 export function ResearchView() {
@@ -165,7 +182,20 @@ export function ResearchView() {
 
   const researches = useMemo(() => allResearches.filter((r) => !r.dismissed), [allResearches])
 
-  const { openClawGatewayUrl, openClawAuthToken, openClawAutoConnect } = useSettingsStore()
+  const { llmProvider, llmModel, llmAutoConnect } = useSettingsStore()
+  const [hasLLMCredential, setHasLLMCredential] = useState(false)
+
+  useEffect(() => {
+    let active = true
+    getStoredCredential(llmProvider).then((cred) => {
+      if (active) setHasLLMCredential(!!cred)
+    })
+    return () => {
+      active = false
+    }
+  }, [llmProvider, connectionState])
+
+  const activeModel = llmModel || getAdapter(llmProvider).defaultModel
 
   const settingsMaximized = useUIStore((s) => s.settingsMaximized)
 
@@ -185,10 +215,10 @@ export function ResearchView() {
   const isNearBottomRef = useRef(true)
 
   useEffect(() => {
-    if (openClawGatewayUrl && openClawAutoConnect && connectionState === 'disconnected') {
-      connect(openClawGatewayUrl, openClawAuthToken || undefined).catch(console.error)
+    if (hasLLMCredential && llmAutoConnect && connectionState === 'disconnected') {
+      connect(llmProvider, activeModel).catch(console.error)
     }
-  }, [openClawGatewayUrl, openClawAuthToken, openClawAutoConnect, connectionState, connect])
+  }, [hasLLMCredential, llmAutoConnect, llmProvider, activeModel, connectionState, connect])
 
   const activeNavItem = useUIStore((s) => s.activeNavItem)
   useEffect(() => {
@@ -207,6 +237,14 @@ export function ResearchView() {
     const threshold = 100
     isNearBottomRef.current =
       container.scrollHeight - container.scrollTop - container.clientHeight < threshold
+  }, [])
+
+  useEffect(() => {
+    const scrollToTop = () => {
+      scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+    window.addEventListener('kybera:chat-scroll-top', scrollToTop)
+    return () => window.removeEventListener('kybera:chat-scroll-top', scrollToTop)
   }, [])
 
   const adjustTextareaHeight = useCallback(() => {
@@ -241,14 +279,25 @@ export function ResearchView() {
     const trimmedInput = input.trim()
     setInput('')
 
-    if (isValidAddress(trimmedInput)) {
-      await requestResearch(trimmedInput, detectNetworkFromAddress(trimmedInput) as ResearchNetwork)
-    } else {
-      await sendMessage(trimmedInput)
+    try {
+      if (isValidAddress(trimmedInput)) {
+        await requestResearch(
+          trimmedInput,
+          detectNetworkFromAddress(trimmedInput) as ResearchNetwork,
+        )
+      } else {
+        await sendMessage(trimmedInput)
+      }
+    } catch (err) {
+      console.error('Failed to send message:', err)
+      // Restore the text so the user doesn't lose their message on failure.
+      setInput((current) => current || trimmedInput)
     }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
+    // Ignore Enter fired to commit an IME composition (CJK/mobile).
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSend()
@@ -257,12 +306,15 @@ export function ResearchView() {
 
   const inputContainerRef = useRef<HTMLDivElement>(null)
 
-  const handleSuggestedSelect = useCallback(async (text: string) => {
-    setShowSuggestions(false)
-    if (connectionState !== 'connected') return
-    setInput('')
-    await sendMessage(text)
-  }, [connectionState, sendMessage])
+  const handleSuggestedSelect = useCallback(
+    async (text: string) => {
+      setShowSuggestions(false)
+      if (connectionState !== 'connected') return
+      setInput('')
+      await sendMessage(text)
+    },
+    [connectionState, sendMessage],
+  )
 
   const handleDismissSuggestions = useCallback(() => {
     setShowSuggestions(false)
@@ -272,7 +324,6 @@ export function ResearchView() {
     setSelectedResearch(research)
     setShowApeInterface(true)
   }
-
 
   const handleRefresh = async (research: TokenResearch) => {
     if (connectionState !== 'connected' || refreshingId) return
@@ -300,8 +351,8 @@ export function ResearchView() {
   }
 
   const handleConnect = () => {
-    if (openClawGatewayUrl) {
-      connect(openClawGatewayUrl, openClawAuthToken || undefined).catch(console.error)
+    if (hasLLMCredential) {
+      connect(llmProvider, activeModel).catch(console.error)
     } else {
       setShowSettings(true)
     }
@@ -326,10 +377,10 @@ export function ResearchView() {
         <h2
           className={`text-xl font-bold bg-gradient-to-r ${styles.titleGradient} bg-clip-text text-transparent mb-3`}
         >
-          Connect to OpenClaw
+          Connect an AI Provider
         </h2>
         <p className="text-text-secondary mb-6">
-          Configure your OpenClaw Gateway URL to start researching tokens with AI-powered OSINT
+          Sign in with Anthropic, OpenAI, or xAI to start researching tokens with AI-powered OSINT
           analysis.
         </p>
 
@@ -338,7 +389,7 @@ export function ResearchView() {
           className={`hidden lg:inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r ${styles.configButtonGradient} rounded-xl font-medium text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300`}
         >
           <Settings className="w-4 h-4" />
-          Configure OpenClaw
+          Configure AI Provider
         </button>
 
         <p className="lg:hidden text-sm text-text-tertiary">
@@ -349,10 +400,15 @@ export function ResearchView() {
     </div>
   )
 
-  const tabTriggerClass = "flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent data-[state=active]:bg-accent/10 transition-colors whitespace-nowrap touch-manipulation min-h-[44px]"
+  const tabTriggerClass =
+    'flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-lg data-[state=active]:text-accent data-[state=active]:bg-accent/10 transition-colors whitespace-nowrap touch-manipulation min-h-[44px]'
 
   return (
-    <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col bg-surface-base relative overflow-hidden">
+    <Tabs.Root
+      value={activeTab}
+      onValueChange={setActiveTab}
+      className="h-full flex flex-col bg-surface-base relative overflow-hidden"
+    >
       {chatWallpaper && (
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -368,105 +424,103 @@ export function ResearchView() {
           <div
             className={`${styles.headerBg} border ${styles.headerBorder} rounded-xl p-3 sm:p-4 relative overflow-hidden`}
           >
-              {particlesApp && (
-                <>
-                  <ResearchParticles
-                    color={theme.styles.unlockScreen.particleColor}
-                    opacity={theme.styles.unlockScreen.particleOpacity ?? 0.6}
-                  />
-                  <div
-                    className="absolute inset-0 pointer-events-none opacity-30"
-                    style={{
-                      background: `radial-gradient(ellipse at 50% 0%, rgba(${theme.styles.unlockScreen.particleColor}, 0.15), transparent 70%)`,
-                    }}
-                  />
-                </>
-              )}
-              <div className="flex items-center justify-between relative z-10">
-                <div className="flex items-center gap-3">
-                  <img src="/kybera-icon.png" alt="Kybera" className="w-7 h-7 rounded-lg shadow-md" />
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`w-1.5 h-1.5 rounded-full ${
-                        connectionState === 'connected'
-                          ? 'bg-green-400 animate-pulse'
-                          : connectionState === 'connecting' || connectionState === 'reconnecting'
-                            ? 'bg-yellow-400 animate-pulse'
-                            : connectionState === 'error'
-                              ? 'bg-red-400'
-                              : 'bg-text-tertiary'
-                      }`}
-                    />
-                    <span
-                      className={`text-xs font-medium ${
-                        connectionState === 'connected'
-                          ? 'text-green-400'
-                          : connectionState === 'connecting' || connectionState === 'reconnecting'
-                            ? 'text-yellow-400'
-                            : connectionState === 'error'
-                              ? 'text-red-400'
-                              : 'text-text-tertiary'
-                      }`}
-                    >
-                      {connectionState === 'connected'
-                        ? 'Connected'
-                        : connectionState === 'connecting'
-                          ? 'Connecting...'
-                          : connectionState === 'reconnecting'
-                            ? 'Reconnecting...'
-                            : connectionState === 'error'
-                              ? 'Error'
-                              : 'Disconnected'}
-                    </span>
-                  </div>
-                </div>
-
+            {particlesApp && (
+              <>
+                <ResearchParticles
+                  color={theme.styles.unlockScreen.particleColor}
+                  opacity={theme.styles.unlockScreen.particleOpacity ?? 0.6}
+                />
+                <div
+                  className="absolute inset-0 pointer-events-none opacity-30"
+                  style={{
+                    background: `radial-gradient(ellipse at 50% 0%, rgba(${theme.styles.unlockScreen.particleColor}, 0.15), transparent 70%)`,
+                  }}
+                />
+              </>
+            )}
+            <div className="flex items-center justify-between relative z-10">
+              <div className="flex items-center gap-3">
+                <img src="/kybera-icon.png" alt="Kybera" className="w-7 h-7 rounded-lg shadow-md" />
                 <div className="flex items-center gap-2">
-                  {connectionState === 'disconnected' && (
-                    <button
-                      onClick={handleConnect}
-                      className={`px-3 py-1.5 bg-accent-500/20 hover:bg-accent-500/30 border border-accent-500/30 rounded-full text-xs font-medium ${theme.styles.iconAccent} transition-colors touch-manipulation`}
-                    >
-                      Connect
-                    </button>
-                  )}
-                  {connectionState === 'connected' && (
-                    <button
-                      onClick={disconnect}
-                      className="px-3 py-1.5 bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 rounded-full text-xs font-medium text-red-400 transition-all duration-200 touch-manipulation"
-                    >
-                      Disconnect
-                    </button>
-                  )}
-                  <NotificationBell className="flex" />
-                  <button
-                    onClick={() => setShowSettings(true)}
-                    className={`${theme.styles.buttonIcon} p-2 rounded-lg hidden lg:flex`}
-                    title="Settings"
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      connectionState === 'connected'
+                        ? 'bg-green-400 animate-pulse'
+                        : connectionState === 'connecting'
+                          ? 'bg-yellow-400 animate-pulse'
+                          : connectionState === 'error'
+                            ? 'bg-red-400'
+                            : 'bg-text-tertiary'
+                    }`}
+                  />
+                  <span
+                    className={`text-xs font-medium ${
+                      connectionState === 'connected'
+                        ? 'text-green-400'
+                        : connectionState === 'connecting'
+                          ? 'text-yellow-400'
+                          : connectionState === 'error'
+                            ? 'text-red-400'
+                            : 'text-text-tertiary'
+                    }`}
                   >
-                    <Settings className="w-4 h-4 text-text-secondary" />
-                  </button>
+                    {connectionState === 'connected'
+                      ? 'Connected'
+                      : connectionState === 'connecting'
+                        ? 'Connecting...'
+                        : connectionState === 'error'
+                          ? 'Error'
+                          : 'Disconnected'}
+                  </span>
                 </div>
               </div>
 
-              {isResearching && (
-                <div className="mt-3 pt-3 border-t border-white/10 relative z-10">
-                  <div className="flex items-center justify-between text-xs mb-2">
-                    <span className="text-text-secondary">
-                      {currentResearchStep || 'Researching...'}
-                    </span>
-                    <span className={theme.styles.iconAccent}>{researchProgress}%</span>
-                  </div>
-                  <div className="h-1 bg-black/30 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full bg-gradient-to-r ${styles.sendGradient} transition-all duration-300`}
-                      style={{ width: `${researchProgress}%` }}
-                    />
-                  </div>
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                {connectionState === 'disconnected' && (
+                  <button
+                    onClick={handleConnect}
+                    className={`px-3 py-1.5 bg-accent-500/20 hover:bg-accent-500/30 border border-accent-500/30 rounded-full text-xs font-medium ${theme.styles.iconAccent} transition-colors touch-manipulation`}
+                  >
+                    Connect
+                  </button>
+                )}
+                {connectionState === 'connected' && (
+                  <button
+                    onClick={disconnect}
+                    className="px-3 py-1.5 bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 rounded-full text-xs font-medium text-red-400 transition-all duration-200 touch-manipulation"
+                  >
+                    Disconnect
+                  </button>
+                )}
+                <NotificationBell className="flex" />
+                <button
+                  onClick={() => setShowSettings(true)}
+                  className={`${theme.styles.buttonIcon} p-2 rounded-lg hidden lg:flex`}
+                  title="Settings"
+                >
+                  <Settings className="w-4 h-4 text-text-secondary" />
+                </button>
+              </div>
             </div>
+
+            {isResearching && (
+              <div className="mt-3 pt-3 border-t border-white/10 relative z-10">
+                <div className="flex items-center justify-between text-xs mb-2">
+                  <span className="text-text-secondary">
+                    {currentResearchStep || 'Researching...'}
+                  </span>
+                  <span className={theme.styles.iconAccent}>{researchProgress}%</span>
+                </div>
+                <div className="h-1 bg-black/30 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full bg-gradient-to-r ${styles.sendGradient} transition-all duration-300`}
+                    style={{ width: `${researchProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
+        </div>
 
         {isMobile && (
           <Tabs.List className="flex justify-center gap-1 px-3 py-2 flex-shrink-0 border-b border-border-subtle">
@@ -488,8 +542,12 @@ export function ResearchView() {
           </Tabs.List>
         )}
 
-        <Tabs.Content value="research" className="flex-1 flex flex-col min-h-0 data-[state=inactive]:!hidden">
-          {!openClawGatewayUrl ? (
+        <Tabs.Content
+          value="research"
+          forceMount
+          className="flex-1 flex flex-col min-h-0 data-[state=inactive]:!hidden"
+        >
+          {!hasLLMCredential ? (
             notConfiguredContent
           ) : (
             <div
@@ -498,6 +556,10 @@ export function ResearchView() {
               className="flex-1 overflow-y-auto overscroll-contain relative"
             >
               <div
+                role="log"
+                aria-live="polite"
+                aria-relevant="additions"
+                aria-label="Conversation"
                 className="max-w-7xl mx-auto px-3 sm:px-4 pt-4"
                 style={{ paddingBottom: `${inputHeight + (isMobile ? 100 : 32)}px` }}
               >
@@ -516,7 +578,7 @@ export function ResearchView() {
                   </div>
                 )}
 
-                {messages.map((message) => (
+                {messages.map((message) =>
                   message.actionResult ? (
                     <div key={message.id} className="mb-6">
                       <ActionResultCard result={message.actionResult} />
@@ -532,10 +594,10 @@ export function ResearchView() {
                         timestamp: message.timestamp,
                       }}
                     />
-                  )
-                ))}
+                  ),
+                )}
 
-                {isResearching && messages.length === 0 && researches.length === 0 && (
+                {isResearching && (
                   <div className="flex gap-4 mb-6">
                     <div
                       className={`flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r ${styles.sendGradient} flex items-center justify-center shadow-lg`}
@@ -545,6 +607,7 @@ export function ResearchView() {
                     <div
                       className={`flex items-center gap-2 px-4 py-3 rounded-2xl ${styles.emptyStateBg} border ${styles.emptyStateBorder}`}
                     >
+                      <span className="sr-only">Assistant is thinking</span>
                       <div
                         className={`w-2 h-2 ${styles.loadingDotBg} rounded-full animate-bounce`}
                         style={{ animationDelay: '0ms' }}
@@ -628,7 +691,7 @@ export function ResearchView() {
                     placeholder={
                       connectionState === 'connected'
                         ? 'Paste contract address or ask a question...'
-                        : 'Connect to OpenClaw to start...'
+                        : 'Sign in to an AI provider to start...'
                     }
                     disabled={connectionState !== 'connected'}
                     rows={1}
@@ -647,6 +710,7 @@ export function ResearchView() {
                     <button
                       onClick={handleSend}
                       disabled={!input.trim() || connectionState !== 'connected'}
+                      aria-label="Send message"
                       className={`absolute bottom-2 right-2 w-10 h-10 sm:w-9 sm:h-9 rounded-full bg-gradient-to-r ${styles.sendGradient} flex items-center justify-center text-white shadow-md transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 touch-manipulation`}
                     >
                       <ArrowUp className="w-5 h-5" />
@@ -659,6 +723,7 @@ export function ResearchView() {
                     <button
                       onClick={handleSend}
                       disabled={!input.trim() || connectionState !== 'connected'}
+                      aria-label="Send message"
                       className={`w-10 h-10 sm:w-9 sm:h-9 rounded-full bg-gradient-to-r ${styles.sendGradient} flex items-center justify-center text-white shadow-md transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 touch-manipulation`}
                     >
                       <ArrowUp className="w-5 h-5" />
@@ -670,19 +735,35 @@ export function ResearchView() {
           </div>
         </Tabs.Content>
 
-        <Tabs.Content value="portfolio" className="flex-1 min-h-0 overflow-hidden data-[state=inactive]:!hidden">
+        <Tabs.Content
+          value="portfolio"
+          forceMount
+          className="flex-1 min-h-0 overflow-hidden data-[state=inactive]:!hidden"
+        >
           <PortfolioView />
         </Tabs.Content>
 
-        <Tabs.Content value="watchlist" className="flex-1 min-h-0 overflow-hidden data-[state=inactive]:!hidden">
+        <Tabs.Content
+          value="watchlist"
+          forceMount
+          className="flex-1 min-h-0 overflow-hidden data-[state=inactive]:!hidden"
+        >
           <WatchlistView />
         </Tabs.Content>
 
-        <Tabs.Content value="markets" className="flex-1 min-h-0 overflow-hidden data-[state=inactive]:!hidden">
+        <Tabs.Content
+          value="markets"
+          forceMount
+          className="flex-1 min-h-0 overflow-hidden data-[state=inactive]:!hidden"
+        >
           <PredictionMarketsView />
         </Tabs.Content>
 
-        <Tabs.Content value="yield" className="flex-1 min-h-0 overflow-hidden data-[state=inactive]:!hidden">
+        <Tabs.Content
+          value="yield"
+          forceMount
+          className="flex-1 min-h-0 overflow-hidden data-[state=inactive]:!hidden"
+        >
           <YieldView />
         </Tabs.Content>
 

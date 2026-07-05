@@ -66,7 +66,7 @@ export function WalletNameEditor({
                 />
               </div>
               {addresses?.[index] && (
-                <span className="text-[10px] sm:text-xs text-text-tertiary font-mono shrink-0">
+                <span className="text-2xs sm:text-xs text-text-tertiary font-mono shrink-0">
                   {formatAddress(addresses[index])}
                 </span>
               )}

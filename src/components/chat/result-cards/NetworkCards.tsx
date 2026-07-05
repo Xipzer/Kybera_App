@@ -19,7 +19,7 @@ export function NetworkListCard({ data }: { data: any }) {
             <NetworkIcon networkId={n.id} size={16} className="flex-shrink-0" />
             <div className="min-w-0">
               <div className="text-xs sm:text-base text-text-primary font-medium truncate">{n.name}</div>
-              <div className="text-[10px] sm:text-xs text-text-tertiary">{n.symbol}</div>
+              <div className="text-2xs sm:text-xs text-text-tertiary">{n.symbol}</div>
             </div>
           </div>
         ))}

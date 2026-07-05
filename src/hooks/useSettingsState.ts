@@ -11,21 +11,32 @@ import { useResearchStore } from '../store/researchStore'
 import { useTheme } from './useTheme'
 import { networkService, NetworkWithVisibility } from '../services/networkService'
 import { Network } from '../types'
+import type { ProviderId } from '../services/llm/types'
+import { getAdapter } from '../services/llm/providers'
+import {
+  beginOAuth,
+  completeOAuth,
+  openAuthPopup,
+  getStoredCredential,
+  clearCredential,
+  storeCredential,
+} from '../services/llm/oauth/manager'
+import type { AuthorizeSession } from '../services/llm/oauth/types'
 
 export function useSettingsState(options?: { isOpen?: boolean }) {
   const isOpen = options?.isOpen ?? true
 
   const {
-    openClawGatewayUrl,
-    openClawAuthToken,
-    openClawAutoConnect,
+    llmProvider,
+    llmModel,
+    llmAutoConnect,
     coinGeckoApiKey,
     alchemyApiKey,
     heliusApiKey,
     autoLockTimeout,
-    setOpenClawGatewayUrl,
-    setOpenClawAuthToken,
-    setOpenClawAutoConnect,
+    setLlmProvider,
+    setLlmModel,
+    setLlmAutoConnect,
     setCoinGeckoApiKey,
     setAlchemyApiKey,
     setHeliusApiKey,
@@ -39,11 +50,15 @@ export function useSettingsState(options?: { isOpen?: boolean }) {
   const { changePassword } = useAuthStore()
   const { password: currentSessionPassword } = useWalletStore()
 
-  const [gatewayUrl, setGatewayUrl] = useState(openClawGatewayUrl || '')
-  const [authToken, setAuthToken] = useState(openClawAuthToken || '')
-  const [showAuthToken, setShowAuthToken] = useState(false)
-  const [autoConnect, setAutoConnect] = useState(openClawAutoConnect)
-  const [isTestingConnection, setIsTestingConnection] = useState(false)
+  const [provider, setProvider] = useState<ProviderId>(llmProvider)
+  const [model, setModel] = useState(llmModel || getAdapter(llmProvider).defaultModel)
+  const [autoConnect, setAutoConnect] = useState(llmAutoConnect)
+  const [isSigningIn, setIsSigningIn] = useState(false)
+  const [isSignedIn, setIsSignedIn] = useState(false)
+  const [oauthSession, setOauthSession] = useState<AuthorizeSession | null>(null)
+  const [manualCode, setManualCode] = useState('')
+  const [apiKeyInput, setApiKeyInput] = useState('')
+  const [llmError, setLlmError] = useState('')
 
   const [cgApiKey, setCgApiKey] = useState(coinGeckoApiKey || '')
   const [showCgApiKey, setShowCgApiKey] = useState(false)
@@ -71,28 +86,41 @@ export function useSettingsState(options?: { isOpen?: boolean }) {
 
   const [activeTab, setActiveTab] = useState('ai')
 
-  const [showImportField, setShowImportField] = useState(false)
-  const [importString, setImportString] = useState('')
-  const [importError, setImportError] = useState('')
-
   useEffect(() => {
     if (!isOpen) {
-      setGatewayUrl(openClawGatewayUrl || '')
-      setAuthToken(openClawAuthToken || '')
-      setAutoConnect(openClawAutoConnect)
+      setProvider(llmProvider)
+      setModel(llmModel || getAdapter(llmProvider).defaultModel)
+      setAutoConnect(llmAutoConnect)
       setCgApiKey(coinGeckoApiKey || '')
       setAlchemyKey(alchemyApiKey || '')
       setHeliusKey(heliusApiKey || '')
     }
-  }, [
-    isOpen,
-    openClawGatewayUrl,
-    openClawAuthToken,
-    openClawAutoConnect,
-    coinGeckoApiKey,
-    alchemyApiKey,
-    heliusApiKey,
-  ])
+  }, [isOpen, llmProvider, llmModel, llmAutoConnect, coinGeckoApiKey, alchemyApiKey, heliusApiKey])
+
+  // Reflect whether we already hold a credential for the selected provider.
+  useEffect(() => {
+    let active = true
+    getStoredCredential(provider).then((cred) => {
+      if (active) setIsSignedIn(!!cred)
+    })
+    return () => {
+      active = false
+    }
+  }, [provider])
+
+  // Listen for the OAuth popup relaying its code back via postMessage.
+  useEffect(() => {
+    if (!oauthSession) return
+    const onMessage = async (e: MessageEvent) => {
+      if (e.origin !== window.location.origin) return
+      const d = e.data as { source?: string; code?: string; state?: string }
+      if (d?.source !== 'kybera-oauth' || !d.code) return
+      await finishOAuth(`${d.code}${d.state ? `#${d.state}` : ''}`)
+    }
+    window.addEventListener('message', onMessage)
+    return () => window.removeEventListener('message', onMessage)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [oauthSession])
 
   useEffect(() => {
     if (isOpen) {
@@ -108,76 +136,75 @@ export function useSettingsState(options?: { isOpen?: boolean }) {
     }
   }
 
-  const handleImportConnection = () => {
-    setImportError('')
-    const str = importString.trim()
-    if (!str) return
+  const handleSelectProvider = async (next: ProviderId) => {
+    setProvider(next)
+    setModel(getAdapter(next).defaultModel)
+    setLlmError('')
+    setOauthSession(null)
+    await setLlmProvider(next)
+  }
 
+  const handleSelectModel = async (next: string) => {
+    setModel(next)
+    await setLlmModel(next)
+  }
+
+  const finishOAuth = async (codeInput: string) => {
+    if (!oauthSession) return
     try {
-      if (str.includes('openclaw_url=') || str.includes('openclaw_url%3D')) {
-        const url = new URL(str)
-        const openclawUrl = url.searchParams.get('openclaw_url')
-        const openclawToken = url.searchParams.get('openclaw_token')
-        if (openclawUrl) {
-          setGatewayUrl(openclawUrl)
-          if (openclawToken) setAuthToken(openclawToken)
-          setShowImportField(false)
-          setImportString('')
-          return
-        }
-      }
-
-      if (str.startsWith('{')) {
-        const parsed = JSON.parse(str)
-        const url = parsed.url || parsed.gateway_url || parsed.gatewayUrl
-        const token = parsed.token || parsed.auth_token || parsed.authToken
-        if (url) {
-          setGatewayUrl(url)
-          if (token) setAuthToken(token)
-          setShowImportField(false)
-          setImportString('')
-          return
-        }
-      }
-
-      if (
-        str.startsWith('ws://') ||
-        str.startsWith('wss://') ||
-        str.startsWith('http://') ||
-        str.startsWith('https://')
-      ) {
-        setGatewayUrl(str)
-        setShowImportField(false)
-        setImportString('')
-        return
-      }
-
-      setImportError('Could not parse connection string. Use a URL, JSON, or connection link.')
-    } catch {
-      setImportError('Invalid connection string format.')
+      await completeOAuth(provider, codeInput, oauthSession)
+      setIsSignedIn(true)
+      setOauthSession(null)
+      setManualCode('')
+      await connectLLM()
+    } catch (error) {
+      setLlmError(error instanceof Error ? error.message : 'Sign-in failed')
     }
   }
 
-  const handleSaveOpenClaw = async () => {
-    await setOpenClawGatewayUrl(gatewayUrl.trim() || null)
-    await setOpenClawAuthToken(authToken.trim() || null)
-    await setOpenClawAutoConnect(autoConnect)
-    if (!gatewayUrl.trim()) return
+  const handleStartOAuth = async () => {
+    setLlmError('')
+    setIsSigningIn(true)
+    try {
+      const session = await beginOAuth(provider)
+      setOauthSession(session)
+      openAuthPopup(session)
+    } catch (error) {
+      setLlmError(error instanceof Error ? error.message : 'Could not start sign-in')
+    } finally {
+      setIsSigningIn(false)
+    }
+  }
+
+  const handleSubmitManualCode = async () => {
+    if (!manualCode.trim()) return
+    await finishOAuth(manualCode.trim())
+  }
+
+  const handleSaveApiKey = async () => {
+    if (!apiKeyInput.trim()) return
+    await storeCredential(provider, { kind: 'apikey', key: apiKeyInput.trim() })
+    setApiKeyInput('')
+    setIsSignedIn(true)
+    await connectLLM()
+  }
+
+  const handleSignOut = async () => {
+    await clearCredential(provider)
+    setIsSignedIn(false)
+    if (connectionState === 'connected') disconnect()
+  }
+
+  const connectLLM = async () => {
+    await setLlmProvider(provider)
+    await setLlmModel(model)
+    await setLlmAutoConnect(autoConnect)
     try {
       if (connectionState === 'connected') disconnect()
-      await connect(gatewayUrl.trim(), authToken.trim() || undefined)
+      await connect(provider, model)
     } catch (error) {
-      console.error('[Settings] Connection failed:', error)
-    }
-  }
-
-  const handleTestConnection = async () => {
-    if (!gatewayUrl.trim()) return
-    setIsTestingConnection(true)
-    try {
-      await handleSaveOpenClaw()
-    } finally {
-      setIsTestingConnection(false)
+      console.error('[Settings] LLM connect failed:', error)
+      setLlmError(error instanceof Error ? error.message : 'Connect failed')
     }
   }
 
@@ -187,10 +214,8 @@ export function useSettingsState(options?: { isOpen?: boolean }) {
     await setCoinGeckoApiKey(cgApiKey.trim() || null)
   }
 
-  const isOpenClawChanged =
-    gatewayUrl.trim() !== (openClawGatewayUrl || '') ||
-    authToken.trim() !== (openClawAuthToken || '') ||
-    autoConnect !== openClawAutoConnect
+  const availableModels = getAdapter(provider).models
+  const supportsOAuth = getAdapter(provider).supportsOAuth
   const isCgApiKeyChanged = cgApiKey.trim() !== (coinGeckoApiKey || '')
   const isApiKeysChanged =
     alchemyKey.trim() !== (alchemyApiKey || '') ||
@@ -303,26 +328,27 @@ export function useSettingsState(options?: { isOpen?: boolean }) {
   return {
     themeConfig,
     uiStore,
-    gatewayUrl,
-    setGatewayUrl,
-    authToken,
-    setAuthToken,
-    showAuthToken,
-    setShowAuthToken,
+    provider,
+    model,
+    availableModels,
+    supportsOAuth,
+    handleSelectProvider,
+    handleSelectModel,
     autoConnect,
     setAutoConnect,
-    isTestingConnection,
+    isSigningIn,
+    isSignedIn,
+    oauthSession,
+    manualCode,
+    setManualCode,
+    apiKeyInput,
+    setApiKeyInput,
+    llmError,
+    handleStartOAuth,
+    handleSubmitManualCode,
+    handleSaveApiKey,
+    handleSignOut,
     connectionState,
-    handleSaveOpenClaw,
-    handleTestConnection,
-    isOpenClawChanged,
-    showImportField,
-    setShowImportField,
-    importString,
-    setImportString,
-    importError,
-    setImportError,
-    handleImportConnection,
     cgApiKey,
     setCgApiKey,
     showCgApiKey,

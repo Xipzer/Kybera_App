@@ -2,15 +2,15 @@
  * Code by Xipzer
  */
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { LuBrain } from 'react-icons/lu'
 import { BarChart3, Eye, TrendingUp, Sprout } from 'lucide-react'
 import { useUIStore, type NavItem } from '../../store/uiStore'
 import { useTheme } from '../../hooks/useTheme'
 
-export const NAV_RAIL_COLLAPSED = 'calc(4vw / 1.04)'
+export const NAV_RAIL_COLLAPSED = 'clamp(56px, 4vw, 72px)'
 export const NAV_RAIL_EXPANDED = '220px'
-const ICON_ZONE = `calc(4vw / 1.04 - 8px)`
+const ICON_ZONE = 'clamp(48px, 3.4vw, 64px)'
 
 const NAV_ITEMS: { id: NavItem; label: string; icon: typeof BarChart3 | typeof LuBrain }[] = [
   { id: 'research', label: 'Chat', icon: LuBrain },
@@ -101,13 +101,19 @@ export function NavRail() {
   const { activeNavItem, setActiveNavItem, particlesApp } = useUIStore()
   const { theme } = useTheme()
   const unlockStyles = theme.styles.unlockScreen
+  const [expanded, setExpanded] = useState(false)
 
   return (
     <aside
+      aria-label="Primary navigation"
       className="group/rail fixed top-0 left-0 bottom-0 z-[110] bg-surface-base border-r border-border-subtle flex flex-col py-1 overflow-hidden transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:shadow-[6px_0_24px_rgba(0,0,0,0.12)]"
-      style={{ width: NAV_RAIL_COLLAPSED }}
-      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.width = NAV_RAIL_EXPANDED }}
-      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.width = NAV_RAIL_COLLAPSED }}
+      style={{ width: expanded ? NAV_RAIL_EXPANDED : NAV_RAIL_COLLAPSED }}
+      onMouseEnter={() => setExpanded(true)}
+      onMouseLeave={() => setExpanded(false)}
+      onFocusCapture={() => setExpanded(true)}
+      onBlurCapture={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) setExpanded(false)
+      }}
     >
       {particlesApp && (
         <>
@@ -125,27 +131,37 @@ export function NavRail() {
       )}
 
       <nav className="relative z-10 flex flex-col gap-0.5 px-1 flex-1 mt-0.5">
-        {NAV_ITEMS.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setActiveNavItem(item.id)}
-            className={`${theme.styles.buttonIcon} rounded-lg flex items-center gap-0 group-hover/rail:gap-3 text-sm font-medium whitespace-nowrap w-full ${
-              activeNavItem === item.id
-                ? `${theme.styles.iconAccent} font-semibold`
-                : 'text-text-secondary hover:text-text-primary'
-            }`}
-            style={{
-              height: ICON_ZONE,
-              paddingLeft: `calc((${ICON_ZONE} - 18px) / 2)`,
-              paddingRight: `calc((${ICON_ZONE} - 18px) / 2)`,
-            }}
-          >
-            <item.icon className={`w-[18px] h-[18px] flex-shrink-0 ${activeNavItem === item.id ? 'drop-shadow-[0_0_4px_rgba(var(--color-accent-500),0.4)]' : ''}`} />
-            <span className="opacity-0 group-hover/rail:opacity-100 transition-opacity duration-200 delay-[50ms] overflow-hidden">
-              {item.label}
-            </span>
-          </button>
-        ))}
+        {NAV_ITEMS.map((item) => {
+          const isActive = activeNavItem === item.id
+          return (
+            <button
+              key={item.id}
+              onClick={() => setActiveNavItem(item.id)}
+              aria-current={isActive ? 'page' : undefined}
+              aria-label={item.label}
+              title={item.label}
+              className={`${theme.styles.buttonIcon} rounded-lg flex items-center gap-0 group-hover/rail:gap-3 text-sm font-medium whitespace-nowrap w-full ${
+                isActive
+                  ? `${theme.styles.iconAccent} font-semibold`
+                  : 'text-text-secondary hover:text-text-primary'
+              }`}
+              style={{
+                height: ICON_ZONE,
+                paddingLeft: `calc((${ICON_ZONE} - 18px) / 2)`,
+                paddingRight: `calc((${ICON_ZONE} - 18px) / 2)`,
+              }}
+            >
+              <item.icon
+                className={`w-[18px] h-[18px] flex-shrink-0 ${isActive ? 'drop-shadow-[0_0_4px_rgba(var(--color-accent-500),0.4)]' : ''}`}
+              />
+              <span
+                className={`transition-opacity duration-200 delay-[50ms] overflow-hidden ${expanded ? 'opacity-100' : 'opacity-0'}`}
+              >
+                {item.label}
+              </span>
+            </button>
+          )
+        })}
       </nav>
 
 

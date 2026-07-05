@@ -256,14 +256,14 @@ export function ResearchCard({
                   ${research.tokenSymbol}
                 </span>
               </div>
-              <div className="flex flex-wrap items-center gap-x-1.5 sm:gap-x-2 gap-y-0.5 text-[10px] sm:text-sm text-text-tertiary">
+              <div className="flex flex-wrap items-center gap-x-1.5 sm:gap-x-2 gap-y-0.5 text-2xs sm:text-sm text-text-tertiary">
                 <span className="uppercase">{research.network}</span>
                 <span className="opacity-50 hidden sm:inline">|</span>
                 <a
                   href={explorerTokenUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`flex items-center gap-0.5 sm:gap-1 hover:${iconAccent} transition-colors`}
+                  className="flex items-center gap-0.5 sm:gap-1 hover:text-accent-500 transition-colors"
                 >
                   {formatAddress(research.contractAddress)}
                   <ExternalLink className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
@@ -313,7 +313,7 @@ export function ResearchCard({
               className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full ${ratingConfig.bgColor} flex items-center gap-1 sm:gap-2`}
             >
               <span className="text-sm sm:text-lg">{ratingConfig.emoji}</span>
-              <span className={`text-[10px] sm:text-sm font-bold ${ratingConfig.color}`}>
+              <span className={`text-2xs sm:text-sm font-bold ${ratingConfig.color}`}>
                 {ratingConfig.label}
               </span>
             </div>
@@ -322,7 +322,7 @@ export function ResearchCard({
 
         <div className="mt-3 sm:mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
           <div>
-            <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5 sm:mb-1">
+            <div className="text-2xs sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5 sm:mb-1">
               Price
             </div>
             <div className="text-text-primary font-medium text-xs sm:text-base">
@@ -330,7 +330,7 @@ export function ResearchCard({
             </div>
             {research.priceChange24h !== undefined && (
               <div
-                className={`text-[10px] sm:text-xs ${research.priceChange24h >= 0 ? 'text-green-500' : 'text-red-500'}`}
+                className={`text-2xs sm:text-xs ${research.priceChange24h >= 0 ? 'text-green-500' : 'text-red-500'}`}
               >
                 {research.priceChange24h >= 0 ? '+' : ''}
                 {research.priceChange24h.toFixed(2)}%
@@ -338,7 +338,7 @@ export function ResearchCard({
             )}
           </div>
           <div>
-            <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5 sm:mb-1">
+            <div className="text-2xs sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5 sm:mb-1">
               MCap
             </div>
             <div className="text-text-primary font-medium text-xs sm:text-base">
@@ -347,7 +347,7 @@ export function ResearchCard({
           </div>
           {research.volume24h && (
             <div>
-              <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5 sm:mb-1">
+              <div className="text-2xs sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5 sm:mb-1">
                 24h Vol
               </div>
               <div className="text-text-primary font-medium text-xs sm:text-base">
@@ -357,7 +357,7 @@ export function ResearchCard({
           )}
           {research.holderDistribution && (
             <div>
-              <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5 sm:mb-1">
+              <div className="text-2xs sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5 sm:mb-1">
                 Holders
               </div>
               <div className="text-text-primary font-medium text-xs sm:text-base">
@@ -482,7 +482,7 @@ export function ResearchCard({
                   Holder Distribution
                 </h4>
                 {research.holderDistribution.hasBotWarnings && (
-                  <span className="px-1.5 py-0.5 rounded-full bg-orange-500/20 text-orange-500 text-[10px] sm:text-xs">
+                  <span className="px-1.5 py-0.5 rounded-full bg-orange-500/20 text-orange-500 text-2xs sm:text-xs">
                     Bot Activity
                   </span>
                 )}
@@ -532,7 +532,7 @@ export function ResearchCard({
           <div className="px-2.5 sm:px-4 pb-3 sm:pb-4">
             <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
               <Shield className="w-3 h-3 sm:w-4 sm:h-4 text-text-tertiary" />
-              <span className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide">
+              <span className="text-2xs sm:text-xs text-text-tertiary uppercase tracking-wide">
                 Sources
               </span>
             </div>
@@ -543,7 +543,7 @@ export function ResearchCard({
                   href={source.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`px-1.5 py-0.5 sm:px-2 sm:py-1 ${tc.interactiveBg} border rounded-lg text-[10px] sm:text-xs text-text-secondary hover:text-text-primary transition-colors flex items-center gap-0.5 sm:gap-1`}
+                  className={`px-1.5 py-0.5 sm:px-2 sm:py-1 ${tc.interactiveBg} border rounded-lg text-2xs sm:text-xs text-text-secondary hover:text-text-primary transition-colors flex items-center gap-0.5 sm:gap-1`}
                 >
                   {source.label}
                   <ExternalLink className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
@@ -567,7 +567,7 @@ export function ResearchCard({
                   className={`px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg ${ratingConfig.bgColor} flex items-center gap-1 sm:gap-1.5 flex-shrink-0`}
                 >
                   <span className="text-xs sm:text-sm">{ratingConfig.emoji}</span>
-                  <span className={`text-[10px] sm:text-xs font-bold ${ratingConfig.color}`}>
+                  <span className={`text-2xs sm:text-xs font-bold ${ratingConfig.color}`}>
                     {ratingConfig.label}
                   </span>
                 </div>
@@ -586,7 +586,7 @@ export function ResearchCard({
                 <Droplets className={`w-4 h-4 sm:w-5 sm:h-5 ${iconAccent}`} />
                 <h4 className="font-medium text-text-primary text-sm sm:text-base">Liquidity</h4>
                 {research.liquidity.isLiquidityLocked && (
-                  <span className="px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-500 text-[10px] sm:text-xs flex items-center gap-0.5 sm:gap-1">
+                  <span className="px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-500 text-2xs sm:text-xs flex items-center gap-0.5 sm:gap-1">
                     <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                     Locked
                   </span>
@@ -619,14 +619,14 @@ export function ResearchCard({
               {research.liquidity.liquidityPairs &&
                 research.liquidity.liquidityPairs.length > 0 && (
                   <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-border-subtle">
-                    <div className="text-[10px] sm:text-xs text-text-tertiary mb-1.5 sm:mb-2">
+                    <div className="text-2xs sm:text-xs text-text-tertiary mb-1.5 sm:mb-2">
                       Liquidity Pairs
                     </div>
                     <div className="flex flex-wrap gap-1.5 sm:gap-2">
                       {research.liquidity.liquidityPairs.map((pair, index) => (
                         <div
                           key={index}
-                          className={`px-1.5 py-0.5 sm:px-2 sm:py-1 ${tc.sectionBg} border rounded-lg text-[10px] sm:text-xs`}
+                          className={`px-1.5 py-0.5 sm:px-2 sm:py-1 ${tc.sectionBg} border rounded-lg text-2xs sm:text-xs`}
                         >
                           <span className="text-text-primary">{pair.token}</span>
                           <span className="text-text-tertiary mx-0.5 sm:mx-1">on</span>
@@ -657,7 +657,7 @@ export function ResearchCard({
                   <span className="text-xs sm:text-sm font-medium text-text-primary block">
                     Full AI Analysis
                   </span>
-                  <span className="text-[10px] sm:text-xs text-text-tertiary">
+                  <span className="text-2xs sm:text-xs text-text-tertiary">
                     Detailed breakdown
                   </span>
                 </div>
@@ -680,13 +680,13 @@ export function ResearchCard({
                     <div
                       className={`w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full ${tc.accentDot} animate-pulse`}
                     />
-                    <span className="text-[10px] sm:text-xs font-medium text-text-secondary uppercase tracking-wider">
+                    <span className="text-2xs sm:text-xs font-medium text-text-secondary uppercase tracking-wider">
                       AI Research Report
                     </span>
                   </div>
                   <button
                     onClick={handleCopyAnalysis}
-                    className={`flex items-center gap-1 sm:gap-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium transition-all ${
+                    className={`flex items-center gap-1 sm:gap-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg text-2xs sm:text-xs font-medium transition-all ${
                       copied
                         ? 'bg-green-500/20 text-green-500'
                         : `${tc.interactiveBg} text-text-secondary hover:text-text-primary`
@@ -911,10 +911,10 @@ export function ResearchCard({
                 <div
                   className={`px-3 py-2 sm:px-4 sm:py-2.5 ${tc.analysisFooterBg} flex items-center justify-between`}
                 >
-                  <span className="text-[10px] sm:text-xs text-text-tertiary">
-                    Powered by OpenClaw AI
+                  <span className="text-2xs sm:text-xs text-text-tertiary">
+                    Powered by Kybera AI
                   </span>
-                  <span className="text-[10px] sm:text-xs text-text-tertiary">
+                  <span className="text-2xs sm:text-xs text-text-tertiary">
                     {new Date(research.timestamp).toLocaleString()}
                   </span>
                 </div>
@@ -925,7 +925,7 @@ export function ResearchCard({
       </div>
 
       <div className={`p-3 sm:p-4 ${tc.footerBg} border-t flex items-center justify-between`}>
-        <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-text-tertiary">
+        <div className="flex items-center gap-1.5 sm:gap-2 text-2xs sm:text-xs text-text-tertiary">
           <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
           <span className="hidden sm:inline">
             {new Date(research.timestamp).toLocaleDateString()}{' '}

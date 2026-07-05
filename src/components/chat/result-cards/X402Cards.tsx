@@ -5,6 +5,7 @@
  */
 
 import { CreditCard } from 'lucide-react'
+import { formatUSD, formatTokenPrice } from '../../../utils/formatters'
 import { useCardTheme, CardShell, StatCell } from './shared'
 
 export function X402Card({ data, action }: { data: any; action: 'status' | 'payments' }) {
@@ -19,8 +20,8 @@ export function X402Card({ data, action }: { data: any; action: 'status' | 'paym
             <span className="text-xs sm:text-base text-text-primary font-medium">{data.enabled ? 'Enabled' : 'Disabled'}</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
-            <StatCell label="Daily Spent" value={`$${Number(data.dailySpent || 0).toFixed(2)} / $${Number(data.dailyBudget || 0).toFixed(2)}`} />
-            <StatCell label="Lifetime" value={`$${Number(data.totalLifetimeSpent || 0).toFixed(2)}`} />
+            <StatCell label="Daily Spent" value={`${formatUSD(Number(data.dailySpent || 0))} / ${formatUSD(Number(data.dailyBudget || 0))}`} />
+            <StatCell label="Lifetime" value={formatUSD(Number(data.totalLifetimeSpent || 0))} />
             <StatCell label="Payments" value={String(data.totalPaymentCount || 0)} />
           </div>
         </div>
@@ -34,7 +35,7 @@ export function X402Card({ data, action }: { data: any; action: 'status' | 'paym
           {data.payments.slice(0, 5).map((p: any, i: number) => (
             <div key={p.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${card.innerBorder}` : ''}`}>
               <span className="text-xs sm:text-base text-text-primary">{p.domain}</span>
-              <span className="text-[10px] sm:text-xs text-text-tertiary">${Number(p.amountUsd || 0).toFixed(4)}</span>
+              <span className="text-2xs sm:text-xs text-text-tertiary">{formatTokenPrice(Number(p.amountUsd || 0))}</span>
             </div>
           ))}
         </div>

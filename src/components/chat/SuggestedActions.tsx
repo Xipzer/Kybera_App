@@ -302,7 +302,7 @@ export function SuggestedActions({ visible, onSelect, onDismiss, containerRef }:
                     setActiveCategory(null)
                     setSelectedIndex(-1)
                   }}
-                  className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-medium transition-all duration-150 ${
+                  className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-2xs sm:text-xs font-medium transition-all duration-150 ${
                     activeCategory === null
                       ? `bg-gradient-to-r ${styles.sendGradient} text-white shadow-sm`
                       : 'bg-surface-elevated/50 text-text-secondary hover:text-text-primary hover:bg-surface-elevated/70'
@@ -317,7 +317,7 @@ export function SuggestedActions({ visible, onSelect, onDismiss, containerRef }:
                       setActiveCategory(cat.id === activeCategory ? null : cat.id)
                       setSelectedIndex(-1)
                     }}
-                    className={`flex-shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-medium transition-all duration-150 ${
+                    className={`flex-shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-2xs sm:text-xs font-medium transition-all duration-150 ${
                       activeCategory === cat.id
                         ? `bg-gradient-to-r ${styles.sendGradient} text-white shadow-sm`
                         : 'bg-surface-elevated/50 text-text-secondary hover:text-text-primary hover:bg-surface-elevated/70'
@@ -353,7 +353,7 @@ export function SuggestedActions({ visible, onSelect, onDismiss, containerRef }:
                       <prompt.icon className="w-3.5 h-3.5 text-white" />
                     </div>
                     <span className="text-xs sm:text-sm truncate flex-1">{prompt.text}</span>
-                    <span className="flex-shrink-0 text-[10px] text-text-tertiary opacity-0 group-hover:opacity-100 transition-opacity bg-surface-elevated/50 px-1.5 py-0.5 rounded">
+                    <span className="flex-shrink-0 text-2xs text-text-tertiary opacity-0 group-hover:opacity-100 transition-opacity bg-surface-elevated/50 px-1.5 py-0.5 rounded">
                       {CATEGORIES.find((c) => c.id === prompt.category)?.label}
                     </span>
                   </button>

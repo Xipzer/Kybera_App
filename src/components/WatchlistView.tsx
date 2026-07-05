@@ -22,20 +22,28 @@ import {
   Copy,
   Check,
 } from 'lucide-react'
-import { useTheme } from '../../hooks/useTheme'
-import { useWatchlistStore } from '../../store/watchlistStore'
-import { walletTrackingService } from '../../services/walletTrackingService'
-import { EmptyState } from '../common/EmptyState'
-import { formatAddress, formatUSD, formatTimeAgo } from '../../utils/formatters'
-import type { WatchedWalletTag, ActivityType } from '../../types/watchlist'
+import { useTheme } from '../hooks/useTheme'
+import { useWatchlistStore } from '../store/watchlistStore'
+import { walletTrackingService } from '../services/walletTrackingService'
+import { EmptyState } from './common/EmptyState'
+import { formatAddress, formatUSD, formatTimeAgo } from '../utils/formatters'
+import type { WatchedWalletTag, ActivityType } from '../types/watchlist'
 
 const NETWORK_OPTIONS = ['ethereum', 'base', 'arbitrum', 'optimism', 'solana']
 
 const TAG_OPTIONS: { value: WatchedWalletTag; label: string; color: string }[] = [
   { value: 'whale', label: 'Whale', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
   { value: 'kol', label: 'KOL', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
-  { value: 'smart_money', label: 'Smart Money', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
-  { value: 'developer', label: 'Developer', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+  {
+    value: 'smart_money',
+    label: 'Smart Money',
+    color: 'bg-green-500/20 text-green-400 border-green-500/30',
+  },
+  {
+    value: 'developer',
+    label: 'Developer',
+    color: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+  },
   { value: 'fund', label: 'Fund', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' },
   { value: 'custom', label: 'Custom', color: 'bg-gray-500/20 text-gray-400 border-gray-500/30' },
 ]
@@ -108,20 +116,23 @@ export function WatchlistView() {
     setShowForm(false)
   }, [addressInput, labelInput, selectedTags, selectedNetworks, addWallet])
 
-  const handleCheckActivity = useCallback(async (walletId: string) => {
-    const wallet = watchedWallets.find((w) => w.id === walletId)
-    if (!wallet || isChecking) return
-    setIsChecking(walletId)
-    try {
-      for (const activity of await walletTrackingService.checkWalletActivity(wallet)) {
-        useWatchlistStore.getState().addActivity(activity)
+  const handleCheckActivity = useCallback(
+    async (walletId: string) => {
+      const wallet = watchedWallets.find((w) => w.id === walletId)
+      if (!wallet || isChecking) return
+      setIsChecking(walletId)
+      try {
+        for (const activity of await walletTrackingService.checkWalletActivity(wallet)) {
+          useWatchlistStore.getState().addActivity(activity)
+        }
+      } finally {
+        setIsChecking(null)
       }
-    } finally {
-      setIsChecking(null)
-    }
-  }, [watchedWallets, isChecking])
+    },
+    [watchedWallets, isChecking],
+  )
 
-  const startEditing = useCallback((wallet: typeof watchedWallets[0]) => {
+  const startEditing = useCallback((wallet: (typeof watchedWallets)[0]) => {
     setEditingWallet(wallet.id)
     setEditLabel(wallet.label)
     setEditTags([...wallet.tags])
@@ -146,26 +157,20 @@ export function WatchlistView() {
 
   const toggleNetwork = (net: string) => {
     setSelectedNetworks((prev) =>
-      prev.includes(net) ? prev.filter((n) => n !== net) : [...prev, net]
+      prev.includes(net) ? prev.filter((n) => n !== net) : [...prev, net],
     )
   }
 
   const toggleTag = (tag: WatchedWalletTag) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    )
+    setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
   }
 
   const toggleEditNetwork = (net: string) => {
-    setEditNetworks((prev) =>
-      prev.includes(net) ? prev.filter((n) => n !== net) : [...prev, net]
-    )
+    setEditNetworks((prev) => (prev.includes(net) ? prev.filter((n) => n !== net) : [...prev, net]))
   }
 
   const toggleEditTag = (tag: WatchedWalletTag) => {
-    setEditTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    )
+    setEditTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
   }
 
   return (
@@ -174,7 +179,7 @@ export function WatchlistView() {
         <div className="flex items-center gap-2">
           <div className={`w-1 h-4 rounded-full bg-gradient-to-b ${styles.sendGradient}`} />
           <h3 className="text-sm font-semibold text-text-primary">Watched Wallets</h3>
-          <span className="text-[10px] text-text-tertiary">({watchedWallets.length})</span>
+          <span className="text-2xs text-text-tertiary">({watchedWallets.length})</span>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
@@ -190,9 +195,13 @@ export function WatchlistView() {
       </div>
 
       {showForm && (
-        <div className={`${styles.inputSolidBg} border ${styles.inputBorder} rounded-xl p-4 space-y-3`}>
+        <div
+          className={`${styles.inputSolidBg} border ${styles.inputBorder} rounded-xl p-4 space-y-3`}
+        >
           <div>
-            <label className="block text-[10px] text-text-tertiary uppercase tracking-wider font-medium mb-1.5">Wallet Address</label>
+            <label className="block text-2xs text-text-tertiary uppercase tracking-wider font-medium mb-1.5">
+              Wallet Address
+            </label>
             <input
               type="text"
               value={addressInput}
@@ -203,7 +212,9 @@ export function WatchlistView() {
             />
           </div>
           <div>
-            <label className="block text-[10px] text-text-tertiary uppercase tracking-wider font-medium mb-1.5">Label</label>
+            <label className="block text-2xs text-text-tertiary uppercase tracking-wider font-medium mb-1.5">
+              Label
+            </label>
             <input
               type="text"
               value={labelInput}
@@ -214,7 +225,9 @@ export function WatchlistView() {
             />
           </div>
           <div>
-            <label className="block text-[10px] text-text-tertiary uppercase tracking-wider font-medium mb-1.5">Networks</label>
+            <label className="block text-2xs text-text-tertiary uppercase tracking-wider font-medium mb-1.5">
+              Networks
+            </label>
             <div className="flex flex-wrap gap-1.5">
               {NETWORK_OPTIONS.map((net) => (
                 <button
@@ -232,7 +245,9 @@ export function WatchlistView() {
             </div>
           </div>
           <div>
-            <label className="block text-[10px] text-text-tertiary uppercase tracking-wider font-medium mb-1.5">Tags</label>
+            <label className="block text-2xs text-text-tertiary uppercase tracking-wider font-medium mb-1.5">
+              Tags
+            </label>
             <div className="flex flex-wrap gap-1.5">
               {TAG_OPTIONS.map((tag) => (
                 <button
@@ -275,12 +290,17 @@ export function WatchlistView() {
           const isEditing = editingWallet === wallet.id
 
           return (
-            <div key={wallet.id} className="rounded-xl border border-border-subtle bg-surface-elevated/30 overflow-hidden transition-all duration-200 hover:border-accent-500/20">
+            <div
+              key={wallet.id}
+              className="rounded-xl border border-border-subtle bg-surface-elevated/30 overflow-hidden transition-all duration-200 hover:border-accent-500/20"
+            >
               <div className="p-3 sm:p-4">
                 {isEditing ? (
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-[10px] text-text-tertiary uppercase tracking-wider font-medium mb-1.5">Label</label>
+                      <label className="block text-2xs text-text-tertiary uppercase tracking-wider font-medium mb-1.5">
+                        Label
+                      </label>
                       <input
                         type="text"
                         value={editLabel}
@@ -291,7 +311,9 @@ export function WatchlistView() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] text-text-tertiary uppercase tracking-wider font-medium mb-1.5">Tags</label>
+                      <label className="block text-2xs text-text-tertiary uppercase tracking-wider font-medium mb-1.5">
+                        Tags
+                      </label>
                       <div className="flex flex-wrap gap-1.5">
                         {TAG_OPTIONS.map((tag) => (
                           <button
@@ -309,7 +331,9 @@ export function WatchlistView() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[10px] text-text-tertiary uppercase tracking-wider font-medium mb-1.5">Networks</label>
+                      <label className="block text-2xs text-text-tertiary uppercase tracking-wider font-medium mb-1.5">
+                        Networks
+                      </label>
                       <div className="flex flex-wrap gap-1.5">
                         {NETWORK_OPTIONS.map((net) => (
                           <button
@@ -347,11 +371,16 @@ export function WatchlistView() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                        <span className="font-semibold text-text-primary text-sm">{wallet.label}</span>
+                        <span className="font-semibold text-text-primary text-sm">
+                          {wallet.label}
+                        </span>
                         {wallet.tags.map((tag) => {
                           const tagConfig = TAG_OPTIONS.find((t) => t.value === tag)
                           return (
-                            <span key={tag} className={`px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider ${tagConfig?.color ?? 'bg-gray-500/20 text-gray-400 border-gray-500/30'} border`}>
+                            <span
+                              key={tag}
+                              className={`px-1.5 py-0.5 rounded-md text-2xs font-semibold uppercase tracking-wider ${tagConfig?.color ?? 'bg-gray-500/20 text-gray-400 border-gray-500/30'} border`}
+                            >
                               {tagConfig?.label ?? tag}
                             </span>
                           )
@@ -364,14 +393,18 @@ export function WatchlistView() {
                         <span className="text-xs text-text-tertiary font-mono group-hover:text-text-secondary transition-colors">
                           {formatAddress(wallet.address, 10, 6)}
                         </span>
-                        {copiedAddress === wallet.address
-                          ? <Check className="w-3 h-3 text-green-500" />
-                          : <Copy className="w-3 h-3 text-text-tertiary opacity-0 group-hover:opacity-100 transition-opacity" />
-                        }
+                        {copiedAddress === wallet.address ? (
+                          <Check className="w-3 h-3 text-green-500" />
+                        ) : (
+                          <Copy className="w-3 h-3 text-text-tertiary opacity-0 group-hover:opacity-100 transition-opacity" />
+                        )}
                       </button>
                       <div className="flex gap-1 mt-2 ml-3.5">
                         {wallet.networks.map((n) => (
-                          <span key={n} className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-surface-elevated text-text-tertiary border border-border-subtle">
+                          <span
+                            key={n}
+                            className="px-1.5 py-0.5 rounded text-2xs font-medium bg-surface-elevated text-text-tertiary border border-border-subtle"
+                          >
                             {n}
                           </span>
                         ))}
@@ -391,9 +424,11 @@ export function WatchlistView() {
                         className={`${theme.styles.buttonIcon} p-1.5 rounded-lg disabled:opacity-40`}
                         title="Check for new activity"
                       >
-                        {isChecking === wallet.id
-                          ? <Loader2 className="w-3.5 h-3.5 text-text-secondary animate-spin" />
-                          : <Radio className="w-3.5 h-3.5 text-text-secondary" />}
+                        {isChecking === wallet.id ? (
+                          <Loader2 className="w-3.5 h-3.5 text-text-secondary animate-spin" />
+                        ) : (
+                          <Radio className="w-3.5 h-3.5 text-text-secondary" />
+                        )}
                       </button>
                       <button
                         onClick={() => removeWallet(wallet.id)}
@@ -406,9 +441,11 @@ export function WatchlistView() {
                         onClick={() => setExpandedWallet(isExpanded ? null : wallet.id)}
                         className={`${theme.styles.buttonIcon} p-1.5 rounded-lg`}
                       >
-                        {isExpanded
-                          ? <ChevronUp className="w-3.5 h-3.5 text-text-secondary" />
-                          : <ChevronDown className="w-3.5 h-3.5 text-text-secondary" />}
+                        {isExpanded ? (
+                          <ChevronUp className="w-3.5 h-3.5 text-text-secondary" />
+                        ) : (
+                          <ChevronDown className="w-3.5 h-3.5 text-text-secondary" />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -418,39 +455,56 @@ export function WatchlistView() {
               {isExpanded && !isEditing && (
                 <div className="border-t border-border-subtle px-3 sm:px-4 py-3">
                   <div className="flex items-center gap-2 mb-3">
-                    <div className={`w-1 h-3.5 rounded-full bg-gradient-to-b ${styles.sendGradient}`} />
-                    <h4 className="text-[10px] font-semibold text-text-tertiary uppercase tracking-wider">Recent Activity</h4>
+                    <div
+                      className={`w-1 h-3.5 rounded-full bg-gradient-to-b ${styles.sendGradient}`}
+                    />
+                    <h4 className="text-2xs font-semibold text-text-tertiary uppercase tracking-wider">
+                      Recent Activity
+                    </h4>
                   </div>
                   {walletActivities.length === 0 ? (
-                    <p className="text-xs text-text-tertiary text-center py-6">No recent activity detected</p>
+                    <p className="text-xs text-text-tertiary text-center py-6">
+                      No recent activity detected
+                    </p>
                   ) : (
                     <div className="space-y-1.5">
                       {walletActivities.map((activity) => {
                         const IconComponent = ACTIVITY_ICONS[activity.activityType] ?? HelpCircle
-                        const colors = ACTIVITY_COLORS[activity.activityType] ?? ACTIVITY_COLORS.unknown
+                        const colors =
+                          ACTIVITY_COLORS[activity.activityType] ?? ACTIVITY_COLORS.unknown
                         return (
-                          <div key={activity.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-surface-elevated/50 border border-border-subtle/50">
-                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${colors.bg}`}>
+                          <div
+                            key={activity.id}
+                            className="flex items-center gap-3 p-2.5 rounded-lg bg-surface-elevated/50 border border-border-subtle/50"
+                          >
+                            <div
+                              className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${colors.bg}`}
+                            >
                               <IconComponent className={`w-3.5 h-3.5 ${colors.text}`} />
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="text-xs font-medium text-text-primary">
                                 {ACTIVITY_LABELS[activity.activityType]}
-                                {activity.activityType === 'swap' && activity.tokenInSymbol && activity.tokenOutSymbol && (
-                                  <span className="text-text-tertiary ml-1.5">
-                                    {activity.tokenInSymbol} → {activity.tokenOutSymbol}
-                                  </span>
-                                )}
+                                {activity.activityType === 'swap' &&
+                                  activity.tokenInSymbol &&
+                                  activity.tokenOutSymbol && (
+                                    <span className="text-text-tertiary ml-1.5">
+                                      {activity.tokenInSymbol} → {activity.tokenOutSymbol}
+                                    </span>
+                                  )}
                               </div>
-                              <div className="text-[10px] text-text-tertiary">{activity.networkId}</div>
+                              <div className="text-2xs text-text-tertiary">
+                                {activity.networkId}
+                              </div>
                             </div>
                             <div className="text-right flex-shrink-0">
-                              {activity.estimatedValueUsd !== undefined && activity.estimatedValueUsd > 0 && (
-                                <div className="text-xs font-semibold text-text-primary">
-                                  {formatUSD(activity.estimatedValueUsd)}
-                                </div>
-                              )}
-                              <div className="text-[10px] text-text-tertiary">
+                              {activity.estimatedValueUsd !== undefined &&
+                                activity.estimatedValueUsd > 0 && (
+                                  <div className="text-xs font-semibold text-text-primary">
+                                    {formatUSD(activity.estimatedValueUsd)}
+                                  </div>
+                                )}
+                              <div className="text-2xs text-text-tertiary">
                                 {formatTimeAgo(activity.timestamp)}
                               </div>
                             </div>

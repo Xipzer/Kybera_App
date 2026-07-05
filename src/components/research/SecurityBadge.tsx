@@ -34,7 +34,7 @@ export function SecurityBadge({ riskScore, riskFlags, isHoneypot, isMalicious, r
         className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full ${tier.bg} flex items-center gap-1 sm:gap-1.5 flex-shrink-0 transition-colors hover:opacity-80`}
       >
         <Shield className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${tier.color}`} />
-        <span className={`text-[10px] sm:text-xs font-medium ${tier.color}`}>
+        <span className={`text-2xs sm:text-xs font-medium ${tier.color}`}>
           {tier.label}
         </span>
         {riskFlags.length > 0 && (
@@ -85,14 +85,14 @@ export function SecurityBadge({ riskScore, riskFlags, isHoneypot, isMalicious, r
 
           {riskFlags.length > 0 && (
             <div className="space-y-1">
-              <span className="text-[10px] text-text-tertiary uppercase tracking-wide font-medium">
+              <span className="text-2xs text-text-tertiary uppercase tracking-wide font-medium">
                 Risk Flags
               </span>
               <div className="flex flex-wrap gap-1">
                 {riskFlags.map((flag) => (
                   <span
                     key={flag}
-                    className={`px-1.5 py-0.5 rounded text-[10px] ${tier.bg} ${tier.color} font-medium`}
+                    className={`px-1.5 py-0.5 rounded text-2xs ${tier.bg} ${tier.color} font-medium`}
                   >
                     {flag}
                   </span>

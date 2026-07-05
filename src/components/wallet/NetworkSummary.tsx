@@ -126,7 +126,7 @@ export function NetworkSummary({
                       </p>
                       {isExecutionNetwork && (
                         <span
-                          className={`inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs ${styles.execBadgeBg} text-white rounded-md font-medium shadow-sm`}
+                          className={`inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 text-2xs sm:text-xs ${styles.execBadgeBg} text-white rounded-md font-medium shadow-sm`}
                         >
                           <Zap className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                           EXEC
@@ -180,7 +180,7 @@ export function NetworkSummary({
 
               {networkBalance.lastUpdated && (
                 <div className="mt-2 sm:mt-3 pt-1.5 sm:pt-2 text-center">
-                  <span className="text-[10px] sm:text-xs text-text-tertiary">
+                  <span className="text-2xs sm:text-xs text-text-tertiary">
                     Updated {new Date(networkBalance.lastUpdated).toLocaleTimeString()}
                   </span>
                 </div>

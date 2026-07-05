@@ -2,7 +2,7 @@
  * Code by Xipzer
  */
 
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import {
   Plus,
   X,
@@ -21,6 +21,9 @@ import { ModernToggle, ModernButton } from '../ModernDialog'
 export function X402Settings() {
   const { theme: themeConfig } = useTheme()
   const [newDomain, setNewDomain] = useState('')
+  const walletSelectId = useId()
+  const dailyBudgetId = useId()
+  const perRequestId = useId()
 
   const config = useX402Store((s) => s.config)
   const paymentHistory = useX402Store((s) => s.paymentHistory)
@@ -72,8 +75,9 @@ export function X402Settings() {
           />
 
           <div>
-            <h4 className="text-xs sm:text-sm font-medium text-text-primary mb-3 sm:mb-4">Payment Wallet</h4>
+            <label htmlFor={walletSelectId} className="block text-xs sm:text-sm font-medium text-text-primary mb-3 sm:mb-4">Payment Wallet</label>
             <select
+              id={walletSelectId}
               value={config.paymentWalletId || ''}
               onChange={(e) => setPaymentWallet(e.target.value)}
               className={themeConfig.styles.input}
@@ -98,12 +102,13 @@ export function X402Settings() {
 
         <div className="space-y-3 sm:space-y-4">
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
+            <label htmlFor={dailyBudgetId} className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
               Daily Budget (USD)
             </label>
             <div className="relative">
               <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
               <input
+                id={dailyBudgetId}
                 type="number"
                 value={config.dailyBudgetUsd}
                 onChange={(e) => setDailyBudget(Math.max(0, parseFloat(e.target.value) || 0))}
@@ -116,12 +121,13 @@ export function X402Settings() {
           </div>
 
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
+            <label htmlFor={perRequestId} className="block text-xs sm:text-sm font-medium text-text-secondary mb-1.5 sm:mb-2">
               Per-Request Limit (USD)
             </label>
             <div className="relative">
               <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
               <input
+                id={perRequestId}
                 type="number"
                 value={config.maxPerRequestUsd}
                 onChange={(e) => setMaxPerRequest(Math.max(0, parseFloat(e.target.value) || 0))}
@@ -148,7 +154,7 @@ export function X402Settings() {
                 style={{ width: `${spendingPercent}%` }}
               />
             </div>
-            <div className="flex items-center justify-between text-[10px] sm:text-xs text-text-tertiary mt-2">
+            <div className="flex items-center justify-between text-2xs sm:text-xs text-text-tertiary mt-2">
               <span>{summary.paymentCount} payments total</span>
               <span>${summary.lifetimeSpent.toFixed(2)} lifetime</span>
             </div>
@@ -169,6 +175,7 @@ export function X402Settings() {
             onChange={(e) => setNewDomain(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAddDomain()}
             placeholder="api.example.com"
+            aria-label="Domain to approve"
             className={themeConfig.styles.input}
             style={{ fontSize: '16px' }}
           />
@@ -193,6 +200,7 @@ export function X402Settings() {
                 {domain}
                 <button
                   onClick={() => removeApprovedDomain(domain)}
+                  aria-label={`Remove ${domain}`}
                   className="p-0.5 hover:bg-surface-hover rounded-full transition-colors"
                 >
                   <X className="w-3 h-3 text-text-tertiary hover:text-red-400" />
@@ -220,28 +228,28 @@ export function X402Settings() {
             <table className="w-full text-xs sm:text-sm">
               <thead>
                 <tr className="bg-surface-elevated">
-                  <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-left text-[10px] sm:text-xs font-medium text-text-tertiary uppercase tracking-wide">Date</th>
-                  <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-left text-[10px] sm:text-xs font-medium text-text-tertiary uppercase tracking-wide">Domain</th>
-                  <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-right text-[10px] sm:text-xs font-medium text-text-tertiary uppercase tracking-wide">Amount</th>
-                  <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-center text-[10px] sm:text-xs font-medium text-text-tertiary uppercase tracking-wide">Status</th>
+                  <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-left text-2xs sm:text-xs font-medium text-text-tertiary uppercase tracking-wide">Date</th>
+                  <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-left text-2xs sm:text-xs font-medium text-text-tertiary uppercase tracking-wide">Domain</th>
+                  <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-right text-2xs sm:text-xs font-medium text-text-tertiary uppercase tracking-wide">Amount</th>
+                  <th className="px-2 sm:px-3 py-1.5 sm:py-2 text-center text-2xs sm:text-xs font-medium text-text-tertiary uppercase tracking-wide">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {paymentHistory.slice(0, 10).map((payment) => (
                   <tr key={payment.id} className="border-t border-border-subtle">
-                    <td className="px-2 sm:px-3 py-1.5 sm:py-2 text-text-secondary text-[10px] sm:text-xs whitespace-nowrap">
+                    <td className="px-2 sm:px-3 py-1.5 sm:py-2 text-text-secondary text-2xs sm:text-xs whitespace-nowrap">
                       {new Date(payment.timestamp).toLocaleDateString()}
                     </td>
-                    <td className="px-2 sm:px-3 py-1.5 sm:py-2 text-text-primary text-[10px] sm:text-xs truncate max-w-[100px] sm:max-w-[140px]">
+                    <td className="px-2 sm:px-3 py-1.5 sm:py-2 text-text-primary text-2xs sm:text-xs truncate max-w-[100px] sm:max-w-[140px]">
                       {payment.domain}
                     </td>
-                    <td className="px-2 sm:px-3 py-1.5 sm:py-2 text-right text-text-primary text-[10px] sm:text-xs font-medium">
+                    <td className="px-2 sm:px-3 py-1.5 sm:py-2 text-right text-text-primary text-2xs sm:text-xs font-medium">
                       ${payment.amountUsd.toFixed(4)}
                     </td>
                     <td className="px-2 sm:px-3 py-1.5 sm:py-2">
                       <div className="flex items-center justify-center gap-1">
                         {statusIcon(payment.status)}
-                        <span className={`text-[10px] sm:text-xs capitalize ${
+                        <span className={`text-2xs sm:text-xs capitalize ${
                           payment.status === 'completed' ? 'text-green-500'
                             : payment.status === 'failed' || payment.status === 'rejected' ? 'text-red-500'
                               : 'text-yellow-500'

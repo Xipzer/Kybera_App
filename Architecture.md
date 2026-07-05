@@ -24,7 +24,7 @@ Browser (React SPA)
   |-- Jupiter API ................. Solana swaps
   |-- KyberSwap API ............... EVM swaps
   |-- relay.link API .............. Cross-chain bridging
-  |-- OpenClaw Gateway ............ AI agent (WebSocket)
+  |-- LLM Provider APIs ........... Anthropic / OpenAI / xAI (direct HTTPS, OAuth or API key)
 ```
 
 All sensitive data (private keys, seed phrases) is encrypted with AES-256 and never leaves the browser unencrypted.
@@ -44,7 +44,7 @@ All sensitive data (private keys, seed phrases) is encrypted with AES-256 and ne
 | Animations       | Framer Motion                       | -           |
 | EVM              | ethers.js                           | 6           |
 | Solana           | @solana/web3.js + @solana/spl-token | 1.98 / 0.4  |
-| AI               | OpenClaw Gateway (WebSocket)        | Protocol v3 |
+| AI               | In-client LLM harness (Anthropic / OpenAI / xAI) | -           |
 | Database         | Dexie.js (IndexedDB)                | 4           |
 | Encryption       | CryptoJS (AES-256)                  | -           |
 | Password Hashing | PBKDF2 (SHA-256, 100K iterations)   | -           |
@@ -73,7 +73,6 @@ src/
       AnimatedPanel.tsx            Animated panel wrapper
       EmptyState.tsx               Placeholder for empty views
       ImageUpload.tsx              Profile picture / wallpaper upload
-      OpenClawDeepLinkBanner.tsx   Banner for OpenClaw deep links
     defi/
       YieldView.tsx                DeFi yield opportunities (DeFiLlama data)
     layout/
@@ -117,17 +116,16 @@ src/
     useExportSecret.ts             Export secret key/seed with password verification
     useMediaQuery.ts               Responsive breakpoint detection
     useMultiNetworkBalance.ts      Multi-chain balance aggregation hook
-    useOpenClawDeepLink.ts         Handle OpenClaw deep links
     useSettingsState.ts            Settings state hook (including API keys)
     useTheme.ts                    Theme application hook
     useTransactionHistory.ts       Transaction history data hook
     useWalletBalance.ts            Single wallet balance hook
 
   services/
+    agentActions.ts                AI action registry (tool definitions + handlers, risk levels)
     database.ts                    Dexie schema (16 tables, single version)
     networkService.ts              Network CRUD, custom networks, visibility
     notificationService.ts         Alert polling and browser push notifications
-    openClawService.ts             OpenClaw Gateway WebSocket client
     tokenImageService.ts           Token logo fetching (CoinGecko, queued)
     walletTrackingService.ts       Watched wallet polling, activity classification, copy trade evaluation
     api/
@@ -150,6 +148,22 @@ src/
       eventBus.ts                  Internal event system
     defi/
       yieldService.ts              DeFi yield data from DeFiLlama
+    llm/
+      llmService.ts                Public AI service (event emitter consumed by researchStore)
+      agent.ts                     In-client agentic tool-calling loop (max 8 turns)
+      tools.ts                     Bridges agentActions registry into LLM tool format
+      systemPrompt.ts              Kybera system prompt
+      types.ts                     Provider-agnostic types (messages, tools, stream events)
+      providers/
+        anthropic.ts               Anthropic Messages API adapter
+        openai-compatible.ts       OpenAI-compatible adapter (OpenAI + xAI/Grok)
+        index.ts                   Provider registry
+      oauth/
+        pkce.ts                    PKCE verifier/challenge generation
+        flow.ts                    Authorization-code flow orchestration
+        configs.ts                 Per-provider OAuth endpoint configuration
+        manager.ts                 Credential storage, retrieval, and token refresh
+        types.ts                   OAuth type definitions
     research/
       basescanService.ts           Basescan/Etherscan contract data
       dexScreenerService.ts        DexScreener token/pair data
@@ -162,8 +176,8 @@ src/
     authStore.ts                   Password hash/salt, init, verify, change password
     chatStore.ts                   Conversations, messages, CRUD
     permissionStore.ts             AI action permissions, transfer limits
-    researchStore.ts               OpenClaw connection, active researches, results
-    settingsStore.ts               Gateway URL, API keys, auto-lock timeout
+    researchStore.ts               LLM harness connection, active researches, results
+    settingsStore.ts               AI provider/model, API keys, auto-lock timeout
     uiStore.ts                     Theme, drawer state, wallpapers, panel sizes, resetUI()
     walletStore.ts                 Wallets, groups, active wallet/network, lock state
     watchlistStore.ts              Watched wallets, activities, copy trade configs
@@ -209,14 +223,15 @@ messages. Persists `activeConversationId` to localStorage.
 **authStore** - Handles password initialization, verification, and changes. Stores the password hash, salt, and
 encryption salt. Persists all three to localStorage.
 
-**settingsStore** - Stores OpenClaw gateway URL, OpenClaw auth token, API keys (CoinGecko, Alchemy, Helius),
-auto-lock timeout, and default network. API keys persist to IndexedDB, other settings to localStorage.
+**settingsStore** - Stores the selected AI provider and model, API keys (CoinGecko, Alchemy, Helius),
+auto-lock timeout, and default network. AI provider/model, API keys, and AI credentials persist to IndexedDB, other
+settings to localStorage.
 
 **uiStore** - Controls theme selection, drawer open/width state, chat sidebar visibility, profile picture, wallpapers (
 chat + lockscreen with opacity), particle effect settings, wallet detail panel size, and UI defaults with a `resetUI()`
 action. Persists to localStorage.
 
-**researchStore** - Manages OpenClaw WebSocket connection state, active research requests, streaming chat messages, and
+**researchStore** - Manages LLM harness connection state, active research requests, streaming chat messages, and
 completed research results. Persists completed researches to localStorage.
 
 **permissionStore** - Manages AI action permissions (trusted/blocked actions), daily transfer limits (default $10K), and
@@ -374,75 +389,77 @@ Discovered tokens are stored in the `discoveredTokens` IndexedDB table.
 
 ## AI Integration
 
-### OpenClaw Gateway
+### LLM Harness
 
-The primary AI integration is **OpenClaw**, a locally-hosted AI agent that connects via WebSocket. The client
-implementation is in `src/services/openclaw/openClawService.ts` (~1200 lines).
+The AI backend is a **direct, in-client multi-provider LLM harness** in `src/services/llm/`. There is no external
+gateway — the browser talks straight to the provider APIs (Anthropic, OpenAI, xAI/Grok) using OAuth tokens or raw API
+keys. `llmService.ts` is the public service the app talks to; it emits the same event surface (`connection_change`,
+`chat_message`, `action_requested`, `action_result`, etc.) that `researchStore` consumes, so the UI layer is unchanged.
 
-**Protocol**: Custom WebSocket protocol (version 3) with:
+**Modules**:
 
-- Challenge/response authentication
-- `req/res/event` message format
-- Methods: `connect`, `agent`, `chat.send`
-- Streaming responses via `event.agent` messages
+- **types.ts** - Provider-agnostic types: normalized messages, tool definitions, stream events, and credentials
+- **providers/** - Provider adapters behind a common `ProviderAdapter` interface: `anthropic.ts` (Anthropic Messages
+  API) and `openai-compatible.ts` (OpenAI + xAI/Grok), with `index.ts` as the registry
+- **oauth/** - PKCE authorization-code flow: `pkce.ts` (verifier/challenge), `flow.ts` (flow orchestration),
+  `configs.ts` (per-provider endpoints), `manager.ts` (credential storage + token refresh), `types.ts`
+- **agent.ts** - The in-client agentic tool-calling loop (max 8 turns): streams model output, executes requested tools
+  locally, feeds results back until the model stops requesting tools
+- **tools.ts** - Bridges the existing action registry (`src/services/agentActions.ts`) into the provider-agnostic LLM
+  tool format; handlers, risk levels, and confirmation requirements are reused unchanged
+- **systemPrompt.ts** - The Kybera system prompt
+- **llmService.ts** - The public service (singleton event emitter)
+
+**Authentication**: Two credential kinds per provider, stored per-provider in the IndexedDB `settings` table:
+
+- **OAuth** (Anthropic Claude Pro/Max, OpenAI, xAI) - Authorization-code + PKCE flow. Since the SPA has no backend, the
+  redirect lands on a hosted callback page (`public/callback.html`, served at `app.kybera.xyz/callback`) that relays
+  the authorization code back to the app. `oauth/manager.ts` persists tokens and refreshes them when expired.
+- **API key** - A raw provider key entered in Settings, used directly.
+
+Providers and models are configured in **Settings > AI**.
 
 **Connection flow**:
 ```
-1. Client connects to WebSocket URL (configured in settings)
-2. Server sends authentication challenge
-3. Client responds with auth token
-4. Connection established, ready for requests
+1. User selects a provider and model in Settings
+2. researchStore.connect() configures LLMService with { provider, model }
+3. LLMService.connect() verifies a usable credential exists (OAuth token or API key)
+4. Connection state set to 'connected'; requests go directly to the provider API
 ```
 
 **Research flow**:
 ```
 1. User enters a contract address in ResearchView
 2. researchStore.requestResearch() is called
-3. OpenClawService constructs a detailed research prompt with:
-   - Contract address and chain
-   - Instructions for OSINT analysis
-   - Required output format (structured JSON)
-4. Prompt sent via WebSocket as an "agent" request
-5. AI streams response chunks back as events
-6. Chunks are concatenated and displayed in real-time
-7. Final response is parsed (parseResearchResponse()) to extract:
+3. LLMService constructs a research prompt (contract address + network)
+   and runs the agent loop with the Kybera system prompt
+4. The model streams text deltas and requests tools (DexScreener data,
+   token security checks, etc.), which execute locally in the browser
+5. Chunks are concatenated and displayed in real-time
+6. Final response is parsed to extract:
    - Token name, symbol, market cap, price
    - Risk rating (SAFE / POTENTIAL / HIGH RISK / AVOID)
    - Pros and cons
    - Developer info
-8. Structured data displayed as a ResearchCard
+7. Structured data displayed as a ResearchCard
 ```
 
-### AI Action System
+### Agent Loop
 
-A complete function-calling system that lets the AI perform wallet operations. This was originally built for direct LLM
-integration and is compatible with OpenAI's tool format.
+`agent.ts` implements native function calling against the configured provider:
 
-**Components**:
+```
+1. Send conversation + tool definitions to the provider (streaming)
+2. Accumulate text deltas (streamed to the UI) and tool_call events
+3. If the model stopped to use tools:
+   - Look up each tool in the action registry
+   - If it requiresConfirmation: await user approval via ActionConfirmationDialog
+   - Execute the handler locally and append the result as a 'tool' message
+4. Repeat (max 8 turns) until the model finishes without tool calls
+```
 
-- **toolDefinitions.ts** - Defines 18 tools in OpenAI function-calling format, organized into 6 categories (wallet,
-  network, transfer, swap, bridge, query)
-- **actionRegistry.ts** - Maps tool names to handler functions, each with a risk level (low/medium/high/critical) and
-  whether confirmation is required
-- **actionExecutor.ts** - Validates action parameters, creates pending action records, executes the handler with wallet
-  context, and records an audit trail in IndexedDB
-- **contextBuilder.ts** - Generates system prompts with current wallet state (active wallet, balances, network,
-  available actions)
-
-**Action categories and risk levels**:
-
-| Category          | Actions                                                                                                       | Risk          |
-|-------------------|---------------------------------------------------------------------------------------------------------------|---------------|
-| Wallet Management | create_evm_wallet, create_solana_wallet, list_wallets, switch_wallet, get_wallet_balance, create_wallet_group | Low           |
-| Network           | switch_network, list_networks                                                                                 | Low           |
-| Queries           | get_token_price, get_transaction_history, search_token                                                        | Low           |
-| Gas Estimation    | estimate_gas                                                                                                  | Low           |
-| Token Transfers   | send_native_token, send_token                                                                                 | High          |
-| Swaps             | get_swap_quote, execute_swap                                                                                  | Medium / High |
-| Bridge            | get_bridge_quote, execute_bridge                                                                              | Medium / High |
-
-High-risk actions trigger the `ActionConfirmationDialog` component, which shows the user exactly what will happen and
-requires explicit approval.
+Tool calls run entirely in the client. Risky actions (based on their registry risk level) still gate through the
+`ActionConfirmationDialog` component, which shows the user exactly what will happen and requires explicit approval.
 
 ---
 
@@ -523,43 +540,36 @@ Users can also upload custom wallpapers for the chat background and lock screen,
 | Jupiter            | swapService.ts                  | HTTP           | Solana token swap quotes and execution                     |
 | KyberSwap          | swapService.ts                  | HTTP           | EVM token swap quotes and execution (no API key needed)    |
 | relay.link         | relayLinkService.ts             | HTTP           | EVM-to-EVM cross-chain bridge quotes and execution         |
-| OpenClaw           | openClawService.ts              | WebSocket      | AI agent for token research and chat                       |
+| LLM Providers      | llm/llmService.ts               | HTTP (SSE)     | AI agent (Anthropic / OpenAI / xAI) for research and chat  |
 
 ---
 
-## OpenClaw Action System
+## Agent Action System
 
-The AI assistant can execute wallet operations through natural language. This is powered by a skill file and action handler system.
+The AI assistant can execute wallet operations through natural language. This is powered by native LLM tool calling:
+the action registry is exposed to the model as function-calling tools, and the agent loop executes them locally.
 
-### Skill File
+### Action Registry
 
-`public/SKILL.md` is served at `https://app.kybera.xyz/SKILL.md`. It teaches the AI:
+`src/services/agentActions.ts` defines the `TOOL_DEFINITIONS` registry: each action has a JSON-schema parameter
+definition, a handler function, a risk level (low/medium/high/critical), and a `requiresConfirmation` flag.
+`src/services/llm/tools.ts` converts the registry into the provider-agnostic tool format sent to the model.
 
-1. **Token Research Format** - How to structure research responses with market data, developer info, and risk ratings
-2. **Wallet Actions** - JSON format for executable actions (create wallets, switch networks, check balances, etc.)
-3. **Self-Update Instructions** - How to cache the skill locally and check for updates
+32 executable actions (including 3 DeFi yield actions from `src/services/defi/yieldActions.ts`), grouped by category:
 
-When a user sends a message, the client includes a reference to the skill URL. The AI fetches and caches it, then follows the instructions.
-
-### Action Handlers
-
-`src/services/openClawActions.ts` defines 13 executable actions:
-
-| Action               | Risk Level | Confirmation | Description                              |
-|----------------------|------------|--------------|------------------------------------------|
-| create_wallet_group  | medium     | yes          | Create a new wallet group with wallets   |
-| add_wallets_to_group | medium     | yes          | Add wallets to an existing group         |
-| rename_wallet        | low        | no           | Rename a wallet                          |
-| rename_wallet_group  | low        | no           | Rename a wallet group                    |
-| delete_wallet        | high       | yes          | Delete a wallet                          |
-| delete_wallet_group  | critical   | yes          | Delete a group and all its wallets       |
-| list_wallets         | low        | no           | List all wallets and groups              |
-| list_networks        | low        | no           | List available blockchain networks       |
-| get_balance          | low        | no           | Get wallet balance on a network          |
-| switch_wallet        | low        | no           | Switch active wallet                     |
-| switch_network       | low        | no           | Switch active network                    |
-| get_swap_quote       | low        | no           | Get a swap quote from KyberSwap/Jupiter  |
-| get_settings         | low        | no           | Get current app settings                 |
+| Category           | Actions                                                                                                             | Risk           | Confirmation          |
+|--------------------|---------------------------------------------------------------------------------------------------------------------|----------------|-----------------------|
+| Wallet Management  | create_wallet_group, add_wallets_to_group, rename_wallet, rename_wallet_group, delete_wallet, delete_wallet_group, list_wallets, switch_wallet, get_balance | low - critical | create/delete actions |
+| Network            | list_networks, switch_network                                                                                       | low            | no                    |
+| Trading            | get_swap_quote                                                                                                      | low            | no                    |
+| Token Security     | get_token_security, check_malicious_address                                                                         | low            | no                    |
+| Alerts             | create_alert, list_alerts, delete_alert                                                                             | low            | no                    |
+| Prediction Markets | search_prediction_markets, get_prediction_market, get_crypto_sentiment                                              | low            | no                    |
+| Portfolio          | get_portfolio_pnl, get_trade_history                                                                                | low            | no                    |
+| Watchlist          | add_watched_wallet, remove_watched_wallet, list_watched_wallets, get_wallet_activity                                | low            | no                    |
+| x402 Payments      | get_x402_status, list_x402_payments                                                                                 | low            | no                    |
+| DeFi Yield         | search_yield_opportunities, get_top_yields, get_yield_for_token                                                     | low            | no                    |
+| Settings           | get_settings                                                                                                        | low            | no                    |
 
 ### Action Execution Flow
 
@@ -567,28 +577,27 @@ When a user sends a message, the client includes a reference to the skill URL. T
 User: "Create a wallet group called Test with 5 EVM wallets"
   |
   v
-openClawService.sendChatMessage()
-  |-- Includes skill URL reference in message
+LLMService.sendChatMessage()
+  |-- Runs the agent loop against the configured provider
+  |   (system prompt + conversation + tool definitions)
   |
   v
-OpenClaw AI processes, fetches skill if needed
-  |-- Responds with JSON action block:
-  |   ```json
-  |   {"action": "create_wallet_group", "params": {"name": "Test", "evmCount": 5}}
-  |   ```
+Model responds with a native tool call:
+  |   create_wallet_group({"name": "Test", "evmCount": 5})
   |
   v
-openClawService.parseAndExecuteActions()
-  |-- Extracts JSON from response
-  |-- Looks up action in TOOL_DEFINITIONS
+agent.ts looks up the tool in TOOL_DEFINITIONS
   |
   v
-requiresConfirmation? 
+requiresConfirmation?
   |-- YES: emit 'action_requested' -> show ActionConfirmationDialog
-  |-- NO: execute immediately via actionHandlers[name](params)
+  |        (agent loop awaits the user's approve/reject)
+  |-- NO: execute immediately via executeAction(name, params)
   |
   v
 Result emitted as 'action_result' -> displayed in chat
+  |-- Result also fed back to the model as a 'tool' message
+  |   so it can summarize or chain further tools (max 8 turns)
 ```
 
 ---

@@ -109,7 +109,7 @@ function NotificationItem({
             )}
             <button
               onClick={(e) => { e.stopPropagation(); onDismiss(notification.id) }}
-              className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-surface-hover transition-all duration-200"
+              className="opacity-0 group-hover:opacity-100 [@media(pointer:coarse)]:opacity-100 p-1 rounded hover:bg-surface-hover transition-all duration-200"
             >
               <Trash2 className="w-3 h-3 text-text-tertiary hover:text-red-400" />
             </button>
@@ -121,8 +121,8 @@ function NotificationItem({
           {notification.message}
         </p>
         <div className="flex items-center gap-2 mt-1">
-          <span className={`text-[10px] ${meta.color}`}>{meta.label}</span>
-          <span className="text-[10px] text-text-tertiary">{formatTimestamp(notification.createdAt)}</span>
+          <span className={`text-2xs ${meta.color}`}>{meta.label}</span>
+          <span className="text-2xs text-text-tertiary">{formatTimestamp(notification.createdAt)}</span>
         </div>
       </div>
     </div>
@@ -151,7 +151,7 @@ export function NotificationPanel({ compact }: NotificationPanelProps) {
         <div className="flex items-center justify-between px-4 pt-3 pb-1">
           <h3 className="text-base font-medium text-text-primary">Notifications</h3>
           {unreadCount > 0 && (
-            <span className="px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 text-[10px] font-bold">
+            <span className="px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 text-2xs font-bold">
               {unreadCount} unread
             </span>
           )}
@@ -179,14 +179,14 @@ export function NotificationPanel({ compact }: NotificationPanelProps) {
             <div className="flex items-center justify-end gap-2 px-4 pt-2 pb-1">
               <button
                 onClick={markAllAsRead}
-                className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-text-secondary hover:text-accent-500 rounded transition-colors"
+                className="flex items-center gap-1 px-2 py-1 text-2xs font-medium text-text-secondary hover:text-accent-500 rounded transition-colors"
               >
                 <CheckCheck className="w-3 h-3" />
                 Mark all read
               </button>
               <button
                 onClick={clearAllNotifications}
-                className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-text-secondary hover:text-red-400 rounded transition-colors"
+                className="flex items-center gap-1 px-2 py-1 text-2xs font-medium text-text-secondary hover:text-red-400 rounded transition-colors"
               >
                 <Trash2 className="w-3 h-3" />
                 Clear all
@@ -206,7 +206,7 @@ export function NotificationPanel({ compact }: NotificationPanelProps) {
               {Array.from(grouped.entries()).map(([dateLabel, items]) => (
                 <div key={dateLabel}>
                   <div className="px-2 py-2">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-text-tertiary">
+                    <span className="text-2xs font-semibold uppercase tracking-wider text-text-tertiary">
                       {dateLabel}
                     </span>
                   </div>

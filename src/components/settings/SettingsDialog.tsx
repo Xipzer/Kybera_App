@@ -2,6 +2,7 @@
  * Code by Xipzer
  */
 
+import { useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Tabs from '@radix-ui/react-tabs'
 import {
@@ -16,8 +17,7 @@ import {
   Edit2,
   Trash2,
   Globe,
-  Zap,
-  Import,
+  LogIn,
   CreditCard,
   Maximize2,
   Minimize2,
@@ -30,7 +30,16 @@ import { useSettingsState } from '../../hooks/useSettingsState'
 import { useUIStore } from '../../store/uiStore'
 import { NetworkManagementDialog } from './NetworkManagementDialog'
 import { ModernToggle, ModernButton, ModernAlert } from '../ModernDialog'
-import { ConnectionBadge, SecretInput, ThemeSelector, OpacitySlider } from './SettingsPanel'
+import {
+  ConnectionBadge,
+  ConnectionDot,
+  ModelSelect,
+  ProviderSelect,
+  PROVIDER_LABELS,
+  SecretInput,
+  ThemeSelector,
+  OpacitySlider,
+} from './SettingsPanel'
 import { X402Settings } from './X402Settings'
 
 interface SettingsDialogProps {
@@ -42,6 +51,7 @@ interface SettingsDialogProps {
 export function SettingsDialog({ open, onOpenChange, maximized = false }: SettingsDialogProps) {
   const s = useSettingsState({ isOpen: open })
   const { theme: themeConfig } = useTheme()
+  const [showApiKey, setShowApiKey] = useState(false)
   const {
     theme,
     setTheme,
@@ -125,159 +135,127 @@ export function SettingsDialog({ open, onOpenChange, maximized = false }: Settin
                   >
                     <div>
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-medium text-text-primary">OpenClaw Gateway</h3>
+                        <h3 className="text-lg font-medium text-text-primary">AI Provider</h3>
                         <ConnectionBadge connectionState={s.connectionState} size="md" />
                       </div>
 
                       <div className="space-y-4">
                         <div>
                           <label className="block text-sm font-medium text-text-secondary mb-2">
-                            Gateway URL
+                            Provider
                           </label>
-                          <input
-                            type="text"
-                            value={s.gatewayUrl}
-                            onChange={(e) => s.setGatewayUrl(e.target.value)}
-                            placeholder="ws://localhost:8080"
-                            className={themeConfig.styles.input}
-                            style={{ fontSize: '16px' }}
-                          />
-                          <p className="mt-1 text-xs text-text-tertiary">
-                            WebSocket URL of your OpenClaw Gateway instance
-                          </p>
+                          <ProviderSelect provider={s.provider} onSelect={s.handleSelectProvider} />
                         </div>
 
-                        <SecretInput
-                          label="Auth Token (Optional)"
-                          value={s.authToken}
-                          onChange={s.setAuthToken}
-                          show={s.showAuthToken}
-                          onToggle={() => s.setShowAuthToken(!s.showAuthToken)}
-                          placeholder="Your auth token..."
-                          inputClassName={themeConfig.styles.input}
-                        />
+                        <div>
+                          <label className="block text-sm font-medium text-text-secondary mb-2">
+                            Model
+                          </label>
+                          <ModelSelect
+                            model={s.model}
+                            models={s.availableModels}
+                            onSelect={s.handleSelectModel}
+                          />
+                        </div>
+
+                        {s.isSignedIn ? (
+                          <div className="flex items-center justify-between p-3 bg-surface-elevated rounded-lg border border-border-subtle">
+                            <div className="flex items-center gap-2">
+                              <ConnectionDot connectionState={s.connectionState} />
+                              <span className="text-sm text-text-primary">
+                                Connected as {PROVIDER_LABELS[s.provider]}
+                              </span>
+                            </div>
+                            <ModernButton variant="ghost" size="sm" onClick={s.handleSignOut}>
+                              Sign out
+                            </ModernButton>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {s.supportsOAuth && (
+                              <>
+                                <ModernButton
+                                  variant="primary"
+                                  onClick={s.handleStartOAuth}
+                                  loading={s.isSigningIn}
+                                  icon={<LogIn className="w-4 h-4" />}
+                                >
+                                  {s.isSigningIn
+                                    ? 'Signing in...'
+                                    : `Sign in with ${PROVIDER_LABELS[s.provider]}`}
+                                </ModernButton>
+
+                                {s.oauthSession && (
+                                  <div className="p-3 bg-surface-elevated rounded-lg border border-border-subtle space-y-2">
+                                    <label className="block text-xs font-medium text-text-secondary">
+                                      Popup didn't complete? Paste the code here
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={s.manualCode}
+                                      onChange={(e) => s.setManualCode(e.target.value)}
+                                      placeholder="Paste code..."
+                                      className={themeConfig.styles.input}
+                                      style={{ fontSize: '16px' }}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') s.handleSubmitManualCode()
+                                      }}
+                                    />
+                                    <ModernButton
+                                      variant="primary"
+                                      size="sm"
+                                      onClick={s.handleSubmitManualCode}
+                                      disabled={!s.manualCode.trim()}
+                                      icon={<Check className="w-3.5 h-3.5" />}
+                                    >
+                                      Submit code
+                                    </ModernButton>
+                                  </div>
+                                )}
+
+                                <div className="flex items-center gap-3">
+                                  <div className="flex-1 border-t border-border-subtle" />
+                                  <span className="text-xs text-text-tertiary">
+                                    or use an API key
+                                  </span>
+                                  <div className="flex-1 border-t border-border-subtle" />
+                                </div>
+                              </>
+                            )}
+
+                            <SecretInput
+                              label="API Key"
+                              value={s.apiKeyInput}
+                              onChange={s.setApiKeyInput}
+                              show={showApiKey}
+                              onToggle={() => setShowApiKey(!showApiKey)}
+                              placeholder={`Enter your ${PROVIDER_LABELS[s.provider]} API key...`}
+                              inputClassName={themeConfig.styles.input}
+                            />
+                            <div className="flex justify-end">
+                              <ModernButton
+                                variant="secondary"
+                                onClick={s.handleSaveApiKey}
+                                disabled={!s.apiKeyInput.trim()}
+                              >
+                                Save key
+                              </ModernButton>
+                            </div>
+                          </div>
+                        )}
 
                         <ModernToggle
                           checked={s.autoConnect}
                           onChange={s.setAutoConnect}
-                          label="Auto-connect on startup"
-                          description="Automatically connect to OpenClaw when app starts"
+                          label="Auto-connect"
+                          description="Automatically connect on startup"
                         />
 
-                        {s.showImportField ? (
-                          <div className="p-3 bg-surface-elevated rounded-lg border border-border-subtle space-y-2">
-                            <label className="block text-xs font-medium text-text-secondary">
-                              Paste a connection string, URL, or JSON config
-                            </label>
-                            <input
-                              type="text"
-                              value={s.importString}
-                              onChange={(e) => {
-                                s.setImportString(e.target.value)
-                                s.setImportError('')
-                              }}
-                              placeholder='wss://host:port or {"url":"...","token":"..."}'
-                              className={themeConfig.styles.input}
-                              style={{ fontSize: '14px' }}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') s.handleImportConnection()
-                              }}
-                            />
-                            {s.importError && (
-                              <p className="text-xs text-red-400">{s.importError}</p>
-                            )}
-                            <div className="flex items-center gap-2">
-                              <ModernButton
-                                variant="primary"
-                                size="sm"
-                                onClick={s.handleImportConnection}
-                                disabled={!s.importString.trim()}
-                                icon={<Check className="w-3.5 h-3.5" />}
-                              >
-                                Apply
-                              </ModernButton>
-                              <ModernButton
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  s.setShowImportField(false)
-                                  s.setImportString('')
-                                  s.setImportError('')
-                                }}
-                              >
-                                Cancel
-                              </ModernButton>
-                            </div>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => s.setShowImportField(true)}
-                            className="flex items-center gap-2 text-sm text-text-secondary hover:text-accent-500 transition-colors"
-                          >
-                            <Import className="w-4 h-4" />
-                            Import connection string
-                          </button>
+                        {s.llmError && (
+                          <ModernAlert type="error" icon={<AlertCircle className="w-4 h-4" />}>
+                            {s.llmError}
+                          </ModernAlert>
                         )}
-
-                        <div className="flex items-center gap-3 pt-2">
-                          <ModernButton
-                            variant="secondary"
-                            onClick={s.handleTestConnection}
-                            disabled={!s.gatewayUrl.trim()}
-                            loading={s.isTestingConnection}
-                            icon={<Zap className="w-4 h-4" />}
-                          >
-                            {s.isTestingConnection ? 'Testing...' : 'Test Connection'}
-                          </ModernButton>
-
-                          <ModernButton
-                            variant="primary"
-                            onClick={s.handleSaveOpenClaw}
-                            disabled={!s.isOpenClawChanged}
-                          >
-                            Save
-                          </ModernButton>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 p-4 bg-surface-elevated rounded-lg border border-border-subtle">
-                        <div className="flex items-start gap-3">
-                          <Zap className="w-5 h-5 text-accent-500 flex-shrink-0 mt-0.5" />
-                          <div className="text-sm">
-                            <p className="text-text-primary font-medium mb-1">What is OpenClaw?</p>
-                            <p className="text-text-secondary">
-                              OpenClaw is an AI gateway that powers token research in Kybera. It can
-                              run locally on your machine or on a remote server. Use{' '}
-                              <code className="px-1 py-0.5 bg-white/10 rounded text-xs">ws://</code>{' '}
-                              for local and{' '}
-                              <code className="px-1 py-0.5 bg-white/10 rounded text-xs">
-                                wss://
-                              </code>{' '}
-                              for remote connections.
-                            </p>
-                            <div className="flex items-center gap-3 mt-2">
-                              <a
-                                href="https://kybera.xyz/docs#openclaw-setup"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-accent-500 hover:text-accent-400 transition-colors"
-                              >
-                                Setup guide
-                                <Globe className="w-3 h-3" />
-                              </a>
-                              <span className="text-text-muted">|</span>
-                              <a
-                                href="https://github.com/openclaw/openclaw"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-accent-500 hover:text-accent-400 transition-colors"
-                              >
-                                GitHub
-                                <Globe className="w-3 h-3" />
-                              </a>
-                            </div>
-                          </div>
-                        </div>
                       </div>
                     </div>
 
@@ -403,6 +381,7 @@ export function SettingsDialog({ open, onOpenChange, maximized = false }: Settin
                                 onClick={() => s.handleToggleNetworkVisibility(network.id)}
                                 className="p-1.5 rounded hover:bg-surface-hover transition-colors"
                                 title={network.isHidden ? 'Show network' : 'Hide network'}
+                                aria-label={network.isHidden ? 'Show network' : 'Hide network'}
                               >
                                 {network.isHidden ? (
                                   <EyeOff className="w-4 h-4 text-text-secondary" />
@@ -419,12 +398,14 @@ export function SettingsDialog({ open, onOpenChange, maximized = false }: Settin
                                       s.setNetworkDialogOpen(true)
                                     }}
                                     className="p-1.5 rounded hover:bg-surface-hover transition-colors"
+                                    aria-label="Edit network"
                                   >
                                     <Edit2 className="w-4 h-4 text-text-secondary" />
                                   </button>
                                   <button
                                     onClick={() => s.handleRemoveNetwork(network.id)}
                                     className="p-1.5 rounded hover:bg-surface-hover transition-colors hover:text-accent-500"
+                                    aria-label="Delete network"
                                   >
                                     <Trash2 className="w-4 h-4" />
                                   </button>
@@ -743,6 +724,7 @@ export function SettingsDialog({ open, onOpenChange, maximized = false }: Settin
                 onClick={handleMinimize}
                 className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
                 title="Pop out to dialog"
+                aria-label="Pop out to dialog"
               >
                 <Minimize2 className="w-4 h-4 text-text-secondary" />
               </button>
@@ -750,6 +732,7 @@ export function SettingsDialog({ open, onOpenChange, maximized = false }: Settin
                 onClick={() => onOpenChange(false)}
                 className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
                 title="Close settings"
+                aria-label="Close settings"
               >
                 <X className="w-5 h-5 text-text-secondary" />
               </button>
@@ -776,17 +759,25 @@ export function SettingsDialog({ open, onOpenChange, maximized = false }: Settin
       <Dialog.Root open={open} onOpenChange={onOpenChange}>
         <Dialog.Portal>
           <Dialog.Overlay className="dialog-overlay" />
-          <Dialog.Content className="dialog-content bg-surface-base rounded-none sm:rounded-xl shadow-2xl border-0 sm:border border-border-subtle w-full h-full sm:w-[95vw] sm:max-w-[800px] sm:h-[85vh] sm:max-h-[600px] flex overflow-hidden">
+          <Dialog.Content
+            aria-describedby={undefined}
+            className="dialog-content bg-surface-base rounded-none sm:rounded-xl shadow-2xl border-0 sm:border border-border-subtle w-full h-full sm:w-[95vw] sm:max-w-[800px] sm:h-[85vh] sm:max-h-[600px] flex overflow-hidden"
+          >
+            <Dialog.Title className="sr-only">Settings</Dialog.Title>
             <div className="absolute top-4 right-4 z-10 flex items-center gap-1">
               <button
                 onClick={handleMaximize}
                 className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
                 title="Maximize settings"
+                aria-label="Maximize settings"
               >
                 <Maximize2 className="w-4 h-4 text-text-secondary" />
               </button>
               <Dialog.Close asChild>
-                <button className="p-2 rounded-lg hover:bg-surface-hover transition-colors">
+                <button
+                  className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
+                  aria-label="Close settings"
+                >
                   <X className="w-5 h-5 text-text-secondary" />
                 </button>
               </Dialog.Close>

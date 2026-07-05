@@ -39,6 +39,7 @@ interface ApeInterfaceProps {
 }
 
 const PRESET_AMOUNTS = [0.01, 0.05, 0.1, 0.25, 0.5, 1.0]
+const SLIPPAGE_PRESETS = [0.5, 1, 3, 5]
 
 export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfaceProps) {
   const { theme, isDark } = useTheme()
@@ -53,7 +54,7 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
   const [error, setError] = useState<string | null>(null)
   const [step, setStep] = useState<'input' | 'confirm' | 'executing' | 'success' | 'error'>('input')
   const [quote, setQuote] = useState<SwapQuote | null>(null)
-  const [slippage] = useState(1.0)
+  const [slippage, setSlippage] = useState(1.0)
   const { copied, copy: copyToClipboard } = useCopyToClipboard()
 
   const activeWalletId = useWalletStore((state) => state.activeWalletId)
@@ -176,9 +177,12 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
 
   const explorerTxUrl = `${getExplorerUrl(research.network)}/tx/`
 
+  const canClose = step !== 'executing'
+  const handleDismiss = () => canClose && onClose()
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
-      <div className={`absolute inset-0 ${tc.backdrop} backdrop-blur-sm`} onClick={onClose} />
+      <div className={`absolute inset-0 ${tc.backdrop} backdrop-blur-sm`} onClick={handleDismiss} />
 
       <div
         className={`relative w-full max-w-md ${theme.styles.dialogContainer} rounded-2xl overflow-hidden max-h-[90vh] overflow-y-auto`}
@@ -196,8 +200,10 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
             </div>
           </div>
           <button
-            onClick={onClose}
-            className={`p-1.5 sm:p-2 ${tc.hoverBg} rounded-lg transition-colors`}
+            onClick={handleDismiss}
+            disabled={!canClose}
+            aria-label="Close"
+            className={`p-1.5 sm:p-2 ${tc.hoverBg} rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed`}
           >
             <X className="w-4 h-4 sm:w-5 sm:h-5 text-text-secondary" />
           </button>
@@ -258,7 +264,8 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
             </div>
           </div>
 
-          {(research.rating === 'red' || research.rating === 'yellow') && step === 'input' && (
+          {(research.rating === 'red' || research.rating === 'yellow') &&
+            (step === 'input' || step === 'confirm') && (
             <div
               className={`${statusClasses('orange', isDark).bg} ${statusClasses('orange', isDark).border} border rounded-xl p-2.5 sm:p-3 mb-3 sm:mb-4 flex items-start gap-2 sm:gap-3`}
             >
@@ -307,6 +314,49 @@ export function ApeInterface({ research, onClose, onTradeComplete }: ApeInterfac
                     {preset} {nativeSymbol}
                   </button>
                 ))}
+              </div>
+
+              <div className="mb-3 sm:mb-4">
+                <label className="block text-xs sm:text-sm text-text-secondary mb-1.5 sm:mb-2">
+                  Max Slippage
+                </label>
+                <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                  {SLIPPAGE_PRESETS.map((preset) => (
+                    <button
+                      key={preset}
+                      onClick={() => setSlippage(preset)}
+                      className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all border ${
+                        slippage === preset
+                          ? 'bg-green-500/20 border-green-500/50 text-green-600 dark:text-green-400'
+                          : tc.interactiveBg
+                      }`}
+                    >
+                      {preset}%
+                    </button>
+                  ))}
+                  <div className="relative flex-1 min-w-[80px]">
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={String(slippage)}
+                      onChange={(e) => {
+                        const v = parseFloat(e.target.value)
+                        if (!isNaN(v) && v > 0 && v <= 50) setSlippage(v)
+                        else if (e.target.value === '') setSlippage(0)
+                      }}
+                      aria-label="Custom slippage percentage"
+                      className={`w-full px-2.5 py-1 sm:py-1.5 pr-6 ${tc.inputBg} border rounded-lg text-xs sm:text-sm text-text-primary text-right focus:outline-none focus:border-green-500/50`}
+                    />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-text-tertiary text-xs">
+                      %
+                    </span>
+                  </div>
+                </div>
+                {slippage >= 5 && (
+                  <p className="text-2xs sm:text-xs text-orange-400 mt-1.5">
+                    High slippage — you may receive significantly fewer tokens.
+                  </p>
+                )}
               </div>
 
               <div className={`${tc.sectionBg} border rounded-xl p-3 sm:p-4 mb-3 sm:mb-4`}>

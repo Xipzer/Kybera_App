@@ -41,6 +41,7 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
   const [svmWalletCount, setSvmWalletCount] = useState(1)
   const { copied, copy: copyToClipboard } = useCopyToClipboard()
   const [showSeed, setShowSeed] = useState(false)
+  const [savedConfirmed, setSavedConfirmed] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -95,6 +96,7 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
     setEvmWalletCount(1)
     setSvmWalletCount(1)
     setShowSeed(false)
+    setSavedConfirmed(false)
     onOpenChange(false)
   }
 
@@ -122,7 +124,7 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
 
   if (createdGroup) {
     return (
-      <ModernDialog open={open} onOpenChange={onOpenChange} width="lg">
+      <ModernDialog open={open} onOpenChange={onOpenChange} width="lg" preventClose>
         <ModernDialogHeader
           icon={<Check className="w-5 h-5 sm:w-6 sm:h-6" />}
           title="Wallet Group Created"
@@ -169,10 +171,31 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
               {copied ? 'Copied!' : 'Copy to Clipboard'}
             </ModernButton>
           </div>
+
+          <label className="flex items-start gap-3 cursor-pointer group pt-1">
+            <input
+              type="checkbox"
+              checked={savedConfirmed}
+              disabled={!showSeed}
+              onChange={(e) => setSavedConfirmed(e.target.checked)}
+              className="mt-0.5 w-4 h-4 rounded accent-accent-500 disabled:opacity-40 disabled:cursor-not-allowed"
+            />
+            <span
+              className={`text-xs sm:text-sm ${showSeed ? 'text-text-secondary' : 'text-text-tertiary'}`}
+            >
+              I have saved my recovery phrase in a secure location.
+              {!showSeed && ' (Reveal the phrase first.)'}
+            </span>
+          </label>
         </ModernDialogSection>
 
         <ModernDialogActions>
-          <ModernButton variant="primary" fullWidth onClick={handleClose}>
+          <ModernButton
+            variant="primary"
+            fullWidth
+            onClick={handleClose}
+            disabled={!savedConfirmed}
+          >
             Done
           </ModernButton>
         </ModernDialogActions>

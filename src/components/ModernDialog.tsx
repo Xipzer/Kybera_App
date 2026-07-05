@@ -12,6 +12,7 @@ interface ModernDialogProps {
   onOpenChange: (open: boolean) => void
   children: React.ReactNode
   width?: 'sm' | 'md' | 'lg'
+  preventClose?: boolean
 }
 
 interface ModernDialogHeaderProps {
@@ -64,7 +65,13 @@ const widthClasses = {
   lg: 'w-full sm:w-[600px]',
 }
 
-export function ModernDialog({ open, onOpenChange, children, width = 'md' }: ModernDialogProps) {
+export function ModernDialog({
+  open,
+  onOpenChange,
+  children,
+  width = 'md',
+  preventClose = false,
+}: ModernDialogProps) {
   const { theme } = useTheme()
 
   const dialogBg = `${theme.styles.dialogContainer} rounded-2xl`
@@ -74,6 +81,9 @@ export function ModernDialog({ open, onOpenChange, children, width = 'md' }: Mod
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <Dialog.Content
+          onEscapeKeyDown={preventClose ? (e) => e.preventDefault() : undefined}
+          onPointerDownOutside={preventClose ? (e) => e.preventDefault() : undefined}
+          onInteractOutside={preventClose ? (e) => e.preventDefault() : undefined}
           className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${widthClasses[width]} max-h-[90vh] overflow-hidden ${dialogBg} z-[9999] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]`}
         >
           <div className="relative overflow-y-auto max-h-[90vh]">{children}</div>
@@ -93,7 +103,7 @@ export function ModernDialogHeader({
   const { theme } = useTheme()
 
   return (
-    <div className="sticky top-0 z-10 px-4 sm:px-6 pt-4 sm:pt-6 pb-4 bg-inherit border-b border-white/10">
+    <div className="sticky top-0 z-10 px-4 sm:px-6 pt-4 sm:pt-6 pb-4 bg-inherit border-b border-border-subtle">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3 sm:gap-4">
           {backButton || (
@@ -259,7 +269,7 @@ export function ModernButton({
         }
       case 'secondary':
         return {
-          className: `bg-white/5 border border-white/10 text-text-secondary hover:bg-white/10 hover:text-text-primary hover:border-white/20 transition-all duration-200 ${buttonSizes[size]}`,
+          className: `bg-surface-hover border border-border-subtle text-text-secondary hover:bg-surface-overlay hover:text-text-primary hover:border-border-default transition-all duration-200 ${buttonSizes[size]}`,
           style: {},
         }
       case 'danger':
@@ -381,12 +391,12 @@ export function ModernToggle({
           disabled={disabled}
           className="sr-only peer"
         />
-        <div className="w-9 h-5 bg-white/10 rounded-full peer-checked:bg-accent-500 transition-colors border border-white/10 peer-checked:border-accent-500/50" />
-        <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow-md transition-transform peer-checked:translate-x-4" />
+        <div className="w-9 h-5 bg-border-strong rounded-full peer-checked:bg-accent-500 transition-colors border border-border-default peer-checked:border-accent-500/50" />
+        <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white border border-black/10 rounded-full shadow-md transition-transform peer-checked:translate-x-4" />
       </div>
       <div className="flex-1">
         <span
-          className={`text-sm font-medium ${theme.styles.textPrimary} group-hover:text-white transition-colors`}
+          className={`text-sm font-medium ${theme.styles.textPrimary} group-hover:text-text-primary transition-colors`}
         >
           {label}
         </span>
@@ -425,7 +435,7 @@ export function ModernNumberInput({
           type="button"
           onClick={() => onChange(Math.max(min, value - 1))}
           disabled={disabled || value <= min}
-          className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg ${theme.styles.buttonIcon} border border-white/10 ${theme.styles.textSecondary} disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center font-medium`}
+          className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg ${theme.styles.buttonIcon} border border-border-subtle ${theme.styles.textSecondary} disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center font-medium`}
         >
           -
         </button>
@@ -438,14 +448,14 @@ export function ModernNumberInput({
             onChange(Math.max(min, Math.min(max, parseInt(e.target.value) || min)))
           }}
           disabled={disabled}
-          className={`w-14 sm:w-16 px-2 py-1.5 sm:py-2 text-center text-sm font-medium bg-white/5 border border-white/10 rounded-lg ${theme.styles.textPrimary} focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-50`}
+          className={`w-14 sm:w-16 px-2 py-1.5 sm:py-2 text-center text-sm font-medium bg-surface-hover border border-border-subtle rounded-lg ${theme.styles.textPrimary} focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-50`}
           style={{ fontSize: '16px' }}
         />
         <button
           type="button"
           onClick={() => onChange(Math.min(max, value + 1))}
           disabled={disabled || value >= max}
-          className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg ${theme.styles.buttonIcon} border border-white/10 ${theme.styles.textSecondary} disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center font-medium`}
+          className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg ${theme.styles.buttonIcon} border border-border-subtle ${theme.styles.textSecondary} disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center font-medium`}
         >
           +
         </button>

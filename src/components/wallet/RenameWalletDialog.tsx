@@ -72,7 +72,7 @@ export function RenameWalletDialog({ open, onOpenChange, wallet }: RenameWalletD
                   <Wallet className="w-4 h-4 text-accent-500" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] sm:text-xs text-text-tertiary font-mono truncate">
+                  <p className="text-2xs sm:text-xs text-text-tertiary font-mono truncate">
                     {wallet?.address}
                   </p>
                 </div>

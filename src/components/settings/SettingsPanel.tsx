@@ -2,6 +2,7 @@
  * Code by Xipzer
  */
 
+import { useId, useState } from 'react'
 import * as Tabs from '@radix-ui/react-tabs'
 import * as Select from '@radix-ui/react-select'
 import {
@@ -17,6 +18,7 @@ import {
   Wifi,
   WifiOff,
   Loader2,
+  LogIn,
   Zap,
   CreditCard,
 } from 'lucide-react'
@@ -27,10 +29,19 @@ import { useSettingsState } from '../../hooks/useSettingsState'
 import { NetworkManagementDialog } from './NetworkManagementDialog'
 import { ModernToggle, ModernButton, ModernAlert } from '../ModernDialog'
 import { X402Settings } from './X402Settings'
+import type { ProviderId, ProviderModel } from '../../services/llm/types'
+
+export const PROVIDER_LABELS: Record<ProviderId, string> = {
+  anthropic: 'Anthropic (Claude)',
+  openai: 'OpenAI (GPT)',
+  xai: 'xAI (Grok)',
+}
 
 export function SettingsPanel() {
   const s = useSettingsState()
   const { theme: themeConfig } = useTheme()
+  const fieldId = useId()
+  const [showApiKey, setShowApiKey] = useState(false)
   const {
     theme,
     setTheme,
@@ -88,62 +99,129 @@ export function SettingsPanel() {
           <Tabs.Content value="ai" className="flex-1 overflow-y-auto p-4 space-y-6">
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base font-medium text-text-primary">OpenClaw Gateway</h3>
+                <h3 className="text-base font-medium text-text-primary">AI Provider</h3>
                 <ConnectionBadge connectionState={s.connectionState} size="sm" />
               </div>
 
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-text-secondary mb-2">
-                    Gateway URL
+                    Provider
                   </label>
-                  <input
-                    type="text"
-                    value={s.gatewayUrl}
-                    onChange={(e) => s.setGatewayUrl(e.target.value)}
-                    placeholder="ws://localhost:8080"
-                    className={themeConfig.styles.input}
-                    style={{ fontSize: '16px' }}
+                  <ProviderSelect provider={s.provider} onSelect={s.handleSelectProvider} />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-text-secondary mb-2">
+                    Model
+                  </label>
+                  <ModelSelect
+                    model={s.model}
+                    models={s.availableModels}
+                    onSelect={s.handleSelectModel}
                   />
                 </div>
 
-                <SecretInput
-                  label="Auth Token (Optional)"
-                  value={s.authToken}
-                  onChange={s.setAuthToken}
-                  show={s.showAuthToken}
-                  onToggle={() => s.setShowAuthToken(!s.showAuthToken)}
-                  placeholder="Your auth token..."
-                  inputClassName={themeConfig.styles.input}
-                />
+                {s.isSignedIn ? (
+                  <div className="flex items-center justify-between p-3 bg-surface-elevated rounded-lg border border-border-subtle">
+                    <div className="flex items-center gap-2">
+                      <ConnectionDot connectionState={s.connectionState} />
+                      <span className="text-sm text-text-primary">
+                        Connected as {PROVIDER_LABELS[s.provider]}
+                      </span>
+                    </div>
+                    <ModernButton variant="ghost" size="sm" onClick={s.handleSignOut}>
+                      Sign out
+                    </ModernButton>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {s.supportsOAuth && (
+                      <>
+                        <ModernButton
+                          variant="primary"
+                          onClick={s.handleStartOAuth}
+                          loading={s.isSigningIn}
+                          fullWidth
+                          icon={<LogIn className="w-4 h-4" />}
+                        >
+                          {s.isSigningIn
+                            ? 'Signing in...'
+                            : `Sign in with ${PROVIDER_LABELS[s.provider]}`}
+                        </ModernButton>
+
+                        {s.oauthSession && (
+                          <div className="p-3 bg-surface-elevated rounded-lg border border-border-subtle space-y-2">
+                            <label
+                              htmlFor={`${fieldId}-manual-code`}
+                              className="block text-xs font-medium text-text-secondary"
+                            >
+                              Popup didn't complete? Paste the code here
+                            </label>
+                            <input
+                              id={`${fieldId}-manual-code`}
+                              type="text"
+                              value={s.manualCode}
+                              onChange={(e) => s.setManualCode(e.target.value)}
+                              placeholder="Paste code..."
+                              className={themeConfig.styles.input}
+                              style={{ fontSize: '16px' }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') s.handleSubmitManualCode()
+                              }}
+                            />
+                            <ModernButton
+                              variant="primary"
+                              size="sm"
+                              onClick={s.handleSubmitManualCode}
+                              disabled={!s.manualCode.trim()}
+                              icon={<Check className="w-3.5 h-3.5" />}
+                            >
+                              Submit code
+                            </ModernButton>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 border-t border-border-subtle" />
+                          <span className="text-xs text-text-tertiary">or use an API key</span>
+                          <div className="flex-1 border-t border-border-subtle" />
+                        </div>
+                      </>
+                    )}
+
+                    <SecretInput
+                      label="API Key"
+                      value={s.apiKeyInput}
+                      onChange={s.setApiKeyInput}
+                      show={showApiKey}
+                      onToggle={() => setShowApiKey(!showApiKey)}
+                      placeholder={`Enter your ${PROVIDER_LABELS[s.provider]} API key...`}
+                      inputClassName={themeConfig.styles.input}
+                    />
+                    <ModernButton
+                      variant="secondary"
+                      onClick={s.handleSaveApiKey}
+                      disabled={!s.apiKeyInput.trim()}
+                      fullWidth
+                    >
+                      Save key
+                    </ModernButton>
+                  </div>
+                )}
 
                 <ModernToggle
                   checked={s.autoConnect}
                   onChange={s.setAutoConnect}
-                  label="Auto-connect on startup"
-                  description="Automatically connect to OpenClaw when app starts"
+                  label="Auto-connect"
+                  description="Automatically connect on startup"
                 />
 
-                <div className="flex items-center gap-3 pt-2">
-                  <ModernButton
-                    variant="secondary"
-                    onClick={s.handleTestConnection}
-                    disabled={!s.gatewayUrl.trim()}
-                    loading={s.isTestingConnection}
-                    fullWidth
-                    icon={<Zap className="w-4 h-4" />}
-                  >
-                    {s.isTestingConnection ? 'Testing...' : 'Test'}
-                  </ModernButton>
-                  <ModernButton
-                    variant="primary"
-                    onClick={s.handleSaveOpenClaw}
-                    disabled={!s.isOpenClawChanged}
-                    fullWidth
-                  >
-                    Save
-                  </ModernButton>
-                </div>
+                {s.llmError && (
+                  <ModernAlert type="error" icon={<AlertCircle className="w-4 h-4" />}>
+                    {s.llmError}
+                  </ModernAlert>
+                )}
               </div>
             </div>
 
@@ -221,10 +299,11 @@ export function SettingsPanel() {
                 />
 
                 <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-2">
+                  <label htmlFor={`${fieldId}-confirm-password`} className="block text-sm font-medium text-text-secondary mb-2">
                     Confirm New Password
                   </label>
                   <input
+                    id={`${fieldId}-confirm-password`}
                     type="password"
                     value={s.confirmNewPassword}
                     onChange={(e) => s.setConfirmNewPassword(e.target.value)}
@@ -270,10 +349,11 @@ export function SettingsPanel() {
 
                 {s.autoLockEnabled && (
                   <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-2">
+                    <label htmlFor={`${fieldId}-lock-timeout`} className="block text-sm font-medium text-text-secondary mb-2">
                       Timeout (minutes)
                     </label>
                     <input
+                      id={`${fieldId}-lock-timeout`}
                       type="number"
                       value={s.lockTimeout}
                       onChange={(e) => s.handleAutoLockTimeoutChange(e.target.value)}
@@ -349,6 +429,85 @@ export function SettingsPanel() {
   )
 }
 
+export function ConnectionDot({ connectionState }: { connectionState: string }) {
+  const color =
+    connectionState === 'connected'
+      ? 'bg-green-400'
+      : connectionState === 'connecting'
+        ? 'bg-accent-500 animate-pulse'
+        : connectionState === 'error'
+          ? 'bg-red-400'
+          : 'bg-white/30'
+  return <span className={`w-2 h-2 rounded-full flex-shrink-0 ${color}`} />
+}
+
+export function ProviderSelect({
+  provider,
+  onSelect,
+}: {
+  provider: ProviderId
+  onSelect: (provider: ProviderId) => void
+}) {
+  const providers: ProviderId[] = ['anthropic', 'openai', 'xai']
+  return (
+    <div className="grid grid-cols-3 gap-1 p-1 bg-surface-elevated rounded-lg border border-border-subtle">
+      {providers.map((p) => (
+        <button
+          key={p}
+          type="button"
+          onClick={() => onSelect(p)}
+          className={`px-2 py-2 min-h-[44px] text-xs sm:text-sm font-medium rounded-md transition-colors touch-manipulation ${
+            provider === p
+              ? 'bg-accent-500/10 text-accent-500'
+              : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'
+          }`}
+        >
+          {PROVIDER_LABELS[p]}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+export function ModelSelect({
+  model,
+  models,
+  onSelect,
+}: {
+  model: string
+  models: ProviderModel[]
+  onSelect: (model: string) => void
+}) {
+  const current = models.find((m) => m.id === model)
+  return (
+    <Select.Root value={model} onValueChange={onSelect}>
+      <Select.Trigger className="w-full flex items-center justify-between gap-2 px-4 py-3 min-h-[44px] text-sm bg-surface-elevated rounded-lg border border-border-subtle touch-manipulation">
+        <Select.Value>
+          <span className="text-text-primary">{current?.label || model}</span>
+        </Select.Value>
+        <Select.Icon>
+          <ChevronDown className="w-4 h-4 text-text-secondary" />
+        </Select.Icon>
+      </Select.Trigger>
+      <Select.Portal>
+        <Select.Content className="min-w-[240px] bg-surface-base rounded-lg shadow-lg border border-border-subtle p-1 z-[9999]">
+          <Select.Viewport>
+            {models.map((m) => (
+              <Select.Item
+                key={m.id}
+                value={m.id}
+                className="flex items-center justify-between px-4 py-3 min-h-[44px] text-sm rounded cursor-pointer transition-colors text-text-primary hover:bg-surface-hover data-[highlighted]:bg-surface-hover touch-manipulation"
+              >
+                <Select.ItemText>{m.label}</Select.ItemText>
+              </Select.Item>
+            ))}
+          </Select.Viewport>
+        </Select.Content>
+      </Select.Portal>
+    </Select.Root>
+  )
+}
+
 export function ConnectionBadge({
   connectionState,
   size = 'md',
@@ -414,10 +573,11 @@ export function SecretInput({
   helpLink?: string
   helpText?: string
 }) {
+  const inputId = useId()
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <label className="block text-sm font-medium text-text-secondary">{label}</label>
+        <label htmlFor={inputId} className="block text-sm font-medium text-text-secondary">{label}</label>
         {helpLink && (
           <a
             href={helpLink}
@@ -431,6 +591,7 @@ export function SecretInput({
       </div>
       <div className="relative">
         <input
+          id={inputId}
           type={show ? 'text' : 'password'}
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -441,6 +602,7 @@ export function SecretInput({
         <button
           type="button"
           onClick={onToggle}
+          aria-label={show ? `Hide ${label}` : `Reveal ${label}`}
           className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded touch-manipulation hover:bg-surface-hover transition-colors"
         >
           {show ? (
@@ -524,11 +686,13 @@ export function OpacitySlider({
   onChange: (value: number) => void
   description?: string
 }) {
+  const sliderId = useId()
   return (
     <div className="mt-4">
-      <label className="block text-sm font-medium text-text-secondary mb-2">{label}</label>
+      <label htmlFor={sliderId} className="block text-sm font-medium text-text-secondary mb-2">{label}</label>
       <div className="flex items-center gap-4">
         <input
+          id={sliderId}
           type="range"
           min="0"
           max="50"

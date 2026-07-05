@@ -19,13 +19,13 @@ export function WalletListCard({ data }: { data: any }) {
       <div className="space-y-3">
         {data.groups?.map((group: any) => (
           <div key={group.groupId}>
-            <div className="text-[10px] sm:text-xs font-medium text-text-secondary uppercase tracking-wide mb-1.5">{group.groupName}</div>
+            <div className="text-2xs sm:text-xs font-medium text-text-secondary uppercase tracking-wide mb-1.5">{group.groupName}</div>
             <div className={`${card.innerBg} border ${card.innerBorder} rounded-xl overflow-hidden`}>
               {group.wallets?.map((w: any, i: number) => (
                 <div key={w.id} className={`flex items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 ${i > 0 ? `border-t ${card.innerBorder}` : ''}`}>
                   <span className="text-xs sm:text-base text-text-primary font-medium">{w.name}</span>
                   <div className="flex items-center gap-2 sm:gap-3">
-                    <span className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-accent-500/10 text-accent-500 font-medium">{w.type}</span>
+                    <span className="text-2xs sm:text-xs px-1.5 py-0.5 rounded-full bg-accent-500/10 text-accent-500 font-medium">{w.type}</span>
                     <AddressChip address={w.address} />
                   </div>
                 </div>
@@ -57,9 +57,9 @@ export function BalanceCard({ data }: { data: any }) {
           <div className={`relative rounded-xl border ${card.innerBorder} p-3 sm:p-4 text-center overflow-hidden`}>
             <div className={`absolute inset-0 bg-gradient-to-br ${sendGradient} opacity-[0.06]`} />
             <div className="relative">
-              <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wider mb-1 sm:mb-2">Total Value</div>
+              <div className="text-2xs sm:text-xs text-text-tertiary uppercase tracking-wider mb-1 sm:mb-2">Total Value</div>
               <div className="text-base sm:text-xl font-bold text-text-primary font-mono">
-                ${Number(data.totalUSD || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {formatUSD(Number(data.totalUSD || 0))}
               </div>
             </div>
           </div>
@@ -68,7 +68,7 @@ export function BalanceCard({ data }: { data: any }) {
             <div className={`relative rounded-xl border ${card.innerBorder} p-3 sm:p-4 text-center overflow-hidden`}>
               <div className={`absolute inset-0 bg-gradient-to-br ${sendGradient} opacity-[0.04]`} />
               <div className="relative">
-                <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wider mb-1 sm:mb-2">{data.nativeSymbol || 'Native'}</div>
+                <div className="text-2xs sm:text-xs text-text-tertiary uppercase tracking-wider mb-1 sm:mb-2">{data.nativeSymbol || 'Native'}</div>
                 <div className="text-base sm:text-xl font-bold text-text-primary font-mono">
                   {formatCryptoBalance(data.native)}
                 </div>
@@ -80,7 +80,7 @@ export function BalanceCard({ data }: { data: any }) {
             <div className={`relative rounded-xl border ${card.innerBorder} p-3 sm:p-4 text-center overflow-hidden`}>
               <div className={`absolute inset-0 bg-gradient-to-br ${sendGradient} opacity-[0.04]`} />
               <div className="relative">
-                <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wider mb-1 sm:mb-2">Native USD</div>
+                <div className="text-2xs sm:text-xs text-text-tertiary uppercase tracking-wider mb-1 sm:mb-2">Native USD</div>
                 <div className="text-base sm:text-xl font-bold text-text-primary font-mono">
                   {formatUSD(data.nativeUSD)}
                 </div>
@@ -91,9 +91,9 @@ export function BalanceCard({ data }: { data: any }) {
 
         {data.tokens?.length > 0 && (
           <div className="space-y-1.5 sm:space-y-2">
-            {data.tokens.map((t: any, i: number) => (
+            {data.tokens.map((t: any) => (
               <div
-                key={i}
+                key={`${t.network || ''}-${t.address || t.symbol}`}
                 className={`p-3 sm:p-4 ${tokenStyles.cardBg} border ${tokenStyles.cardBorder} rounded-xl ${tokenStyles.cardShadow} transition-all duration-200`}
               >
                 <div className="flex items-center justify-between">
@@ -145,7 +145,7 @@ export function BalanceCard({ data }: { data: any }) {
                             ? <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-green-500" />
                             : <TrendingDown className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-500" />
                           }
-                          <span className={`text-[10px] sm:text-xs font-medium ${t.change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                          <span className={`text-2xs sm:text-xs font-medium ${t.change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                             {t.change24h >= 0 ? '+' : ''}{t.change24h.toFixed(2)}%
                           </span>
                         </div>
@@ -168,9 +168,7 @@ export function WalletGroupCard({ data, action }: { data: any; action: 'created'
       icon={action === 'created' ? Plus : Trash2}
       title={action === 'created' ? `Group Created — ${data.groupName}` : `Group Deleted — ${data.groupName}`}
     >
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
-        <StatCell label="Wallets" value={String(data.walletsCreated ?? data.walletsDeleted ?? 0)} />
-      </div>
+      <StatCell label="Wallets" value={String(data.walletsCreated ?? data.walletsDeleted ?? 0)} />
     </CardShell>
   )
 }

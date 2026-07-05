@@ -7,7 +7,7 @@ import { EventEmitter } from 'events'
 export interface BalanceUpdateEvent {
   wallet: string
   network: string
-  balance: any
+  balance: unknown
 }
 
 export interface PriceUpdateEvent {
@@ -19,7 +19,7 @@ export interface PriceUpdateEvent {
 }
 
 export interface TransactionEvent {
-  transaction: any
+  transaction: unknown
 }
 
 export interface ConnectionStatusEvent {
@@ -52,7 +52,7 @@ interface BlockchainEvents {
 
 export class BlockchainEventBus {
   private emitter = new EventEmitter()
-  private eventHistory: Array<{ event: string; data: any; timestamp: number }> = []
+  private eventHistory: Array<{ event: string; data: unknown; timestamp: number }> = []
   private maxHistorySize = 100
 
   constructor() {
@@ -106,7 +106,7 @@ export class BlockchainEventBus {
     }
   }
 
-  getEventHistory(event?: string): Array<{ event: string; data: any; timestamp: number }> {
+  getEventHistory(event?: string): Array<{ event: string; data: unknown; timestamp: number }> {
     if (event) {
       return this.eventHistory.filter((h) => h.event === event)
     }

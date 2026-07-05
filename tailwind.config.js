@@ -8,6 +8,9 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      fontSize: {
+        '2xs': ['0.6875rem', '1rem'],
+      },
       colors: {
         primary: {
           50: 'rgb(var(--color-primary-50) / <alpha-value>)',

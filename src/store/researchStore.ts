@@ -4,15 +4,10 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import {
-  TokenResearch,
-  ResearchNetwork,
-  ResearchChatMessage,
-  OpenClawResearchUpdate,
-  OpenClawResearchComplete,
-} from '../types/research'
-import { OpenClawService, ConnectionState, OpenClawEvent } from '../services/openClawService'
+import { TokenResearch, ResearchNetwork, ResearchChatMessage } from '../types/research'
+import { LLMService, ConnectionState, LLMEvent } from '../services/llm/llmService'
 import { PendingAction } from '../types/aiActions'
+import type { ProviderId } from '../services/llm/types'
 
 interface ResearchState {
   connectionState: ConnectionState
@@ -29,7 +24,7 @@ interface ResearchState {
 
   pendingAction: PendingAction | null
   
-  connect: (gatewayUrl: string, authToken?: string) => Promise<void>
+  connect: (provider: ProviderId, model: string) => Promise<void>
   disconnect: () => void
   
   requestResearch: (contractAddress: string, network: ResearchNetwork) => Promise<string>
@@ -66,18 +61,12 @@ export const useResearchStore = create<ResearchState>()(
       researchProgress: 0,
       pendingAction: null,
 
-      connect: async (gatewayUrl, authToken) => {
+      connect: async (provider, model) => {
         set({ connectionError: null })
 
         try {
-          OpenClawService.configure({
-            gatewayUrl,
-            authToken,
-            reconnectAttempts: 5,
-            reconnectDelay: 2000,
-          })
-
-          await OpenClawService.connect()
+          LLMService.configure({ provider, model })
+          await LLMService.connect()
         } catch (error) {
           console.error('[ResearchStore] Connection failed:', error)
           set({
@@ -89,7 +78,7 @@ export const useResearchStore = create<ResearchState>()(
       },
 
       disconnect: () => {
-        OpenClawService.disconnect()
+        LLMService.disconnect()
         set({
           connectionState: 'disconnected',
           connectionError: null,
@@ -97,7 +86,7 @@ export const useResearchStore = create<ResearchState>()(
       },
 
       requestResearch: async (contractAddress, network) => {
-        const researchId = await OpenClawService.requestResearch(contractAddress, network)
+        const researchId = await LLMService.requestResearch(contractAddress, network)
 
         const newResearch: TokenResearch = {
           id: researchId,
@@ -130,7 +119,7 @@ export const useResearchStore = create<ResearchState>()(
         const { activeResearchId } = get()
 
         const userMessage: ResearchChatMessage = {
-          id: `msg_${Date.now()}`,
+          id: `msg_${crypto.randomUUID()}`,
           role: 'user',
           content,
           timestamp: new Date(),
@@ -141,7 +130,7 @@ export const useResearchStore = create<ResearchState>()(
           messages: [...state.messages, userMessage],
         }))
 
-        await OpenClawService.sendChatMessage(content, activeResearchId || undefined)
+        await LLMService.sendChatMessage(content)
       },
 
       dismissResearch: (researchId) => {
@@ -176,15 +165,15 @@ export const useResearchStore = create<ResearchState>()(
         if (!pendingAction) return
 
         set({ pendingAction: null })
-        await OpenClawService.executeActionWithConfirmation(pendingAction)
+        LLMService.resolveConfirmation(pendingAction.id, true)
       },
 
-      rejectAction: async (reason?: string) => {
+      rejectAction: async () => {
         const { pendingAction } = get()
         if (!pendingAction) return
 
         set({ pendingAction: null })
-        await OpenClawService.rejectAction(pendingAction, reason)
+        LLMService.resolveConfirmation(pendingAction.id, false)
       },
 
       _setConnectionState: (connectionState) => {
@@ -272,7 +261,7 @@ export function initializeResearchListeners() {
   if (listenersInitialized) return
   listenersInitialized = true
 
-  OpenClawService.on('connection_change', (event: OpenClawEvent) => {
+  LLMService.on('connection_change', (event: LLMEvent) => {
     const data = event.data as { currentState: ConnectionState }
     useResearchStore.getState()._setConnectionState(data.currentState)
     if (data.currentState === 'error') {
@@ -280,47 +269,27 @@ export function initializeResearchListeners() {
     }
   })
 
-  OpenClawService.on('research_update', (event: OpenClawEvent) => {
-    const update = event.data as OpenClawResearchUpdate
-    useResearchStore.getState()._updateResearch(update.researchId, {
-      status: update.status,
-      ...(update.partialData || {}),
-    })
-    if (update.currentStep || update.progress !== undefined) {
-      useResearchStore.getState()._setResearching(
-        true,
-        update.currentStep || null,
-        update.progress || 0
-      )
-    }
+  LLMService.on('research_started', (event: LLMEvent) => {
+    const { researchId } = event.data as { researchId: string }
+    consumedRunIds.add(researchId)
+    useResearchStore.getState()._setResearching(true, 'Researching...', 0)
   })
 
-  OpenClawService.on('research_complete', (event: OpenClawEvent) => {
-    const { researchId, research } = event.data as OpenClawResearchComplete
-    useResearchStore.getState()._setResearchComplete(researchId, research)
-  })
-
-  OpenClawService.on('chat_message', (event: OpenClawEvent) => {
+  LLMService.on('chat_message', (event: LLMEvent) => {
     const msg = event.data as ResearchChatMessage
-    if (consumedRunIds.has(msg.id)) {
-      if (!msg.isStreaming) consumedRunIds.delete(msg.id)
-      return
-    }
     useResearchStore.getState()._addChatMessage(msg)
     if (!msg.isStreaming) {
-      const isActiveResearch = msg.researchId && useResearchStore.getState().researches.some((r) => r.id === msg.researchId)
-      if (!isActiveResearch) {
-        useResearchStore.getState()._setResearching(false, null, 0)
-      }
+      useResearchStore.getState()._setResearching(false, null, 0)
     }
   })
 
-  OpenClawService.on('error', (event: OpenClawEvent) => {
+  LLMService.on('error', (event: LLMEvent) => {
     const error = event.data as { message: string }
     useResearchStore.getState()._setConnectionError(error.message)
+    useResearchStore.getState()._setResearching(false)
   })
 
-  OpenClawService.on('research_error', (event: OpenClawEvent) => {
+  LLMService.on('research_error', (event: LLMEvent) => {
     const error = event.data as { researchId: string; message: string }
     useResearchStore.getState()._updateResearch(error.researchId, {
       status: 'failed',
@@ -329,12 +298,12 @@ export function initializeResearchListeners() {
     useResearchStore.getState()._setResearching(false)
   })
 
-  OpenClawService.on('action_requested', (event: OpenClawEvent) => {
+  LLMService.on('action_requested', (event: LLMEvent) => {
     const { action } = event.data as { action: PendingAction }
     useResearchStore.getState()._setPendingAction(action)
   })
 
-  OpenClawService.on('action_result', (event: OpenClawEvent) => {
+  LLMService.on('action_result', (event: LLMEvent) => {
     const result = event.data as { actionName?: string; runId?: string; success: boolean; message: string; data?: unknown; error?: string }
     const hasCard = !!result.actionName
     const store = useResearchStore.getState()

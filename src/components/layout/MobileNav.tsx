@@ -28,6 +28,8 @@ export function MobileNav({
   const handleResearchClick = () => {
     if (activePanel !== null) {
       onClosePanel()
+    } else {
+      window.dispatchEvent(new CustomEvent('kybera:chat-scroll-top'))
     }
   }
 
@@ -58,7 +60,7 @@ export function MobileNav({
 
   return (
     <nav
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-50"
+      className="fixed bottom-0 left-0 right-0 z-50"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <div
@@ -74,6 +76,7 @@ export function MobileNav({
           <button
             key={tab.label}
             onClick={tab.onClick}
+            aria-current={tab.isActive ? 'page' : undefined}
             className="relative flex flex-col items-center justify-center gap-0.5 px-5 py-1.5 touch-manipulation min-w-[72px] group"
           >
             {tab.isActive && (
@@ -91,14 +94,14 @@ export function MobileNav({
                 }`}
               />
               {tab.badge > 0 && (
-                <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[9px] font-bold leading-none shadow-lg">
+                <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-2xs font-bold leading-none shadow-lg">
                   {tab.badge > 99 ? '99+' : tab.badge}
                 </span>
               )}
             </div>
 
             <span
-              className={`text-[10px] font-semibold tracking-wide transition-all duration-300 ${
+              className={`text-2xs font-semibold tracking-wide transition-all duration-300 ${
                 tab.isActive
                   ? styles.navIconActive
                   : `${styles.navIconColor} group-hover:text-text-secondary`

@@ -6,10 +6,12 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { db } from '../services/database'
 
+import type { ProviderId } from '../services/llm/types'
+
 interface SettingsState {
-  openClawGatewayUrl: string | null
-  openClawAuthToken: string | null
-  openClawAutoConnect: boolean
+  llmProvider: ProviderId
+  llmModel: string | null
+  llmAutoConnect: boolean
 
   coinGeckoApiKey: string | null
   alchemyApiKey: string | null
@@ -17,9 +19,9 @@ interface SettingsState {
   autoLockTimeout: number
   defaultNetwork: string
 
-  setOpenClawGatewayUrl: (url: string | null) => Promise<void>
-  setOpenClawAuthToken: (token: string | null) => Promise<void>
-  setOpenClawAutoConnect: (autoConnect: boolean) => Promise<void>
+  setLlmProvider: (provider: ProviderId) => Promise<void>
+  setLlmModel: (model: string | null) => Promise<void>
+  setLlmAutoConnect: (autoConnect: boolean) => Promise<void>
   setCoinGeckoApiKey: (key: string | null) => Promise<void>
   setAlchemyApiKey: (key: string | null) => Promise<void>
   setHeliusApiKey: (key: string | null) => Promise<void>
@@ -32,28 +34,28 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
-      openClawGatewayUrl: null,
-      openClawAuthToken: null,
-      openClawAutoConnect: true,
+      llmProvider: 'anthropic',
+      llmModel: null,
+      llmAutoConnect: true,
       coinGeckoApiKey: null,
       alchemyApiKey: null,
       heliusApiKey: null,
       autoLockTimeout: 15,
       defaultNetwork: 'base',
 
-      setOpenClawGatewayUrl: async (url) => {
-        await db.settings.put({ key: 'openClawGatewayUrl', value: url })
-        set({ openClawGatewayUrl: url })
+      setLlmProvider: async (provider) => {
+        await db.settings.put({ key: 'llmProvider', value: provider })
+        set({ llmProvider: provider })
       },
 
-      setOpenClawAuthToken: async (token) => {
-        await db.settings.put({ key: 'openClawAuthToken', value: token })
-        set({ openClawAuthToken: token })
+      setLlmModel: async (model) => {
+        await db.settings.put({ key: 'llmModel', value: model })
+        set({ llmModel: model })
       },
 
-      setOpenClawAutoConnect: async (autoConnect) => {
-        await db.settings.put({ key: 'openClawAutoConnect', value: autoConnect })
-        set({ openClawAutoConnect: autoConnect })
+      setLlmAutoConnect: async (autoConnect) => {
+        await db.settings.put({ key: 'llmAutoConnect', value: autoConnect })
+        set({ llmAutoConnect: autoConnect })
       },
 
       setCoinGeckoApiKey: async (key) => {
@@ -91,9 +93,9 @@ export const useSettingsStore = create<SettingsState>()(
         )
 
         set({
-          openClawGatewayUrl: settingsMap.openClawGatewayUrl || null,
-          openClawAuthToken: settingsMap.openClawAuthToken || null,
-          openClawAutoConnect: settingsMap.openClawAutoConnect ?? true,
+          llmProvider: (settingsMap.llmProvider as ProviderId) || 'anthropic',
+          llmModel: settingsMap.llmModel || null,
+          llmAutoConnect: settingsMap.llmAutoConnect ?? true,
           coinGeckoApiKey: settingsMap.coinGeckoApiKey || null,
           alchemyApiKey: settingsMap.alchemyApiKey || null,
           heliusApiKey: settingsMap.heliusApiKey || null,
@@ -107,7 +109,9 @@ export const useSettingsStore = create<SettingsState>()(
       partialize: (state) => ({
         autoLockTimeout: state.autoLockTimeout,
         defaultNetwork: state.defaultNetwork,
-        openClawAutoConnect: state.openClawAutoConnect,
+        llmProvider: state.llmProvider,
+        llmModel: state.llmModel,
+        llmAutoConnect: state.llmAutoConnect,
         alchemyApiKey: state.alchemyApiKey,
         heliusApiKey: state.heliusApiKey,
         coinGeckoApiKey: state.coinGeckoApiKey,

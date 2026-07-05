@@ -76,7 +76,7 @@ function AlertItem({
               {meta.label}
             </span>
             {alert.oneShot && (
-              <span className="px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider rounded bg-amber-500/15 text-amber-400">
+              <span className="px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wider rounded bg-amber-500/15 text-amber-400">
                 one-shot
               </span>
             )}
@@ -160,7 +160,7 @@ export function AlertManager() {
         <span className="text-xs font-medium text-text-secondary">
           {alerts.length} alert{alerts.length !== 1 ? 's' : ''}
         </span>
-        <span className="text-[10px] text-text-tertiary">
+        <span className="text-2xs text-text-tertiary">
           {alerts.filter((a) => a.enabled).length} active
         </span>
       </div>

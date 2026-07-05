@@ -200,6 +200,10 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
             value={seedPhrase}
             onChange={(e) => setSeedPhrase(e.target.value)}
             rows={3}
+            spellCheck={false}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
           />
 
           <WalletTypeConfig

@@ -20,7 +20,7 @@ export function AlertsCard({ data }: { data: any }) {
                 <span className={`w-2 h-2 rounded-full ${a.enabled ? 'bg-green-500' : 'bg-gray-400'}`} />
                 <span className="text-xs sm:text-base text-text-primary">{a.type.replace(/_/g, ' ')}</span>
               </div>
-              <span className="text-[10px] sm:text-xs text-text-tertiary">{a.triggerCount}x triggered</span>
+              <span className="text-2xs sm:text-xs text-text-tertiary">{a.triggerCount}x triggered</span>
             </div>
           ))}
         </div>

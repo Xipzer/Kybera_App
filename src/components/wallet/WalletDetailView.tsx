@@ -166,7 +166,7 @@ export function WalletDetailView() {
                       title="Blockchain data from cache - refreshing..."
                     >
                       <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-yellow-500" />
-                      <span className={`text-[10px] sm:text-xs ${styles.badgeCachedText}`}>
+                      <span className={`text-2xs sm:text-xs ${styles.badgeCachedText}`}>
                         Cached
                       </span>
                     </div>
@@ -176,7 +176,7 @@ export function WalletDetailView() {
                       title="Blockchain data fresh"
                     >
                       <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-green-500" />
-                      <span className={`text-[10px] sm:text-xs ${styles.badgeLiveText}`}>Live</span>
+                      <span className={`text-2xs sm:text-xs ${styles.badgeLiveText}`}>Live</span>
                     </div>
                   )}
                 </div>
@@ -224,12 +224,12 @@ export function WalletDetailView() {
                   </span>
                 </div>
                 {balance.lastUpdated && (
-                  <span className={`text-[10px] sm:text-xs text-text-tertiary`}>
+                  <span className={`text-2xs sm:text-xs text-text-tertiary`}>
                     Updated {formatTimeAgo(balance.lastUpdated)}
                   </span>
                 )}
                 {multiError && balance.totalUSD > 0 && (
-                  <span className={`text-[10px] sm:text-xs text-text-tertiary`}>(cached)</span>
+                  <span className={`text-2xs sm:text-xs text-text-tertiary`}>(cached)</span>
                 )}
               </div>
             </>

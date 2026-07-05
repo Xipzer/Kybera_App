@@ -30,9 +30,10 @@ export function useCardTheme() {
 
 // ─── Card Shell ─────────────────────────────────────────────────────────────
 
-export function CardShell({ icon: Icon, title, children }: {
+export function CardShell({ icon: Icon, title, trailing, children }: {
   icon: LucideIcon
-  title: string
+  title: React.ReactNode
+  trailing?: React.ReactNode
   children: React.ReactNode
 }) {
   const { card, sendGradient } = useCardTheme()
@@ -43,7 +44,8 @@ export function CardShell({ icon: Icon, title, children }: {
         <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-r ${sendGradient} flex items-center justify-center flex-shrink-0`}>
           <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
         </div>
-        <span className="text-sm sm:text-lg font-semibold text-text-primary">{title}</span>
+        <span className="text-sm sm:text-lg font-semibold text-text-primary min-w-0">{title}</span>
+        {trailing && <div className="ml-auto flex-shrink-0">{trailing}</div>}
       </div>
       <div className="p-3 sm:p-4">{children}</div>
     </div>
@@ -52,11 +54,11 @@ export function CardShell({ icon: Icon, title, children }: {
 
 // ─── Stat Cell ──────────────────────────────────────────────────────────────
 
-export function StatCell({ label, value, mono, className }: { label: string; value: string; mono?: boolean; className?: string }) {
+export function StatCell({ label, value, mono, className, valueClassName }: { label: string; value: string; mono?: boolean; className?: string; valueClassName?: string }) {
   return (
     <div className={className}>
-      <div className="text-[10px] sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5 sm:mb-1">{label}</div>
-      <div className={`text-xs sm:text-base text-text-primary font-medium ${mono ? 'font-mono' : ''}`}>{value}</div>
+      <div className="text-2xs sm:text-xs text-text-tertiary uppercase tracking-wide mb-0.5 sm:mb-1">{label}</div>
+      <div className={`text-xs sm:text-base font-medium ${valueClassName ?? 'text-text-primary'} ${mono ? 'font-mono' : ''}`}>{value}</div>
     </div>
   )
 }
@@ -66,20 +68,28 @@ export function StatCell({ label, value, mono, className }: { label: string; val
 export function AddressChip({ address }: { address: string }) {
   const [copied, setCopied] = useState(false)
 
-  return (
-    <button
-      onClick={() => {
-        navigator.clipboard.writeText(address)
+  const handleCopy = () => {
+    navigator.clipboard
+      .writeText(address)
+      .then(() => {
         setCopied(true)
         setTimeout(() => setCopied(false), 2000)
-      }}
-      className="inline-flex items-center gap-1 font-mono text-[10px] sm:text-xs text-text-tertiary hover:text-text-secondary transition-colors cursor-pointer"
+      })
+      .catch(() => {})
+  }
+
+  return (
+    <button
+      onClick={handleCopy}
+      aria-label="Copy address"
+      className="group/chip inline-flex items-center gap-1 font-mono text-2xs sm:text-xs text-text-tertiary hover:text-text-secondary transition-colors cursor-pointer"
     >
       {address.slice(0, 6)}...{address.slice(-4)}
-      {copied
-        ? <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-green-500" />
-        : <Copy className="w-2.5 h-2.5 sm:w-3 sm:h-3 opacity-0 group-hover:opacity-100" />
-      }
+      {copied ? (
+        <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-green-500" />
+      ) : (
+        <Copy className="w-2.5 h-2.5 sm:w-3 sm:h-3 opacity-60 group-hover/chip:opacity-100 [@media(pointer:coarse)]:opacity-60 transition-opacity" />
+      )}
     </button>
   )
 }
@@ -95,7 +105,7 @@ export function YieldRiskBadge({ level }: { level: string }) {
   }
   const c = config[level] ?? config.high
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold uppercase tracking-wider ${c.bg} ${c.text} border ${c.border}`}>
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-2xs sm:text-xs font-semibold uppercase tracking-wider ${c.bg} ${c.text} border ${c.border}`}>
       <c.icon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
       {level}
     </span>

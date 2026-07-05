@@ -987,7 +987,7 @@ function WalletItem({
                 e.stopPropagation()
                 onCopy()
               }}
-              className={`p-1 rounded-lg transition-all ${walletStyles.walletCardHover} opacity-0 group-hover:opacity-100 hover:scale-110`}
+              className={`p-1 rounded-lg transition-all ${walletStyles.walletCardHover} opacity-0 group-hover:opacity-100 [@media(pointer:coarse)]:opacity-100 hover:scale-110`}
               title="Copy address"
             >
               <Copy className={`w-3 h-3 text-text-secondary`} />
@@ -998,7 +998,7 @@ function WalletItem({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className={`p-1 rounded-lg transition-all ${walletStyles.walletCardHover} opacity-0 group-hover:opacity-100 hover:scale-110`}
+                className={`p-1 rounded-lg transition-all ${walletStyles.walletCardHover} opacity-0 group-hover:opacity-100 [@media(pointer:coarse)]:opacity-100 hover:scale-110`}
                 title="View on explorer"
               >
                 <ExternalLink className={`w-3 h-3 text-text-secondary`} />
@@ -1011,7 +1011,7 @@ function WalletItem({
           <DropdownMenu.Trigger asChild>
             <button
               onClick={(e) => e.stopPropagation()}
-              className={`${theme.styles.buttonIcon} opacity-0 group-hover:opacity-100`}
+              className={`${theme.styles.buttonIcon} opacity-0 group-hover:opacity-100 [@media(pointer:coarse)]:opacity-100`}
             >
               <MoreVertical className={`w-4 h-4 ${theme.styles.iconSecondary}`} />
             </button>
@@ -1392,7 +1392,7 @@ function GroupWalletItem({
                 e.stopPropagation()
                 onCopyAddress(wallet.address)
               }}
-              className={`p-1 rounded-lg transition-all ${walletStyles.walletCardHover} opacity-0 group-hover:opacity-100 hover:scale-110`}
+              className={`p-1 rounded-lg transition-all ${walletStyles.walletCardHover} opacity-0 group-hover:opacity-100 [@media(pointer:coarse)]:opacity-100 hover:scale-110`}
               title="Copy address"
             >
               <Copy className={`w-3 h-3 text-text-secondary`} />
@@ -1403,7 +1403,7 @@ function GroupWalletItem({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className={`p-1 rounded-lg transition-all ${walletStyles.walletCardHover} opacity-0 group-hover:opacity-100 hover:scale-110`}
+                className={`p-1 rounded-lg transition-all ${walletStyles.walletCardHover} opacity-0 group-hover:opacity-100 [@media(pointer:coarse)]:opacity-100 hover:scale-110`}
                 title="View on explorer"
               >
                 <ExternalLink className={`w-3 h-3 text-text-secondary`} />
@@ -1421,7 +1421,7 @@ function GroupWalletItem({
             <DropdownMenu.Trigger asChild>
               <button
                 onClick={(e) => e.stopPropagation()}
-                className={`p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-all ${walletStyles.walletCardHover} hover:scale-110`}
+                className={`p-1 rounded-lg opacity-0 group-hover:opacity-100 [@media(pointer:coarse)]:opacity-100 transition-all ${walletStyles.walletCardHover} hover:scale-110`}
               >
                 <MoreVertical className={`w-3.5 h-3.5 text-text-secondary`} />
               </button>

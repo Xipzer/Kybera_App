@@ -11,21 +11,19 @@ import { WalletDrawer } from '../wallet/WalletDrawer'
 import { SettingsPanel } from '../settings/SettingsPanel'
 import { NotificationPanel } from '../notifications/NotificationPanel'
 import { useUIStore } from '../../store/uiStore'
+import { applyThemeClass } from '../../utils/themeClasses'
 
 interface ResponsiveLayoutProps {
   children: ReactNode
 }
 
 export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
-  const isMobile = useMediaQuery('(max-width: 1024px)')
+  const isMobile = useMediaQuery('(max-width: 1023.98px)')
   const [mobilePanel, setMobilePanel] = useState<'wallet' | 'settings' | 'notifications' | null>(null)
   const { theme: uiTheme } = useUIStore()
 
   useEffect(() => {
-    if (isMobile) {
-      document.documentElement.classList.remove('light', 'dark', 'xipz', 'ogDark', 'ogLight')
-      document.documentElement.classList.add(uiTheme)
-    }
+    if (isMobile) applyThemeClass(uiTheme)
   }, [isMobile, uiTheme])
 
   useEffect(() => {
@@ -71,6 +69,8 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
           direction="right"
           width="w-full sm:w-[85vw] sm:max-w-[400px]"
           className="pb-[64px]"
+          onClose={closePanel}
+          label="Wallets"
         >
           <div className="h-full overflow-y-auto overscroll-contain">
             <WalletDrawer />
@@ -82,6 +82,8 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
           direction="right"
           width="w-full sm:w-[85vw] sm:max-w-[400px]"
           className="pb-[64px]"
+          onClose={closePanel}
+          label="Settings"
         >
           <div className="h-full overflow-y-auto overscroll-contain">
             <SettingsPanel />
@@ -93,6 +95,8 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
           direction="right"
           width="w-full sm:w-[85vw] sm:max-w-[400px]"
           className="pb-[64px]"
+          onClose={closePanel}
+          label="Notifications"
         >
           <div className="h-full overflow-y-auto overscroll-contain">
             <NotificationPanel />

@@ -42,12 +42,17 @@ export function ExportGroupDialog({ open, onOpenChange, group }: ExportGroupDial
   } = useExportSecret({
     exportFn: (id, pw) => exportGroupSeed(id, pw),
     onClose: () => onOpenChange(false),
+    open,
   })
 
   const seedWords = secret ? secret.split(' ') : Array(12).fill('')
 
   return (
-    <ModernDialog open={open} onOpenChange={onOpenChange} width="md">
+    <ModernDialog
+      open={open}
+      onOpenChange={(o) => (o ? onOpenChange(o) : handleClose())}
+      width="md"
+    >
       <ModernDialogHeader
         icon={<Key className="w-5 h-5" />}
         title="Export Recovery Phrase"

@@ -7,6 +7,7 @@ import { Lock, Sun, Moon, Palette, Shield, Fingerprint, Zap } from 'lucide-react
 import { useWalletStore } from '../store/walletStore'
 import { useAuthStore } from '../store/authStore'
 import { useUIStore } from '../store/uiStore'
+import { applyThemeClass } from '../utils/themeClasses'
 import { useTheme } from '../hooks/useTheme'
 
 function ParticleField({
@@ -281,8 +282,7 @@ export function UnlockScreen() {
   }
 
   useEffect(() => {
-    document.documentElement.classList.remove('light', 'dark', 'xipz', 'ogDark', 'ogLight')
-    document.documentElement.classList.add(uiTheme)
+    applyThemeClass(uiTheme)
   }, [uiTheme])
 
   useEffect(() => {
@@ -411,7 +411,7 @@ export function UnlockScreen() {
 
             <button
               onClick={cycleTheme}
-              className={`absolute top-4 right-4 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${styles.inputBg} hover:bg-white/10 border ${styles.inputBorder} ${styles.textMuted} hover:${styles.textPrimary} hover:scale-105 z-10`}
+              className={`absolute top-4 right-4 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${styles.inputBg} hover:bg-white/10 border ${styles.inputBorder} ${styles.textMuted} hover:text-text-primary hover:scale-105 z-10`}
               aria-label="Change theme"
             >
               {getThemeIcon()}

@@ -41,10 +41,15 @@ export function ExportWalletDialog({ open, onOpenChange, wallet }: ExportWalletD
   } = useExportSecret({
     exportFn: (id, pw) => getWalletPrivateKey(id, pw),
     onClose: () => onOpenChange(false),
+    open,
   })
 
   return (
-    <ModernDialog open={open} onOpenChange={onOpenChange} width="md">
+    <ModernDialog
+      open={open}
+      onOpenChange={(o) => (o ? onOpenChange(o) : handleClose())}
+      width="md"
+    >
       <ModernDialogHeader
         icon={<Key className="w-5 h-5" />}
         title="Export Private Key"
@@ -82,7 +87,7 @@ export function ExportWalletDialog({ open, onOpenChange, wallet }: ExportWalletD
                       <p className="font-medium text-text-primary text-sm sm:text-base">
                         {wallet?.name}
                       </p>
-                      <p className="text-[10px] sm:text-xs text-text-tertiary font-mono truncate">
+                      <p className="text-2xs sm:text-xs text-text-tertiary font-mono truncate">
                         {wallet?.address}
                       </p>
                     </div>
@@ -167,7 +172,7 @@ export function ExportWalletDialog({ open, onOpenChange, wallet }: ExportWalletD
               </div>
 
               <div className="p-3 sm:p-4 bg-white/5 border border-white/10 rounded-xl">
-                <p className="font-mono text-[10px] sm:text-sm text-text-primary break-all leading-relaxed">
+                <p className="font-mono text-2xs sm:text-sm text-text-primary break-all leading-relaxed">
                   {showSecret ? secret : '\u2022'.repeat(64)}
                 </p>
               </div>

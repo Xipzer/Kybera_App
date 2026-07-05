@@ -362,8 +362,8 @@ const actionHandlers: Record<string, ActionHandler> = {
         hasAlchemyKey: !!settings.alchemyApiKey,
         hasHeliusKey: !!settings.heliusApiKey,
         hasCoinGeckoKey: !!settings.coinGeckoApiKey,
-        hasOpenClawUrl: !!settings.openClawGatewayUrl,
-        openClawAutoConnect: settings.openClawAutoConnect,
+        llmProvider: settings.llmProvider,
+        llmModel: settings.llmModel,
       },
     }
   },
@@ -1145,17 +1145,6 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   },
   ...YIELD_TOOL_DEFINITIONS,
 ]
-
-export function getToolsForOpenClaw(): object[] {
-  return TOOL_DEFINITIONS.map((tool) => ({
-    type: 'function',
-    function: {
-      name: tool.name,
-      description: tool.description,
-      parameters: tool.parameters,
-    },
-  }))
-}
 
 export function getToolDefinition(name: string): ToolDefinition | undefined {
   return TOOL_DEFINITIONS.find((t) => t.name === name)

@@ -136,32 +136,6 @@ export interface ResearchRequest {
   requestedAt: Date
 }
 
-export interface OpenClawMessage {
-  type: 'research_request' | 'research_update' | 'research_complete' | 'chat' | 'error'
-  payload: unknown
-  timestamp: Date
-  sessionId?: string
-}
-
-export interface OpenClawResearchUpdate {
-  researchId: string
-  status: TokenResearch['status']
-  progress?: number
-  currentStep?: string
-  partialData?: Partial<TokenResearch>
-}
-
-export interface OpenClawResearchComplete {
-  researchId: string
-  research: TokenResearch
-}
-
-export interface OpenClawError {
-  code: string
-  message: string
-  researchId?: string
-}
-
 export interface ActionResultData {
   actionName: string
   success: boolean

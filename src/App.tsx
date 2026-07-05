@@ -4,7 +4,9 @@
 
 import { useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MotionConfig } from 'framer-motion'
 import { BrowserRouter } from 'react-router-dom'
+import { applyThemeClass } from './utils/themeClasses'
 import { useWalletStore } from './store/walletStore'
 import { useChatStore } from './store/chatStore'
 import { useSettingsStore } from './store/settingsStore'
@@ -13,7 +15,6 @@ import { useAuthStore } from './store/authStore'
 import { ResponsiveLayout } from './components/layout/ResponsiveLayout'
 import { ChatInterface } from './components/chat/ChatInterface'
 import { UnlockScreen } from './components/UnlockScreen'
-import { OpenClawDeepLinkBanner } from './components/common/OpenClawDeepLinkBanner'
 import { initializeMemoryProtection } from './services/security/memoryProtection'
 import { cleanupDiscoveredTokens } from './utils/dbUtils'
 
@@ -33,8 +34,7 @@ function App() {
   }, [])
 
   useEffect(() => {
-    document.documentElement.classList.remove('light', 'dark', 'xipz')
-    document.documentElement.classList.add(theme)
+    applyThemeClass(theme)
   }, [theme])
 
   useEffect(() => {
@@ -50,12 +50,13 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <OpenClawDeepLinkBanner />
-        <ResponsiveLayout>
-          <ChatInterface />
-        </ResponsiveLayout>
-      </BrowserRouter>
+      <MotionConfig reducedMotion="user">
+        <BrowserRouter>
+          <ResponsiveLayout>
+            <ChatInterface />
+          </ResponsiveLayout>
+        </BrowserRouter>
+      </MotionConfig>
     </QueryClientProvider>
   )
 }

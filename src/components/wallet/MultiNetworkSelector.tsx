@@ -53,7 +53,7 @@ export function MultiNetworkSelector({ collapsed = false }: { collapsed?: boolea
     setViewNetworks(availableNetworks.map((n) => n.id))
   }
 
-  const handleClearAll = () => {
+  const handleReset = () => {
     setViewNetworks([availableNetworks[0].id])
   }
 
@@ -108,10 +108,10 @@ export function MultiNetworkSelector({ collapsed = false }: { collapsed?: boolea
                 </button>
                 <span className={`text-xs ${theme.styles.textTertiary}`}>•</span>
                 <button
-                  onClick={handleClearAll}
+                  onClick={handleReset}
                   className={`text-xs px-1.5 py-0.5 rounded ${theme.styles.textSecondary} hover:text-accent transition-colors`}
                 >
-                  Clear
+                  Reset
                 </button>
               </div>
             </div>
@@ -213,10 +213,10 @@ export function MultiNetworkSelector({ collapsed = false }: { collapsed?: boolea
                 </button>
                 <span className={`text-xs ${theme.styles.textTertiary}`}>•</span>
                 <button
-                  onClick={handleClearAll}
+                  onClick={handleReset}
                   className={`text-xs px-1.5 py-0.5 rounded ${theme.styles.textSecondary} hover:text-accent transition-colors`}
                 >
-                  Clear
+                  Reset
                 </button>
               </div>
             </div>

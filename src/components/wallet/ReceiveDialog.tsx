@@ -49,7 +49,7 @@ export function ReceiveDialog({ open, onOpenChange, wallet }: ReceiveDialogProps
           title: `${wallet.name} Address`,
           text: wallet.address,
         })
-      } catch (err) {
+      } catch {
         copyAddress()
       }
     } else {

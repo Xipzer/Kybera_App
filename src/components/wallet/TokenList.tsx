@@ -233,7 +233,7 @@ export function TokenList({
               {tokens.map((token) => (
                 <div
                   key={`${networkId}-${token.symbol}-${token.isNative ? 'native' : token.address || ''}`}
-                  className={`p-3 sm:p-4 ${styles.cardBg} border ${styles.cardBorder} rounded-xl ${styles.cardHover} ${styles.cardShadow} transition-all duration-200 cursor-pointer touch-manipulation`}
+                  className={`p-3 sm:p-4 ${styles.cardBg} border ${styles.cardBorder} rounded-xl ${styles.cardHover} ${styles.cardShadow} transition-all duration-200 touch-manipulation`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 sm:gap-3">
@@ -314,7 +314,7 @@ export function TokenList({
                               <TrendingDown className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-500" />
                             )}
                             <span
-                              className={`text-[10px] sm:text-xs font-medium ${
+                              className={`text-2xs sm:text-xs font-medium ${
                                 token.change24h >= 0 ? 'text-green-500' : 'text-red-500'
                               }`}
                             >

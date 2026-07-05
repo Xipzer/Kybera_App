@@ -8,6 +8,7 @@ import * as Select from '@radix-ui/react-select'
 import * as Popover from '@radix-ui/react-popover'
 import {
   AlertCircle,
+  ArrowLeft,
   Check,
   ChevronDown,
   ExternalLink,
@@ -66,6 +67,9 @@ export function SendDialog({
   const [memo, setMemo] = useState('')
 
   const [activeTab, setActiveTab] = useState('wallets')
+  const [step, setStep] = useState<'input' | 'confirm'>('input')
+  const [estimatedFee, setEstimatedFee] = useState<string | null>(null)
+  const [isEstimatingFee, setIsEstimatingFee] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingBalances, setIsLoadingBalances] = useState(false)
   const [error, setError] = useState('')
@@ -142,31 +146,31 @@ export function SendDialog({
   }, [fromWallet?.address, network.id])
 
   useEffect(() => {
-    if (selectedToken && amount) {
-      const amountNum = parseFloat(amount)
-      if (!isNaN(amountNum)) {
-        setUsdAmount(amountNum * (selectedToken.usdValue / parseFloat(selectedToken.balance)))
-      } else {
-        setUsdAmount(0)
-      }
+    const bal = selectedToken ? parseFloat(selectedToken.balance) : 0
+    const amountNum = parseFloat(amount)
+    if (selectedToken && amount && !isNaN(amountNum) && bal > 0 && selectedToken.usdValue > 0) {
+      setUsdAmount(amountNum * (selectedToken.usdValue / bal))
     } else {
       setUsdAmount(0)
     }
   }, [amount, selectedToken])
 
-  const handleSend = async () => {
+  const hasPrice = (selectedToken?.usdValue ?? 0) > 0
+  const recipientValid = recipient
+    ? blockchainService.validateAddress(recipient, fromWallet.type)
+    : null
+
+  const handleReview = async () => {
     setError('')
 
     if (!recipient || !amount || !selectedToken) {
       setError('Please fill in all required fields')
       return
     }
-
     if (!password) {
       setError('Please unlock your wallet first')
       return
     }
-
     if (!blockchainService.validateAddress(recipient, fromWallet.type)) {
       setError('Invalid recipient address')
       return
@@ -177,48 +181,67 @@ export function SendDialog({
       setError('Invalid amount')
       return
     }
-
     if (amountNum > parseFloat(selectedToken.balance)) {
       setError('Insufficient balance')
       return
     }
 
+    setIsEstimatingFee(true)
+    let fee: string | null = null
+    try {
+      fee = await blockchainService.estimateTransactionFee(fromWallet, network, recipient, amount)
+      setEstimatedFee(fee)
+    } catch (err) {
+      console.error('Fee estimation failed:', err)
+      setEstimatedFee(null)
+    } finally {
+      setIsEstimatingFee(false)
+    }
+
+    // For native sends, ensure amount + gas fits within balance.
+    if (selectedToken.isNative && fee) {
+      if (amountNum + parseFloat(fee) > parseFloat(selectedToken.balance)) {
+        setError('Insufficient balance for amount + network fee')
+        return
+      }
+    }
+
+    setStep('confirm')
+  }
+
+  const resetAndClose = () => {
+    onOpenChange(false)
+    setStep('input')
+    setRecipient('')
+    setAmount('')
+    setMemo('')
+    setTxHash(null)
+    setShowSuccess(false)
+    setEstimatedFee(null)
+    setError('')
+  }
+
+  const handleConfirmSend = async () => {
+    if (!selectedToken || !password) return
+    setError('')
     setIsLoading(true)
 
     try {
-      let hash: string
-
-      if (selectedToken.isNative) {
-        hash = await blockchainService.sendTransaction(
-          fromWallet,
-          network,
-          recipient,
-          amount,
-          password,
-        )
-      } else {
-        hash = await blockchainService.sendToken(
-          fromWallet,
-          network,
-          selectedToken.address!,
-          recipient,
-          amount,
-          selectedToken.decimals,
-          password,
-        )
-      }
+      const hash = selectedToken.isNative
+        ? await blockchainService.sendTransaction(fromWallet, network, recipient, amount, password)
+        : await blockchainService.sendToken(
+            fromWallet,
+            network,
+            selectedToken.address!,
+            recipient,
+            amount,
+            selectedToken.decimals,
+            password,
+          )
 
       setTxHash(hash)
       setShowSuccess(true)
-
-      setTimeout(() => {
-        onOpenChange(false)
-        setRecipient('')
-        setAmount('')
-        setMemo('')
-        setTxHash(null)
-        setShowSuccess(false)
-      }, 3000)
+      setTimeout(resetAndClose, 4000)
     } catch (err) {
       console.error('Transaction failed:', err)
       setError(err instanceof Error ? err.message : 'Transaction failed. Please try again.')
@@ -261,14 +284,92 @@ export function SendDialog({
       : 'bg-surface-elevated border-border-subtle'
 
   return (
-    <ModernDialog open={open} onOpenChange={onOpenChange} width="lg">
+    <ModernDialog
+      open={open}
+      onOpenChange={(o) => (o ? onOpenChange(o) : resetAndClose())}
+      width="lg"
+      preventClose={isLoading}
+    >
       <ModernDialogHeader
         icon={<Send className="w-5 h-5" />}
-        title="Send"
-        subtitle={`From ${fromWallet.name}`}
-        onClose={() => onOpenChange(false)}
+        title={step === 'confirm' ? 'Confirm Send' : 'Send'}
+        subtitle={step === 'confirm' ? 'Review before sending' : `From ${fromWallet.name}`}
+        onClose={resetAndClose}
+        backButton={
+          step === 'confirm' && !isLoading && !showSuccess ? (
+            <button
+              onClick={() => setStep('input')}
+              aria-label="Back"
+              className="p-2.5 sm:p-3 rounded-xl hover:bg-white/10 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-text-secondary" />
+            </button>
+          ) : undefined
+        }
       />
 
+      {step === 'confirm' ? (
+        <ModernDialogSection className="space-y-4 pb-4">
+          <div className="p-4 bg-white/5 border border-white/10 rounded-xl space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs font-medium text-text-secondary">Amount</span>
+              <div className="text-right">
+                <p className="text-base font-semibold text-text-primary">
+                  {amount} {selectedToken?.symbol}
+                </p>
+                {hasPrice && <p className="text-xs text-text-tertiary">≈ {formatUSD(usdAmount)}</p>}
+              </div>
+            </div>
+            <div className="h-px bg-white/10" />
+            <div className="flex items-start justify-between gap-3">
+              <span className="text-xs font-medium text-text-secondary shrink-0">To</span>
+              <span className="text-xs font-mono text-text-primary break-all text-right">
+                {recipient}
+              </span>
+            </div>
+            <div className="h-px bg-white/10" />
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs font-medium text-text-secondary">Network</span>
+              <span className="text-xs font-medium text-text-primary">{network.name}</span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs font-medium text-text-secondary">Network fee</span>
+              <span className="text-xs font-medium text-text-primary">
+                {isEstimatingFee
+                  ? 'Estimating…'
+                  : estimatedFee
+                    ? `≈ ${formatCryptoBalance(estimatedFee)} ${nativeCurrency.symbol}`
+                    : 'Unavailable'}
+              </span>
+            </div>
+          </div>
+
+          {error && (
+            <ModernAlert type="error" icon={<AlertCircle className="w-4 h-4" />}>
+              {error}
+            </ModernAlert>
+          )}
+
+          {showSuccess && txHash && (
+            <div className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/30 rounded-xl">
+              <Check className="w-5 h-5 text-green-400 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-green-400">Transaction Sent!</p>
+                <p className="text-xs text-green-400/80 truncate">{txHash}</p>
+              </div>
+              <a
+                href={`${network.explorerUrl}/tx/${txHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="View on explorer"
+                className="p-2 rounded-lg hover:bg-green-500/20 transition-colors"
+              >
+                <ExternalLink className="w-4 h-4 text-green-400" />
+              </a>
+            </div>
+          )}
+        </ModernDialogSection>
+      ) : (
       <ModernDialogSection className="space-y-4 pb-4">
         <div className="space-y-2">
           <label className={`text-xs font-medium ${theme.styles.textSecondary}`}>From</label>
@@ -522,9 +623,24 @@ export function SendDialog({
             value={recipient}
             onChange={(e) => setRecipient(e.target.value)}
             placeholder={`Enter ${network.type} address`}
-            className="w-full px-4 py-3 text-sm bg-white/5 border border-white/10 rounded-xl text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent-500/50 focus:border-accent-500/50 transition-all"
+            spellCheck={false}
+            autoComplete="off"
+            aria-invalid={recipientValid === false}
+            className={`w-full px-4 py-3 text-sm bg-white/5 border rounded-xl text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 transition-all ${
+              recipientValid === false
+                ? 'border-red-500/50 focus:ring-red-500/50'
+                : recipientValid
+                  ? 'border-green-500/40 focus:ring-green-500/40'
+                  : 'border-white/10 focus:ring-accent-500/50 focus:border-accent-500/50'
+            }`}
             style={{ fontSize: '16px' }}
           />
+          {recipientValid === false && (
+            <p className="text-xs text-red-400 flex items-center gap-1.5">
+              <AlertCircle className="w-3.5 h-3.5" /> This doesn't look like a valid {network.type}{' '}
+              address
+            </p>
+          )}
 
           <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
             <Tabs.List className="flex border-b border-white/10">
@@ -655,39 +771,59 @@ export function SendDialog({
           </ModernAlert>
         )}
 
-        {showSuccess && txHash && (
-          <div className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/30 rounded-xl">
-            <Check className="w-5 h-5 text-green-400 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-green-400">Transaction Sent!</p>
-              <p className="text-xs text-green-400/80 truncate">{txHash}</p>
-            </div>
-            <a
-              href={`${network.explorerUrl}/tx/${txHash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 rounded-lg hover:bg-green-500/20 transition-colors"
-            >
-              <ExternalLink className="w-4 h-4 text-green-400" />
-            </a>
-          </div>
-        )}
       </ModernDialogSection>
+      )}
 
       <ModernDialogActions>
-        <ModernButton variant="secondary" fullWidth onClick={() => onOpenChange(false)}>
-          Cancel
-        </ModernButton>
-        <ModernButton
-          variant="primary"
-          fullWidth
-          onClick={handleSend}
-          loading={isLoading}
-          disabled={!recipient || !amount || !selectedToken || isLoadingBalances}
-          icon={<Send className="w-4 h-4" />}
-        >
-          Send
-        </ModernButton>
+        {step === 'confirm' ? (
+          showSuccess ? (
+            <ModernButton variant="primary" fullWidth onClick={resetAndClose}>
+              Done
+            </ModernButton>
+          ) : (
+            <>
+              <ModernButton
+                variant="secondary"
+                fullWidth
+                onClick={() => setStep('input')}
+                disabled={isLoading}
+              >
+                Back
+              </ModernButton>
+              <ModernButton
+                variant="primary"
+                fullWidth
+                onClick={handleConfirmSend}
+                loading={isLoading}
+                icon={<Send className="w-4 h-4" />}
+              >
+                Confirm Send
+              </ModernButton>
+            </>
+          )
+        ) : (
+          <>
+            <ModernButton variant="secondary" fullWidth onClick={resetAndClose}>
+              Cancel
+            </ModernButton>
+            <ModernButton
+              variant="primary"
+              fullWidth
+              onClick={handleReview}
+              loading={isEstimatingFee}
+              disabled={
+                !recipient ||
+                !amount ||
+                !selectedToken ||
+                isLoadingBalances ||
+                recipientValid === false
+              }
+              icon={<Send className="w-4 h-4" />}
+            >
+              Review
+            </ModernButton>
+          </>
+        )}
       </ModernDialogActions>
     </ModernDialog>
   )

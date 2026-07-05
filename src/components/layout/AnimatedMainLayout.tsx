@@ -5,6 +5,7 @@
 import { ReactNode, useState, useEffect, useRef } from 'react'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { useUIStore } from '../../store/uiStore'
+import { applyThemeClass } from '../../utils/themeClasses'
 import { WalletDrawer } from '../wallet/WalletDrawer'
 import { NavRail, NAV_RAIL_COLLAPSED } from './NavRail'
 import { useTheme } from '../../hooks/useTheme'
@@ -29,8 +30,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const wasCollapsedOnDragStart = useRef({ wallet: false })
 
   useEffect(() => {
-    document.documentElement.classList.remove('light', 'dark', 'xipz', 'ogDark', 'ogLight')
-    document.documentElement.classList.add(uiTheme)
+    applyThemeClass(uiTheme)
   }, [uiTheme])
 
   const handleWalletDoubleClick = () => {

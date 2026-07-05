@@ -20,7 +20,7 @@ export function YieldCard({ data }: { data: any }) {
               <div className="flex items-center gap-1.5 sm:gap-2">
                 {o.network && <NetworkIcon networkId={o.network} size={14} className="flex-shrink-0" />}
                 <span className="text-xs sm:text-base text-text-primary font-medium">{o.protocol}</span>
-                <span className="text-[10px] sm:text-xs text-text-tertiary">{o.token}</span>
+                <span className="text-2xs sm:text-xs text-text-tertiary">{o.token}</span>
               </div>
               <div className="flex items-center gap-2 sm:gap-3">
                 <span className={`text-xs sm:text-base font-medium ${iconAccent}`}>{Number(o.apy || 0).toFixed(2)}%</span>

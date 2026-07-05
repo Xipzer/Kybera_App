@@ -9,7 +9,7 @@ interface QueuedRequest<T> {
   priority: RequestPriority
   execute: () => Promise<T>
   resolve: (value: T) => void
-  reject: (reason: any) => void
+  reject: (reason: unknown) => void
   timestamp: number
 }
 
@@ -21,8 +21,10 @@ interface RateLimitConfig {
 
 export class RateLimiter {
   private static instance: RateLimiter
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- heterogeneous queue of differently-typed requests
   private requestQueue: QueuedRequest<any>[] = []
   private requestHistory: number[] = []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- heterogeneous in-flight request map
   private pendingRequests: Map<string, Promise<any>> = new Map()
   private isProcessing = false
 

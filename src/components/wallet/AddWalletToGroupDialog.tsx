@@ -237,7 +237,7 @@ export function AddWalletToGroupDialog({ open, onOpenChange, groupId }: AddWalle
                     <p className="font-medium text-text-primary text-sm sm:text-base">
                       {selectedGroup.name}
                     </p>
-                    <p className="text-[10px] sm:text-xs text-text-tertiary">
+                    <p className="text-2xs sm:text-xs text-text-tertiary">
                       {(() => {
                         const evmCount = selectedGroup.evmWalletCount || 0
                         const svmCount = selectedGroup.svmWalletCount || 0

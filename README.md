@@ -4,7 +4,8 @@ A multi-chain cryptocurrency wallet that runs entirely in your browser. Manage w
 other chains, swap and bridge tokens, and use an AI-powered research agent to investigate new token launches before you
 buy.
 
-No backend server. No accounts. No data leaves your browser unless you're talking to a blockchain or the AI agent.
+No backend server. No accounts. No data leaves your browser unless you're talking to a blockchain or your chosen AI
+provider.
 
 ---
 
@@ -18,9 +19,9 @@ across all chains at once.
 KyberSwap (
 EVM), and cross-chain bridging via relay.link.
 
-**AI-powered token research** through OpenClaw, a locally-hosted AI agent. Paste a contract address and get deep OSINT
-analysis: developer identity, holder distribution, liquidity analysis, and a risk rating (SAFE / POTENTIAL / HIGH RISK /
-AVOID). Then decide to ape in or fade.
+**AI-powered token research** through a built-in AI agent that runs directly against your own AI provider account
+(Anthropic, OpenAI, or xAI). Paste a contract address and get deep analysis: developer identity, holder distribution,
+liquidity analysis, and a risk rating (SAFE / POTENTIAL / HIGH RISK / AVOID). Then decide to ape in or fade.
 
 **Security-first design** with AES-256 encrypted keys, PBKDF2 password hashing, automatic memory wiping, auto-lock on
 inactivity, and browser extension/XSS detection.
@@ -89,7 +90,8 @@ precedence).
 | `VITE_HELIUS_API_KEY`    | Solana RPC (Helius)                          | Solana token discovery and balances |
 | `VITE_COINGECKO_API_KEY` | Token prices (CoinGecko Demo key)            | Optional, free tier works without   |
 
-OpenClaw keys are configured only through the in-app settings panel (not `.env`).
+AI provider credentials (OAuth sign-in or API keys for Anthropic, OpenAI, and xAI) are configured only through the
+in-app **Settings > AI** tab (not `.env`).
 
 ### Getting Free Keys
 
@@ -141,7 +143,7 @@ OpenClaw keys are configured only through the in-app settings panel (not `.env`)
 | Animations        | Framer Motion                        |
 | EVM Blockchain    | ethers.js v6                         |
 | Solana Blockchain | @solana/web3.js + @solana/spl-token  |
-| AI Integration    | OpenClaw Gateway (WebSocket)         |
+| AI Integration    | In-client multi-provider LLM harness (Anthropic / OpenAI / xAI, OAuth + API key) |
 | Database          | Dexie.js (IndexedDB)                 |
 | Encryption        | CryptoJS (AES-256) + PBKDF2          |
 | Routing           | React Router v7                      |
@@ -168,31 +170,38 @@ You can also import standalone wallets via private key. Groups and wallets suppo
 
 All swap/bridge operations show you a quote before execution and require confirmation.
 
-### AI Token Research (OpenClaw)
+### AI Token Research
 
-OpenClaw is a separate AI agent that connects to Kybera via WebSocket. When you submit a contract address:
+Kybera's AI agent runs entirely in the client, talking directly to your chosen AI provider (Anthropic, OpenAI, or
+xAI/Grok). When you submit a contract address:
 
-1. The app sends a research prompt to OpenClaw with context about the token
-2. OpenClaw performs deep research using data from DexScreener, Basescan/Etherscan, and other sources
+1. The app sends a research prompt to the model with context about the token
+2. The agent performs deep research by calling built-in tools that fetch data from DexScreener, Basescan/Etherscan, and
+   other sources — all executed locally in your browser
 3. Results stream back in real-time and are parsed into a structured research card
 4. The card shows: token info, market data, developer identity, pros/cons, and a risk rating
 5. You can "Ape" (buy through the quick-trade interface) or "Fade" (dismiss)
 
-OpenClaw runs locally and must be set up separately. Configure its gateway URL and auth token in the app settings.
+To use it, sign in with an AI provider in **Settings > AI** — either via OAuth (Anthropic Claude Pro/Max, OpenAI, xAI)
+or by pasting a raw API key. Credentials are stored per-provider in your browser's local database, and you can pick the
+provider and model there too.
 
 ### AI Action System
 
-The AI assistant can execute 18 different actions on your behalf, organized by category:
+The AI assistant can execute 32 different actions on your behalf through native tool calling, organized by category:
 
-- **Wallet**: Create wallets, list wallets, switch active wallet, check balances, create groups
+- **Wallet**: Create wallet groups, add/rename/delete wallets, list wallets, switch active wallet, check balances
 - **Network**: Switch networks, list available networks
-- **Transfers**: Send native tokens, send ERC-20/SPL tokens, estimate gas
-- **Swaps**: Get swap quotes, execute swaps
-- **Bridge**: Get bridge quotes, execute cross-chain bridges
-- **Queries**: Get token prices, view transaction history, search for tokens
+- **Trading**: Get swap quotes
+- **Security**: Check token security, screen malicious addresses
+- **Alerts**: Create, list, and delete price alerts
+- **Markets**: Search prediction markets, get crypto sentiment
+- **Portfolio**: Get P&L, view trade history
+- **Watchlist**: Add/remove/list watched wallets, view wallet activity
+- **DeFi**: Search yield opportunities, get top yields
 
-High-risk actions (transfers, swaps, bridges) require your explicit confirmation before executing. You can configure
-trusted/blocked actions and set daily transfer limits in the permissions settings.
+All tool calls run locally in your browser. Risky actions (creating or deleting wallets/groups) require your explicit
+confirmation before executing.
 
 ### Security
 
@@ -231,6 +240,7 @@ src/
     api/             External API integrations (CoinGecko, swaps, bridge, rate limiter)
     blockchain/      Blockchain services (EVM, Solana, balance aggregation, providers)
     defi/            DeFi yield data (DeFiLlama)
+    llm/             Multi-provider LLM harness (provider adapters, OAuth, agent loop)
     research/        Token research data sources (DexScreener, Basescan, Polymarket)
     security/        Memory protection and XSS defense
   store/             Zustand state stores
