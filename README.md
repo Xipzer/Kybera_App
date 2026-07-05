@@ -271,14 +271,23 @@ The production build automatically:
 **Required rewrite rules**: Some external APIs don't support CORS, so requests are proxied through your domain. Your
 hosting platform must rewrite these paths:
 
-| Source               | Destination                              | Action  | Notes                                         |
-|----------------------|------------------------------------------|---------|-----------------------------------------------|
-| `/api/coingecko/*`   | `https://api.coingecko.com/*`            | Rewrite | Works on Render (CoinGecko sends CORS headers)|
-| `/api/polymarket/*`  | CORS proxy URL                           | Rewrite | Gamma API has no CORS; requires a proxy (e.g. Cloudflare Worker) |
+| Source                 | Destination                              | Action  | Notes                                         |
+|------------------------|------------------------------------------|---------|-----------------------------------------------|
+| `/api/coingecko/*`     | `https://api.coingecko.com/*`            | Rewrite | Works on Render (CoinGecko sends CORS headers)|
+| `/api/polymarket/*`    | CORS proxy URL                           | Rewrite | Gamma API has no CORS; requires a proxy (e.g. Cloudflare Worker) |
+| `/api/anthropic-token` | `https://platform.claude.com/v1/oauth/token` | Proxy | OAuth token exchange; no CORS on POST response |
+| `/api/anthropic/*`     | `https://api.anthropic.com/*`            | Proxy   | Messages API                                  |
+| `/api/openai-token`    | `https://auth.openai.com/oauth/token`    | Proxy   | OAuth token exchange                          |
+| `/api/openai-codex/*`  | `https://chatgpt.com/backend-api/codex/*`| Proxy   | Codex Responses API (ChatGPT OAuth); blocks browser CORS |
+| `/api/openai/*`        | `https://api.openai.com/*`               | Proxy   | Chat Completions (API-key mode)               |
+| `/api/xai/*`           | `https://api.x.ai/*`                     | Proxy   | Grok (API-key only)                           |
 
 On Render Static Sites, add these in **Redirects/Rewrites** settings. Note that Render "rewrites" to external URLs
-actually perform 302 redirects, which only work if the destination API sends CORS headers. The Polymarket Gamma API does
-not, so a server-side CORS proxy (such as a Cloudflare Worker) is required as the rewrite destination.
+actually perform 302 redirects, which only work if the destination API sends CORS headers. The Polymarket Gamma API and
+the LLM/OAuth endpoints above do **not** send CORS on the browser-blocked responses, so a server-side CORS proxy is
+required. Deploy the bundled Cloudflare Worker (`workers/llm-proxy.js`, config in `workers/wrangler.toml`) and route
+`app.kybera.xyz/api/*` to it — it forwards these requests server-side and re-adds CORS headers. The vite dev proxy in
+`vite.config.ts` handles the same paths automatically during local development.
 
 ---
 

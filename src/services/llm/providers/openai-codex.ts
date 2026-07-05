@@ -21,7 +21,7 @@ import type {
 } from '../types'
 import { OpenAICompatibleAdapter } from './openai-compatible'
 
-const CODEX_URL = 'https://chatgpt.com/backend-api/codex/responses'
+const CODEX_URL = '/api/openai-codex/responses'
 const CODEX_INSTRUCTIONS =
   'You are a helpful AI assistant embedded in the Kybera self-custody crypto wallet.'
 
@@ -94,7 +94,7 @@ export class OpenAIAdapter implements ProviderAdapter {
   private apiKeyAdapter = new OpenAICompatibleAdapter({
     id: 'openai',
     label: 'OpenAI (GPT)',
-    apiUrl: 'https://api.openai.com/v1/chat/completions',
+    apiUrl: '/api/openai/v1/chat/completions',
     defaultModel: this.defaultModel,
     supportsOAuth: true,
     models: this.models,

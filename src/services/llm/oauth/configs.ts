@@ -23,8 +23,11 @@ export const OAUTH_CONFIGS: Partial<Record<ProviderId, OAuthProviderConfig>> = {
   anthropic: {
     provider: 'anthropic',
     clientId: ANTHROPIC_CLIENT_ID,
+    // The authorize URL is a top-level browser navigation (no CORS) — direct.
     authorizeUrl: 'https://claude.ai/oauth/authorize',
-    tokenUrl: 'https://platform.claude.com/v1/oauth/token',
+    // The token exchange is an XHR that the provider blocks cross-origin, so it
+    // goes through the same-origin proxy (vite in dev, Render rewrite in prod).
+    tokenUrl: '/api/anthropic-token',
     scopes:
       'org:create_api_key user:profile user:inference user:sessions:claude_code user:mcp_servers user:file_upload',
     redirectUri: 'http://localhost:53692/callback',
@@ -36,7 +39,7 @@ export const OAUTH_CONFIGS: Partial<Record<ProviderId, OAuthProviderConfig>> = {
     provider: 'openai',
     clientId: 'app_EMoamEEZ73f0CkXaXp7hrann',
     authorizeUrl: 'https://auth.openai.com/oauth/authorize',
-    tokenUrl: 'https://auth.openai.com/oauth/token',
+    tokenUrl: '/api/openai-token',
     scopes: 'openid profile email offline_access',
     redirectUri: 'http://localhost:1455/auth/callback',
     stateIsVerifier: false,

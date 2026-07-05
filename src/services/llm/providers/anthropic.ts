@@ -17,7 +17,7 @@ import type {
   StreamEvent,
 } from '../types'
 
-const API_URL = 'https://api.anthropic.com/v1/messages'
+const API_URL = '/api/anthropic/v1/messages'
 const API_VERSION = '2023-06-01'
 const CLAUDE_CODE_IDENTITY = "You are Claude Code, Anthropic's official CLI for Claude."
 const CLAUDE_CODE_VERSION = '2.1.75'

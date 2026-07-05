@@ -13,7 +13,7 @@ import { OpenAICompatibleAdapter } from './openai-compatible'
 const xaiAdapter = new OpenAICompatibleAdapter({
   id: 'xai',
   label: 'xAI (Grok)',
-  apiUrl: 'https://api.x.ai/v1/chat/completions',
+  apiUrl: '/api/xai/v1/chat/completions',
   defaultModel: 'grok-4.3',
   supportsOAuth: false,
   models: [
