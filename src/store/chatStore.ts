@@ -5,7 +5,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { Conversation, Message } from '../types'
-import { db } from '../services/database'
+import { db, StoredConversation } from '../services/database'
 
 interface ChatState {
   conversations: Conversation[]
@@ -100,7 +100,7 @@ export const useChatStore = create<ChatState>()(
       },
 
       updateConversation: async (id, updates) => {
-        const updateData: any = {
+        const updateData: Partial<StoredConversation> = {
           updatedAt: Date.now(),
         }
         if (updates.title) updateData.title = updates.title

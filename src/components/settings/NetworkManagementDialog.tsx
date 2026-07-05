@@ -110,8 +110,8 @@ export function NetworkManagementDialog({
       }
 
       onOpenChange(false)
-    } catch (err: any) {
-      setError(err.message || 'Failed to save network')
+    } catch (err) {
+      setError((err as Error).message || 'Failed to save network')
     } finally {
       setSaving(false)
     }

@@ -4,6 +4,7 @@
 
 import Dexie, { Table } from 'dexie'
 import { Conversation, Message, Transaction, Wallet, WalletGroup } from '../types'
+import type { AlertConfig } from '../types/notifications'
 
 export interface StoredWallet extends Omit<Wallet, 'createdAt'> {
   createdAt: number
@@ -37,7 +38,7 @@ export interface StoredTransaction extends Omit<Transaction, 'timestamp'> {
 
 export interface StoredSetting {
   key: string
-  value: any
+  value: unknown
 }
 
 export interface StoredTokenBalance {
@@ -133,10 +134,10 @@ export interface StoredNetworkVisibility {
 export interface StoredAIActionHistory {
   id: string
   actionName: string
-  parameters: Record<string, any>
+  parameters: Record<string, unknown>
   result: {
     success: boolean
-    data?: any
+    data?: unknown
     error?: string
     message?: string
     transactionHash?: string
@@ -153,7 +154,7 @@ export interface StoredAIActionHistory {
 
 export interface StoredAlert {
   id: string
-  config: any
+  config: AlertConfig
   enabled: boolean
   createdAt: number
   lastTriggeredAt?: number

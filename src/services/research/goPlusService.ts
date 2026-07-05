@@ -71,6 +71,29 @@ const RISK_FLAG_DEFINITIONS: {
   { key: 'isOpenSource', flag: 'Contract is not open source', points: 15, condition: 'falsy' },
 ]
 
+interface GoPlusRawTokenData {
+  is_honeypot?: unknown
+  is_open_source?: unknown
+  is_proxy?: unknown
+  owner_address?: string
+  can_take_back_ownership?: unknown
+  cannot_sell_all?: unknown
+  slippage_modifiable?: unknown
+  is_anti_whale?: unknown
+  trading_cooldown?: unknown
+  transfer_pausable?: unknown
+  hidden_owner?: unknown
+  selfdestruct?: unknown
+  external_call?: unknown
+  is_mintable?: unknown
+  is_blacklisted?: unknown
+  is_true_token?: unknown
+  trust_list?: unknown
+  holder_count?: string
+  lp_holders?: unknown[]
+  total_supply?: string
+}
+
 class GoPlusService {
   private readonly BASE_URL = 'https://api.gopluslabs.io/api/v1'
 
@@ -175,8 +198,8 @@ class GoPlusService {
     }
   }
 
-  private parseTokenSecurity(raw: Record<string, any>): GoPlusTokenSecurity {
-    const toBool = (val: any): boolean => val === '1' || val === 1 || val === true
+  private parseTokenSecurity(raw: GoPlusRawTokenData): GoPlusTokenSecurity {
+    const toBool = (val: unknown): boolean => val === '1' || val === 1 || val === true
 
     const security: GoPlusTokenSecurity = {
       isHoneypot: toBool(raw.is_honeypot),
@@ -196,7 +219,7 @@ class GoPlusService {
       isBlacklisted: toBool(raw.is_blacklisted),
       isTrueToken: toBool(raw.is_true_token),
       trustList: toBool(raw.trust_list),
-      holderCount: parseInt(raw.holder_count) || 0,
+      holderCount: parseInt(raw.holder_count as string) || 0,
       lpHolderCount: raw.lp_holders ? raw.lp_holders.length : 0,
       totalSupply: raw.total_supply || '0',
       riskScore: 0,

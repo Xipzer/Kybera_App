@@ -27,7 +27,7 @@ export interface PaymentPayload {
   network: X402Network
   payload: {
     signature: string
-    authorization: any
+    authorization: Record<string, unknown>
   }
 }
 

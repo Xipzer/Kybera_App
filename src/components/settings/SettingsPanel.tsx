@@ -156,14 +156,15 @@ export function SettingsPanel() {
                               htmlFor={`${fieldId}-manual-code`}
                               className="block text-xs font-medium text-text-secondary"
                             >
-                              Popup didn't complete? Paste the code here
+                              After signing in, your browser is redirected to a page that won't load
+                              — copy the code (or full URL) from the address bar and paste it here.
                             </label>
                             <input
                               id={`${fieldId}-manual-code`}
                               type="text"
                               value={s.manualCode}
                               onChange={(e) => s.setManualCode(e.target.value)}
-                              placeholder="Paste code..."
+                              placeholder="Paste code or redirect URL..."
                               className={themeConfig.styles.input}
                               style={{ fontSize: '16px' }}
                               onKeyDown={(e) => {

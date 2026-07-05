@@ -32,6 +32,17 @@ const KNOWN_DEX_ROUTERS = new Set([
 
 const APPROVAL_METHOD_ID = '0x095ea7b3'
 
+interface TrackedTx {
+  hash?: string
+  from?: string
+  to?: string
+  input?: string
+  value?: string
+  timeStamp?: string
+  blockNumber?: string
+  functionName?: string
+}
+
 class WalletTrackingService {
   private pollingInterval: ReturnType<typeof setInterval> | null = null
   private isProcessing = false
@@ -218,7 +229,7 @@ class WalletTrackingService {
     return []
   }
 
-  classifyTransaction(tx: any, walletAddress: string): ActivityType {
+  classifyTransaction(tx: TrackedTx, walletAddress: string): ActivityType {
     const from = (tx.from || '').toLowerCase()
     const to = (tx.to || '').toLowerCase()
     const wallet = walletAddress.toLowerCase()
@@ -249,7 +260,7 @@ class WalletTrackingService {
     return 'unknown'
   }
 
-  parseSwapFromTx(tx: any): { tokenIn: string; tokenOut: string; amounts: { in: string; out: string } } | null {
+  parseSwapFromTx(tx: TrackedTx): { tokenIn: string; tokenOut: string; amounts: { in: string; out: string } } | null {
     const input = tx.input || '0x'
     if (input === '0x' || input.length < 10) return null
 
@@ -277,7 +288,7 @@ class WalletTrackingService {
         tokenIn: isEthInput ? 'ETH' : 'TOKEN',
         tokenOut: isEthInput ? 'TOKEN' : 'ETH',
         amounts: {
-          in: isEthInput ? this.weiToEth(tx.value) : 'unknown',
+          in: isEthInput ? this.weiToEth(tx.value as string) : 'unknown',
           out: 'unknown',
         },
       }

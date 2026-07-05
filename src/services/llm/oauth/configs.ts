@@ -1,18 +1,20 @@
 /**
  * Code by Xipzer
  *
- * Per-provider OAuth endpoint configuration. Anthropic values mirror the
- * Claude Code CLI PKCE flow (public client). OpenAI and xAI use their standard
- * authorization-code + PKCE endpoints.
+ * Per-provider OAuth endpoint configuration — copied verbatim from the pi-mono
+ * reference the Kimaki adapter is built on:
+ *   packages/ai/src/utils/oauth/anthropic.ts
+ *   packages/ai/src/utils/oauth/openai-codex.ts
  *
- * The redirect URI points at Kybera's hosted callback relay so the pure
- * client-side SPA can complete OAuth without a backend.
+ * The redirect URIs are the providers' REGISTERED loopback callbacks. They must
+ * be sent exactly as-is in both the authorize request and the token exchange,
+ * or the provider rejects the client ("Redirect URI ... is not supported").
+ *
+ * xAI (Grok) has no public OAuth client — it is API-key only (see providers).
  */
 
 import type { ProviderId } from '../types'
 import type { OAuthProviderConfig } from './types'
-
-const CALLBACK_URL = 'https://app.kybera.xyz/callback'
 
 // Anthropic Claude Code public OAuth client (base64 to keep it out of naive scrapes).
 const ANTHROPIC_CLIENT_ID = atob('OWQxYzI1MGEtZTYxYi00NGQ5LTg4ZWQtNTk0NGQxOTYyZjVl')
@@ -23,27 +25,26 @@ export const OAUTH_CONFIGS: Partial<Record<ProviderId, OAuthProviderConfig>> = {
     clientId: ANTHROPIC_CLIENT_ID,
     authorizeUrl: 'https://claude.ai/oauth/authorize',
     tokenUrl: 'https://platform.claude.com/v1/oauth/token',
-    scopes: 'user:profile user:inference',
-    redirectUri: CALLBACK_URL,
+    scopes:
+      'org:create_api_key user:profile user:inference user:sessions:claude_code user:mcp_servers user:file_upload',
+    redirectUri: 'http://localhost:53692/callback',
+    stateIsVerifier: true,
+    tokenBodyFormat: 'json',
     extraAuthParams: { code: 'true' },
-    stateInCode: true,
   },
   openai: {
     provider: 'openai',
-    // OpenAI's ChatGPT/Codex OAuth public client id.
     clientId: 'app_EMoamEEZ73f0CkXaXp7hrann',
     authorizeUrl: 'https://auth.openai.com/oauth/authorize',
     tokenUrl: 'https://auth.openai.com/oauth/token',
     scopes: 'openid profile email offline_access',
-    redirectUri: CALLBACK_URL,
-  },
-  xai: {
-    provider: 'xai',
-    // Placeholder client id — set once xAI's OAuth app is registered.
-    clientId: 'kybera-xai',
-    authorizeUrl: 'https://accounts.x.ai/oauth/authorize',
-    tokenUrl: 'https://accounts.x.ai/oauth/token',
-    scopes: 'inference offline_access',
-    redirectUri: CALLBACK_URL,
+    redirectUri: 'http://localhost:1455/auth/callback',
+    stateIsVerifier: false,
+    tokenBodyFormat: 'form',
+    extraAuthParams: {
+      id_token_add_organizations: 'true',
+      codex_cli_simplified_flow: 'true',
+      originator: 'kybera',
+    },
   },
 }

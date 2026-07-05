@@ -1,9 +1,13 @@
 /**
  * Code by Xipzer
  *
- * OAuth flow abstraction. Kybera is a pure client-side SPA, so authorization
- * codes return to a hosted static callback page which relays them back to the
- * app (via postMessage when opened as a popup, or a pasteable code otherwise).
+ * OAuth flow abstraction, mirroring the pi-mono / Kimaki adapters exactly.
+ *
+ * Kybera is a browser SPA and cannot run the localhost callback server that the
+ * CLI reference uses. Instead we use the manual-paste variant: the redirect_uri
+ * stays the provider-REGISTERED loopback (so the authorize request is accepted),
+ * the browser is sent there after login, and the user pastes the resulting code
+ * (or full redirect URL) back into Kybera.
  */
 
 import type { ProviderId, OAuthTokens } from '../types'
@@ -14,12 +18,14 @@ export interface OAuthProviderConfig {
   authorizeUrl: string
   tokenUrl: string
   scopes: string
-  /** Hosted callback page that receives ?code&state and relays it back. */
+  /** Provider-registered redirect URI (a loopback). Must match exactly. */
   redirectUri: string
-  /** Extra params appended to the authorize URL. */
+  /** Anthropic sends state = the PKCE verifier; OpenAI uses a random state. */
+  stateIsVerifier: boolean
+  /** OpenAI token endpoint expects form-urlencoded; Anthropic expects JSON. */
+  tokenBodyFormat: 'json' | 'form'
+  /** Extra params appended to the authorize URL (e.g. code=true, originator). */
   extraAuthParams?: Record<string, string>
-  /** Some providers (Anthropic) fold state into the code as `code#state`. */
-  stateInCode?: boolean
 }
 
 export interface AuthorizeSession {
@@ -28,16 +34,9 @@ export interface AuthorizeSession {
   state: string
 }
 
-/** Result of exchanging an authorization code. */
-export interface TokenExchangeResult {
-  access: string
-  refresh: string
-  expires: number
-}
-
 export interface OAuthFlow {
   config: OAuthProviderConfig
-  begin(): Promise<AuthorizeSession>
+  begin(originator?: string): Promise<AuthorizeSession>
   exchange(codeInput: string, session: AuthorizeSession): Promise<OAuthTokens>
   refresh(refreshToken: string): Promise<OAuthTokens>
 }

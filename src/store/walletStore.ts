@@ -11,7 +11,7 @@ import {
   getNetworksByType,
   getDefaultNetworkId,
 } from '../utils/networks'
-import { db } from '../services/database'
+import { db, StoredWallet, StoredWalletGroup } from '../services/database'
 import { EVMWalletService } from '../services/blockchain/evmWallet'
 import { SVMWalletService } from '../services/blockchain/svmWallet'
 import { decryptData, encryptData } from '../utils/crypto'
@@ -293,7 +293,7 @@ export const useWalletStore = create<WalletState>()(
           lastNetworkId: getDefaultNetworkId(walletType),
         }
 
-        const updateData: any = {
+        const updateData: Partial<Pick<WalletGroup, 'walletCount' | 'evmWalletCount' | 'svmWalletCount'>> = {
           walletCount: group.walletCount + 1,
           ...(walletType === 'EVM'
             ? { evmWalletCount: group.evmWalletCount + 1 }
@@ -469,32 +469,32 @@ export const useWalletStore = create<WalletState>()(
       },
 
       updateWallet: async (id, updates) => {
-        const updateData: any = {}
+        const updateData: Record<string, unknown> = {}
         if (updates.createdAt) {
           updateData.createdAt = updates.createdAt.getTime()
         }
         Object.keys(updates).forEach((key) => {
           if (key !== 'createdAt') {
-            updateData[key] = (updates as any)[key]
+            updateData[key] = (updates as Record<string, unknown>)[key]
           }
         })
-        await db.wallets.update(id, updateData)
+        await db.wallets.update(id, updateData as Partial<StoredWallet>)
         set((state) => ({
           wallets: state.wallets.map((w) => (w.id === id ? { ...w, ...updates } : w)),
         }))
       },
 
       updateWalletGroup: async (id, updates) => {
-        const updateData: any = {}
+        const updateData: Record<string, unknown> = {}
         if (updates.createdAt) {
           updateData.createdAt = updates.createdAt.getTime()
         }
         Object.keys(updates).forEach((key) => {
           if (key !== 'createdAt') {
-            updateData[key] = (updates as any)[key]
+            updateData[key] = (updates as Record<string, unknown>)[key]
           }
         })
-        await db.walletGroups.update(id, updateData)
+        await db.walletGroups.update(id, updateData as Partial<StoredWalletGroup>)
         set((state) => ({
           walletGroups: state.walletGroups.map((g) => (g.id === id ? { ...g, ...updates } : g)),
         }))

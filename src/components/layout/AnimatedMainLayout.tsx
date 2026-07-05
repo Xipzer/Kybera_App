@@ -3,7 +3,7 @@
  */
 
 import { ReactNode, useState, useEffect, useRef } from 'react'
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
+import { Panel, PanelGroup, PanelResizeHandle, ImperativePanelHandle } from 'react-resizable-panels'
 import { useUIStore } from '../../store/uiStore'
 import { applyThemeClass } from '../../utils/themeClasses'
 import { WalletDrawer } from '../wallet/WalletDrawer'
@@ -25,7 +25,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const [isWalletDraggingBelowMin, setIsWalletDraggingBelowMin] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
 
-  const walletPanelRef = useRef<any>(null)
+  const walletPanelRef = useRef<ImperativePanelHandle>(null)
   const walletSizeRef = useRef(25)
   const wasCollapsedOnDragStart = useRef({ wallet: false })
 

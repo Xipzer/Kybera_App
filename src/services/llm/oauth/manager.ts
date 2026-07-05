@@ -1,9 +1,15 @@
 /**
  * Code by Xipzer
  *
- * OAuth session lifecycle: begin authorization, complete via popup/postMessage
- * or pasted code, persist credentials, and refresh access tokens on demand
- * (deduplicated so concurrent requests share one refresh).
+ * OAuth session lifecycle: begin authorization (opens the provider login in a
+ * new tab), complete via a pasted code / redirect URL, persist credentials, and
+ * refresh access tokens on demand (deduplicated so concurrent requests share
+ * one refresh).
+ *
+ * Because Kybera runs in the browser it cannot host the loopback callback the
+ * CLI reference uses, so login is manual-paste: the provider redirects to its
+ * registered loopback URI (which the browser cannot load), and the user copies
+ * the code / full URL from the address bar back into Kybera.
  */
 
 import { db } from '../../database'
@@ -16,11 +22,17 @@ const CRED_KEY = (p: ProviderId) => `llm.credential.${p}`
 
 const flows = new Map<ProviderId, OAuthFlow>()
 
+export function providerSupportsOAuth(provider: ProviderId): boolean {
+  return !!OAUTH_CONFIGS[provider]
+}
+
 function getFlow(provider: ProviderId): OAuthFlow {
   const existing = flows.get(provider)
   if (existing) return existing
   const config = OAUTH_CONFIGS[provider]
-  if (!config) throw new Error(`No OAuth config for provider "${provider}"`)
+  if (!config) {
+    throw new Error(`${provider} does not support OAuth sign-in. Use an API key instead.`)
+  }
   const flow = new GenericOAuthFlow(config)
   flows.set(provider, flow)
   return flow
@@ -88,11 +100,7 @@ export async function getUsableCredential(
   }
 }
 
-/**
- * Open the provider authorize URL in a popup and resolve with the code once the
- * hosted callback relays it back via postMessage. Falls back to manual paste if
- * the popup is blocked (caller handles the returned session in that case).
- */
-export function openAuthPopup(session: AuthorizeSession): Window | null {
-  return window.open(session.url, 'kybera-oauth', 'width=520,height=720')
+/** Open the provider's login page in a new tab. */
+export function openAuthPage(session: AuthorizeSession): Window | null {
+  return window.open(session.url, '_blank', 'noopener,noreferrer')
 }

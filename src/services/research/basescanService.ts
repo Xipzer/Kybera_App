@@ -152,7 +152,7 @@ class BasescanService {
         return []
       }
 
-      return data.result.map((holder: any) => ({
+      return data.result.map((holder: { TokenHolderAddress: string; TokenHolderQuantity: string; label?: string }) => ({
         address: holder.TokenHolderAddress,
         balance: holder.TokenHolderQuantity,
         percentage: 0,

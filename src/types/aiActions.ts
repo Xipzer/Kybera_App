@@ -38,12 +38,12 @@ export interface ToolCall {
 export interface ParsedToolCall {
   id: string
   name: string
-  parameters: Record<string, any>
+  parameters: Record<string, unknown>
 }
 
 export interface ActionConfig {
   name: string
-  handler: (params: any, context: ActionContext) => Promise<ActionResult>
+  handler: (params: Record<string, unknown>, context: ActionContext) => Promise<ActionResult>
   requiresConfirmation: boolean
   riskLevel: RiskLevel
   requiresPassword?: boolean
@@ -70,7 +70,7 @@ export interface ActionContext {
 
 export interface ActionResult {
   success: boolean
-  data?: any
+  data?: unknown
   error?: string
   message?: string
   transactionHash?: string
@@ -81,7 +81,7 @@ export interface PendingAction {
   id: string
   toolCallId: string
   name: string
-  parameters: Record<string, any>
+  parameters: Record<string, unknown>
   riskLevel: RiskLevel
   status: ActionStatus
   createdAt: Date
@@ -93,7 +93,7 @@ export interface PendingAction {
 export interface ActionHistoryEntry {
   id: string
   actionName: string
-  parameters: Record<string, any>
+  parameters: Record<string, unknown>
   result: ActionResult
   status: ActionStatus
   executedAt: Date

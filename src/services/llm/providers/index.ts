@@ -6,37 +6,26 @@
 
 import type { ProviderAdapter, ProviderId } from '../types'
 import { AnthropicAdapter } from './anthropic'
+import { OpenAIAdapter } from './openai-codex'
 import { OpenAICompatibleAdapter } from './openai-compatible'
 
-const openaiAdapter = new OpenAICompatibleAdapter({
-  id: 'openai',
-  label: 'OpenAI (GPT)',
-  apiUrl: 'https://api.openai.com/v1/chat/completions',
-  defaultModel: 'gpt-5',
-  supportsOAuth: true,
-  models: [
-    { id: 'gpt-5', label: 'GPT-5', contextWindow: 256000 },
-    { id: 'gpt-5-mini', label: 'GPT-5 mini', contextWindow: 256000 },
-    { id: 'gpt-4.1', label: 'GPT-4.1', contextWindow: 128000 },
-  ],
-})
-
+// xAI (Grok) has no public OAuth client — API key only.
 const xaiAdapter = new OpenAICompatibleAdapter({
   id: 'xai',
   label: 'xAI (Grok)',
   apiUrl: 'https://api.x.ai/v1/chat/completions',
-  defaultModel: 'grok-4',
-  supportsOAuth: true,
+  defaultModel: 'grok-4.3',
+  supportsOAuth: false,
   models: [
-    { id: 'grok-4', label: 'Grok 4', contextWindow: 256000 },
-    { id: 'grok-4-fast', label: 'Grok 4 Fast', contextWindow: 256000 },
-    { id: 'grok-3', label: 'Grok 3', contextWindow: 131072 },
+    { id: 'grok-4.3', label: 'Grok 4.3', contextWindow: 256000 },
+    { id: 'grok-4.20-0309-reasoning', label: 'Grok 4.20 (reasoning)', contextWindow: 256000 },
+    { id: 'grok-composer-2.5-fast', label: 'Grok Composer 2.5 Fast', contextWindow: 256000 },
   ],
 })
 
 const ADAPTERS: Record<ProviderId, ProviderAdapter> = {
   anthropic: new AnthropicAdapter(),
-  openai: openaiAdapter,
+  openai: new OpenAIAdapter(),
   xai: xaiAdapter,
 }
 

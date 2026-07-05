@@ -16,7 +16,7 @@ import { getAdapter } from '../services/llm/providers'
 import {
   beginOAuth,
   completeOAuth,
-  openAuthPopup,
+  openAuthPage,
   getStoredCredential,
   clearCredential,
   storeCredential,
@@ -108,20 +108,6 @@ export function useSettingsState(options?: { isOpen?: boolean }) {
     }
   }, [provider])
 
-  // Listen for the OAuth popup relaying its code back via postMessage.
-  useEffect(() => {
-    if (!oauthSession) return
-    const onMessage = async (e: MessageEvent) => {
-      if (e.origin !== window.location.origin) return
-      const d = e.data as { source?: string; code?: string; state?: string }
-      if (d?.source !== 'kybera-oauth' || !d.code) return
-      await finishOAuth(`${d.code}${d.state ? `#${d.state}` : ''}`)
-    }
-    window.addEventListener('message', onMessage)
-    return () => window.removeEventListener('message', onMessage)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [oauthSession])
-
   useEffect(() => {
     if (isOpen) {
       loadNetworks()
@@ -168,7 +154,7 @@ export function useSettingsState(options?: { isOpen?: boolean }) {
     try {
       const session = await beginOAuth(provider)
       setOauthSession(session)
-      openAuthPopup(session)
+      openAuthPage(session)
     } catch (error) {
       setLlmError(error instanceof Error ? error.message : 'Could not start sign-in')
     } finally {
@@ -302,8 +288,8 @@ export function useSettingsState(options?: { isOpen?: boolean }) {
         await networkService.removeCustomNetwork(id)
         await loadNetworks()
         setNetworkError('')
-      } catch (error: any) {
-        setNetworkError(error.message || 'Failed to remove network')
+      } catch (error) {
+        setNetworkError((error as Error).message || 'Failed to remove network')
       }
     }
   }

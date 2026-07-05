@@ -1,18 +1,14 @@
 /**
  * Code by Xipzer
  *
- * Generic PKCE authorization-code OAuth flow. Provider-specific endpoints and
- * quirks are supplied via OAuthProviderConfig.
+ * PKCE authorization-code OAuth flow, copied from the pi-mono reference. Handles
+ * the two providers' divergences (Anthropic: state=verifier + JSON token body;
+ * OpenAI Codex: random state + form-urlencoded token body + extra params).
  */
 
 import type { OAuthTokens } from '../types'
 import type { AuthorizeSession, OAuthFlow, OAuthProviderConfig } from './types'
 import { generatePKCE, randomState } from './pkce'
-
-/** Refresh 5 minutes before the real expiry to avoid mid-request failures. */
-function tokenExpiry(expiresIn: number): number {
-  return Date.now() + expiresIn * 1000 - 5 * 60 * 1000
-}
 
 interface RawTokenResponse {
   access_token: string
@@ -20,42 +16,59 @@ interface RawTokenResponse {
   expires_in: number
 }
 
+/** Extract the ChatGPT account id from an OpenAI Codex OAuth JWT access token. */
+function extractOpenAIAccountId(accessToken: string): string | undefined {
+  try {
+    const payload = accessToken.split('.')[1]
+    if (!payload) return undefined
+    const json = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) as Record<
+      string,
+      unknown
+    >
+    const auth = json['https://api.openai.com/auth'] as { chatgpt_account_id?: string } | undefined
+    return auth?.chatgpt_account_id
+  } catch {
+    return undefined
+  }
+}
+
 /** Parse `code`, `code#state`, or a full redirect URL into { code, state }. */
 export function parseCodeInput(input: string): { code: string; state: string } {
-  const trimmed = input.trim()
+  const value = input.trim()
   try {
-    const url = new URL(trimmed)
+    const url = new URL(value)
     const code = url.searchParams.get('code')
     const state = url.searchParams.get('state')
     if (code) return { code, state: state ?? '' }
   } catch {
     // not a URL
   }
-  if (trimmed.includes('#')) {
-    const [code = '', state = ''] = trimmed.split('#', 2)
+  if (value.includes('#')) {
+    const [code = '', state = ''] = value.split('#', 2)
     return { code, state }
   }
-  if (trimmed.includes('code=')) {
-    const params = new URLSearchParams(trimmed)
+  if (value.includes('code=')) {
+    const params = new URLSearchParams(value)
     const code = params.get('code')
     if (code) return { code, state: params.get('state') ?? '' }
   }
-  return { code: trimmed, state: '' }
+  return { code: value, state: '' }
 }
 
 export class GenericOAuthFlow implements OAuthFlow {
   constructor(public config: OAuthProviderConfig) {}
 
   async begin(): Promise<AuthorizeSession> {
-    const pkce = await generatePKCE()
-    const state = this.config.stateInCode ? pkce.verifier : randomState()
+    const { verifier, challenge } = await generatePKCE()
+    const state = this.config.stateIsVerifier ? verifier : randomState()
 
+    // Preserve the exact param set/order the reference uses.
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: this.config.clientId,
       redirect_uri: this.config.redirectUri,
       scope: this.config.scopes,
-      code_challenge: pkce.challenge,
+      code_challenge: challenge,
       code_challenge_method: 'S256',
       state,
       ...(this.config.extraAuthParams ?? {}),
@@ -63,26 +76,36 @@ export class GenericOAuthFlow implements OAuthFlow {
 
     return {
       url: `${this.config.authorizeUrl}?${params.toString()}`,
-      verifier: pkce.verifier,
+      verifier,
       state,
     }
   }
 
   async exchange(codeInput: string, session: AuthorizeSession): Promise<OAuthTokens> {
     const { code, state } = parseCodeInput(codeInput)
-    const data = await this.post({
+    if (state && state !== session.state) {
+      throw new Error('OAuth state mismatch')
+    }
+
+    const body: Record<string, string> = {
       grant_type: 'authorization_code',
       client_id: this.config.clientId,
       code,
       redirect_uri: this.config.redirectUri,
       code_verifier: session.verifier,
-      state: state || session.state,
-    })
+    }
+    // Anthropic requires `state` echoed in the token exchange; OpenAI does not.
+    if (this.config.stateIsVerifier) body.state = state || session.state
+
+    const data = await this.post(body)
     return {
       kind: 'oauth',
       access: data.access_token,
       refresh: data.refresh_token,
-      expires: tokenExpiry(data.expires_in),
+      expires: Date.now() + data.expires_in * 1000 - 5 * 60 * 1000,
+      ...(this.config.provider === 'openai'
+        ? { accountId: extractOpenAIAccountId(data.access_token) }
+        : {}),
     }
   }
 
@@ -96,15 +119,22 @@ export class GenericOAuthFlow implements OAuthFlow {
       kind: 'oauth',
       access: data.access_token,
       refresh: data.refresh_token || refreshToken,
-      expires: tokenExpiry(data.expires_in),
+      expires: Date.now() + data.expires_in * 1000 - 5 * 60 * 1000,
+      ...(this.config.provider === 'openai'
+        ? { accountId: extractOpenAIAccountId(data.access_token) }
+        : {}),
     }
   }
 
   private async post(body: Record<string, string>): Promise<RawTokenResponse> {
+    const isForm = this.config.tokenBodyFormat === 'form'
     const res = await fetch(this.config.tokenUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify(body),
+      headers: {
+        'Content-Type': isForm ? 'application/x-www-form-urlencoded' : 'application/json',
+        Accept: 'application/json',
+      },
+      body: isForm ? new URLSearchParams(body).toString() : JSON.stringify(body),
     })
     if (!res.ok) {
       const text = await res.text().catch(() => '')

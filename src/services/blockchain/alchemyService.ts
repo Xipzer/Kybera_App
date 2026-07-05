@@ -66,7 +66,7 @@ export class AlchemyService {
     }
   }
 
-  private async rpc(method: string, params: any[]): Promise<any> {
+  private async rpc<T = unknown>(method: string, params: unknown[]): Promise<T> {
     const response = await fetch(this.baseUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -85,15 +85,18 @@ export class AlchemyService {
 
   async getTokenBalances(walletAddress: string): Promise<TokenBalancesResponse> {
     try {
-      const result = await this.rpc('alchemy_getTokenBalances', [walletAddress, 'erc20'])
+      const result = await this.rpc<{
+        address: string
+        tokenBalances?: { contractAddress: string; tokenBalance: string | null }[]
+      }>('alchemy_getTokenBalances', [walletAddress, 'erc20'])
       return {
         address: result.address,
-        tokenBalances: (result.tokenBalances || []).map((tb: any) => ({
+        tokenBalances: (result.tokenBalances || []).map((tb) => ({
           contractAddress: tb.contractAddress,
           tokenBalance: tb.tokenBalance,
         })),
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Alchemy getTokenBalances error:', error)
       throw error
     }
@@ -103,7 +106,12 @@ export class AlchemyService {
     try {
       return await Promise.all(
         tokenAddresses.map(async (address) => {
-          const result = await this.rpc('alchemy_getTokenMetadata', [address])
+          const result = await this.rpc<{
+            name?: string | null
+            symbol?: string | null
+            decimals?: number | null
+            logo?: string | null
+          } | null>('alchemy_getTokenMetadata', [address])
           return {
             name: result?.name || null,
             symbol: result?.symbol || null,

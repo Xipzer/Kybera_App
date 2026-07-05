@@ -111,10 +111,10 @@ export class CoinGeckoService {
       )
 
       const prices: Record<string, TokenPrice> = {}
-      for (const [address, priceData] of Object.entries(data)) {
+      for (const [address, priceData] of Object.entries(data as Record<string, Partial<TokenPrice>>)) {
         prices[address] = {
-          usd: (priceData as any).usd || 0,
-          usd_24h_change: (priceData as any).usd_24h_change || 0,
+          usd: priceData.usd || 0,
+          usd_24h_change: priceData.usd_24h_change || 0,
         }
       }
 
@@ -162,10 +162,10 @@ export class CoinGeckoService {
         })
 
         const batchPrices: Record<string, TokenPrice> = {}
-        for (const [address, priceData] of Object.entries(data)) {
+        for (const [address, priceData] of Object.entries(data as Record<string, Partial<TokenPrice>>)) {
           batchPrices[address] = {
-            usd: (priceData as any).usd || 0,
-            usd_24h_change: (priceData as any).usd_24h_change || 0,
+            usd: priceData.usd || 0,
+            usd_24h_change: priceData.usd_24h_change || 0,
           }
         }
 
@@ -297,7 +297,7 @@ export class CoinGeckoService {
         'low',
       )
 
-      const coin = data.coins?.find((c: any) => c.symbol.toLowerCase() === symbol.toLowerCase())
+      const coin = data.coins?.find((c: { symbol: string; large?: string; thumb?: string }) => c.symbol.toLowerCase() === symbol.toLowerCase())
 
       return coin ? coin.large || coin.thumb || null : null
     } catch (error) {

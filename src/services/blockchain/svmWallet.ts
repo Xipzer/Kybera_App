@@ -98,7 +98,7 @@ export class SVMWalletService {
 
     try {
       const connection = new Connection(rpcUrl)
-      const securePrivateKey = memoryProtection.getSensitive(keyId)
+      const securePrivateKey = memoryProtection.getSensitive<string>(keyId)
       if (!securePrivateKey) throw new Error('Failed to retrieve secure key')
 
       const secretKey = Uint8Array.from(Buffer.from(securePrivateKey, 'hex'))
@@ -205,7 +205,7 @@ export class SVMWalletService {
 
     try {
       const connection = new Connection(rpcUrl)
-      const securePrivateKey = memoryProtection.getSensitive(keyId)
+      const securePrivateKey = memoryProtection.getSensitive<string>(keyId)
       if (!securePrivateKey) throw new Error('Failed to retrieve secure key')
 
       const secretKey = Uint8Array.from(Buffer.from(securePrivateKey, 'hex'))

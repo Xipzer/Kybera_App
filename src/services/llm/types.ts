@@ -15,6 +15,8 @@ export interface OAuthTokens {
   refresh: string
   /** Epoch ms at which the access token should be treated as expired. */
   expires: number
+  /** OpenAI Codex: chatgpt account id extracted from the JWT (sent as a header). */
+  accountId?: string
 }
 
 export interface ApiKeyCredential {

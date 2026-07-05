@@ -188,13 +188,15 @@ export function SettingsDialog({ open, onOpenChange, maximized = false }: Settin
                                 {s.oauthSession && (
                                   <div className="p-3 bg-surface-elevated rounded-lg border border-border-subtle space-y-2">
                                     <label className="block text-xs font-medium text-text-secondary">
-                                      Popup didn't complete? Paste the code here
+                                      After signing in, your browser lands on a page that won't load
+                                      — copy the code (or full URL) from the address bar and paste it
+                                      here.
                                     </label>
                                     <input
                                       type="text"
                                       value={s.manualCode}
                                       onChange={(e) => s.setManualCode(e.target.value)}
-                                      placeholder="Paste code..."
+                                      placeholder="Paste code or redirect URL..."
                                       className={themeConfig.styles.input}
                                       style={{ fontSize: '16px' }}
                                       onKeyDown={(e) => {

@@ -70,7 +70,7 @@ export class EVMWalletService {
 
     const provider = createProvider(rpcUrl, chainId)
     try {
-      const securePrivateKey = memoryProtection.getSensitive(keyId)
+      const securePrivateKey = memoryProtection.getSensitive<string>(keyId)
       if (!securePrivateKey) throw new Error('Failed to retrieve secure key')
 
       const wallet = new ethers.Wallet(securePrivateKey, provider)
@@ -137,7 +137,7 @@ export class EVMWalletService {
 
     const provider = createProvider(rpcUrl, chainId)
     try {
-      const securePrivateKey = memoryProtection.getSensitive(keyId)
+      const securePrivateKey = memoryProtection.getSensitive<string>(keyId)
       if (!securePrivateKey) throw new Error('Failed to retrieve secure key')
 
       const contract = new ethers.Contract(

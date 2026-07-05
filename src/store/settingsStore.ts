@@ -89,18 +89,18 @@ export const useSettingsStore = create<SettingsState>()(
             acc[key] = value
             return acc
           },
-          {} as Record<string, any>,
+          {} as Record<string, unknown>,
         )
 
         set({
           llmProvider: (settingsMap.llmProvider as ProviderId) || 'anthropic',
-          llmModel: settingsMap.llmModel || null,
-          llmAutoConnect: settingsMap.llmAutoConnect ?? true,
-          coinGeckoApiKey: settingsMap.coinGeckoApiKey || null,
-          alchemyApiKey: settingsMap.alchemyApiKey || null,
-          heliusApiKey: settingsMap.heliusApiKey || null,
-          autoLockTimeout: settingsMap.autoLockTimeout || 15,
-          defaultNetwork: settingsMap.defaultNetwork || 'base',
+          llmModel: (settingsMap.llmModel as string) || null,
+          llmAutoConnect: (settingsMap.llmAutoConnect as boolean | undefined) ?? true,
+          coinGeckoApiKey: (settingsMap.coinGeckoApiKey as string) || null,
+          alchemyApiKey: (settingsMap.alchemyApiKey as string) || null,
+          heliusApiKey: (settingsMap.heliusApiKey as string) || null,
+          autoLockTimeout: (settingsMap.autoLockTimeout as number) || 15,
+          defaultNetwork: (settingsMap.defaultNetwork as string) || 'base',
         })
       },
     }),

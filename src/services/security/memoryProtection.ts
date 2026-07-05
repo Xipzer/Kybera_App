@@ -6,7 +6,7 @@ import { securityService } from './securityService'
 
 interface SensitiveData {
   id: string
-  data: any
+  data: unknown
   timestamp: number
   accessCount: number
   lastAccess: number
@@ -23,7 +23,7 @@ class MemoryProtectionService {
     this.startCleanupTimer()
   }
 
-  storeSensitive(id: string, data: any, maxAgeMs?: number): void {
+  storeSensitive(id: string, data: unknown, maxAgeMs?: number): void {
     this.sensitiveStore.set(id, {
       id,
       data: this.deepClone(data),
@@ -37,7 +37,7 @@ class MemoryProtectionService {
     }, maxAgeMs || this.MAX_AGE_MS)
   }
 
-  getSensitive(id: string): any | null {
+  getSensitive<T = unknown>(id: string): T | null {
     const entry = this.sensitiveStore.get(id)
     if (!entry) return null
 
@@ -53,10 +53,10 @@ class MemoryProtectionService {
       console.warn(`Sensitive data ${id} accessed ${entry.accessCount} times, wiping for security`)
       const data = this.deepClone(entry.data)
       this.wipeSensitive(id)
-      return data
+      return data as T
     }
 
-    return this.deepClone(entry.data)
+    return this.deepClone(entry.data) as T
   }
 
   wipeSensitive(id: string): void {
@@ -75,22 +75,23 @@ class MemoryProtectionService {
     this.sensitiveStore.clear()
   }
 
-  private deepClone(obj: any): any {
+  private deepClone(obj: unknown): unknown {
     if (obj === null || typeof obj !== 'object') return obj
     if (obj instanceof Date) return new Date(obj.getTime())
     if (obj instanceof Array) return obj.map((item) => this.deepClone(item))
     if (obj instanceof Object) {
-      const clonedObj: any = {}
-      for (const key in obj) {
-        if (Object.prototype.hasOwnProperty.call(obj, key)) {
-          clonedObj[key] = this.deepClone(obj[key])
+      const source = obj as Record<string, unknown>
+      const clonedObj: Record<string, unknown> = {}
+      for (const key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          clonedObj[key] = this.deepClone(source[key])
         }
       }
       return clonedObj
     }
   }
 
-  private secureWipe(data: any): void {
+  private secureWipe(data: unknown): void {
     if (typeof data === 'string') {
       data = null
     } else if (data instanceof Uint8Array) {
@@ -99,11 +100,12 @@ class MemoryProtectionService {
       }
       data.fill(0)
     } else if (typeof data === 'object' && data !== null) {
-      for (const key in data) {
-        if (Object.prototype.hasOwnProperty.call(data, key)) {
-          this.secureWipe(data[key])
-          data[key] = null
-          delete data[key]
+      const target = data as Record<string, unknown>
+      for (const key in target) {
+        if (Object.prototype.hasOwnProperty.call(target, key)) {
+          this.secureWipe(target[key])
+          target[key] = null
+          delete target[key]
         }
       }
     }
@@ -289,9 +291,10 @@ export function initializeMemoryProtection() {
       memoryProtection.wipeAll()
     })
     
-    if ('performance' in window && 'memory' in (performance as any)) {
+    const perf = performance as Performance & { memory?: { usedJSHeapSize: number; jsHeapSizeLimit: number } }
+    if ('performance' in window && perf.memory) {
       setInterval(() => {
-        const memory = (performance as any).memory
+        const memory = perf.memory!
         if (memory.usedJSHeapSize / memory.jsHeapSizeLimit > 0.9) {
           console.warn('High memory usage detected, cleaning sensitive data')
           memoryProtection.wipeAll()

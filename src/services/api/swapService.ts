@@ -18,6 +18,37 @@ const CHAIN_NAME_MAP: Record<number, string> = {
   10: 'optimism',
 }
 
+interface JupiterRoutePlan {
+  swapInfo?: { label?: string }
+}
+
+interface JupiterQuoteResponse {
+  outAmount?: string
+  otherAmountThreshold?: string
+  priceImpactPct?: number
+  routePlan?: JupiterRoutePlan[]
+}
+
+interface KyberRouteHop {
+  exchange: string
+}
+
+export interface KyberRouteSummary {
+  amountOut: string
+  gas?: string
+  route?: KyberRouteHop[][]
+  [key: string]: unknown
+}
+
+interface KyberRoutesResponse {
+  code?: number
+  message?: string
+  data?: {
+    routeSummary?: KyberRouteSummary
+    routerAddress?: string
+  }
+}
+
 export interface SwapQuote {
   fromToken: string
   toToken: string
@@ -29,7 +60,7 @@ export interface SwapQuote {
   estimatedGas?: string
   route: string[]
   provider: 'jupiter' | 'kyberswap'
-  routeSummary?: any
+  routeSummary?: KyberRouteSummary
   routerAddress?: string
 }
 
@@ -65,7 +96,7 @@ class SwapService {
         throw new Error(`Jupiter API error: ${response.statusText}`)
       }
 
-      const data = await response.json()
+      const data = (await response.json()) as JupiterQuoteResponse
 
       if (!data.outAmount) {
         throw new Error('No route found for this swap')
@@ -76,15 +107,15 @@ class SwapService {
         toToken,
         fromAmount: amount,
         toAmount: (parseInt(data.outAmount) / 1e9).toString(),
-        toAmountMin: (parseInt(data.otherAmountThreshold) / 1e9).toString(),
+        toAmountMin: (parseInt(data.otherAmountThreshold as string) / 1e9).toString(),
         priceImpact: data.priceImpactPct || 0,
         slippage,
-        route: data.routePlan?.map((r: any) => r.swapInfo?.label) || ['Jupiter'],
+        route: (data.routePlan?.map((r) => r.swapInfo?.label) as string[]) || ['Jupiter'],
         provider: 'jupiter',
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('[SwapService] Error getting Jupiter quote:', error)
-      throw new Error(`Failed to get Jupiter quote: ${error.message}`)
+      throw new Error(`Failed to get Jupiter quote: ${(error as Error).message}`)
     }
   }
 
@@ -133,9 +164,9 @@ class SwapService {
         toAmount: quote.toAmount,
         status: 'completed',
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('[SwapService] Error executing Jupiter swap:', error)
-      throw new Error(`Failed to execute Jupiter swap: ${error.message}`)
+      throw new Error(`Failed to execute Jupiter swap: ${(error as Error).message}`)
     }
   }
 
@@ -171,7 +202,7 @@ class SwapService {
         throw new Error(`KyberSwap API error: ${response.statusText}`)
       }
 
-      const data = await response.json()
+      const data = (await response.json()) as KyberRoutesResponse
 
       if (data.code !== 0 || !data.data?.routeSummary) {
         throw new Error(data.message || 'No route found for this swap')
@@ -192,14 +223,14 @@ class SwapService {
         priceImpact: 0,
         slippage,
         estimatedGas: summary.gas || '0',
-        route: summary.route?.[0]?.map((r: any) => r.exchange) || ['KyberSwap'],
+        route: summary.route?.[0]?.map((r) => r.exchange) || ['KyberSwap'],
         provider: 'kyberswap',
         routeSummary: summary,
         routerAddress: data.data.routerAddress,
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('[SwapService] Error getting KyberSwap quote:', error)
-      throw new Error(`Failed to get KyberSwap quote: ${error.message}`)
+      throw new Error(`Failed to get KyberSwap quote: ${(error as Error).message}`)
     }
   }
 
@@ -293,9 +324,9 @@ class SwapService {
         toAmount: ethers.formatUnits(txData.amountOut, 18),
         status: 'completed',
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('[SwapService] Error executing KyberSwap swap:', error)
-      throw new Error(`Failed to execute KyberSwap swap: ${error.message}`)
+      throw new Error(`Failed to execute KyberSwap swap: ${(error as Error).message}`)
     }
   }
 

@@ -44,7 +44,7 @@ interface ActionResultCardProps {
 export function ActionResultCard({ result }: ActionResultCardProps) {
   if (!result.success) return <FailureCard result={result} />
 
-  const d = result.data as any
+  const d = (result.data ?? {}) as Record<string, unknown>
 
   switch (result.actionName) {
     case 'list_wallets':

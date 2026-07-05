@@ -34,17 +34,19 @@ import { ExportWalletDialog } from './ExportWalletDialog'
 import { ImportGroupDialog } from './ImportGroupDialog'
 import { WalletDetailView } from './WalletDetailView'
 
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
+import { Panel, PanelGroup, PanelResizeHandle, ImperativePanelHandle } from 'react-resizable-panels'
 import { useTheme } from '../../hooks/useTheme'
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard'
 import { useUIStore } from '../../store/uiStore'
 import { formatAddress, formatUSD } from '../../utils/formatters'
 import { useWalletListBalances } from '../../hooks/useWalletListBalances'
 
+import type { Wallet, WalletGroup, Network } from '../../types/wallet'
 import {
   closestCenter,
   DndContext,
   DragEndEvent,
+  DraggableSyntheticListeners,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -236,7 +238,7 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
   const [showCreateGroupDialog, setShowCreateGroupDialog] = useState(false)
   const [showAddToGroupDialog, setShowAddToGroupDialog] = useState(false)
   const [selectedGroupId, setSelectedGroupId] = useState<string | undefined>()
-  const [exportGroup, setExportGroup] = useState<any | null>(null)
+  const [exportGroup, setExportGroup] = useState<WalletGroup | null>(null)
   const [exportWallet, setExportWallet] = useState<(typeof wallets)[0] | null>(null)
   const [showImportGroupDialog, setShowImportGroupDialog] = useState(false)
   const { theme } = useTheme()
@@ -320,8 +322,8 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
   const panelGroupRef = useRef<HTMLDivElement>(null)
   const tabBarRef = useRef<HTMLDivElement>(null)
   const [listMinPct, setListMinPct] = useState(15)
-  const listPanelRef = useRef<any>(null)
-  const detailPanelRef = useRef<any>(null)
+  const listPanelRef = useRef<ImperativePanelHandle>(null)
+  const detailPanelRef = useRef<ImperativePanelHandle>(null)
 
   useEffect(() => {
     if (isWalletListCollapsed) {
@@ -884,14 +886,14 @@ export function WalletDrawer({ collapsed }: WalletDrawerProps) {
 }
 
 interface WalletItemProps {
-  wallet: any
+  wallet: Wallet
   isActive: boolean
   onSelect: () => void
   onCopy: () => void
   onRename: () => void
   onExport: () => void
   onDelete: () => void
-  network?: any
+  network?: Network
   totalUSD?: number
 }
 
@@ -1079,16 +1081,16 @@ function WalletItem({
 }
 
 interface WalletGroupItemProps {
-  group: any
-  wallets: any[]
+  group: WalletGroup
+  wallets: Wallet[]
   onAddWallet: () => void
   onSelectWallet: (walletId: string) => void
   activeWalletId: string | null
-  onExportGroup: (group: any) => void
-  onRenameWallet: (wallet: any) => void
+  onExportGroup: (group: WalletGroup) => void
+  onRenameWallet: (wallet: Wallet) => void
   onDeleteWallet: (walletId: string) => void
   onCopyAddress: (address: string) => void
-  dragHandleProps?: any
+  dragHandleProps?: DraggableSyntheticListeners
   groupTotalUSD?: number
   walletBalances?: Map<string, number>
 }
@@ -1293,13 +1295,13 @@ function WalletGroupItem({
 }
 
 interface GroupWalletItemProps {
-  wallet: any
+  wallet: Wallet
   isActive: boolean
   onSelectWallet: (walletId: string) => void
   onCopyAddress: (address: string) => void
-  onRenameWallet: (wallet: any) => void
+  onRenameWallet: (wallet: Wallet) => void
   onDeleteWallet: (walletId: string) => void
-  network?: any
+  network?: Network
   totalUSD?: number
 }
 

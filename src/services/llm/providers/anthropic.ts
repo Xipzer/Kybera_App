@@ -19,8 +19,20 @@ import type {
 
 const API_URL = 'https://api.anthropic.com/v1/messages'
 const API_VERSION = '2023-06-01'
-const OAUTH_BETA = 'oauth-2025-04-20'
 const CLAUDE_CODE_IDENTITY = "You are Claude Code, Anthropic's official CLI for Claude."
+const CLAUDE_CODE_VERSION = '2.1.75'
+const CLAUDE_CODE_BETA = 'claude-code-20250219'
+const OAUTH_BETA = 'oauth-2025-04-20'
+const FINE_GRAINED_TOOL_STREAMING_BETA = 'fine-grained-tool-streaming-2025-05-14'
+const INTERLEAVED_THINKING_BETA = 'interleaved-thinking-2025-05-14'
+
+/** Mirrors Kimaki's getRequiredBetas: interleaved-thinking only for non-adaptive models. */
+function requiredBetas(modelId: string): string {
+  const betas = [CLAUDE_CODE_BETA, OAUTH_BETA, FINE_GRAINED_TOOL_STREAMING_BETA]
+  const isAdaptive = /opus-4[-.]6|sonnet-4[-.]6|sonnet-5|opus-4[-.]7|opus-4[-.]8/.test(modelId)
+  if (!isAdaptive) betas.push(INTERLEAVED_THINKING_BETA)
+  return betas.join(',')
+}
 
 interface AnthropicContentBlock {
   type: string
@@ -83,10 +95,11 @@ export class AnthropicAdapter implements ProviderAdapter {
   id = 'anthropic' as const
   label = 'Anthropic (Claude)'
   supportsOAuth = true
-  defaultModel = 'claude-sonnet-4-5'
+  defaultModel = 'claude-sonnet-5'
   models = [
-    { id: 'claude-opus-4-5', label: 'Claude Opus 4.5', contextWindow: 200000 },
-    { id: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5', contextWindow: 200000 },
+    { id: 'claude-opus-4-8', label: 'Claude Opus 4.8', contextWindow: 200000 },
+    { id: 'claude-sonnet-5', label: 'Claude Sonnet 5', contextWindow: 200000 },
+    { id: 'claude-opus-4-7', label: 'Claude Opus 4.7', contextWindow: 200000 },
     { id: 'claude-haiku-4-5', label: 'Claude Haiku 4.5', contextWindow: 200000 },
   ]
 
@@ -102,18 +115,20 @@ export class AnthropicAdapter implements ProviderAdapter {
     const mergedSystem = [req.system, system].filter(Boolean).join('\n\n')
     if (mergedSystem) systemBlocks.push({ type: 'text', text: mergedSystem })
 
+    // Headers copied from the Kimaki / pi-mono Anthropic OAuth adapter.
     const headers: Record<string, string> = {
       'content-type': 'application/json',
       accept: 'text/event-stream',
       'anthropic-version': API_VERSION,
+      'anthropic-dangerous-direct-browser-access': 'true',
     }
     if (isOAuth) {
       headers['authorization'] = `Bearer ${credential.access}`
-      headers['anthropic-beta'] = OAUTH_BETA
-      headers['anthropic-dangerous-direct-browser-access'] = 'true'
+      headers['anthropic-beta'] = requiredBetas(req.model)
+      headers['user-agent'] = `claude-cli/${CLAUDE_CODE_VERSION}`
+      headers['x-app'] = 'cli'
     } else {
       headers['x-api-key'] = credential.key
-      headers['anthropic-dangerous-direct-browser-access'] = 'true'
     }
 
     const body = {
