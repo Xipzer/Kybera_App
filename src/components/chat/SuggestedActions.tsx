@@ -215,15 +215,9 @@ export function SuggestedActions({ visible, onSelect, onDismiss, containerRef }:
       onDismiss()
     }
 
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onDismiss()
-    }
-
     document.addEventListener('mousedown', handleClickOutside)
-    document.addEventListener('keydown', handleEscape)
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
-      document.removeEventListener('keydown', handleEscape)
     }
   }, [visible, onDismiss, containerRef])
 
@@ -241,7 +235,7 @@ export function SuggestedActions({ visible, onSelect, onDismiss, containerRef }:
   }, [search, activeCategory])
 
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
+    (e: KeyboardEvent) => {
       if (e.key === 'ArrowDown') {
         e.preventDefault()
         setSelectedIndex((prev) => (prev < filteredPrompts.length - 1 ? prev + 1 : 0))
@@ -250,6 +244,7 @@ export function SuggestedActions({ visible, onSelect, onDismiss, containerRef }:
         setSelectedIndex((prev) => (prev > 0 ? prev - 1 : filteredPrompts.length - 1))
       } else if (e.key === 'Enter' && selectedIndex >= 0) {
         e.preventDefault()
+        e.stopPropagation()
         onSelect(filteredPrompts[selectedIndex].text)
       } else if (e.key === 'Escape') {
         onDismiss()
@@ -257,6 +252,15 @@ export function SuggestedActions({ visible, onSelect, onDismiss, containerRef }:
     },
     [filteredPrompts, selectedIndex, onSelect, onDismiss]
   )
+
+  // Capture-phase document listener: forwards arrow/Enter/Escape keys to the panel
+  // regardless of whether focus sits in the chat textarea or the panel's search input,
+  // without stealing focus from either.
+  useEffect(() => {
+    if (!visible) return
+    document.addEventListener('keydown', handleKeyDown, true)
+    return () => document.removeEventListener('keydown', handleKeyDown, true)
+  }, [visible, handleKeyDown])
 
   useEffect(() => {
     if (selectedIndex >= 0 && listRef.current) {
@@ -288,7 +292,13 @@ export function SuggestedActions({ visible, onSelect, onDismiss, containerRef }:
                     setSelectedIndex(-1)
                     if (e.target.value.trim()) setActiveCategory(null)
                   }}
-                  onKeyDown={handleKeyDown}
+                  role="combobox"
+                  aria-expanded={visible}
+                  aria-controls="suggested-actions-listbox"
+                  aria-activedescendant={
+                    selectedIndex >= 0 ? `suggested-action-option-${selectedIndex}` : undefined
+                  }
+                  aria-label="Search commands"
                   placeholder="Search commands..."
                   className="w-full pl-9 pr-3 py-2 bg-surface-elevated/50 border border-border-subtle/50 rounded-xl text-text-primary placeholder:text-text-tertiary text-xs sm:text-sm focus:outline-none focus:border-border-subtle"
                 />
@@ -332,6 +342,12 @@ export function SuggestedActions({ visible, onSelect, onDismiss, containerRef }:
 
             <div
               ref={listRef}
+              id="suggested-actions-listbox"
+              role="listbox"
+              aria-label="Suggested commands"
+              aria-activedescendant={
+                selectedIndex >= 0 ? `suggested-action-option-${selectedIndex}` : undefined
+              }
               className="max-h-[240px] sm:max-h-[300px] overflow-y-auto scrollbar-thin px-1.5 pb-1.5"
             >
               {filteredPrompts.length === 0 ? (
@@ -342,6 +358,9 @@ export function SuggestedActions({ visible, onSelect, onDismiss, containerRef }:
                 filteredPrompts.map((prompt, i) => (
                   <button
                     key={`${prompt.category}-${prompt.text}`}
+                    id={`suggested-action-option-${i}`}
+                    role="option"
+                    aria-selected={i === selectedIndex}
                     onClick={() => onSelect(prompt.text)}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left transition-all duration-100 group ${
                       i === selectedIndex

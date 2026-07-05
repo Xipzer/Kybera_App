@@ -282,26 +282,18 @@ export function useSettingsState(options?: { isOpen?: boolean }) {
   }
 
   const handleAddNetwork = async (network: Omit<Network, 'id'>) => {
-    try {
-      await networkService.addCustomNetwork(network)
-      await loadNetworks()
-      setNetworkDialogOpen(false)
-      setNetworkError('')
-    } catch (error: any) {
-      throw error
-    }
+    await networkService.addCustomNetwork(network)
+    await loadNetworks()
+    setNetworkDialogOpen(false)
+    setNetworkError('')
   }
 
   const handleUpdateNetwork = async (id: string, updates: Partial<Network>) => {
-    try {
-      await networkService.updateCustomNetwork(id, updates)
-      await loadNetworks()
-      setNetworkDialogOpen(false)
-      setEditingNetwork(undefined)
-      setNetworkError('')
-    } catch (error: any) {
-      throw error
-    }
+    await networkService.updateCustomNetwork(id, updates)
+    await loadNetworks()
+    setNetworkDialogOpen(false)
+    setEditingNetwork(undefined)
+    setNetworkError('')
   }
 
   const handleRemoveNetwork = async (id: string) => {

@@ -139,7 +139,9 @@ export function AddWalletToGroupDialog({ open, onOpenChange, groupId }: AddWalle
           const w = await derive(seed, existingCount + i)
           addresses.push(w.address)
         }
-      } catch {}
+      } catch {
+        /* preview is best-effort; ignore derivation failures */
+      }
     }
     setPreviewAddresses(addresses)
     setShowNameEditor(true)

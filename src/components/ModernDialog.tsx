@@ -246,18 +246,21 @@ const buttonSizes = {
   lg: 'px-5 py-3 text-sm sm:text-base',
 }
 
-export function ModernButton({
-  variant = 'primary',
-  size = 'md',
-  icon,
-  loading,
-  fullWidth,
-  children,
-  className = '',
-  disabled,
-  style,
-  ...props
-}: ModernButtonProps) {
+export const ModernButton = React.forwardRef<HTMLButtonElement, ModernButtonProps>(function ModernButton(
+  {
+    variant = 'primary',
+    size = 'md',
+    icon,
+    loading,
+    fullWidth,
+    children,
+    className = '',
+    disabled,
+    style,
+    ...props
+  },
+  ref,
+) {
   const { theme } = useTheme()
 
   const getButtonStyles = () => {
@@ -274,12 +277,12 @@ export function ModernButton({
         }
       case 'danger':
         return {
-          className: `px-4 py-2 bg-gradient-to-r from-red-500 to-rose-500 text-white rounded-lg font-medium transition-all duration-200 hover:shadow-lg hover:shadow-red-500/25 ${buttonSizes[size]}`,
+          className: `px-4 py-2 bg-gradient-to-r from-red-500 to-rose-500 text-white font-medium transition-all duration-200 hover:shadow-lg hover:shadow-red-500/25 ${buttonSizes[size]}`,
           style: {},
         }
       case 'ghost':
         return {
-          className: `${theme.styles.buttonIcon} ${buttonSizes[size]} ${theme.styles.textSecondary} hover:${theme.styles.textPrimary}`,
+          className: `${theme.styles.buttonIcon} ${buttonSizes[size]} ${theme.styles.textSecondary} hover:text-text-primary`,
           style: {},
         }
       default:
@@ -294,7 +297,8 @@ export function ModernButton({
 
   return (
     <button
-      className={`${fullWidth ? 'flex-1' : ''} ${buttonStyles.className} rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 sm:gap-2 ${className}`}
+      ref={ref}
+      className={`${fullWidth ? 'flex-1' : ''} ${buttonStyles.className} rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 sm:gap-2 ${className}`}
       disabled={disabled || loading}
       style={{ ...buttonStyles.style, ...style }}
       {...props}
@@ -307,7 +311,7 @@ export function ModernButton({
       {children}
     </button>
   )
-}
+})
 
 interface SeedPhraseGridProps {
   words: string[]

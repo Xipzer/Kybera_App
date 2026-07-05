@@ -6,6 +6,7 @@ import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react'
 import {
   Settings,
   ArrowUp,
+  ArrowDown,
   Bot,
   Sparkles,
   AlertCircle,
@@ -22,7 +23,7 @@ import { useResearchStore } from '../../store/researchStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { getStoredCredential } from '../../services/llm/oauth/manager'
 import { getAdapter } from '../../services/llm/providers'
-import { useUIStore } from '../../store/uiStore'
+import { useUIStore, type NavItem } from '../../store/uiStore'
 import { ResearchCard } from './ResearchCard'
 import { ApeInterface } from './ApeInterface'
 import { ChatMessage } from '../chat/ChatMessage'
@@ -199,7 +200,6 @@ export function ResearchView() {
 
   const settingsMaximized = useUIStore((s) => s.settingsMaximized)
 
-  const [activeTab, setActiveTab] = useState('research')
   const [input, setInput] = useState('')
   const [showSettings, setShowSettings] = useState(false)
   const [selectedResearch, setSelectedResearch] = useState<TokenResearch | null>(null)
@@ -213,6 +213,7 @@ export function ResearchView() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const isNearBottomRef = useRef(true)
+  const [showJumpToLatest, setShowJumpToLatest] = useState(false)
 
   useEffect(() => {
     if (hasLLMCredential && llmAutoConnect && connectionState === 'disconnected') {
@@ -221,22 +222,34 @@ export function ResearchView() {
   }, [hasLLMCredential, llmAutoConnect, llmProvider, activeModel, connectionState, connect])
 
   const activeNavItem = useUIStore((s) => s.activeNavItem)
-  useEffect(() => {
-    if (!isMobile) setActiveTab(activeNavItem)
-  }, [isMobile, activeNavItem])
+  const setActiveNavItem = useUIStore((s) => s.setActiveNavItem)
+
+  const lastMessageStreaming = messages[messages.length - 1]?.isStreaming ?? false
 
   useEffect(() => {
     if (isNearBottomRef.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      // Use instant scroll while tokens stream in to avoid smooth-scroll rubber-banding;
+      // smooth-scroll only on discrete new messages.
+      messagesEndRef.current?.scrollIntoView({
+        behavior: lastMessageStreaming ? 'auto' : 'smooth',
+      })
     }
-  }, [messages, researches])
+  }, [messages, researches, lastMessageStreaming])
 
   const handleScroll = useCallback(() => {
     const container = scrollContainerRef.current
     if (!container) return
     const threshold = 100
-    isNearBottomRef.current =
+    const nearBottom =
       container.scrollHeight - container.scrollTop - container.clientHeight < threshold
+    isNearBottomRef.current = nearBottom
+    setShowJumpToLatest(!nearBottom)
+  }, [])
+
+  const jumpToLatest = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    isNearBottomRef.current = true
+    setShowJumpToLatest(false)
   }, [])
 
   useEffect(() => {
@@ -319,6 +332,31 @@ export function ResearchView() {
   const handleDismissSuggestions = useCallback(() => {
     setShowSuggestions(false)
   }, [])
+
+  const toggleSuggestions = useCallback(() => {
+    if (showSuggestions) {
+      setShowSuggestions(false)
+    } else {
+      setShowSuggestions(true)
+      textareaRef.current?.focus()
+    }
+  }, [showSuggestions])
+
+  useEffect(() => {
+    const handleCommandK = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        toggleSuggestions()
+      }
+    }
+    window.addEventListener('keydown', handleCommandK)
+    return () => window.removeEventListener('keydown', handleCommandK)
+  }, [toggleSuggestions])
+
+  const isMacLike = useMemo(
+    () => /Mac|iPhone|iPad|iPod/.test(typeof navigator !== 'undefined' ? navigator.platform : ''),
+    [],
+  )
 
   const handleApe = (research: TokenResearch) => {
     setSelectedResearch(research)
@@ -405,8 +443,8 @@ export function ResearchView() {
 
   return (
     <Tabs.Root
-      value={activeTab}
-      onValueChange={setActiveTab}
+      value={activeNavItem}
+      onValueChange={(value) => setActiveNavItem(value as NavItem)}
       className="h-full flex flex-col bg-surface-base relative overflow-hidden"
     >
       {chatWallpaper && (
@@ -555,6 +593,16 @@ export function ResearchView() {
               onScroll={handleScroll}
               className="flex-1 overflow-y-auto overscroll-contain relative"
             >
+              {showJumpToLatest && (
+                <button
+                  onClick={jumpToLatest}
+                  aria-label="Jump to latest messages"
+                  className={`sticky bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-elevated border border-border-subtle shadow-lg text-xs font-medium text-text-secondary hover:text-text-primary transition-colors`}
+                >
+                  <ArrowDown className="w-3.5 h-3.5" />
+                  Jump to latest
+                </button>
+              )}
               <div
                 role="log"
                 aria-live="polite"
@@ -705,6 +753,17 @@ export function ResearchView() {
                       fontSize: '16px',
                     }}
                   />
+
+                  {!input && connectionState === 'connected' && (
+                    <button
+                      onClick={toggleSuggestions}
+                      aria-label="Browse suggested commands"
+                      title={`Suggested commands (${isMacLike ? '⌘K' : 'Ctrl+K'})`}
+                      className="absolute bottom-[15px] right-14 hidden sm:flex items-center px-1.5 py-0.5 rounded-md border border-border-subtle bg-surface-elevated/50 text-2xs font-medium text-text-tertiary hover:text-text-secondary hover:border-border-default transition-colors"
+                    >
+                      {isMacLike ? '⌘K' : 'Ctrl+K'}
+                    </button>
+                  )}
 
                   {!hasScroll && (
                     <button

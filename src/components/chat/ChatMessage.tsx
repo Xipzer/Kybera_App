@@ -12,11 +12,24 @@ import { parseUiBlocks, stripUiBlocks, stripJsonActionBlocks, UiBlockCard } from
 
 const KYBERA_ICON = '/kybera-icon.png'
 
+// html: false is load-bearing — it prevents raw HTML injection from agent output.
 const md = new MarkdownIt({
   html: false,
   linkify: true,
   typographer: true,
 })
+
+// Force all links to open in a new tab with noopener/noreferrer so the wallet
+// SPA is never navigated away from (and referrer/opener are not leaked).
+const defaultLinkOpen =
+  md.renderer.rules.link_open ??
+  ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options))
+md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
+  const token = tokens[idx]
+  token.attrSet('target', '_blank')
+  token.attrSet('rel', 'noopener noreferrer')
+  return defaultLinkOpen(tokens, idx, options, env, self)
+}
 
 /** Strip ```json action blocks and ```kybera-ui blocks from displayed text. */
 function stripAgentBlocks(text: string): string {

@@ -75,6 +75,7 @@ export function ImportGroupDialog({ open, onOpenChange }: ImportGroupDialogProps
             return
           }
         } catch {
+          /* fall through to the generic import path below */
         }
       }
 

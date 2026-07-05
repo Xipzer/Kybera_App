@@ -145,7 +145,9 @@ export class TokenDiscoveryService {
           name = metadata[0].name || 'Unknown Token'
           decimals = metadata[0].decimals || 18
         }
-      } catch {}
+      } catch {
+        /* metadata lookup is best-effort; fall back to RPC below */
+      }
 
       if (symbol === 'UNKNOWN' && this.rpcService) {
         try {
@@ -157,7 +159,9 @@ export class TokenDiscoveryService {
           symbol = rpcSymbol || symbol
           name = rpcName || name
           decimals = rpcDecimals || decimals
-        } catch {}
+        } catch {
+          /* RPC metadata fallback failed; keep defaults */
+        }
       }
 
       if (this.isSpamToken(name, symbol)) {

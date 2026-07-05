@@ -2,11 +2,14 @@
  * Code by Xipzer
  */
 
+import { useState } from 'react'
 import { Wallet } from '../../types'
 import { Network } from '../../utils/networks'
 import { formatAddress, formatDate, formatCryptoBalance } from '../../utils/formatters'
-import { ArrowUpRight, ArrowDownLeft, ExternalLink, RefreshCw } from 'lucide-react'
+import { ArrowUpRight, ArrowDownLeft, ExternalLink } from 'lucide-react'
 import { useTransactionHistory } from '../../hooks/useTransactionHistory'
+
+const PAGE_SIZE = 20
 
 interface TransactionHistoryProps {
   wallet: Wallet
@@ -15,6 +18,7 @@ interface TransactionHistoryProps {
 
 export function TransactionHistory({ wallet, network }: TransactionHistoryProps) {
   const { transactions, loading, error } = useTransactionHistory(wallet, network)
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const nativeCurrency = network.nativeCurrency || {
     name: network.symbol || 'ETH',
     symbol: network.symbol || 'ETH',
@@ -23,8 +27,27 @@ export function TransactionHistory({ wallet, network }: TransactionHistoryProps)
   
   if (loading) {
     return (
-      <div className="p-4 flex items-center justify-center">
-        <RefreshCw className="w-5 h-5 text-text-secondary animate-spin" />
+      <div className="p-3 sm:p-4">
+        <div className="animate-pulse space-y-2">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="p-3 sm:p-4 bg-surface-base border border-border-subtle rounded-lg"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/10 flex-shrink-0" />
+                  <div className="space-y-2">
+                    <div className="h-4 w-28 bg-white/10 rounded" />
+                    <div className="h-3 w-36 bg-white/10 rounded" />
+                    <div className="h-3 w-20 bg-white/10 rounded" />
+                  </div>
+                </div>
+                <div className="h-4 w-20 bg-white/10 rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -41,8 +64,11 @@ export function TransactionHistory({ wallet, network }: TransactionHistoryProps)
   return (
     <div className="p-3 sm:p-4">
       <div className="space-y-2">
-        {transactions.map((tx) => {
+        {transactions.slice(0, visibleCount).map((tx) => {
           const isSent = tx.from.toLowerCase() === wallet.address.toLowerCase()
+          const isTokenTransfer = !!tx.tokenAddress
+          const assetSymbol =
+            tx.tokenSymbol ?? (isTokenTransfer ? 'Token' : nativeCurrency.symbol)
           return (
             <div
               key={tx.hash}
@@ -65,7 +91,7 @@ export function TransactionHistory({ wallet, network }: TransactionHistoryProps)
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                       <p className="text-sm sm:text-base font-medium text-text-primary">
-                        {isSent ? 'Sent' : 'Received'} {nativeCurrency.symbol}
+                        {isSent ? 'Sent' : 'Received'} {assetSymbol}
                       </p>
                       <span
                         className={`text-2xs sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${
@@ -96,7 +122,7 @@ export function TransactionHistory({ wallet, network }: TransactionHistoryProps)
                     }`}
                   >
                     {isSent ? '-' : '+'}
-                    {formatCryptoBalance(tx.value)} {nativeCurrency.symbol}
+                    {formatCryptoBalance(tx.value)} {assetSymbol}
                   </p>
                   <a
                     href={`${network.explorerUrl}/tx/${tx.hash}`}
@@ -113,6 +139,15 @@ export function TransactionHistory({ wallet, network }: TransactionHistoryProps)
           )
         })}
       </div>
+
+      {transactions.length > visibleCount && (
+        <button
+          onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+          className="w-full mt-3 py-2.5 rounded-lg border border-border-subtle text-sm font-medium text-text-secondary hover:text-text-primary hover:border-border-default transition-colors touch-manipulation"
+        >
+          Load more ({transactions.length - visibleCount} remaining)
+        </button>
+      )}
 
       {transactions.length === 0 && (
         <div className="text-center py-8">

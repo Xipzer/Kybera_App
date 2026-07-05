@@ -2,7 +2,7 @@
  * Code by Xipzer
  */
 
-import { ReactNode, useState, useEffect } from 'react'
+import { ReactNode, useState, useEffect, useRef } from 'react'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { MainLayout } from './AnimatedMainLayout'
 import { MobileNav } from './MobileNav'
@@ -32,14 +32,49 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
     }
   }, [isMobile])
 
+  // Hardware/browser back closes an open mobile panel instead of leaving the app.
+  // A sentinel history entry is pushed when a panel opens; closing via UI consumes
+  // it with history.back() so the stack never accumulates stale entries.
+  const panelHistoryPushedRef = useRef(false)
+
+  useEffect(() => {
+    const panelOpen = isMobile && mobilePanel !== null
+    if (panelOpen && !panelHistoryPushedRef.current) {
+      panelHistoryPushedRef.current = true
+      window.history.pushState({ kyberaMobilePanel: true }, '')
+    } else if (!panelOpen && panelHistoryPushedRef.current) {
+      panelHistoryPushedRef.current = false
+      window.history.back()
+    }
+  }, [isMobile, mobilePanel])
+
+  useEffect(() => {
+    const onPopState = () => {
+      if (panelHistoryPushedRef.current) {
+        panelHistoryPushedRef.current = false
+        setMobilePanel(null)
+      }
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
   useEffect(() => {
     if (isMobile && mobilePanel !== null) {
+      // iOS Safari ignores `overflow: hidden` on body; pin it with position:fixed
+      // and restore the scroll position on unlock to prevent background rubber-banding.
+      const scrollY = window.scrollY
+      document.body.style.position = 'fixed'
+      document.body.style.top = `-${scrollY}px`
+      document.body.style.width = '100%'
       document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
+      return () => {
+        document.body.style.position = ''
+        document.body.style.top = ''
+        document.body.style.width = ''
+        document.body.style.overflow = ''
+        window.scrollTo(0, scrollY)
+      }
     }
   }, [isMobile, mobilePanel])
 

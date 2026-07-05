@@ -2,7 +2,7 @@
  * Code by Xipzer
  */
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { AlertTriangle, Info, AlertCircle, Shield, CheckCircle, Clock, Copy } from 'lucide-react'
 import { PendingAction, RiskLevel } from '../../types'
 import { formatAddress } from '../../utils/formatters'
@@ -81,6 +81,17 @@ export function ActionConfirmationDialog({
   onReject,
 }: ActionConfirmationDialogProps) {
   const [confirmText, setConfirmText] = useState('')
+  const rejectRef = useRef<HTMLButtonElement>(null)
+
+  // Focus the safe (Reject) action when the dialog opens, so an accidental
+  // Enter/Space does not approve a risky action.
+  useEffect(() => {
+    if (open) {
+      const id = requestAnimationFrame(() => rejectRef.current?.focus())
+      return () => cancelAnimationFrame(id)
+    }
+  }, [open])
+
   if (!action) return null
 
   const getRiskConfig = (risk: RiskLevel) => {
@@ -225,7 +236,7 @@ export function ActionConfirmationDialog({
       </ModernDialogSection>
 
       <ModernDialogActions>
-        <ModernButton variant="secondary" fullWidth onClick={onReject}>
+        <ModernButton ref={rejectRef} variant="secondary" fullWidth onClick={onReject}>
           Reject
         </ModernButton>
         <ModernButton

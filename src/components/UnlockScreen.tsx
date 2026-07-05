@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Lock, Sun, Moon, Palette, Shield, Fingerprint, Zap } from 'lucide-react'
+import { Lock, Sun, Moon, Palette, Shield, Fingerprint, Zap, Eye, EyeOff } from 'lucide-react'
 import { useWalletStore } from '../store/walletStore'
 import { useAuthStore } from '../store/authStore'
 import { useUIStore } from '../store/uiStore'
@@ -226,6 +226,35 @@ function MatrixRain({ phase, themeColor }: { phase: MatrixPhase; themeColor: str
   )
 }
 
+function scorePassword(pw: string): number {
+  let score = 0
+  if (pw.length >= 8) score++
+  if (pw.length >= 12) score++
+  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++
+  if (/\d/.test(pw)) score++
+  if (/[^A-Za-z0-9]/.test(pw)) score++
+  return Math.min(score, 4)
+}
+
+function PasswordStrength({ password, mutedClass }: { password: string; mutedClass: string }) {
+  const score = scorePassword(password)
+  const labels = ['Very weak', 'Weak', 'Fair', 'Good', 'Strong']
+  const colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-lime-500', 'bg-green-500']
+  return (
+    <div className="mt-2 space-y-1 animate-in fade-in duration-200">
+      <div className="flex gap-1">
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className={`h-1 flex-1 rounded-full transition-colors ${i < score ? colors[score] : 'bg-white/10'}`}
+          />
+        ))}
+      </div>
+      <p className={`text-2xs ${mutedClass}`}>Password strength: {labels[score]}</p>
+    </div>
+  )
+}
+
 export function UnlockScreen() {
   const { unlock } = useWalletStore()
   const {
@@ -252,6 +281,7 @@ export function UnlockScreen() {
   const [isLoading, setIsLoading] = useState(false)
   const [isFocused, setIsFocused] = useState(false)
   const [isConfirmFocused, setIsConfirmFocused] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [matrixPhase, setMatrixPhase] = useState<MatrixPhase>('idle')
   const { theme } = useTheme()
 
@@ -462,17 +492,35 @@ export function UnlockScreen() {
                       <Fingerprint className="w-5 h-5" />
                     </div>
                     <input
-                      type="password"
+                      type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       onFocus={() => setIsFocused(true)}
                       onBlur={() => setIsFocused(false)}
                       placeholder="Enter password"
-                      className={`w-full pl-12 pr-4 py-3.5 ${styles.inputBg} border ${styles.inputBorder} rounded-xl ${styles.textPrimary} placeholder:${styles.textMuted} focus:outline-none ${styles.inputFocusBorder} transition-all duration-300`}
+                      autoComplete={isInitialized ? 'current-password' : 'new-password'}
+                      spellCheck={false}
+                      className={`w-full pl-12 pr-12 py-3.5 ${styles.inputBg} border ${styles.inputBorder} rounded-xl ${styles.textPrimary} placeholder:${styles.textMuted} focus:outline-none ${styles.inputFocusBorder} transition-all duration-300`}
                       autoFocus
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      className={`absolute right-4 ${styles.textMuted} hover:opacity-80 transition-opacity`}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-5 h-5" />
+                      ) : (
+                        <Eye className="w-5 h-5" />
+                      )}
+                    </button>
                   </div>
                 </div>
+
+                {!isInitialized && password.length > 0 && (
+                  <PasswordStrength password={password} mutedClass={styles.textMuted} />
+                )}
               </div>
 
               {!isInitialized && (
@@ -494,12 +542,14 @@ export function UnlockScreen() {
                         <Lock className="w-5 h-5" />
                       </div>
                       <input
-                        type="password"
+                        type={showPassword ? 'text' : 'password'}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         onFocus={() => setIsConfirmFocused(true)}
                         onBlur={() => setIsConfirmFocused(false)}
                         placeholder="Confirm password"
+                        autoComplete="new-password"
+                        spellCheck={false}
                         className={`w-full pl-12 pr-4 py-3.5 ${styles.inputBg} border ${styles.inputBorder} rounded-xl ${styles.textPrimary} placeholder:${styles.textMuted} focus:outline-none ${styles.inputFocusBorder} transition-all duration-300`}
                       />
                     </div>

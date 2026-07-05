@@ -78,7 +78,7 @@ function parseInlineMarkdown(text: string, tc: ReturnType<typeof themeClasses>):
       continue
     }
 
-    const nextSpecial = remaining.search(/[`*\[]/)
+    const nextSpecial = remaining.search(/[`*[]/)
     if (nextSpecial === -1) {
       elements.push(<span key={key++}>{remaining}</span>)
       break
@@ -861,7 +861,9 @@ export function ResearchCard({
                                 ? 'text-yellow-500'
                                 : 'text-text-tertiary'
 
-                          const cleanContent = content.replace(/[✅🟩❌🟥⚠️🚨🟨🟧]/g, '').trim()
+                          const cleanContent = content
+                            .replace(/✅|🟩|❌|🟥|⚠️|🚨|🟨|🟧/gu, '')
+                            .trim()
 
                           elements.push(
                             <div

@@ -119,14 +119,13 @@ export function MainLayout({ children }: MainLayoutProps) {
         >
           <div
             onDoubleClick={handleWalletDoubleClick}
-            className="h-full bg-surface-base transition-opacity duration-200"
+            className="h-full bg-surface-base transition-opacity duration-200 ml-auto w-full max-w-[520px]"
             style={{
               opacity: isWalletDraggingBelowMin ? 0.5 : 1,
+              pointerEvents: isWalletDraggingBelowMin ? 'none' : 'auto',
             }}
           >
-            {!isWalletDraggingBelowMin && (
-              <WalletDrawer collapsed={isWalletCollapsed} />
-            )}
+            <WalletDrawer collapsed={isWalletCollapsed} />
           </div>
         </Panel>
       </PanelGroup>
