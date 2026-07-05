@@ -114,6 +114,7 @@ export class OpenAIAdapter implements ProviderAdapter {
     const body = {
       model: req.model,
       stream: true,
+      store: false,
       instructions,
       input: toResponsesInput(req.messages),
       tools: req.tools?.length ? toResponsesTools(req.tools) : undefined,
@@ -212,9 +213,15 @@ async function* parseResponsesSSE(
         }
       } else if (type === 'response.completed' || type === 'response.done') {
         yield { type: 'done', stopReason: sawTool ? 'tool_use' : 'end' }
+        return
       } else if (type === 'error' || type === 'response.failed') {
         yield { type: 'error', error: JSON.stringify(evt) }
+        return
       }
     }
   }
+
+  // Stream ended without an explicit completion event — emit a terminal event
+  // so the agent loop never hangs.
+  yield { type: 'done', stopReason: sawTool ? 'tool_use' : 'end' }
 }

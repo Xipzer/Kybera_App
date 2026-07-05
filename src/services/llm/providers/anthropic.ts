@@ -236,7 +236,16 @@ async function* parseAnthropicSSE(
           stopReason: sawToolUse || stopReason === 'tool_use' ? 'tool_use' : stopReason,
           usage,
         }
+        return
       }
     }
+  }
+
+  // Stream ended without message_stop — emit a terminal event so the agent
+  // loop never hangs.
+  yield {
+    type: 'done',
+    stopReason: sawToolUse || stopReason === 'tool_use' ? 'tool_use' : stopReason,
+    usage,
   }
 }

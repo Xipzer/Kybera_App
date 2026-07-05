@@ -268,26 +268,30 @@ The production build automatically:
 - Disables source maps
 - Polyfills Node.js globals (Buffer, process) needed by crypto libraries
 
-**Required rewrite rules**: Some external APIs don't support CORS, so requests are proxied through your domain. Your
-hosting platform must rewrite these paths:
+**Server-side proxy (CORS)**: Several external APIs (Polymarket, the LLM providers, and their OAuth token endpoints)
+either send no CORS headers or block the browser origin, so the app calls them same-origin under `/api/*` and a
+server-side function forwards them. These paths are proxied:
 
-| Source                 | Destination                              | Action  | Notes                                         |
-|------------------------|------------------------------------------|---------|-----------------------------------------------|
-| `/api/coingecko/*`     | `https://api.coingecko.com/*`            | Rewrite | Works on Render (CoinGecko sends CORS headers)|
-| `/api/polymarket/*`    | CORS proxy URL                           | Rewrite | Gamma API has no CORS; requires a proxy (e.g. Cloudflare Worker) |
-| `/api/anthropic-token` | `https://platform.claude.com/v1/oauth/token` | Proxy | OAuth token exchange; no CORS on POST response |
-| `/api/anthropic/*`     | `https://api.anthropic.com/*`            | Proxy   | Messages API                                  |
-| `/api/openai-token`    | `https://auth.openai.com/oauth/token`    | Proxy   | OAuth token exchange                          |
-| `/api/openai-codex/*`  | `https://chatgpt.com/backend-api/codex/*`| Proxy   | Codex Responses API (ChatGPT OAuth); blocks browser CORS |
-| `/api/openai/*`        | `https://api.openai.com/*`               | Proxy   | Chat Completions (API-key mode)               |
-| `/api/xai/*`           | `https://api.x.ai/*`                     | Proxy   | Grok (API-key only)                           |
+| Path                   | Upstream                                     | Notes                                         |
+|------------------------|----------------------------------------------|-----------------------------------------------|
+| `/api/coingecko/*`     | `https://api.coingecko.com/*`                | Token prices                                  |
+| `/api/polymarket/*`    | `https://gamma-api.polymarket.com/*`         | Prediction markets (no CORS)                  |
+| `/api/anthropic-token` | `https://platform.claude.com/v1/oauth/token` | Claude OAuth token exchange (no CORS on POST) |
+| `/api/anthropic/*`     | `https://api.anthropic.com/*`                | Messages API                                  |
+| `/api/openai-token`    | `https://auth.openai.com/oauth/token`        | OpenAI OAuth token exchange                   |
+| `/api/openai-codex/*`  | `https://chatgpt.com/backend-api/codex/*`    | Codex Responses API (ChatGPT OAuth)           |
+| `/api/openai/*`        | `https://api.openai.com/*`                   | Chat Completions (API-key mode)               |
+| `/api/xai/*`           | `https://api.x.ai/*`                          | Grok (API-key only)                           |
 
-On Render Static Sites, add these in **Redirects/Rewrites** settings. Note that Render "rewrites" to external URLs
-actually perform 302 redirects, which only work if the destination API sends CORS headers. The Polymarket Gamma API and
-the LLM/OAuth endpoints above do **not** send CORS on the browser-blocked responses, so a server-side CORS proxy is
-required. Deploy the bundled Cloudflare Worker (`workers/llm-proxy.js`, config in `workers/wrangler.toml`) and route
-`app.kybera.xyz/api/*` to it — it forwards these requests server-side and re-adds CORS headers. The vite dev proxy in
-`vite.config.ts` handles the same paths automatically during local development.
+**Deployment is Vercel-native** — no external proxy needed. The repo ships:
+
+- `api/[...path].js` — a Vercel Edge function that proxies every `/api/*` path above server-side and re-adds CORS.
+- `vercel.json` — SPA fallback rewrite (`/((?!api/).*) → /index.html`) so client-side routes resolve while `/api/*`
+  hits the function.
+
+Just connect the repo to Vercel and deploy; the function and rewrites are picked up automatically. Locally, the
+matching vite dev proxy in `vite.config.ts` handles the same paths. (On other hosts — Render, Netlify, Cloudflare Pages
+— port `api/[...path].js` to that platform's function format and add an SPA fallback.)
 
 ---
 

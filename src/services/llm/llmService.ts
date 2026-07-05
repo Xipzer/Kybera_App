@@ -120,6 +120,9 @@ class LLMServiceClass {
 
     this.history.push({ role: 'user', content: userText })
     this.abortController = new AbortController()
+    // Fail loudly instead of spinning forever if the stream stalls (e.g. a
+    // misconfigured proxy or an upstream that never closes the connection).
+    const timeout = setTimeout(() => this.abortController?.abort(), 120_000)
 
     let streamed = ''
     const emitStream = (final: boolean) => {
@@ -157,6 +160,7 @@ class LLMServiceClass {
     } catch (err) {
       this.emit('error', { message: err instanceof Error ? err.message : 'Agent run failed' })
     } finally {
+      clearTimeout(timeout)
       this.abortController = null
     }
   }
