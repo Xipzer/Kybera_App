@@ -136,13 +136,26 @@ export class GenericOAuthFlow implements OAuthFlow {
       },
       body: isForm ? new URLSearchParams(body).toString() : JSON.stringify(body),
     })
+    const text = await res.text().catch(() => '')
     if (!res.ok) {
-      const text = await res.text().catch(() => '')
-      throw new Error(`OAuth token request failed (${res.status}): ${text}`)
+      throw new Error(`OAuth token request failed (${res.status}): ${text || '(empty response)'}`)
     }
-    const json = (await res.json()) as RawTokenResponse
+    if (!text) {
+      // An empty 200 usually means the /api/* proxy isn't wired up (the request
+      // isn't reaching the provider) rather than a real token error.
+      throw new Error(
+        `Token endpoint returned an empty response. The ${this.config.provider} token proxy ` +
+          `(${this.config.tokenUrl}) is not forwarding requests — check the deployment proxy config.`,
+      )
+    }
+    let json: RawTokenResponse
+    try {
+      json = JSON.parse(text) as RawTokenResponse
+    } catch {
+      throw new Error(`Token endpoint returned non-JSON: ${text.slice(0, 200)}`)
+    }
     if (!json.access_token) {
-      throw new Error(`Invalid token response: ${JSON.stringify(json)}`)
+      throw new Error(`Invalid token response: ${text.slice(0, 200)}`)
     }
     return json
   }

@@ -1,0 +1,37 @@
+# Code by Xipzer
+# Render Blueprint. Defines the Kybera static SPA and the CORS proxy Web Service.
+#
+# The static site can't run functions, so the LLM/OAuth/Polymarket calls the SPA
+# makes under /api/* are rewritten to the proxy Web Service (see the routes on
+# the static site below and proxy/index.ts).
+
+services:
+  # --- CORS proxy (LLM providers + OAuth token endpoints + Polymarket) ---
+  - type: web
+    name: kybera-proxy
+    runtime: node
+    rootDir: proxy
+    plan: free
+    buildCommand: curl -fsSL https://bun.sh/install | bash && ~/.bun/bin/bun install
+    startCommand: ~/.bun/bin/bun run index.ts
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 10000
+
+  # --- Static SPA ---
+  - type: web
+    name: kybera-app
+    runtime: static
+    rootDir: .
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    routes:
+      # Proxy all /api/* to the proxy service (replace the URL after first deploy).
+      - type: rewrite
+        source: /api/*
+        destination: https://kybera-proxy.onrender.com/api/*
+      # SPA fallback for client-side routes.
+      - type: rewrite
+        source: /*
+        destination: /index.html
