@@ -22,6 +22,74 @@
 import http from 'node:http'
 import { Readable } from 'node:stream'
 import { randomUUID } from 'node:crypto'
+import { spawn } from 'node:child_process'
+
+// --- Forked from Kimaki's anthropic-auth-plugin.ts ---
+// The Anthropic OAuth token exchange 429s when run in-process, even with a
+// payload that succeeds in a plain fresh Node process. Kimaki works around this
+// by running the OAuth-only HTTP calls in an isolated `node -e` child. We fork
+// that exact approach for the token endpoints.
+function requestTextIsolated(urlString, options) {
+  return new Promise((resolve, reject) => {
+    const payload = JSON.stringify({
+      body: options.body,
+      headers: options.headers,
+      method: options.method,
+      url: urlString,
+    })
+    const child = spawn(
+      process.execPath,
+      [
+        '-e',
+        `
+const input = JSON.parse(process.argv[1]);
+(async () => {
+  const response = await fetch(input.url, {
+    method: input.method,
+    headers: input.headers,
+    body: input.body,
+  });
+  const text = await response.text();
+  process.stdout.write(JSON.stringify({ status: response.status, headers: Object.fromEntries(response.headers), body: text }));
+})().catch((error) => {
+  console.error(error instanceof Error ? error.stack ?? error.message : String(error));
+  process.exit(1);
+});
+        `.trim(),
+        payload,
+      ],
+      { stdio: ['ignore', 'pipe', 'pipe'] },
+    )
+
+    let stdout = ''
+    let stderr = ''
+    const timeout = setTimeout(() => {
+      child.kill()
+      reject(new Error(`Request timed out. url=${urlString}`))
+    }, 30_000)
+
+    child.stdout.on('data', (c) => (stdout += String(c)))
+    child.stderr.on('data', (c) => (stderr += String(c)))
+    child.on('error', (err) => {
+      clearTimeout(timeout)
+      reject(err)
+    })
+    child.on('close', (code) => {
+      clearTimeout(timeout)
+      if (code !== 0) {
+        reject(new Error(stderr.trim() || `Node helper exited with code ${code}`))
+        return
+      }
+      try {
+        resolve(JSON.parse(stdout))
+      } catch {
+        reject(new Error(`Invalid helper output: ${stdout.slice(0, 200)}`))
+      }
+    })
+  })
+}
+
+const ISOLATED_ROUTES = new Set(['/api/anthropic-token', '/api/openai-token'])
 
 const ROUTES = [
   ['/api/anthropic-token', 'https://platform.claude.com/v1/oauth/token'],
@@ -103,6 +171,27 @@ const server = http.createServer(async (req, res) => {
 
   const body =
     req.method === 'GET' || req.method === 'HEAD' ? undefined : await readBody(req)
+
+  // OAuth token exchange: run in an isolated Node child (Kimaki's fix for the
+  // in-process 429). These are non-streaming JSON responses.
+  if (ISOLATED_ROUTES.has(prefix)) {
+    try {
+      const result = await requestTextIsolated(target, {
+        method: req.method,
+        headers: fwdHeaders,
+        body: body && body.length ? body.toString('utf8') : undefined,
+      })
+      res.writeHead(result.status, {
+        'content-type': result.headers['content-type'] || 'application/json',
+        ...corsHeaders(origin),
+      })
+      res.end(result.body)
+    } catch (err) {
+      res.writeHead(502, { 'content-type': 'application/json', ...corsHeaders(origin) })
+      res.end(JSON.stringify({ error: `Token exchange failed: ${String(err)}` }))
+    }
+    return
+  }
 
   let upstream
   try {
