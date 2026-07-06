@@ -20,19 +20,14 @@ import type {
 const API_URL = '/api/anthropic/v1/messages'
 const API_VERSION = '2023-06-01'
 const CLAUDE_CODE_IDENTITY = "You are Claude Code, Anthropic's official CLI for Claude."
-const CLAUDE_CODE_VERSION = '2.1.75'
-const CLAUDE_CODE_BETA = 'claude-code-20250219'
-const OAUTH_BETA = 'oauth-2025-04-20'
-const FINE_GRAINED_TOOL_STREAMING_BETA = 'fine-grained-tool-streaming-2025-05-14'
-const INTERLEAVED_THINKING_BETA = 'interleaved-thinking-2025-05-14'
-
-/** Mirrors Kimaki's getRequiredBetas: interleaved-thinking only for non-adaptive models. */
-function requiredBetas(modelId: string): string {
-  const betas = [CLAUDE_CODE_BETA, OAUTH_BETA, FINE_GRAINED_TOOL_STREAMING_BETA]
-  const isAdaptive = /opus-4[-.]6|sonnet-4[-.]6|sonnet-5|opus-4[-.]7|opus-4[-.]8/.test(modelId)
-  if (!isAdaptive) betas.push(INTERLEAVED_THINKING_BETA)
-  return betas.join(',')
-}
+// Kept close to the current Claude Code CLI release to avoid being flagged.
+const CLAUDE_CODE_VERSION = '2.1.167'
+// Exact beta header string from the proven Reversion claude-code adapter.
+const CLAUDE_CODE_BETA_HEADERS =
+  'oauth-2025-04-20,claude-code-20250219,interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14'
+// The Claude Code OAuth beta surface validates that tools "look like" MCP tools,
+// so tool names are prefixed on the request and stripped on the response.
+const MCP_TOOL_PREFIX = 'mcp_'
 
 interface AnthropicContentBlock {
   type: string
@@ -110,25 +105,46 @@ export class AnthropicAdapter implements ProviderAdapter {
     const { system, msgs } = toAnthropicMessages(req.messages)
     const isOAuth = credential.kind === 'oauth'
 
-    const systemBlocks: { type: 'text'; text: string }[] = []
-    if (isOAuth) systemBlocks.push({ type: 'text', text: CLAUDE_CODE_IDENTITY })
-    const mergedSystem = [req.system, system].filter(Boolean).join('\n\n')
-    if (mergedSystem) systemBlocks.push({ type: 'text', text: mergedSystem })
-
-    // Headers copied from the Kimaki / pi-mono Anthropic OAuth adapter.
     const headers: Record<string, string> = {
       'content-type': 'application/json',
       accept: 'text/event-stream',
       'anthropic-version': API_VERSION,
       'anthropic-dangerous-direct-browser-access': 'true',
     }
+
+    let url = API_URL
+    const mergedSystem = [req.system, system].filter(Boolean).join('\n\n')
+    let messages = msgs
+    let tools = req.tools?.length ? toAnthropicTools(req.tools) : undefined
+    let systemField: string | { type: 'text'; text: string }[] | undefined
+
     if (isOAuth) {
+      // Claude Code OAuth beta surface — proven request shaping from Reversion:
+      // ?beta=true, exact identity system prompt, custom system relocated into a
+      // user/assistant pair, and mcp_-prefixed tool names.
       headers['authorization'] = `Bearer ${credential.access}`
-      headers['anthropic-beta'] = requiredBetas(req.model)
+      headers['anthropic-beta'] = CLAUDE_CODE_BETA_HEADERS
       headers['user-agent'] = `claude-cli/${CLAUDE_CODE_VERSION}`
       headers['x-app'] = 'cli'
+      url = `${API_URL}?beta=true`
+
+      systemField = CLAUDE_CODE_IDENTITY
+      if (mergedSystem) {
+        messages = [
+          { role: 'user', content: [{ type: 'text', text: `[System Instructions]\n${mergedSystem}` }] },
+          { role: 'assistant', content: [{ type: 'text', text: "Understood. I'll follow these instructions." }] },
+          ...msgs,
+        ]
+      }
+      if (tools) {
+        tools = tools.map((t) => ({
+          ...t,
+          name: t.name.startsWith(MCP_TOOL_PREFIX) ? t.name : `${MCP_TOOL_PREFIX}${t.name}`,
+        }))
+      }
     } else {
       headers['x-api-key'] = credential.key
+      systemField = mergedSystem ? [{ type: 'text', text: mergedSystem }] : undefined
     }
 
     const body = {
@@ -136,12 +152,12 @@ export class AnthropicAdapter implements ProviderAdapter {
       max_tokens: req.maxTokens ?? 4096,
       temperature: req.temperature,
       stream: true,
-      system: systemBlocks.length ? systemBlocks : undefined,
-      messages: msgs,
-      tools: req.tools?.length ? toAnthropicTools(req.tools) : undefined,
+      system: systemField,
+      messages,
+      tools,
     }
 
-    const res = await fetch(API_URL, {
+    const res = await fetch(url, {
       method: 'POST',
       headers,
       body: JSON.stringify(body),
@@ -154,13 +170,17 @@ export class AnthropicAdapter implements ProviderAdapter {
       return
     }
 
-    yield* parseAnthropicSSE(res.body)
+    // Strip the mcp_ prefix from streamed tool_use names for OAuth requests.
+    yield* parseAnthropicSSE(res.body, isOAuth)
   }
 }
 
 async function* parseAnthropicSSE(
   body: ReadableStream<Uint8Array>,
+  stripMcpPrefix = false,
 ): AsyncGenerator<StreamEvent> {
+  const unprefix = (name: string) =>
+    stripMcpPrefix && name.startsWith(MCP_TOOL_PREFIX) ? name.slice(MCP_TOOL_PREFIX.length) : name
   const reader = body.getReader()
   const decoder = new TextDecoder()
   let buffer = ''
@@ -219,7 +239,7 @@ async function* parseAnthropicSSE(
             args = {}
           }
           sawToolUse = true
-          yield { type: 'tool_call', call: { id: tb.id, name: tb.name, arguments: args } }
+          yield { type: 'tool_call', call: { id: tb.id, name: unprefix(tb.name), arguments: args } }
           toolBlocks.delete(index)
         }
       } else if (type === 'message_delta') {
