@@ -3,12 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "CORS proxy for Kybera's LLM providers + OAuth token endpoints (Render Web Service)",
-  "scripts": {
-    "start": "bun run index.ts",
-    "dev": "bun --watch index.ts"
+  "description": "Zero-dependency CORS proxy for Kybera's LLM providers + OAuth token endpoints (Render Web Service, Node runtime)",
+  "engines": {
+    "node": ">=18"
   },
-  "dependencies": {
-    "hono": "^4.6.14"
+  "scripts": {
+    "start": "node index.js"
   }
 }

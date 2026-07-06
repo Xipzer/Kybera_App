@@ -16,7 +16,6 @@ import {
   Plus,
   Edit2,
   Trash2,
-  Globe,
   LogIn,
   CreditCard,
   Maximize2,
@@ -29,6 +28,7 @@ import { useTheme } from '../../hooks/useTheme'
 import { useSettingsState } from '../../hooks/useSettingsState'
 import { useUIStore } from '../../store/uiStore'
 import { NetworkManagementDialog } from './NetworkManagementDialog'
+import { NetworkIcon } from '../NetworkIcons'
 import { ModernToggle, ModernButton, ModernAlert } from '../ModernDialog'
 import {
   ConnectionBadge,
@@ -346,17 +346,12 @@ export function SettingsDialog({ open, onOpenChange, maximized = false }: Settin
                             }`}
                           >
                             <div className="flex items-center gap-3">
-                              <div
-                                className={`p-2 rounded-lg ${
-                                  network.type === 'EVM' ? 'bg-blue-500/10' : 'bg-purple-500/10'
-                                }`}
-                              >
-                                <Globe
-                                  className={`w-4 h-4 ${
-                                    network.type === 'EVM' ? 'text-blue-400' : 'text-purple-400'
-                                  }`}
-                                />
-                              </div>
+                              <NetworkIcon
+                                networkId={network.id}
+                                logoURI={network.logoURI}
+                                name={network.name}
+                                size={32}
+                              />
                               <div>
                                 <div className="flex items-center gap-2">
                                   <span className="text-sm font-medium text-text-primary">

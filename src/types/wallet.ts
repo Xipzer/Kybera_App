@@ -13,6 +13,8 @@ export interface Network {
   symbol: string
   explorerUrl: string
   type: ChainType
+  /** Remote chain-logo URL (DefiLlama CDN). Falls back to an initial avatar. */
+  logoURI?: string
   nativeCurrency: {
     name: string
     symbol: string

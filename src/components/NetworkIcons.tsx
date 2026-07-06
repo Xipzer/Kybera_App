@@ -3,6 +3,7 @@
  */
 
 import React from 'react'
+import { getNetworkLogo, getNetworkName } from '../utils/networks'
 
 interface IconProps {
   className?: string
@@ -287,14 +288,75 @@ export function NativeTokenIcon({ symbol, className, size = 32 }: IconProps & { 
   return null
 }
 
+// Deterministic accent color for the initial-letter fallback avatar.
+const FALLBACK_COLORS = [
+  '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316', '#eab308',
+  '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6', '#a855f7', '#ef4444',
+]
+
+function fallbackColor(seed: string): string {
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0
+  return FALLBACK_COLORS[hash % FALLBACK_COLORS.length]
+}
+
+function InitialAvatar({ name, size, className }: { name: string; size: number; className?: string }) {
+  const letter = (name.trim()[0] || '?').toUpperCase()
+  return (
+    <span
+      className={`inline-flex items-center justify-center rounded-full font-semibold text-white ${className ?? ''}`}
+      style={{
+        width: size,
+        height: size,
+        background: fallbackColor(name),
+        fontSize: Math.round(size * 0.5),
+      }}
+      aria-hidden
+    >
+      {letter}
+    </span>
+  )
+}
+
+/**
+ * Network icon with graceful fallback:
+ *   1. crisp local SVG for the main chains (by networkId)
+ *   2. remote logo (logoURI, DefiLlama CDN) for everything else
+ *   3. deterministic colored initial-letter avatar if the image fails/absent
+ */
 export function NetworkIcon({
   networkId,
+  logoURI,
+  name,
   className,
   size = 32,
-}: IconProps & { networkId: string }) {
+}: IconProps & { networkId: string; logoURI?: string; name?: string }) {
   const IconComponent = NETWORK_ICONS[networkId]
+  const [imgFailed, setImgFailed] = React.useState(false)
+
   if (IconComponent) {
     return <IconComponent className={className} size={size} />
   }
-  return null
+
+  // Auto-resolve the remote logo + name from the network registry when the
+  // caller only passed a networkId, so every call site gets icons for free.
+  const resolvedLogo = logoURI ?? getNetworkLogo(networkId)
+  const resolvedName = name ?? getNetworkName(networkId) ?? networkId
+
+  if (resolvedLogo && !imgFailed) {
+    return (
+      <img
+        src={resolvedLogo}
+        alt={`${resolvedName} logo`}
+        width={size}
+        height={size}
+        loading="lazy"
+        onError={() => setImgFailed(true)}
+        className={`rounded-full object-cover bg-white/5 ${className ?? ''}`}
+        style={{ width: size, height: size }}
+      />
+    )
+  }
+
+  return <InitialAvatar name={resolvedName} size={size} className={className} />
 }

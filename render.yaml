@@ -7,17 +7,15 @@
 
 services:
   # --- CORS proxy (LLM providers + OAuth token endpoints + Polymarket) ---
+  # Zero-dependency Node service — no build step needed.
   - type: web
     name: kybera-proxy
     runtime: node
     rootDir: proxy
     plan: free
-    buildCommand: curl -fsSL https://bun.sh/install | bash && ~/.bun/bin/bun install
-    startCommand: ~/.bun/bin/bun run index.ts
+    buildCommand: ''
+    startCommand: node index.js
     healthCheckPath: /health
-    envVars:
-      - key: PORT
-        value: 10000
 
   # --- Static SPA ---
   - type: web
