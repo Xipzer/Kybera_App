@@ -47,7 +47,7 @@ export const OAUTH_CONFIGS: Partial<Record<ProviderId, OAuthProviderConfig>> = {
     extraAuthParams: {
       id_token_add_organizations: 'true',
       codex_cli_simplified_flow: 'true',
-      originator: 'kybera',
+      originator: 'codex_cli_rs',
     },
   },
 }

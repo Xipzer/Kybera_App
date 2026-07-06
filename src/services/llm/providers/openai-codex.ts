@@ -121,12 +121,14 @@ export class OpenAIAdapter implements ProviderAdapter {
       tool_choice: req.tools?.length ? 'auto' : undefined,
     }
 
+    // The Codex-CLI identity headers (user-agent, originator, session_id) that
+    // Cloudflare gates on are injected by the proxy server-side, because the
+    // browser can't set user-agent (a forbidden fetch header).
     const headers: Record<string, string> = {
       'content-type': 'application/json',
       accept: 'text/event-stream',
       authorization: `Bearer ${credential.access}`,
       'openai-beta': 'responses=experimental',
-      originator: 'kybera',
     }
     if (credential.accountId) headers['chatgpt-account-id'] = credential.accountId
 

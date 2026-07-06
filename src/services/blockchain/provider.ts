@@ -33,18 +33,28 @@ function inferChainId(rpcUrl: string): number | null {
   return null
 }
 
+// Keyless public fallbacks used when the user hasn't configured a provider key.
+const PUBLIC_SOLANA_MAINNET = 'https://api.mainnet-beta.solana.com'
+const PUBLIC_SOLANA_DEVNET = 'https://api.devnet.solana.com'
+
 function resolveRpcUrl(url: string): string {
   if (url.includes('.g.alchemy.com/v2/')) {
     return url.replace(/\/v2\/.*$/, `/v2/${getAlchemyApiKey()}`)
   }
   if (url.includes('helius-rpc.com')) {
-    return url.replace(/api-key=[^&]*/, `api-key=${getHeliusApiKey()}`)
+    const key = getHeliusApiKey()
+    // No Helius key -> the URL would be `?api-key=` (broken); use a public RPC.
+    if (!key) return url.includes('devnet') ? PUBLIC_SOLANA_DEVNET : PUBLIC_SOLANA_MAINNET
+    return url.replace(/api-key=[^&]*/, `api-key=${key}`)
   }
   return url
 }
 
 export function getBestRpcUrl(network: Network): string {
-  if (network.type === 'EVM' && network.alchemyRpcUrl) {
+  // Only use Alchemy when a key is actually configured — otherwise the URL
+  // resolves to `.../v2/` (no key), which 401s and sends no CORS headers.
+  // Fall back to the network's public RPC, which works keyless for every chain.
+  if (network.type === 'EVM' && network.alchemyRpcUrl && getAlchemyApiKey()) {
     return resolveRpcUrl(network.alchemyRpcUrl)
   }
   return resolveRpcUrl(network.rpcUrl)

@@ -21,6 +21,7 @@
 
 import http from 'node:http'
 import { Readable } from 'node:stream'
+import { randomUUID } from 'node:crypto'
 
 const ROUTES = [
   ['/api/anthropic-token', 'https://platform.claude.com/v1/oauth/token'],
@@ -36,7 +37,7 @@ const ROUTES = [
 const ALLOW_HEADERS =
   'content-type, authorization, anthropic-version, anthropic-beta, ' +
   'anthropic-dangerous-direct-browser-access, x-api-key, x-app, user-agent, ' +
-  'openai-beta, chatgpt-account-id, originator, accept'
+  'openai-beta, chatgpt-account-id, originator, session_id, accept'
 
 function corsHeaders(origin) {
   return {
@@ -90,6 +91,15 @@ const server = http.createServer(async (req, res) => {
   delete fwdHeaders.host
   delete fwdHeaders.cookie
   delete fwdHeaders['content-length']
+
+  // The Codex backend (chatgpt.com) gates by Codex-CLI identity headers that
+  // browsers can't set (user-agent is a forbidden fetch header). Inject them
+  // server-side so the OAuth Codex path is accepted from the proxy.
+  if (prefix === '/api/openai-codex') {
+    fwdHeaders['user-agent'] = 'codex_cli_rs/0.20.0'
+    fwdHeaders['originator'] = 'codex_cli_rs'
+    if (!fwdHeaders['session_id']) fwdHeaders['session_id'] = randomUUID()
+  }
 
   const body =
     req.method === 'GET' || req.method === 'HEAD' ? undefined : await readBody(req)
